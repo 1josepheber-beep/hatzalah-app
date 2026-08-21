@@ -108,6 +108,53 @@
     border-radius:9px;padding:9px 13px;cursor:pointer;flex:0 0 auto}
   .installbar .ib-x{border:0;background:none;color:var(--mut);font-size:20px;line-height:1;
     padding:2px 4px;cursor:pointer;flex:0 0 auto}
+
+  /* ---------- Screen (sub-page) ---------- */
+  .screen{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .22s ease;visibility:hidden}
+  .screen.open{transform:translateX(0);visibility:visible}
+  .scr-head{position:sticky;top:0;background:linear-gradient(180deg,var(--navy),var(--navy-d));
+    color:#fff;padding:calc(env(safe-area-inset-top) + 8px) 10px 10px;
+    display:flex;align-items:center;gap:6px;box-shadow:0 2px 10px rgba(9,26,52,.25)}
+  .scr-head .back{border:0;background:rgba(255,255,255,.14);color:#fff;font-size:15px;font-weight:600;
+    border-radius:10px;padding:9px 12px 9px 8px;cursor:pointer;display:flex;align-items:center;gap:3px}
+  .scr-head .back svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.4}
+  .scr-head h2{font-size:17px;margin:0;font-weight:700}
+  .scr-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 30px}
+  .scr-search{padding:10px 12px 2px}
+  .scr-search input{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;
+    padding:12px 14px;font-size:16px;color:var(--ink);box-shadow:var(--shadow)}
+  .scr-search input:focus{outline:none;border-color:var(--navy)}
+
+  /* Hospital card */
+  .hcard{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .hcard-top{padding:14px 14px;cursor:pointer;display:flex;align-items:flex-start;gap:10px}
+  .hcard-top .nm{flex:1}
+  .hcard-top .nm b{font-size:16px;line-height:1.2;display:block}
+  .hcard-top .chev{width:20px;height:20px;stroke:var(--mut);fill:none;stroke-width:2;
+    flex:0 0 auto;margin-top:2px;transition:transform .18s}
+  .hcard.open .hcard-top .chev{transform:rotate(180deg)}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;background:#eaf0f9;color:var(--navy)}
+  .tag.tr{background:#fdeaea;color:var(--red)}
+  .tag.pe{background:#eafaf1;color:#1a7a48}
+  .hcard-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line);margin-top:2px}
+  .hcard.open .hcard-body{display:block}
+  .hrow{display:flex;gap:9px;margin-top:12px}
+  .hbtn{flex:1;border:0;border-radius:11px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:6px;color:#fff}
+  .hbtn svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2}
+  .hbtn.call{background:#1a7a48}
+  .hbtn.nav{background:#1e5fae}
+  .hbtn.red{background:var(--red)}
+  .hmeta{margin-top:12px;font-size:13px;color:var(--ink)}
+  .hmeta div{margin-top:5px}
+  .hmeta .k{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .hmore{margin-top:10px;background:none;border:0;color:var(--navy);font-weight:700;font-size:13px;
+    cursor:pointer;text-decoration:underline;padding:2px 0}
+  .hmore-wrap{margin-top:8px}
+  .empty{text-align:center;color:var(--mut);padding:40px 20px;font-size:14px}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -155,6 +202,18 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
+</div>
+
+<!-- HOSPITALS SCREEN -->
+<div class="screen" id="hospScreen">
+  <div class="scr-head">
+    <button class="back" id="hospBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Hospitals</h2>
+  </div>
+  <div class="scr-search">
+    <input id="hospSearch" type="search" placeholder="Search hospitals or specialty…" enterkeyhint="search">
+  </div>
+  <div class="scr-body" id="hospBody"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -262,6 +321,7 @@
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
     if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
+    if(type==="hospitals"){ openHospitals(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -284,6 +344,126 @@
   if(saved&&saved.pw){STATE.me=saved;enter();}
   else{setTimeout(function(){$("pw").focus();},200);}
 
+
+
+  // ---- Hospitals screen ----
+  var HOSP={loaded:false, rows:[]};
+  // specialty columns -> display label + tag style; "important few" flagged
+  var SPECS=[
+    {col:"Trauma I/II", label:"Trauma I/II", cls:"tr", key:true},
+    {col:"Trauma III", label:"Trauma III", cls:"tr", key:true},
+    {col:"Pedi Trauma I", label:"Pedi Trauma I", cls:"tr", key:true},
+    {col:"Pediatric ICU", label:"Pediatric ICU", cls:"pe", key:true},
+    {col:"Stroke Comprehensive", label:"Stroke (Comprehensive)", cls:"", key:true},
+    {col:"Stroke Primary", label:"Stroke (Primary)", cls:"", key:true},
+    {col:"24hr Cardiac Cath", label:"24hr Cardiac Cath", cls:"", key:true},
+    {col:"Post-Arrest Hypothermia", label:"Post-Arrest Hypothermia", cls:"", key:false},
+    {col:"VAD", label:"VAD", cls:"", key:false},
+    {col:"Burn", label:"Burn", cls:"", key:false},
+    {col:"Hyperbaric", label:"Hyperbaric", cls:"", key:false},
+    {col:"Obstetric", label:"Obstetric", cls:"", key:false},
+    {col:"SAFE Certified", label:"SAFE Certified", cls:"", key:false}
+  ];
+
+  function openHospitals(){
+    var scr=$("hospScreen"); scr.classList.add("open");
+    if(!HOSP.loaded){
+      $("hospBody").innerHTML='<div class="empty">Loading hospitals…</div>';
+      fetchTab("Hospitals").then(function(rows){
+        HOSP.rows=rows.filter(function(r){ return r_(r,"Hospital Name") && !isX(r["Hide"]); });
+        HOSP.loaded=true; renderHosp("");
+      }).catch(function(){
+        $("hospBody").innerHTML='<div class="empty">Couldn\'t load hospitals. Check your internet and go back in.</div>';
+      });
+    }else{
+      renderHosp($("hospSearch").value||"");
+    }
+  }
+  function closeHospitals(){ $("hospScreen").classList.remove("open"); }
+
+  function specsFor(r){
+    var on=[]; for(var i=0;i<SPECS.length;i++){ if(isX(r[SPECS[i].col])) on.push(SPECS[i]); }
+    return on;
+  }
+  function tagHTML(s){ return '<span class="tag '+(s.cls||"")+'">'+esc(s.label)+'</span>'; }
+
+  function renderHosp(q){
+    q=(q||"").trim().toLowerCase();
+    var body=$("hospBody");
+    var list=HOSP.rows.filter(function(r){
+      if(!q) return true;
+      var hay=(r_(r,"Hospital Name")+" "+r_(r,"Specialties (summary)")+" "+r_(r,"Code")).toLowerCase();
+      return hay.indexOf(q)>-1;
+    });
+    list.sort(function(a,b){ return r_(a,"Hospital Name").localeCompare(r_(b,"Hospital Name")); });
+    if(!list.length){ body.innerHTML='<div class="empty">No hospitals match \u201C'+esc(q)+'\u201D.</div>'; return; }
+    var html="";
+    list.forEach(function(r,idx){
+      var name=r_(r,"Hospital Name");
+      var on=specsFor(r);
+      var key=on.filter(function(s){return s.key;});
+      var extra=on.filter(function(s){return !s.key;});
+      var phone=r_(r,"Phone (Call)"), red=r_(r,"Red Phone");
+      var addr=r_(r,"Address (Navigate)");
+      var lat=r_(r,"Latitude"), lng=r_(r,"Longitude");
+      var door=r_(r,"Door Code");
+
+      var tags = key.map(tagHTML).join("");
+      var extraTags = extra.map(tagHTML).join("");
+
+      // Navigate target: coords if present, else address
+      var navHref="";
+      if(lat && lng){ navHref="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(lat+","+lng); }
+      else if(addr){ navHref="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(addr); }
+
+      html+='<div class="hcard" data-i="'+idx+'">'+
+        '<div class="hcard-top js-toggle">'+
+          '<div class="nm"><b>'+esc(name)+'</b>'+(tags?'<div class="tags">'+tags+'</div>':'')+'</div>'+
+          '<svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+
+        '</div>'+
+        '<div class="hcard-body">'+
+          '<div class="hrow">'+
+            (phone?'<button class="hbtn call js-call" data-n="'+esc(phone)+'"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.6a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.5-1.2a2 2 0 012.1-.5c.8.3 1.7.6 2.6.7a2 2 0 011.7 2z"/></svg>Call</button>':'')+
+            (navHref?'<button class="hbtn nav js-nav" data-h="'+esc(navHref)+'"><svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>Navigate</button>':'')+
+          '</div>'+
+          (red?'<div class="hrow"><button class="hbtn red js-call" data-n="'+esc(red)+'"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.4 1.8.7 2.6a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.5-1.2a2 2 0 012.1-.5c.8.3 1.7.6 2.6.7a2 2 0 011.7 2z"/></svg>Red Phone</button></div>':'')+
+          '<div class="hmeta">'+
+            (door?'<div><span class="k">Door code</span><br>'+esc(door)+'</div>':'')+
+            (addr?'<div><span class="k">Address</span><br>'+esc(addr)+'</div>':'')+
+          '</div>'+
+          (extraTags?'<div class="hmore-wrap"><button class="hmore js-more">More specialties</button><div class="tags js-extra" style="display:none">'+extraTags+'</div></div>':'')+
+        '</div>'+
+      '</div>';
+    });
+    body.innerHTML=html;
+  }
+
+  // Event delegation for the hospitals body
+  $("hospBody").addEventListener("click",function(e){
+    var t=e.target;
+    var call=t.closest?t.closest(".js-call"):null;
+    if(call){ e.stopPropagation(); dial(call.getAttribute("data-n")); return; }
+    var nav=t.closest?t.closest(".js-nav"):null;
+    if(nav){ e.stopPropagation(); window.open(nav.getAttribute("data-h"),"_blank","noopener"); return; }
+    var more=t.closest?t.closest(".js-more"):null;
+    if(more){ e.stopPropagation();
+      var wrap=more.parentNode.querySelector(".js-extra");
+      if(wrap){ var show=wrap.style.display==="none"; wrap.style.display=show?"flex":"none";
+        more.textContent=show?"Fewer specialties":"More specialties"; }
+      return;
+    }
+    var tog=t.closest?t.closest(".js-toggle"):null;
+    if(tog){ var card=tog.closest(".hcard"); if(card) card.classList.toggle("open"); }
+  });
+
+  $("hospBack").addEventListener("click",closeHospitals);
+  $("hospSearch").addEventListener("input",function(){ renderHosp(this.value); });
+
+  // Home search: typing + Enter jumps into Hospitals filtered
+  $("search").addEventListener("keydown",function(e){
+    if(e.key==="Enter"){ var v=this.value; openHospitals();
+      setTimeout(function(){ $("hospSearch").value=v; renderHosp(v); },30); }
+  });
 
   // ---- Install banner ----
   (function(){
