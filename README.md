@@ -1,1 +1,0 @@
-# hatzalah-app
