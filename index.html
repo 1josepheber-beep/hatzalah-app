@@ -164,6 +164,31 @@
   .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .chip.clr{color:var(--red);border-color:#f0c9cd;background:#fff;font-weight:700}
   .fcount{padding:6px 14px 0;font-size:12px;color:var(--mut)}
+
+  /* Protocols list */
+  .cathead{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--mut);margin:16px 4px 7px}
+  .plist{display:flex;flex-direction:column;gap:8px}
+  .pitem{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 14px;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+  .pitem b{font-size:15px;font-weight:600;line-height:1.25;flex:1}
+  .pitem .go{width:18px;height:18px;stroke:var(--mut);fill:none;stroke-width:2;flex:0 0 auto}
+  .phit{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400;display:block}
+  /* Protocol reader */
+  .preader{position:fixed;inset:0;z-index:45;background:var(--card);display:flex;flex-direction:column;
+    transform:translateX(100%);transition:transform .22s ease;visibility:hidden}
+  .preader.open{transform:translateX(0);visibility:visible}
+  .pr-cat{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;opacity:.8}
+  .pr-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 30px}
+  .pr-title{font-size:20px;font-weight:800;line-height:1.25;margin:0 0 12px;color:var(--navy)}
+  .pr-text{font-size:15px;line-height:1.6;color:var(--ink);white-space:pre-wrap;word-wrap:break-word}
+  .pr-nav{display:flex;gap:9px;padding:10px 12px calc(env(safe-area-inset-bottom) + 12px);
+    border-top:1px solid var(--line);background:#fff}
+  .pr-nav button{flex:1;border:1px solid var(--line);background:#fff;color:var(--navy);
+    font-weight:700;font-size:14px;border-radius:11px;padding:12px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:5px}
+  .pr-nav button:disabled{opacity:.35}
+  .pr-nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -211,6 +236,35 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
+</div>
+
+<!-- PROTOCOLS SCREEN -->
+<div class="screen" id="protoScreen">
+  <div class="scr-head">
+    <button class="back" id="protoBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Protocols</h2>
+  </div>
+  <div class="scr-search">
+    <input id="protoSearch" type="search" placeholder="Search protocols \u2014 \u201Cburn\u201D, \u201Cchest pain\u201D, \u201COB\u201D\u2026" enterkeyhint="search">
+  </div>
+  <div class="fcount" id="protoCount"></div>
+  <div class="scr-body" id="protoBody"></div>
+</div>
+
+<!-- PROTOCOL READER -->
+<div class="preader" id="protoReader">
+  <div class="scr-head">
+    <button class="back" id="protoReadBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>List</button>
+    <div class="pr-cat" id="prCat"></div>
+  </div>
+  <div class="pr-body">
+    <h1 class="pr-title" id="prTitle"></h1>
+    <div class="pr-text" id="prText"></div>
+  </div>
+  <div class="pr-nav">
+    <button id="prPrev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Prev</button>
+    <button id="prNext">Next<svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
 </div>
 
 <!-- HOSPITALS SCREEN -->
@@ -353,6 +407,7 @@
     var type=r_(t,"Type").toLowerCase();
     if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
     if(type==="hospitals"){ openHospitals(); return; }
+    if(type==="protocols"){ openProtocols(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -543,6 +598,102 @@
     if(e.key==="Enter"){ var v=this.value; openHospitals();
       setTimeout(function(){ $("hospSearch").value=v; renderHosp(v); },30); }
   });
+
+
+  // ---- Protocols screen ----
+  var PROTO={loaded:false, all:[], view:[]};
+  var CAT_ORDER=["Policies & Operations","Skills & Procedures","Medical Emergencies","Cardiac Arrest","Trauma Emergencies","Reference & Equipment"];
+
+  function loadProtocols(){
+    return new Promise(function(resolve,reject){
+      if(window.HOH_PROTOCOLS){ resolve(window.HOH_PROTOCOLS); return; }
+      var s=document.createElement("script");
+      s.src="protocols.js?v=1";
+      s.onload=function(){ window.HOH_PROTOCOLS?resolve(window.HOH_PROTOCOLS):reject(); };
+      s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  function openProtocols(){
+    $("protoScreen").classList.add("open");
+    if(PROTO.loaded){ renderProto($("protoSearch").value||""); return; }
+    $("protoBody").innerHTML='<div class="empty">Loading protocols\u2026</div>';
+    loadProtocols().then(function(list){
+      PROTO.all=list.map(function(p,i){ return {
+        i:i, title:(p.title||"").trim(), category:(p.category||"").trim(),
+        keywords:(p.keywords||""), body:(p.body||"")
+      };});
+      PROTO.loaded=true; renderProto("");
+    }).catch(function(){
+      $("protoBody").innerHTML='<div class="empty">Couldn\'t load protocols. Check your internet and open this again.</div>';
+    });
+  }
+  function closeProtocols(){ $("protoScreen").classList.remove("open"); }
+
+  function renderProto(q){
+    q=(q||"").trim().toLowerCase();
+    var body=$("protoBody"), cnt=$("protoCount");
+    var list=PROTO.all.filter(function(p){
+      if(!q) return true;
+      return (p.title+" "+p.keywords+" "+p.body).toLowerCase().indexOf(q)>-1;
+    });
+    PROTO.view=list;
+    cnt.textContent = q ? (list.length+" of "+PROTO.all.length+" protocols") : (PROTO.all.length+" protocols");
+    if(!list.length){ body.innerHTML='<div class="empty">No protocols match \u201C'+esc(q)+'\u201D.</div>'; return; }
+
+    // group by category in fixed order
+    var groups={}; list.forEach(function(p){ (groups[p.category]=groups[p.category]||[]).push(p); });
+    var cats=CAT_ORDER.filter(function(c){return groups[c];})
+      .concat(Object.keys(groups).filter(function(c){return CAT_ORDER.indexOf(c)<0;}));
+    var html="";
+    cats.forEach(function(c){
+      html+='<div class="cathead">'+esc(c)+'</div><div class="plist">';
+      groups[c].forEach(function(p){
+        var sub="";
+        if(q && p.title.toLowerCase().indexOf(q)<0){
+          // show a snippet of where it matched in the body
+          var bi=p.body.toLowerCase().indexOf(q);
+          if(bi>-1){ var st=Math.max(0,bi-24); sub='<span class="phit">\u2026'+esc(p.body.slice(st,bi+q.length+30).replace(/\s+/g," ").trim())+'\u2026</span>'; }
+        }
+        html+='<div class="pitem" data-i="'+p.i+'"><b>'+esc(p.title)+sub+'</b>'+
+               '<svg class="go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
+      });
+      html+='</div>';
+    });
+    body.innerHTML=html;
+  }
+
+  // Reader
+  function openReader(globalIndex){
+    // position within current filtered view (so Prev/Next flips through the filtered set)
+    var pos=-1;
+    for(var k=0;k<PROTO.view.length;k++){ if(PROTO.view[k].i===globalIndex){ pos=k; break; } }
+    if(pos<0){ PROTO.view=PROTO.all; for(var m=0;m<PROTO.all.length;m++){ if(PROTO.all[m].i===globalIndex){pos=m;break;} } }
+    showReaderAt(pos);
+    $("protoReader").classList.add("open");
+  }
+  function showReaderAt(pos){
+    var p=PROTO.view[pos]; if(!p) return;
+    PROTO.pos=pos;
+    $("prCat").textContent=p.category;
+    $("prTitle").textContent=p.title;
+    $("prText").textContent=p.body;
+    $("prPrev").disabled = pos<=0;
+    $("prNext").disabled = pos>=PROTO.view.length-1;
+    $("protoReader").querySelector(".pr-body").scrollTop=0;
+  }
+  function closeReader(){ $("protoReader").classList.remove("open"); }
+
+  $("protoBody").addEventListener("click",function(e){
+    var it=e.target.closest?e.target.closest(".pitem"):null;
+    if(it){ openReader(parseInt(it.getAttribute("data-i"),10)); }
+  });
+  $("protoBack").addEventListener("click",closeProtocols);
+  $("protoReadBack").addEventListener("click",closeReader);
+  $("prPrev").addEventListener("click",function(){ if(PROTO.pos>0) showReaderAt(PROTO.pos-1); });
+  $("prNext").addEventListener("click",function(){ if(PROTO.pos<PROTO.view.length-1) showReaderAt(PROTO.pos+1); });
+  $("protoSearch").addEventListener("input",function(){ renderProto(this.value); });
 
   // ---- Install banner ----
   (function(){
