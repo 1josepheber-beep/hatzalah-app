@@ -189,6 +189,24 @@
     display:flex;align-items:center;justify-content:center;gap:5px}
   .pr-nav button:disabled{opacity:.35}
   .pr-nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4}
+
+  .searchwrap{position:relative;z-index:15}
+  .sresults{position:absolute;left:12px;right:12px;top:100%;margin-top:6px;background:#fff;
+    border:1px solid var(--line);border-radius:13px;box-shadow:0 10px 30px rgba(16,38,74,.16);
+    max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+  .sresults.show{display:block}
+  .sr-group{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);
+    padding:10px 14px 4px}
+  .sr-item{padding:11px 14px;cursor:pointer;border-top:1px solid #f0f2f6;display:flex;align-items:center;gap:9px}
+  .sr-item:first-child{border-top:0}
+  .sr-item .sic{width:26px;height:26px;border-radius:7px;background:#eaf0f9;color:var(--navy);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .sr-item .sic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+  .sr-item .st{flex:1;min-width:0}
+  .sr-item .st b{font-size:14px;font-weight:600;display:block;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sr-item .st span{font-size:11px;color:var(--mut)}
+  .sr-empty{padding:16px 14px;color:var(--mut);font-size:13px;text-align:center}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -230,8 +248,9 @@
   <div class="searchwrap">
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="search" type="search" placeholder="Search…" enterkeyhint="search">
+      <input id="search" type="search" placeholder="Search…" enterkeyhint="search" autocomplete="off">
     </div>
+    <div class="sresults" id="sresults"></div>
   </div>
 
   <div class="grid" id="grid"></div>
@@ -593,10 +612,99 @@
   $("hospBack").addEventListener("click",closeHospitals);
   $("hospSearch").addEventListener("input",function(){ renderHosp(this.value); });
 
-  // Home search: typing + Enter jumps into Hospitals filtered
-  $("search").addEventListener("keydown",function(e){
-    if(e.key==="Enter"){ var v=this.value; openHospitals();
-      setTimeout(function(){ $("hospSearch").value=v; renderHosp(v); },30); }
+  // ---- Global home search (hospitals + protocols) ----
+  function ensureData(){
+    // make sure both datasets are available for searching
+    var jobs=[];
+    if(!HOSP.loaded){
+      jobs.push(fetchTab("Hospitals").then(function(rows){
+        HOSP.rows=rows.filter(function(r){return r_(r,"Hospital Name") && !isX(r["Hide"]);});
+        HOSP.loaded=true;
+      }).catch(function(){}));
+    }
+    if(!PROTO.loaded){
+      jobs.push(loadProtocols().then(function(list){
+        PROTO.all=list.map(function(p,i){return {i:i,title:(p.title||"").trim(),category:(p.category||"").trim(),keywords:(p.keywords||""),body:(p.body||"")};});
+        PROTO.loaded=true;
+      }).catch(function(){}));
+    }
+    return Promise.all(jobs);
+  }
+
+  var ICO_HOSP='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>';
+  var ICO_PROTO='<svg viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/></svg>';
+
+  function renderGlobal(q){
+    var box=$("sresults");
+    q=(q||"").trim(); var ql=q.toLowerCase();
+    if(!ql){ box.className="sresults"; box.innerHTML=""; return; }
+
+    var hosp=(HOSP.rows||[]).filter(function(r){
+      return (r_(r,"Hospital Name")+" "+r_(r,"Specialties (summary)")).toLowerCase().indexOf(ql)>-1;
+    }).slice(0,6);
+    var pro=(PROTO.all||[]).filter(function(p){
+      return (p.title+" "+p.keywords+" "+p.body).toLowerCase().indexOf(ql)>-1;
+    });
+    // rank protocols: title matches first
+    pro.sort(function(a,b){
+      var at=a.title.toLowerCase().indexOf(ql)>-1?0:1, bt=b.title.toLowerCase().indexOf(ql)>-1?0:1;
+      return at-bt;
+    });
+    pro=pro.slice(0,8);
+
+    var html="";
+    if(hosp.length){
+      html+='<div class="sr-group">Hospitals</div>';
+      hosp.forEach(function(r){
+        html+='<div class="sr-item" data-t="h" data-q="'+esc(r_(r,"Hospital Name"))+'">'+
+          '<div class="sic">'+ICO_HOSP+'</div><div class="st"><b>'+esc(r_(r,"Hospital Name"))+'</b>'+
+          '<span>'+esc(r_(r,"Specialties (summary)")||"Hospital")+'</span></div></div>';
+      });
+    }
+    if(pro.length){
+      html+='<div class="sr-group">Protocols</div>';
+      pro.forEach(function(p){
+        html+='<div class="sr-item" data-t="p" data-i="'+p.i+'">'+
+          '<div class="sic">'+ICO_PROTO+'</div><div class="st"><b>'+esc(p.title)+'</b>'+
+          '<span>'+esc(p.category)+'</span></div></div>';
+      });
+    }
+    if(!html){ html='<div class="sr-empty">No matches for “'+esc(q)+'”</div>'; }
+    box.innerHTML=html; box.className="sresults show";
+  }
+
+  var searchTimer=null;
+  $("search").addEventListener("input",function(){
+    var v=this.value;
+    if(searchTimer) clearTimeout(searchTimer);
+    if(!v.trim()){ renderGlobal(""); return; }
+    // load datasets (once) then render; keep it snappy
+    ensureData().then(function(){ renderGlobal(v); });
+  });
+  $("search").addEventListener("focus",function(){ if(this.value.trim()){ ensureData().then(function(){ renderGlobal($("search").value); }); } });
+
+  // click a result
+  $("sresults").addEventListener("click",function(e){
+    var it=e.target.closest?e.target.closest(".sr-item"):null; if(!it) return;
+    var t=it.getAttribute("data-t");
+    hideGlobal();
+    if(t==="h"){
+      var q=it.getAttribute("data-q");
+      openHospitals();
+      setTimeout(function(){ $("hospSearch").value=q; HOSP.filters={};
+        if(HOSP.loaded){ if(typeof buildChips==="function") buildChips(); renderHosp(q); } },40);
+    }else if(t==="p"){
+      var gi=parseInt(it.getAttribute("data-i"),10);
+      openProtocols();
+      setTimeout(function(){ $("protoSearch").value=""; if(PROTO.loaded){ renderProto(""); openReader(gi);} },40);
+    }
+    $("search").value="";
+  });
+
+  function hideGlobal(){ var b=$("sresults"); b.className="sresults"; b.innerHTML=""; }
+  // tap outside closes the dropdown
+  document.addEventListener("click",function(e){
+    if(!e.target.closest || !e.target.closest(".searchwrap")) hideGlobal();
   });
 
 
