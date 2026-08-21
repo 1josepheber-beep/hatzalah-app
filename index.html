@@ -287,24 +287,21 @@
 
   // ---- Install banner ----
   (function(){
-    var DISMISS="hoh_install_dismiss_v1";
     var bar=$("installbar"), go=$("ibGo"), x=$("ibX"), sub=$("ibSub");
     var deferred=null;
     function standalone(){
       return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone===true;
     }
     function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent); }
-    function dismissed(){ try{return localStorage.getItem(DISMISS)==="1";}catch(e){return false;} }
-    function showBar(){ if(!standalone() && !dismissed()) bar.classList.add("show"); }
+    function showBar(){ if(!standalone()) bar.classList.add("show"); }
     function hideBar(){ bar.classList.remove("show"); }
 
-    x.addEventListener("click",function(){
-      hideBar(); try{localStorage.setItem(DISMISS,"1");}catch(e){}
-    });
+    // X only hides for this view; it returns on next refresh/login until installed
+    x.addEventListener("click", hideBar);
 
-    // Android / Chromium: capture the real prompt
+    // Android / Chromium: capture the real install prompt
     window.addEventListener("beforeinstallprompt",function(e){
-      e.preventDefault(); deferred=e; go.textContent="Install"; showBar();
+      e.preventDefault(); deferred=e; go.style.display=""; go.textContent="Install"; showBar();
     });
     go.addEventListener("click",function(){
       if(deferred){
@@ -316,13 +313,11 @@
       }
     });
 
-    // If already installed during this session, hide it
-    window.addEventListener("appinstalled",function(){
-      hideBar(); try{localStorage.setItem(DISMISS,"1");}catch(e){}
-    });
+    // Once installed, hide immediately and it won't come back (standalone check)
+    window.addEventListener("appinstalled", hideBar);
 
-    // iOS never fires beforeinstallprompt: show a manual-steps banner instead
-    if(isIOS() && !standalone() && !dismissed()){
+    // iOS never fires beforeinstallprompt: show manual steps each visit until installed
+    if(isIOS() && !standalone()){
       sub.textContent="Tap Share, then \u201CAdd to Home Screen.\u201D";
       go.style.display="none";
       showBar();
