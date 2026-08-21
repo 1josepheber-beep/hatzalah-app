@@ -155,6 +155,15 @@
     cursor:pointer;text-decoration:underline;padding:2px 0}
   .hmore-wrap{margin-top:8px}
   .empty{text-align:center;color:var(--mut);padding:40px 20px;font-size:14px}
+
+  .fbar{display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding:8px 12px 4px;scrollbar-width:none}
+  .fbar::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--navy);
+    font-size:13px;font-weight:600;padding:7px 13px;border-radius:20px;cursor:pointer;white-space:nowrap}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .chip.clr{color:var(--red);border-color:#f0c9cd;background:#fff;font-weight:700}
+  .fcount{padding:6px 14px 0;font-size:12px;color:var(--mut)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -213,6 +222,8 @@
   <div class="scr-search">
     <input id="hospSearch" type="search" placeholder="Search hospitals or specialty…" enterkeyhint="search">
   </div>
+  <div class="fbar" id="hospFilters"></div>
+  <div class="fcount" id="hospCount"></div>
   <div class="scr-body" id="hospBody"></div>
 </div>
 
@@ -367,7 +378,23 @@
 
 
   // ---- Hospitals screen ----
-  var HOSP={loaded:false, rows:[]};
+  var HOSP={loaded:false, rows:[], filters:{}};
+  // Order of quick-filter chips (short labels)
+  var CHIPS=[
+    {col:"Trauma I/II", label:"Trauma I/II"},
+    {col:"Trauma III", label:"Trauma III"},
+    {col:"Pedi Trauma I", label:"Pedi Trauma"},
+    {col:"Stroke Comprehensive", label:"Stroke Comp."},
+    {col:"Stroke Primary", label:"Stroke"},
+    {col:"24hr Cardiac Cath", label:"Cardiac Cath"},
+    {col:"Pediatric ICU", label:"Pediatric ICU"},
+    {col:"Burn", label:"Burn"},
+    {col:"Hyperbaric", label:"Hyperbaric"},
+    {col:"VAD", label:"VAD"},
+    {col:"Obstetric", label:"Obstetric"},
+    {col:"Post-Arrest Hypothermia", label:"Post-Arrest Hypo."},
+    {col:"SAFE Certified", label:"SAFE"}
+  ];
   // specialty columns -> display label + tag style; "important few" flagged
   var SPECS=[
     {col:"Trauma I/II", label:"Trauma I/II", cls:"tr", key:true},
@@ -391,7 +418,7 @@
       $("hospBody").innerHTML='<div class="empty">Loading hospitals…</div>';
       fetchTab("Hospitals").then(function(rows){
         HOSP.rows=rows.filter(function(r){ return r_(r,"Hospital Name") && !isX(r["Hide"]); });
-        HOSP.loaded=true; renderHosp("");
+        HOSP.loaded=true; buildChips(); renderHosp($("hospSearch").value||"");
       }).catch(function(){
         $("hospBody").innerHTML='<div class="empty">Couldn\'t load hospitals. Check your internet and go back in.</div>';
       });
@@ -400,6 +427,30 @@
     }
   }
   function closeHospitals(){ $("hospScreen").classList.remove("open"); }
+
+  function buildChips(){
+    var bar=$("hospFilters"); bar.innerHTML="";
+    // only show chips that at least one hospital actually has
+    CHIPS.forEach(function(ch){
+      var any=HOSP.rows.some(function(r){return isX(r[ch.col]);});
+      if(!any) return;
+      var b=document.createElement("button");
+      b.className="chip"+(HOSP.filters[ch.col]?" on":"");
+      b.textContent=ch.label;
+      b.addEventListener("click",function(){
+        if(HOSP.filters[ch.col]) delete HOSP.filters[ch.col]; else HOSP.filters[ch.col]=true;
+        buildChips(); renderHosp($("hospSearch").value||"");
+      });
+      bar.appendChild(b);
+    });
+    // clear chip when any active
+    if(Object.keys(HOSP.filters).length){
+      var c=document.createElement("button");
+      c.className="chip clr"; c.textContent="Clear \u2715";
+      c.addEventListener("click",function(){ HOSP.filters={}; buildChips(); renderHosp($("hospSearch").value||""); });
+      bar.appendChild(c);
+    }
+  }
 
   function specsFor(r){
     var on=[]; for(var i=0;i<SPECS.length;i++){ if(isX(r[SPECS[i].col])) on.push(SPECS[i]); }
