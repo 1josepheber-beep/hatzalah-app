@@ -461,13 +461,21 @@
   function renderHosp(q){
     q=(q||"").trim().toLowerCase();
     var body=$("hospBody");
+    var active=Object.keys(HOSP.filters);
     var list=HOSP.rows.filter(function(r){
+      for(var k=0;k<active.length;k++){ if(!isX(r[active[k]])) return false; }
       if(!q) return true;
       var hay=(r_(r,"Hospital Name")+" "+r_(r,"Specialties (summary)")+" "+r_(r,"Code")).toLowerCase();
       return hay.indexOf(q)>-1;
     });
     list.sort(function(a,b){ return r_(a,"Hospital Name").localeCompare(r_(b,"Hospital Name")); });
-    if(!list.length){ body.innerHTML='<div class="empty">No hospitals match \u201C'+esc(q)+'\u201D.</div>'; return; }
+    var cnt=$("hospCount");
+    cnt.textContent = (active.length||q) ? (list.length+" of "+HOSP.rows.length+" hospitals")
+                                         : (HOSP.rows.length+" hospitals");
+    if(!list.length){
+      var msg = active.length ? "No hospitals match those filters." : ("No hospitals match \u201C"+esc(q)+"\u201D.");
+      body.innerHTML='<div class="empty">'+msg+'</div>'; return;
+    }
     var html="";
     list.forEach(function(r,idx){
       var name=r_(r,"Hospital Name");
