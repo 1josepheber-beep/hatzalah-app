@@ -551,7 +551,7 @@
       var hay=(r_(r,"Hospital Name")+" "+r_(r,"Specialties (summary)")+" "+r_(r,"Code")).toLowerCase();
       return hay.indexOf(q)>-1;
     });
-    list.sort(function(a,b){ return r_(a,"Hospital Name").localeCompare(r_(b,"Hospital Name")); });
+    // Order follows the Google Sheet's row order (no re-sorting).
     var cnt=$("hospCount");
     cnt.textContent = (active.length||q) ? (list.length+" of "+HOSP.rows.length+" hospitals")
                                          : (HOSP.rows.length+" hospitals");
