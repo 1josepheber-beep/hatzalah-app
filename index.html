@@ -890,6 +890,18 @@
   prBody.addEventListener("pointerup",pzUp);
   prBody.addEventListener("pointercancel",pzUp);
 
+  // Desktop: wheel / two-finger scroll pans the page; Ctrl+wheel (or trackpad pinch) zooms.
+  prBody.addEventListener("wheel",function(e){
+    if(!$("protoReader").classList.contains("open")) return;
+    e.preventDefault();
+    if(e.ctrlKey){
+      var r=prBody.getBoundingClientRect();
+      pzZoomTo(e.clientX-r.left, e.clientY-r.top, PZ.scale*Math.exp(-e.deltaY*0.0025));
+    }else{
+      PZ.tx-=e.deltaX; PZ.ty-=e.deltaY; pzApply();
+    }
+  },{passive:false});
+
   function openReaderPage(n){ $("protoReader").classList.add("open"); showPage(n); }
   function showPage(n){
     if(!PROTO.TOTAL) return;
