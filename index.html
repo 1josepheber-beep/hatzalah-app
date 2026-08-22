@@ -121,7 +121,7 @@
   .scr-head .back svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.4}
   .scr-head h2{font-size:17px;margin:0;font-weight:700}
   .scr-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 12px 30px}
-  .scr-search{padding:10px 12px 2px}
+  .scr-search{padding:10px 12px 2px;position:relative;z-index:20}
   .scr-search input{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;
     padding:12px 14px;font-size:16px;color:var(--ink);box-shadow:var(--shadow)}
   .scr-search input:focus{outline:none;border-color:var(--navy)}
@@ -272,6 +272,7 @@
   </div>
   <div class="scr-search">
     <input id="protoSearch" type="search" placeholder="Search \u2014 \u201Cchest pain\u201D, \u201Cepi\u201D, \u201Cburns\u201D, \u201Ccroup\u201D\u2026" enterkeyhint="search">
+    <div class="sresults" id="protoSres"></div>
   </div>
   <div class="fcount" id="protoCount"></div>
   <div class="scr-body" id="protoBody"></div>
@@ -750,7 +751,8 @@
 
   function openProtocols(){
     $("protoScreen").classList.add("open");
-    if(PROTO.loaded){ renderProto($("protoSearch").value||""); return; }
+    var b=$("protoSres"); if(b){ b.className="sresults"; b.innerHTML=""; }
+    if(PROTO.loaded){ renderProto(""); return; }
     $("protoBody").innerHTML='<div class="empty">Loading protocols\u2026</div>';
     loadProtocols().then(function(d){ initProto(d); renderProto(""); })
       .catch(function(){ $("protoBody").innerHTML='<div class="empty">Couldn\'t load protocols. Check your internet and open this again.</div>'; });
@@ -915,7 +917,51 @@
   $("prPrev").addEventListener("click",function(){ showPage(PROTO.pos-1); });
   $("prNext").addEventListener("click",function(){ showPage(PROTO.pos+1); });
   $("prZoom").addEventListener("click",zoomBtn);
-  $("protoSearch").addEventListener("input",function(){ renderProto(this.value); });
+  // Protocols screen search = same tappable dropdown as the home page
+  function renderProtoDropdown(q){
+    var box=$("protoSres");
+    q=(q||"").trim(); var ql=q.toLowerCase();
+    if(!ql){ box.className="sresults"; box.innerHTML=""; renderProto(""); return; }
+    var pro=[], seen={};
+    (PROTO.toc||[]).forEach(function(t){
+      if(t.name.toLowerCase().indexOf(ql)>-1 && !seen[t.page]){
+        seen[t.page]=1; pro.push({page:t.page,name:t.name,sub:"Page "+t.label,rank:0}); }
+    });
+    (PROTO.pages||[]).forEach(function(p){
+      if(seen[p.n]) return;
+      var i=p.t.toLowerCase().indexOf(ql);
+      if(i>-1){ seen[p.n]=1; var o=protoOwner(p.n);
+        var st=Math.max(0,i-20), snip="\u2026"+p.t.slice(st,i+ql.length+30).replace(/\s+/g," ").trim()+"\u2026";
+        pro.push({page:p.n,name:(o?o.name:("Page "+p.l)),sub:snip,rank:1}); }
+    });
+    pro.sort(function(a,b){ return a.rank-b.rank || a.page-b.page; });
+    pro=pro.slice(0,40);
+    $("protoCount").textContent=pro.length?(pro.length+" result"+(pro.length===1?"":"s")+" for \u201C"+q+"\u201D"):"";
+    var html="";
+    if(!pro.length){ html='<div class="sr-empty">No protocols match \u201C'+esc(q)+'\u201D</div>'; }
+    else pro.forEach(function(p){
+      html+='<div class="sr-item" data-page="'+p.page+'"><div class="sic">'+ICO_PROTO+'</div>'+
+        '<div class="st"><b>'+esc(p.name)+'</b><span>'+esc(p.sub)+'</span></div></div>';
+    });
+    box.innerHTML=html; box.className="sresults show";
+  }
+  function hideProtoDropdown(){ var b=$("protoSres"); if(b){ b.className="sresults"; b.innerHTML=""; } }
+
+  $("protoSearch").addEventListener("input",function(){
+    var v=this.value;
+    var go=function(){ renderProtoDropdown(v); };
+    if(!PROTO.loaded){ loadProtocols().then(function(d){ initProto(d); go(); }).catch(function(){}); }
+    else go();
+  });
+  $("protoSres").addEventListener("click",function(e){
+    var it=e.target.closest?e.target.closest(".sr-item"):null; if(!it) return;
+    hideProtoDropdown();
+    openReaderPage(parseInt(it.getAttribute("data-page"),10));
+  });
+  // tap anywhere on the protocols screen outside the search closes the dropdown
+  $("protoScreen").addEventListener("click",function(e){
+    if(!e.target.closest || !e.target.closest(".scr-search")) hideProtoDropdown();
+  });
 
   // ---- Install banner ----
   (function(){
