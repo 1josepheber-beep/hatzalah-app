@@ -1906,9 +1906,10 @@
   $("qNotes").addEventListener("click",function(){ closeQMenu(); openNotes(); });
 
   // ---------- Notes (local, on-device only) ----------
-  var NOTES={entries:[]}, NOTES_KEY="hoh_notes_v1";
-  function notesLoad(){ try{ var s=JSON.parse(localStorage.getItem(NOTES_KEY)||"null"); if(s&&s.entries) NOTES=s; }catch(e){} }
-  function notesSave(){ try{ localStorage.setItem(NOTES_KEY,JSON.stringify(NOTES)); }catch(e){} }
+  var NOTES={entries:[]}, NOTES_PREFIX="hoh_notes_";
+  function notesKey(){ return NOTES_PREFIX + ((STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"anon"); }
+  function notesLoad(){ NOTES={entries:[]}; try{ var s=JSON.parse(localStorage.getItem(notesKey())||"null"); if(s&&s.entries) NOTES=s; }catch(e){} }
+  function notesSave(){ try{ localStorage.setItem(notesKey(),JSON.stringify(NOTES)); }catch(e){} }
   function notesStamp(){ var d=new Date(); return d.toLocaleDateString([], {month:"numeric",day:"numeric",year:"numeric"})+"  "+d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); }
   function closeNotes(){ $("notesScreen").classList.remove("open"); }
   function openNotes(){
