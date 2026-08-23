@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v5";
+var CACHE="hoh-v6";
 var SHELL=["./","./index.html","./proto_index.js","./placement.js"];
 self.addEventListener("install",function(e){
   self.skipWaiting();
@@ -41,11 +41,11 @@ self.addEventListener("fetch",function(e){
     return;
   }
 
-  // App's own files (HTML/JS/icons): NETWORK-FIRST so updates show up when online,
-  // fall back to cache only when offline. This means no manual cache clearing.
+  // App's own files (HTML/JS/icons): NETWORK-FIRST with no-store so a new deploy
+  // always wins when online; fall back to cache only when offline.
   if(url.origin===location.origin){
     e.respondWith(
-      fetch(req).then(function(res){
+      fetch(req,{cache:"no-store"}).then(function(res){
         var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);});
         return res;
       }).catch(function(){
