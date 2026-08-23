@@ -737,19 +737,27 @@
       // Refresh the logged-in member from the roster so status/admin/unit changes in the
       // sheet take effect on next open (no need to sign out and back in).
       if(STATE.me&&STATE.me.pw){
-        var rows=res[2]||[], mp=String(STATE.me.pw).trim();
+        var rows=res[2]||[], mp=String(STATE.me.pw).trim(), found=null;
         for(var i=0;i<rows.length;i++){
-          if(String(rows[i]["Password"]||"").trim()===mp){
-            var h=rows[i];
-            STATE.me.status=r_(h,"Status");
-            STATE.me.admin=isX(h["Admin"]);
-            STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
-            STATE.me.first=r_(h,"First Name")||STATE.me.first;
-            STATE.me.last=r_(h,"Last Name")||STATE.me.last;
-            try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
-            break;
-          }
+          if(String(rows[i]["Password"]||"").trim()===mp){ found=rows[i]; break; }
         }
+        var act=found?String(found["Active"]||"").trim().toLowerCase():"";
+        var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
+        if(!stillActive){
+          try{localStorage.removeItem(LS);}catch(e){}
+          STATE.me=null;
+          $("app").classList.add("hidden");
+          $("gate").classList.remove("hidden");
+          if($("pwErr")) $("pwErr").textContent="Your access has been deactivated. Contact your coordinator.";
+          return;
+        }
+        var h=found;
+        STATE.me.status=r_(h,"Status");
+        STATE.me.admin=isX(h["Admin"]);
+        STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
+        STATE.me.first=r_(h,"First Name")||STATE.me.first;
+        STATE.me.last=r_(h,"Last Name")||STATE.me.last;
+        try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
       paintHeader(); paintTiles(); loadCerts();
       try{ if(window.gtag && STATE.me && STATE.me.unit){ gtag('set',{user_id:STATE.me.unit}); gtag('set','user_properties',{unit:STATE.me.unit,role:(STATE.me.admin?"admin":"member")}); } }catch(e){}
