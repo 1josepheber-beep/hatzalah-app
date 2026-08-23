@@ -145,7 +145,61 @@
   .modal input{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
     font-size:16px;color:var(--ink)}
   .modal input:focus{outline:none;border-color:var(--navy)}
+  .modal select{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+    font-size:16px;color:var(--ink);background:#fff}
   .modal-btns{display:flex;align-items:center;gap:8px;margin-top:4px}
+
+  /* Required Equipment */
+  .eq-tools{padding:10px 12px 6px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:10}
+  .eq-tools>input{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;
+    padding:11px 13px;font-size:16px;color:var(--ink)}
+  .eq-tools>input:focus{outline:none;border-color:var(--navy)}
+  .eq-chips{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+  .eq-chip{border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:700;font-size:12.5px;
+    padding:6px 12px;border-radius:999px;cursor:pointer}
+  .eq-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .eq-progwrap{display:flex;align-items:center;gap:10px;margin-top:9px}
+  .eq-prog{flex:1;font-size:13px;font-weight:700;color:var(--navy)}
+  .eq-exports{display:flex;gap:6px}
+  .eq-cat{border-bottom:1px solid var(--line)}
+  .eq-cat-h{display:flex;align-items:center;gap:8px;padding:12px;background:#f2f5fa;cursor:pointer;
+    font-weight:800;font-size:14px;color:var(--navy);position:sticky;top:0}
+  .eq-cat-h .cnt{margin-left:auto;font-size:12px;color:var(--mut);font-weight:700}
+  .eq-cat-h .car{width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2.4;transition:transform .15s}
+  .eq-cat.collapsed .car{transform:rotate(-90deg)}
+  .eq-cat.collapsed .eq-items{display:none}
+  .eq-item{display:flex;gap:11px;padding:11px 12px;border-top:1px solid var(--line);align-items:flex-start}
+  .eq-item:first-child{border-top:0}
+  .eq-cb{width:23px;height:23px;flex:0 0 auto;border:2px solid var(--line);border-radius:6px;cursor:pointer;
+    display:grid;place-items:center;margin-top:1px;background:#fff}
+  .eq-cb.on{background:var(--navy);border-color:var(--navy)}
+  .eq-cb svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:3;display:none}
+  .eq-cb.on svg{display:block}
+  .eq-main{flex:1;min-width:0}
+  .eq-nm{font-weight:600;font-size:15px;color:var(--ink);line-height:1.25}
+  .eq-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center}
+  .eq-badge{font-size:10px;font-weight:800;letter-spacing:.4px;padding:2px 7px;border-radius:6px;text-transform:uppercase}
+  .eq-badge.bls{background:#e4f0e6;color:#1f7a37}
+  .eq-badge.als{background:#e5edfa;color:#1e5fae}
+  .eq-badge.micu{background:#f3e6f7;color:#8a2ea3}
+  .eq-src{font-size:10px;font-weight:700;color:var(--mut);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+  .eq-qty{font-size:12px;color:var(--mut);font-weight:600}
+  .eq-ours{font-size:12.5px;color:var(--mut);margin-top:3px}
+  .eq-note{font-size:12.5px;color:var(--navy);margin-top:3px;font-style:italic}
+  .eq-subs{margin-top:7px;display:flex;flex-direction:column;gap:6px}
+  .eq-sub{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink)}
+  .eq-sub .eq-cb{width:19px;height:19px}
+  .eq-sub .eq-cb svg{width:12px;height:12px}
+  .eq-edit-hint{margin-left:auto;color:var(--navy);font-size:12px;font-weight:700;flex:0 0 auto}
+  #printArea{display:none}
+  @media print{
+    body>*{display:none !important}
+    #printArea{display:block !important}
+    #printArea h2{font-size:18px;margin:0 0 4px}
+    #printArea .pc{font-weight:bold;margin:12px 0 4px;border-bottom:1px solid #000}
+    #printArea table{width:100%;border-collapse:collapse;font-size:11px}
+    #printArea td,#printArea th{border:1px solid #999;padding:3px 5px;text-align:left;vertical-align:top}
+  }
   .tile .lab{font-size:16px;font-weight:700;line-height:1.15;margin-top:2px}
   .tile .adm{margin-top:2px;font-size:10px;font-weight:700;
     letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
@@ -428,6 +482,54 @@
   </div>
 </div>
 
+<!-- REQUIRED EQUIPMENT -->
+<div class="screen" id="equipScreen">
+  <div class="scr-head">
+    <button class="back" id="equipBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Required Equipment</h2>
+    <button class="hbtn hidden" id="equipEdit">Edit</button>
+  </div>
+  <div class="edit-bar hidden" id="equipEditBar">
+    <button class="ebtn primary" id="equipAdd">+ Add item</button>
+    <button class="ebtn" id="equipSave">Save &amp; download</button>
+  </div>
+  <div class="eq-tools">
+    <input id="equipSearch" type="search" placeholder="Search equipment\u2026" enterkeyhint="search">
+    <div class="eq-chips" id="equipTiers"></div>
+    <div class="eq-progwrap"><div class="eq-prog" id="equipProg"></div>
+      <div class="eq-exports">
+        <button class="ebtn" id="equipCsv">CSV</button>
+        <button class="ebtn" id="equipPrint">Print / PDF</button>
+      </div>
+    </div>
+  </div>
+  <div class="scr-body" id="equipBody"></div>
+</div>
+
+<div class="modal-wrap hidden" id="eqEdit">
+  <div class="modal">
+    <h3 id="eqEditTitle">Edit item</h3>
+    <label>Name<input id="eqName" type="text" placeholder="Item name"></label>
+    <label>Category<input id="eqCat" type="text" list="eqCatList" placeholder="Category"></label>
+    <datalist id="eqCatList"></datalist>
+    <div style="display:flex;gap:10px">
+      <label style="flex:1">Tier<select id="eqTier"><option value="bls">BLS</option><option value="als">ALS</option><option value="micu">MICU</option></select></label>
+      <label style="flex:1">Qty<input id="eqQty" type="text" placeholder="1"></label>
+    </div>
+    <label>Source<select id="eqSrc"><option value="s">State (S)</option><option value="c">City (C)</option><option value="sc">Both (SC)</option></select></label>
+    <label>Our note<input id="eqOurs" type="text" placeholder="Optional"></label>
+    <label>Notes<input id="eqNotes" type="text" placeholder="Optional"></label>
+    <div class="modal-btns">
+      <button class="ebtn danger" id="eqDelete">Delete</button>
+      <span style="flex:1"></span>
+      <button class="ebtn" id="eqCancel">Cancel</button>
+      <button class="ebtn primary" id="eqSaveItem">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea"></div>
+
 <!-- HOSPITALS SCREEN -->
 <div class="screen" id="hospScreen">
   <div class="scr-head">
@@ -643,6 +745,7 @@
     if(type==="protocols"){ openProtocols(); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
+    if(type==="equipment"||type==="checklist"){ openEquip(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -941,6 +1044,172 @@
     var ph=$("cabPhoto"), z=ph.classList.toggle("zoom"); this.textContent=z?"Fit":"Zoom";
   });
   $("cabSearch").addEventListener("input",function(){ renderCabItems(this.value); });
+
+  // ---------- Required Equipment (compliance checklist) ----------
+  var EQ={loaded:false,d:null,tier:"all",q:"",edit:false,collapsed:{},editId:null};
+  function loadEquip(){
+    return new Promise(function(res,rej){
+      if(window.HOH_EQUIP){ res(window.HOH_EQUIP); return; }
+      var s=document.createElement("script"); s.src="equipment.js";
+      s.onload=function(){ window.HOH_EQUIP?res(window.HOH_EQUIP):rej(); };
+      s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  function closeEquip(){ $("equipScreen").classList.remove("open"); }
+  function openEquip(){
+    if(!$("equipScreen").classList.contains("open")) navOpen(closeEquip);
+    $("equipScreen").classList.add("open");
+    $("equipEdit").classList.toggle("hidden",!isAdmin());
+    if(EQ.loaded){ renderEquip(); return; }
+    $("equipBody").innerHTML='<div class="empty">Loading\u2026</div>';
+    loadEquip().then(function(d){ EQ.d=d; EQ.loaded=true; buildTierChips(); renderEquip(); })
+      .catch(function(){ $("equipBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
+  }
+  function eqById(id){ for(var i=0;i<EQ.d.items.length;i++) if(EQ.d.items[i].id===id) return EQ.d.items[i]; return null; }
+  function buildTierChips(){
+    var box=$("equipTiers"), tiers=[["all","All"],["bls","BLS"],["als","ALS"],["micu","MICU"]];
+    box.innerHTML="";
+    tiers.forEach(function(t){
+      var c=document.createElement("button"); c.className="eq-chip"+(EQ.tier===t[0]?" on":""); c.textContent=t[1];
+      c.addEventListener("click",function(){ EQ.tier=t[0]; buildTierChips(); renderEquip(); });
+      box.appendChild(c);
+    });
+  }
+  function eqFiltered(){
+    var q=EQ.q.toLowerCase().trim();
+    return EQ.d.items.filter(function(it){
+      if(EQ.tier!=="all" && it.tier!==EQ.tier) return false;
+      if(q){ var hay=(it.name+" "+(it.ours||"")+" "+(it.notes||"")+" "+it.cat).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      return true;
+    });
+  }
+  function renderEquip(){
+    var body=$("equipBody"), items=eqFiltered(), have=0,total=0;
+    items.forEach(function(it){ total++; if(it.have) have++; });
+    $("equipProg").textContent=have+" / "+total+" present";
+    body.innerHTML="";
+    EQ.d.cats.forEach(function(cat){
+      var catItems=items.filter(function(it){return it.cat===cat;});
+      if(!catItems.length) return;
+      var sec=document.createElement("div"); sec.className="eq-cat"+(EQ.collapsed[cat]?" collapsed":"");
+      var chave=catItems.filter(function(it){return it.have;}).length;
+      sec.innerHTML='<div class="eq-cat-h" data-cat="'+esc(cat)+'"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+
+        esc(cat)+'<span class="cnt">'+chave+'/'+catItems.length+'</span></div><div class="eq-items"></div>';
+      var list=sec.querySelector(".eq-items");
+      catItems.forEach(function(it){ list.appendChild(eqRow(it)); });
+      body.appendChild(sec);
+    });
+    if(!body.children.length) body.innerHTML='<div class="empty">No items match.</div>';
+  }
+  function eqRow(it){
+    var row=document.createElement("div"); row.className="eq-item"; row.setAttribute("data-id",it.id);
+    var tier=(it.tier||"bls").toLowerCase(), srcTxt=(it.src||"").toUpperCase(), subs="";
+    if(it.subs&&it.subs.length){
+      subs='<div class="eq-subs">'+it.subs.map(function(s,si){
+        return '<div class="eq-sub"><span class="eq-cb'+(s.have?' on':'')+'" data-sub="'+si+'"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+esc(s.label)+'</div>';
+      }).join('')+'</div>';
+    }
+    row.innerHTML=
+      '<span class="eq-cb'+(it.have?' on':'')+'" data-have="1"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+      '<div class="eq-main"><div class="eq-nm">'+esc(it.name)+'</div>'+
+        '<div class="eq-meta"><span class="eq-badge '+tier+'">'+tier.toUpperCase()+'</span>'+
+        (it.qty?'<span class="eq-qty">Qty '+esc(it.qty)+'</span>':'')+
+        (srcTxt?'<span class="eq-src">'+esc(srcTxt)+'</span>':'')+
+        (EQ.edit?'<span class="eq-edit-hint">Edit \u203A</span>':'')+'</div>'+
+        (it.ours?'<div class="eq-ours">'+esc(it.ours)+'</div>':'')+
+        (it.notes?'<div class="eq-note">'+esc(it.notes)+'</div>':'')+subs+'</div>';
+    return row;
+  }
+  function setEqEdit(on){
+    EQ.edit=on;
+    $("equipEdit").classList.toggle("on",on); $("equipEdit").textContent=on?"Done":"Edit";
+    $("equipEditBar").classList.toggle("hidden",!on);
+    renderEquip();
+  }
+  $("equipBody").addEventListener("click",function(e){
+    var t=e.target;
+    var head=t.closest?t.closest(".eq-cat-h"):null;
+    if(head){ var cat=head.getAttribute("data-cat"); EQ.collapsed[cat]=!EQ.collapsed[cat]; renderEquip(); return; }
+    var cb=t.closest?t.closest(".eq-cb"):null, row=t.closest?t.closest(".eq-item"):null;
+    if(cb && row){
+      if(!EQ.edit) return;
+      var it=eqById(parseInt(row.getAttribute("data-id"),10));
+      if(cb.getAttribute("data-have")){ it.have=!it.have; }
+      else if(cb.getAttribute("data-sub")!=null){ it.subs[parseInt(cb.getAttribute("data-sub"),10)].have=!it.subs[parseInt(cb.getAttribute("data-sub"),10)].have; }
+      renderEquip(); return;
+    }
+    if(EQ.edit && row){ openEqEdit(parseInt(row.getAttribute("data-id"),10)); }
+  });
+  // ---- add / edit item ----
+  function openEqEdit(id){
+    EQ.editId=id;
+    var isNew=(id==null), it=isNew?{name:"",cat:"",tier:"bls",qty:"",src:"c",ours:"",notes:""}:eqById(id);
+    $("eqEditTitle").textContent=isNew?"Add item":"Edit item";
+    $("eqName").value=it.name||""; $("eqCat").value=it.cat||""; $("eqTier").value=it.tier||"bls";
+    $("eqQty").value=it.qty||""; $("eqSrc").value=it.src||"c"; $("eqOurs").value=it.ours||""; $("eqNotes").value=it.notes||"";
+    var dl=$("eqCatList"); dl.innerHTML=EQ.d.cats.map(function(c){return '<option value="'+esc(c)+'">';}).join("");
+    if($("eqEdit").classList.contains("hidden")) navOpen(closeEqEdit);
+    $("eqEdit").classList.remove("hidden");
+  }
+  function closeEqEdit(){ $("eqEdit").classList.add("hidden"); EQ.editId=null; }
+  function saveEqItem(){
+    var nm=$("eqName").value.trim(); if(!nm){ $("eqName").focus(); return; }
+    var cat=$("eqCat").value.trim()||"Miscellaneous";
+    if(EQ.d.cats.indexOf(cat)<0) EQ.d.cats.push(cat);
+    var vals={name:nm,cat:cat,tier:$("eqTier").value,qty:$("eqQty").value.trim(),src:$("eqSrc").value,
+      ours:$("eqOurs").value.trim(),notes:$("eqNotes").value.trim()};
+    if(EQ.editId==null){
+      var maxId=0; EQ.d.items.forEach(function(x){ if(x.id>maxId) maxId=x.id; });
+      EQ.d.items.push({id:maxId+1,tier:vals.tier,cat:vals.cat,name:vals.name,qty:vals.qty,src:vals.src,
+        ours:vals.ours,have:false,notes:vals.notes,subs:[]});
+    }else{ var it=eqById(EQ.editId); for(var k in vals) it[k]=vals[k]; }
+    navBack(); renderEquip();
+  }
+  function deleteEqItem(){
+    if(EQ.editId==null){ navBack(); return; }
+    EQ.d.items=EQ.d.items.filter(function(x){return x.id!==EQ.editId;});
+    navBack(); renderEquip();
+  }
+  // ---- exports ----
+  function eqCSV(){
+    var rows=[["Category","Tier","Name","Qty","Source","Present","Our note","Notes"]];
+    EQ.d.items.forEach(function(it){
+      rows.push([it.cat,(it.tier||"").toUpperCase(),it.name,it.qty,(it.src||"").toUpperCase(),it.have?"Yes":"No",it.ours||"",it.notes||""]);
+    });
+    var csv=rows.map(function(r){ return r.map(function(c){ c=String(c==null?"":c); return '"'+c.replace(/"/g,'""')+'"'; }).join(","); }).join("\r\n");
+    dlBlob("required-equipment.csv", new Blob([csv],{type:"text/csv"}));
+  }
+  function eqPrint(){
+    var html='<h2>Hatzalah of Houston \u2014 Required Equipment</h2>';
+    EQ.d.cats.forEach(function(cat){
+      var its=EQ.d.items.filter(function(it){return it.cat===cat;});
+      if(!its.length) return;
+      html+='<div class="pc">'+esc(cat)+'</div><table><tr><th>\u2713</th><th>Item</th><th>Qty</th><th>Tier</th><th>Src</th><th>Notes</th></tr>';
+      its.forEach(function(it){
+        html+='<tr><td>'+(it.have?"\u2713":"")+'</td><td>'+esc(it.name)+(it.ours?" \u2014 "+esc(it.ours):"")+'</td><td>'+esc(it.qty||"")+
+          '</td><td>'+(it.tier||"").toUpperCase()+'</td><td>'+(it.src||"").toUpperCase()+'</td><td>'+esc(it.notes||"")+'</td></tr>';
+      });
+      html+='</table>';
+    });
+    $("printArea").innerHTML=html;
+    window.print();
+  }
+  function serializeEquip(){ return "window.HOH_EQUIP = "+JSON.stringify(EQ.d)+";"; }
+  function eqSaveDownload(){
+    dlBlob("equipment.js", new Blob([serializeEquip()],{type:"text/javascript"}));
+    toast("Downloaded equipment.js. Put it in your hatzalah-app folder, then commit & push.");
+  }
+  // ---- bindings ----
+  $("equipBack").addEventListener("click",navBack);
+  $("equipEdit").addEventListener("click",function(){ setEqEdit(!EQ.edit); });
+  $("equipAdd").addEventListener("click",function(){ openEqEdit(null); });
+  $("equipSave").addEventListener("click",eqSaveDownload);
+  $("equipCsv").addEventListener("click",eqCSV);
+  $("equipPrint").addEventListener("click",eqPrint);
+  $("eqSaveItem").addEventListener("click",saveEqItem);
+  $("eqCancel").addEventListener("click",navBack);
+  $("eqDelete").addEventListener("click",deleteEqItem);
+  $("equipSearch").addEventListener("input",function(){ EQ.q=this.value; renderEquip(); });
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});
