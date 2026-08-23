@@ -41,6 +41,17 @@
   .unit small{display:block;font-size:9px;opacity:.75;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
   .unit b{display:block;font-size:16px;line-height:1}
   .callrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .rstatus{margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:7px 12px;border-radius:10px;font-weight:800;font-size:14px;letter-spacing:.4px;
+    text-transform:uppercase;background:rgba(255,255,255,.12);color:#fff}
+  .rstatus small{font-weight:600;font-size:10px;letter-spacing:.5px;opacity:.85;text-transform:uppercase}
+  .rstatus .dot{width:10px;height:10px;border-radius:50%;background:#fff;flex:0 0 auto}
+  .rstatus.primary{background:rgba(38,166,91,.24);color:#e2ffef}
+  .rstatus.primary .dot{background:#37d67a}
+  .rstatus.backup{background:rgba(201,147,58,.26);color:#ffedd0}
+  .rstatus.backup .dot{background:#f2b04a}
+  .rstatus.observer{background:rgba(255,255,255,.16);color:#eef2f8}
+  .rstatus.observer .dot{background:#c3ccda}
   .call{
     appearance:none;border:0;cursor:pointer;color:#fff;font-weight:700;font-size:15px;
     border-radius:12px;padding:11px 8px;line-height:1.05;
@@ -68,6 +79,8 @@
   .tile .ic{width:42px;height:42px;border-radius:12px;display:flex;
     align-items:center;justify-content:center;background:#eaf0f9;color:var(--navy)}
   .tile .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
+  .tile .ic.img{background:transparent;overflow:hidden}
+  .tile .ic.img img{width:100%;height:100%;object-fit:cover;display:block}
   .tile .lab{font-size:16px;font-weight:700;line-height:1.15;margin-top:2px}
   .tile .adm{margin-top:2px;font-size:10px;font-weight:700;
     letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
@@ -239,6 +252,7 @@
       <div></div>
       <div class="unit"><small>Unit</small><b id="unit">—</b></div>
     </div>
+    <div class="rstatus hidden" id="rstatus"></div>
     <div class="callrow">
       <button class="call disp" id="dispBtn"><small>Tap to call</small><span id="dispLabel">Dispatch</span></button>
       <button class="call mc" id="mcBtn"><small>Tap to call</small><span id="mcLabel">Medical Control</span></button>
@@ -381,7 +395,7 @@
       }
       $("pwLoad").classList.add("hidden");
       if(!hit){ $("pwErr").textContent="Password not recognized. Check with your coordinator."; return false; }
-      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),pw:pw.trim()};
+      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),status:r_(hit,"Status"),pw:pw.trim()};
       localStorage.setItem(LS,JSON.stringify(me)); STATE.me=me; return true;
     }).catch(function(){
       $("pwLoad").classList.add("hidden");
@@ -400,7 +414,7 @@
   function icon(n){return ICONS[n]||ICONS.link;}
 
   function boot(){
-    return Promise.all([fetchTab("Settings"),fetchTab("Tiles")]).then(function(res){
+    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Members")]).then(function(res){
       STATE.settings={};
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
       STATE.tiles=res[1].filter(function(t){
@@ -408,6 +422,23 @@
         var a=String(t["Active"]||"").trim().toLowerCase();
         return a===""||a==="x"||a==="yes"||a==="true";
       }).sort(function(a,b){return (parseFloat(a["Order"])||99)-(parseFloat(b["Order"])||99);});
+      // Refresh the logged-in member from the roster so status/admin/unit changes in the
+      // sheet take effect on next open (no need to sign out and back in).
+      if(STATE.me&&STATE.me.pw){
+        var rows=res[2]||[], mp=String(STATE.me.pw).trim();
+        for(var i=0;i<rows.length;i++){
+          if(String(rows[i]["Password"]||"").trim()===mp){
+            var h=rows[i];
+            STATE.me.status=r_(h,"Status");
+            STATE.me.admin=isX(h["Admin"]);
+            STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
+            STATE.me.first=r_(h,"First Name")||STATE.me.first;
+            STATE.me.last=r_(h,"Last Name")||STATE.me.last;
+            try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
+            break;
+          }
+        }
+      }
       paintHeader(); paintTiles();
     });
   }
@@ -417,6 +448,15 @@
     $("dispLabel").textContent=getSetting("Dispatch Label","Dispatch");
     $("gateOrg").textContent=getSetting("Org Name","Hatzalah of Houston");
     $("search").placeholder=getSetting("Search Placeholder","Search…");
+    var el=$("rstatus"), st=(STATE.me&&STATE.me.status?String(STATE.me.status):"").trim();
+    var key=st.toLowerCase();
+    el.className="rstatus";
+    if(!st){ el.classList.add("hidden"); el.innerHTML=""; }
+    else{
+      el.classList.add(key==="primary"||key==="backup"||key==="observer"?key:"observer");
+      var label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
+      el.innerHTML='<span class="dot"></span>'+esc(label)+' <small>responder</small>';
+    }
   }
   function paintTiles(){
     var g=$("grid");g.innerHTML="";
@@ -424,9 +464,15 @@
       var adminOnly=isX(t["Admin Only"]);
       if(adminOnly&&!STATE.me.admin) return;
       var b=document.createElement("button");b.className="tile";
-      b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg></div>'+
-                  '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
+      var img=r_(t,"Image URL")||r_(t,"Image")||"";
+      var ico = img ? '<div class="ic img"><img src="'+esc(img)+'" alt=""></div>'
+                    : '<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg></div>';
+      b.innerHTML=ico+'<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
                   (adminOnly?'<div class="adm">Admin</div>':'');
+      // if a tile image fails to load, fall back to the built-in icon
+      if(img){ var im=b.querySelector(".ic img");
+        if(im) im.onerror=function(){ var box=b.querySelector(".ic");
+          box.className="ic"; box.innerHTML='<svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg>'; }; }
       b.addEventListener("click",function(){openTile(t);});
       g.appendChild(b);
     });
