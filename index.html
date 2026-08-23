@@ -76,6 +76,7 @@
   .gcs-row b{flex:0 0 74px;color:var(--navy)} .gcs-row span{color:var(--ink)}
   /* CPR tracker */
   .cpr-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:11px}
+  .cpr-now{text-align:center;font-size:15px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;letter-spacing:.3px}
   .cpr-total,.cpr-cycle,.cpr-epi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center;box-shadow:var(--shadow)}
   .cpr-total small,.cpr-cycle small,.cpr-epi small{font-size:11px;font-weight:800;letter-spacing:.7px;color:var(--mut)}
   .cpr-total div,.cpr-cycle div#cprCycle,.cpr-epi div#cprEpi{font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.05}
@@ -93,12 +94,15 @@
   .cpr-b.start{background:#2f9e44} .cpr-b.start.on{background:var(--gold);color:#3a2c00}
   .cpr-b.metro{background:#555f6e} .cpr-b.metro.on{background:var(--navy)}
   .cpr-b.shock{background:#e0902a} .cpr-b.epi{background:#1e5fae}
+  .cpr-b.comp{background:#0f8a8a} .cpr-b.o2{background:#2b8fd6}
+  .cpr-b.igel{background:#7a4fd6} .cpr-b.pads{background:#b0531a}
   .cpr-b.rhythm{background:var(--navy)} .cpr-b.rosc{background:#1f9d55}
   .cpr-reset{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
   .cpr-log{display:flex;flex-direction:column;gap:5px}
-  .cpr-le{display:flex;gap:10px;font-size:13.5px;padding:8px 11px;background:#f6f8fb;border-radius:9px}
-  .cpr-le b{flex:0 0 52px;color:var(--navy);font-variant-numeric:tabular-nums}
-  .cpr-le span{color:var(--ink);font-weight:600}
+  .cpr-le{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:8px 11px;background:#f6f8fb;border-radius:9px}
+  .cpr-le b{flex:0 0 50px;color:var(--navy);font-variant-numeric:tabular-nums}
+  .cpr-le span{flex:1;color:var(--ink);font-weight:600}
+  .cpr-le i{flex:0 0 auto;color:var(--mut);font-size:12px;font-style:normal;font-variant-numeric:tabular-nums}
   header .logo{width:44px;height:44px;border-radius:11px;background:#fff;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
   header .logo img{width:40px;height:40px;object-fit:contain}
@@ -738,6 +742,7 @@
     <h2>CPR Tracker</h2>
   </div>
   <div class="cpr-body">
+    <div class="cpr-now" id="cprNow"></div>
     <div class="cpr-total"><small>TOTAL CODE TIME</small><div id="cprTotal">0:00</div></div>
     <div class="cpr-cycle" id="cprCycleBox"><small>COMPRESSION CYCLE</small><div id="cprCycle">2:00</div>
       <div class="cpr-sub">Cycle <b id="cprCycNum">1</b> \u00B7 rhythm check at 0:00</div></div>
@@ -748,7 +753,11 @@
       <button class="cpr-b metro" id="cprMetro">Metronome</button>
       <button class="cpr-b shock" id="cprShock">Shock</button>
       <button class="cpr-b epi" id="cprEpiBtn">Gave Epi</button>
+      <button class="cpr-b comp" id="cprComp">Compressor Change</button>
       <button class="cpr-b rhythm" id="cprRhythm">Pulse / Rhythm</button>
+      <button class="cpr-b o2" id="cprO2">O2 / BVM</button>
+      <button class="cpr-b igel" id="cprIgel">iGel Placed</button>
+      <button class="cpr-b pads" id="cprPads">Pads Applied</button>
       <button class="cpr-b rosc" id="cprRosc">ROSC</button>
     </div>
     <button class="cpr-reset" id="cprReset">Reset code</button>
@@ -1911,9 +1920,10 @@
   function cprFmt(ms){ if(ms<0)ms=0; var s=Math.floor(ms/1000); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
   function cprAudio(){ if(!CPR.actx){ try{ CPR.actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(CPR.actx&&CPR.actx.state==="suspended")CPR.actx.resume(); return CPR.actx; }
   function beep(freq,dur,vol){ var c=cprAudio(); if(!c)return; var o=c.createOscillator(),g=c.createGain(); o.frequency.value=freq; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(vol||0.2,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+(dur||0.06)); o.start(); o.stop(c.currentTime+(dur||0.06)); }
-  function cprLogAdd(label){ CPR.log.unshift({t:CPR.total,label:label}); renderCprLog(); }
+  function cprClock(){ return new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit",second:"2-digit"}); }
+  function cprLogAdd(label){ CPR.log.unshift({t:CPR.total, clock:cprClock(), label:label}); renderCprLog(); }
   function renderCprLog(){
-    $("cprLog").innerHTML=CPR.log.map(function(e){ return '<div class="cpr-le"><b>'+cprFmt(e.t)+'</b><span>'+esc(e.label)+'</span></div>'; }).join("");
+    $("cprLog").innerHTML=CPR.log.map(function(e){ return '<div class="cpr-le"><b>'+cprFmt(e.t)+'</b><span>'+esc(e.label)+'</span><i>'+esc(e.clock)+'</i></div>'; }).join("");
   }
   function cprTick(){
     var now=Date.now();
@@ -1922,6 +1932,7 @@
       if(CPR.cycle>=CYCLE_MS){ CPR.cycle-=CYCLE_MS; CPR.cycNum++; cycleAlert(); cprLogAdd("Rhythm check \u00B7 switch compressor (cycle "+CPR.cycNum+")"); }
     }
     CPR.last=now;
+    $("cprNow").textContent="Time now  "+cprClock();
     $("cprTotal").textContent=cprFmt(CPR.total);
     $("cprCycle").textContent=cprFmt(CYCLE_MS-CPR.cycle);
     $("cprCycNum").textContent=CPR.cycNum;
@@ -1966,6 +1977,10 @@
   $("cprShock").addEventListener("click",function(){ CPR.shocks++; if(navigator.vibrate)navigator.vibrate(80); cprLogAdd("Shock #"+CPR.shocks); });
   $("cprEpiBtn").addEventListener("click",function(){ CPR.epis++; CPR.epi=0; CPR.hadEpi=true; cprLogAdd("Epinephrine #"+CPR.epis); cprTick(); });
   $("cprRhythm").addEventListener("click",function(){ CPR.cycle=0; cprLogAdd("Pulse / rhythm check"); cprTick(); });
+  $("cprComp").addEventListener("click",function(){ if(navigator.vibrate)navigator.vibrate(60); cprLogAdd("Compressor change"); });
+  $("cprO2").addEventListener("click",function(){ cprLogAdd("O2 / BVM"); });
+  $("cprIgel").addEventListener("click",function(){ cprLogAdd("iGel placed"); });
+  $("cprPads").addEventListener("click",function(){ cprLogAdd("Pads applied"); });
   $("cprRosc").addEventListener("click",function(){ cprLogAdd("ROSC"); if(CPR.running)cprSetRunning(false); if(CPR.metro)cprSetMetro(false); });
   $("cprReset").addEventListener("click",cprReset);
 
