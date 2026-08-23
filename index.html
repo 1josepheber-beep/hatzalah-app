@@ -122,6 +122,30 @@
   .cirow.sel .cinum{background:var(--red)}
   .ciname{flex:1;font-weight:600;color:var(--ink);font-size:15px}
   .ciqty{color:var(--mut);font-size:13px;font-weight:600;flex:0 0 auto}
+  /* Equipment Finder — admin editor */
+  .hbtn{margin-left:auto;border:0;cursor:pointer;background:rgba(255,255,255,.16);color:#fff;
+    font-weight:700;font-size:14px;padding:8px 14px;border-radius:9px}
+  .hbtn.on{background:var(--gold);color:#1a1205}
+  .edit-bar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;background:#eef2f8;
+    border-bottom:1px solid var(--line)}
+  .ebtn{border:1px solid var(--line);cursor:pointer;background:#fff;color:var(--ink);font-weight:700;
+    font-size:13px;padding:9px 13px;border-radius:9px}
+  .ebtn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .ebtn.danger{background:#fff;color:var(--red);border-color:var(--red)}
+  .cbin .rsz{position:absolute;right:-8px;bottom:-8px;width:20px;height:20px;border-radius:50%;
+    background:var(--navy);border:2px solid #fff;display:none;cursor:se-resize;touch-action:none}
+  .cab-photo.editing .cbin{cursor:move}
+  .cab-photo.editing .cbin.sel .rsz{display:block}
+  .cab-photo.editing .cbin{touch-action:none}
+  .modal-wrap{position:fixed;inset:0;z-index:70;background:rgba(9,20,40,.55);display:flex;
+    align-items:center;justify-content:center;padding:20px}
+  .modal{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+  .modal h3{margin:0 0 12px;font-size:17px}
+  .modal label{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:12px}
+  .modal input{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:11px 12px;
+    font-size:16px;color:var(--ink)}
+  .modal input:focus{outline:none;border-color:var(--navy)}
+  .modal-btns{display:flex;align-items:center;gap:8px;margin-top:4px}
   .tile .lab{font-size:16px;font-weight:700;line-height:1.15;margin-top:2px}
   .tile .adm{margin-top:2px;font-size:10px;font-weight:700;
     letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
@@ -353,7 +377,12 @@
 <div class="screen" id="placeScreen">
   <div class="scr-head">
     <button class="back" id="placeBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
-    <h2>Product Placement</h2>
+    <h2 id="placeTitle">Product Placement</h2>
+    <button class="hbtn hidden" id="placeEdit">Edit</button>
+  </div>
+  <div class="edit-bar hidden" id="cabHomeBar">
+    <button class="ebtn primary" id="cabAdd">+ Add cabinet</button>
+    <button class="ebtn" id="cabSaveHome">Save &amp; download</button>
   </div>
   <div class="cab-grid" id="cabGrid"></div>
 </div>
@@ -362,6 +391,12 @@
   <div class="scr-head">
     <button class="back" id="cabBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Cabinets</button>
     <h2 id="cabName">Cabinet</h2>
+    <button class="hbtn hidden" id="cabEdit">Edit</button>
+  </div>
+  <div class="edit-bar hidden" id="cabEditBar">
+    <button class="ebtn" id="cabPhotoBtn">Replace photo</button>
+    <button class="ebtn primary" id="cabAddItem">+ Add item</button>
+    <button class="ebtn" id="cabSave">Save &amp; download</button>
   </div>
   <div class="cab-photo-wrap" id="cabPhotoWrap">
     <div class="cab-photo" id="cabPhoto"><img id="cabImg" alt="Cabinet photo"></div>
@@ -371,6 +406,22 @@
     <input id="cabSearch" type="search" placeholder="Find an item in this cabinet\u2026" enterkeyhint="search">
   </div>
   <div class="cab-list" id="cabList"></div>
+</div>
+
+<input type="file" id="cabFile" accept="image/*" class="hidden">
+
+<div class="modal-wrap hidden" id="itemEdit">
+  <div class="modal">
+    <h3 id="itemEditTitle">Edit item</h3>
+    <label>Item name<input id="itemName" type="text" placeholder="e.g. BVM, Adult"></label>
+    <label>Quantity<input id="itemQty" type="text" placeholder="e.g. 2"></label>
+    <div class="modal-btns">
+      <button class="ebtn danger" id="itemDelete">Delete</button>
+      <span style="flex:1"></span>
+      <button class="ebtn" id="itemCancel">Cancel</button>
+      <button class="ebtn primary" id="itemSave">Save</button>
+    </div>
+  </div>
 </div>
 
 <!-- HOSPITALS SCREEN -->
@@ -585,51 +636,90 @@
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
-  // ---------- Product Placement (cabinet look-up) ----------
-  var PLACE={loaded:false,cabs:[],cur:null,sel:-1};
+  // ---------- Equipment Finder (cabinet look-up + admin editor) ----------
+  var PLACE={loaded:false,cabs:[],cur:null,sel:-1,edit:false,drag:null,editIdx:-1};
+  function clampf(v,a,b){ return v<a?a:(v>b?b:v); }
+  function isAdmin(){ return !!(STATE.me&&STATE.me.admin); }
   function loadPlacement(){
     return new Promise(function(res,rej){
       if(window.HOH_PLACE){ res(window.HOH_PLACE); return; }
-      var s=document.createElement("script"); s.src="placement.js?v=1";
+      var s=document.createElement("script"); s.src="placement.js";
       s.onload=function(){ window.HOH_PLACE?res(window.HOH_PLACE):rej(); };
       s.onerror=rej; document.head.appendChild(s);
     });
   }
   function openPlacement(){
     $("placeScreen").classList.add("open");
+    $("placeEdit").classList.toggle("hidden",!isAdmin());
     if(PLACE.loaded){ return; }
     $("cabGrid").innerHTML='<div class="empty">Loading\u2026</div>';
     loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; renderCabGrid(); })
       .catch(function(){ $("cabGrid").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
   }
+  function setHomeEdit(on){
+    PLACE.edit=on;
+    $("placeEdit").classList.toggle("on",on);
+    $("placeEdit").textContent=on?"Done":"Edit";
+    $("cabHomeBar").classList.toggle("hidden",!on);
+    renderCabGrid();
+  }
   function renderCabGrid(){
     var g=$("cabGrid"); g.innerHTML="";
-    if(!PLACE.cabs.length){ g.innerHTML='<div class="empty">No cabinets set up yet.</div>'; return; }
+    if(!PLACE.cabs.length){ g.innerHTML='<div class="empty">No cabinets yet.'+(isAdmin()?' Tap Edit to add one.':'')+'</div>'; return; }
     PLACE.cabs.forEach(function(c){
-      var d=document.createElement("button"); d.className="cab-card";
-      d.innerHTML='<img src="'+esc(c.img)+'" alt=""><div><div class="cc-nm">'+esc(c.name)+
-        '</div><div class="cc-ct">'+c.bins.length+' item'+(c.bins.length===1?'':'s')+'</div></div>';
-      d.addEventListener("click",function(){ openCab(c.id); });
+      var d=document.createElement("div"); d.className="cab-card";
+      var thumb=c._img||c.img||"";
+      d.innerHTML='<img src="'+esc(thumb)+'" alt=""><div style="flex:1"><div class="cc-nm">'+esc(c.name)+
+        '</div><div class="cc-ct">'+c.bins.length+' item'+(c.bins.length===1?'':'s')+
+        (c.img||c._img?'':' \u00B7 no photo')+'</div></div>'+
+        (PLACE.edit?'<button class="ebtn danger" data-del="'+esc(c.id)+'">Delete</button>':'');
+      d.addEventListener("click",function(e){
+        if(e.target.getAttribute&&e.target.getAttribute("data-del")){ delCabinet(c.id); return; }
+        openCab(c.id);
+      });
       g.appendChild(d);
     });
   }
+  function newId(){ return "C"+Date.now().toString(36); }
+  function addCabinet(){
+    var nm=prompt("Cabinet name (e.g. Airway, Meds, Trauma):","");
+    if(!nm) return; nm=nm.trim(); if(!nm) return;
+    PLACE.cabs.push({id:newId(),name:nm,img:"",bins:[]});
+    renderCabGrid();
+    toast("Added \u201C"+nm+"\u201D. Open it to add a photo and items.");
+  }
+  function delCabinet(id){
+    var c=cabById(id); if(!c) return;
+    if(!confirm("Delete cabinet \u201C"+c.name+"\u201D and all its items?")) return;
+    PLACE.cabs=PLACE.cabs.filter(function(x){return x.id!==id;});
+    renderCabGrid();
+  }
+  function cabById(id){ for(var i=0;i<PLACE.cabs.length;i++) if(PLACE.cabs[i].id===id) return PLACE.cabs[i]; return null; }
+
   function openCab(id){
-    var c=null; for(var i=0;i<PLACE.cabs.length;i++){ if(PLACE.cabs[i].id===id){ c=PLACE.cabs[i]; break; } }
-    if(!c) return;
+    var c=cabById(id); if(!c) return;
     PLACE.cur=c; PLACE.sel=-1;
     $("cabName").textContent=c.name;
     $("cabSearch").value="";
+    $("cabEdit").classList.toggle("hidden",!isAdmin());
+    setCabEdit(false);
+    drawCab();
+    $("cabPhotoWrap").scrollTop=0; $("cabPhotoWrap").scrollLeft=0;
+    $("placeDetail").classList.add("open");
+  }
+  function drawCab(){
+    var c=PLACE.cur; if(!c) return;
+    var src=c._img||c.img||"";
     var boxes="";
     c.bins.forEach(function(b,k){
       boxes+='<div class="cbin" data-i="'+k+'" style="left:'+(b.x*100)+'%;top:'+(b.y*100)+
         '%;width:'+(b.w*100)+'%;height:'+(b.h*100)+'%"><span class="cbadge">'+(k+1)+
-        '</span><span class="cchip">'+esc(b.n)+'</span></div>';
+        '</span><span class="cchip">'+esc(b.n)+'</span><span class="rsz" data-rsz="'+k+'"></span></div>';
     });
-    var ph=$("cabPhoto"); ph.classList.remove("zoom"); $("cabZoom").textContent="Zoom";
-    ph.innerHTML='<img id="cabImg" src="'+esc(c.img)+'" alt="">'+boxes;
+    var ph=$("cabPhoto");
+    ph.innerHTML=(src?'<img id="cabImg" src="'+esc(src)+'" alt="">':'')+boxes;
+    if(!src){ ph.insertAdjacentHTML("afterbegin",'<div class="empty" style="color:#fff;padding:30px">No photo yet'+(isAdmin()?' \u2014 tap Edit, then Replace photo.':'.')+'</div>'); }
     renderCabItems("");
-    $("cabPhotoWrap").scrollTop=0; $("cabPhotoWrap").scrollLeft=0;
-    $("placeDetail").classList.add("open");
   }
   function renderCabItems(q){
     var c=PLACE.cur; if(!c) return;
@@ -640,35 +730,162 @@
       var r=document.createElement("div");
       r.className="cirow"+(PLACE.sel===k?" sel":""); r.setAttribute("data-i",k);
       r.innerHTML='<span class="cinum">'+(k+1)+'</span><span class="ciname">'+esc(b.n)+'</span>'+
-        (b.q?'<span class="ciqty">\u00D7'+esc(b.q)+'</span>':'');
-      r.addEventListener("click",function(){ selectSlot(k,true); });
+        (b.q?'<span class="ciqty">\u00D7'+esc(b.q)+'</span>':'')+
+        (PLACE.edit?'<span class="ciqty" style="color:var(--navy)">Edit \u203A</span>':'');
+      r.addEventListener("click",function(){ if(PLACE.edit) openItemEdit(k); else selectSlot(k,true); });
       L.appendChild(r);
     });
-    if(q===""&&!L.childNodes.length) L.innerHTML='<div class="empty">No items.</div>';
-    if(q!==""&&!L.childNodes.length) L.innerHTML='<div class="empty">No item matches \u201C'+esc(q)+'\u201D.</div>';
+    if(!L.childNodes.length) L.innerHTML='<div class="empty">'+(q?'No item matches \u201C'+esc(q)+'\u201D.':'No items yet.')+'</div>';
   }
   function selectSlot(k,fromList){
     PLACE.sel=k;
     var ph=$("cabPhoto");
-    ph.querySelectorAll(".cbin").forEach(function(el){
-      el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
+    ph.querySelectorAll(".cbin").forEach(function(el){ el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
     var box=ph.querySelector('.cbin[data-i="'+k+'"]');
+    if(box && !fromList){}
     if(box){ var wrap=$("cabPhotoWrap"), br=box.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
       wrap.scrollTop += (br.top-wr.top)-wr.height/2+br.height/2;
       wrap.scrollLeft += (br.left-wr.left)-wr.width/2+br.width/2; }
-    $("cabList").querySelectorAll(".cirow").forEach(function(el){
-      el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
+    $("cabList").querySelectorAll(".cirow").forEach(function(el){ el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
     if(!fromList){ var row=$("cabList").querySelector('.cirow[data-i="'+k+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
   }
+  function setCabEdit(on){
+    PLACE.edit=on;
+    $("cabEdit").classList.toggle("on",on);
+    $("cabEdit").textContent=on?"Done":"Edit";
+    $("cabEditBar").classList.toggle("hidden",!on);
+    $("cabPhoto").classList.toggle("editing",on);
+    renderCabItems($("cabSearch").value||"");
+  }
+  // ----- item add/edit -----
+  function openItemEdit(k){
+    PLACE.editIdx=k;
+    var isNew=(k<0), b=isNew?{n:"",q:""}:PLACE.cur.bins[k];
+    $("itemEditTitle").textContent=isNew?"Add item":"Edit item";
+    $("itemName").value=b.n||""; $("itemQty").value=b.q||"";
+    $("itemDelete").style.display=isNew?"none":"";
+    $("itemEdit").classList.remove("hidden");
+    setTimeout(function(){ $("itemName").focus(); },50);
+  }
+  function closeItemEdit(){ $("itemEdit").classList.add("hidden"); PLACE.editIdx=-2; }
+  function saveItemEdit(){
+    var nm=$("itemName").value.trim(); if(!nm){ $("itemName").focus(); return; }
+    var qty=$("itemQty").value.trim();
+    if(PLACE.editIdx<0){
+      PLACE.cur.bins.push({n:nm,q:qty,x:0.42,y:0.42,w:0.15,h:0.15});
+      PLACE.sel=PLACE.cur.bins.length-1;
+    }else{ PLACE.cur.bins[PLACE.editIdx].n=nm; PLACE.cur.bins[PLACE.editIdx].q=qty; }
+    closeItemEdit(); drawCab();
+    if(PLACE.editIdx<0) toast("Item added \u2014 drag its box to position it.");
+  }
+  function deleteItem(){
+    if(PLACE.editIdx<0){ closeItemEdit(); return; }
+    PLACE.cur.bins.splice(PLACE.editIdx,1); PLACE.sel=-1; closeItemEdit(); drawCab();
+  }
+  // ----- photo upload -----
+  function pickPhoto(){ $("cabFile").value=""; $("cabFile").click(); }
+  $("cabFile").addEventListener("change",function(){
+    var f=this.files&&this.files[0]; if(!f||!PLACE.cur) return;
+    var fr=new FileReader();
+    fr.onload=function(){
+      var im=new Image();
+      im.onload=function(){
+        var mw=1100, s=Math.min(1,mw/im.naturalWidth);
+        var cv=document.createElement("canvas");
+        cv.width=Math.round(im.naturalWidth*s); cv.height=Math.round(im.naturalHeight*s);
+        cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
+        var url; try{ url=cv.toDataURL("image/webp",0.8); if(url.indexOf("image/webp")<0) throw 0; }
+        catch(e){ url=cv.toDataURL("image/jpeg",0.82); }
+        PLACE.cur._img=url; PLACE.cur._dirty=true;
+        drawCab(); toast("Photo set. Remember to Save & download.");
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(f);
+  });
+  // ----- drag / resize on photo -----
+  (function(){
+    var ph=$("cabPhoto");
+    ph.addEventListener("pointerdown",function(e){
+      if(!PLACE.edit) return;
+      var rz=e.target.closest?e.target.closest(".rsz"):null;
+      var box=e.target.closest?e.target.closest(".cbin"):null;
+      if(!box) return;
+      var k=parseInt(box.getAttribute("data-i"),10);
+      selectSlot(k,true);
+      var b=PLACE.cur.bins[k], R=ph.getBoundingClientRect();
+      PLACE.drag={k:k,mode:rz?"resize":"move",sx:e.clientX,sy:e.clientY,
+        x0:b.x,y0:b.y,w0:b.w,h0:b.h,W:R.width,H:R.height};
+      ph.setPointerCapture&&ph.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    ph.addEventListener("pointermove",function(e){
+      var d=PLACE.drag; if(!d) return;
+      var dx=(e.clientX-d.sx)/d.W, dy=(e.clientY-d.sy)/d.H, b=PLACE.cur.bins[d.k];
+      if(d.mode==="move"){ b.x=clampf(d.x0+dx,0,1-b.w); b.y=clampf(d.y0+dy,0,1-b.h); }
+      else{ b.w=clampf(d.w0+dx,0.02,1-b.x); b.h=clampf(d.h0+dy,0.02,1-b.y); }
+      var el=ph.querySelector('.cbin[data-i="'+d.k+'"]');
+      if(el){ el.style.left=(b.x*100)+"%"; el.style.top=(b.y*100)+"%"; el.style.width=(b.w*100)+"%"; el.style.height=(b.h*100)+"%"; }
+      e.preventDefault();
+    });
+    function end(){ PLACE.drag=null; }
+    ph.addEventListener("pointerup",end); ph.addEventListener("pointercancel",end);
+  })();
+  // ----- save & download -----
+  function serializePlace(){
+    var out=PLACE.cabs.map(function(c){
+      return {id:c.id,name:c.name,img:c.img||"",bins:c.bins.map(function(b){
+        return {n:b.n||"",q:b.q||"",x:+(+b.x).toFixed(4),y:+(+b.y).toFixed(4),w:+(+b.w).toFixed(4),h:+(+b.h).toFixed(4)};
+      })};
+    });
+    return "window.HOH_PLACE = "+JSON.stringify(out)+";";
+  }
+  function dlBlob(name,blob){
+    var a=document.createElement("a"), u=URL.createObjectURL(blob);
+    a.href=u; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },800);
+  }
+  function dataURLtoBlob(u){
+    var p=u.split(","), mime=p[0].match(/:(.*?);/)[1], bin=atob(p[1]), n=bin.length, arr=new Uint8Array(n);
+    while(n--) arr[n]=bin.charCodeAt(n); return new Blob([arr],{type:mime});
+  }
+  function saveDownload(){
+    // assign filenames for any newly uploaded photos, queue their downloads
+    var imgDls=[];
+    PLACE.cabs.forEach(function(c){
+      if(c._dirty && c._img){
+        var ext=c._img.indexOf("image/webp")>-1?"webp":"jpg";
+        var fn="cabinets/cab_"+c.id+"_"+Date.now().toString(36)+"."+ext;
+        c.img=fn; imgDls.push({name:fn.split("/").pop(),blob:dataURLtoBlob(c._img)});
+        c._dirty=false;
+      }
+    });
+    dlBlob("placement.js", new Blob([serializePlace()],{type:"text/javascript"}));
+    imgDls.forEach(function(d,i){ setTimeout(function(){ dlBlob(d.name,d.blob); }, 500*(i+1)); });
+    var msg="Downloaded placement.js"+(imgDls.length?(" + "+imgDls.length+" photo(s)"):"")+
+      ". Put placement.js in your hatzalah-app folder"+(imgDls.length?", and the photo(s) in the cabinets folder":"")+", then commit & push.";
+    toast(msg);
+  }
+  // ----- bindings -----
   $("placeBack").addEventListener("click",function(){ $("placeScreen").classList.remove("open"); });
-  $("cabBack").addEventListener("click",function(){ $("placeDetail").classList.remove("open"); });
+  $("cabBack").addEventListener("click",function(){ $("placeDetail").classList.remove("open"); setHomeEdit(false); });
+  $("placeEdit").addEventListener("click",function(){ setHomeEdit(!PLACE.edit); });
+  $("cabAdd").addEventListener("click",addCabinet);
+  $("cabSaveHome").addEventListener("click",saveDownload);
+  $("cabEdit").addEventListener("click",function(){ setCabEdit(!PLACE.edit); });
+  $("cabPhotoBtn").addEventListener("click",pickPhoto);
+  $("cabAddItem").addEventListener("click",function(){ openItemEdit(-1); });
+  $("cabSave").addEventListener("click",saveDownload);
+  $("itemSave").addEventListener("click",saveItemEdit);
+  $("itemCancel").addEventListener("click",closeItemEdit);
+  $("itemDelete").addEventListener("click",deleteItem);
   $("cabPhoto").addEventListener("click",function(e){
+    if(PLACE.edit) return; // taps handled as drag/select in edit mode
     var b=e.target.closest?e.target.closest(".cbin"):null;
     if(b) selectSlot(parseInt(b.getAttribute("data-i"),10),false);
   });
   $("cabZoom").addEventListener("click",function(){
-    var ph=$("cabPhoto"), z=ph.classList.toggle("zoom");
-    this.textContent=z?"Fit":"Zoom";
+    var ph=$("cabPhoto"), z=ph.classList.toggle("zoom"); this.textContent=z?"Fit":"Zoom";
   });
   $("cabSearch").addEventListener("input",function(){ renderCabItems(this.value); });
 

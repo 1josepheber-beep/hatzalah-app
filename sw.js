@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v4";
+var CACHE="hoh-v5";
 var SHELL=["./","./index.html","./proto_index.js","./placement.js"];
 self.addEventListener("install",function(e){
   self.skipWaiting();
@@ -31,10 +31,11 @@ self.addEventListener("fetch",function(e){
   if(url.origin===location.origin && (url.pathname.indexOf("/protocols/")>-1||url.pathname.indexOf("/cabinets/")>-1)){
     e.respondWith(
       caches.match(req).then(function(hit){
-        return hit || fetch(req).then(function(res){
-          var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);});
+        if(hit && hit.ok) return hit;
+        return fetch(req).then(function(res){
+          if(res && res.ok){ var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);}); }
           return res;
-        });
+        }).catch(function(){ return hit; });
       })
     );
     return;
