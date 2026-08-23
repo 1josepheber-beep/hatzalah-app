@@ -212,6 +212,44 @@
     border:1px solid var(--navy);border-radius:8px;padding:6px 10px;cursor:pointer;vertical-align:middle}
   .up-note{font-size:13px;color:var(--mut);margin:14px 0 16px;line-height:1.5}
   .up-open{width:100%;font-size:16px;padding:14px}
+
+  /* Certifications */
+  .tile{position:relative}
+  @keyframes cpr{0%,100%{box-shadow:0 0 0 0 rgba(200,32,46,.5)}50%{box-shadow:0 0 0 7px rgba(200,32,46,0)}}
+  @keyframes cpo{0%,100%{box-shadow:0 0 0 0 rgba(201,147,58,.6)}50%{box-shadow:0 0 0 7px rgba(201,147,58,0)}}
+  .tile.glow-red{border-color:var(--red);animation:cpr 1.6s infinite}
+  .tile.glow-orange{border-color:var(--gold);animation:cpo 1.6s infinite}
+  .tile .cdot{position:absolute;top:9px;right:9px;width:12px;height:12px;border-radius:50%;display:none;
+    box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .tile.glow-red .cdot{display:block;background:var(--red)}
+  .tile.glow-orange .cdot{display:block;background:var(--gold)}
+  .cert-mem{border-bottom:1px solid var(--line)}
+  .cert-mem-h{display:flex;align-items:center;gap:9px;padding:13px 12px;cursor:pointer;font-weight:800;
+    font-size:15px;color:var(--ink);background:#f2f5fa}
+  .cert-mem-h .car{width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2.4;transition:transform .15s}
+  .cert-mem.collapsed .car{transform:rotate(-90deg)}
+  .cert-mem.collapsed .cert-list{display:none}
+  .cert-badge-dot{width:11px;height:11px;border-radius:50%;margin-left:auto;flex:0 0 auto}
+  .cert-list{padding:2px 0}
+  .cert-row{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid var(--line);
+    border-left:4px solid var(--line)}
+  .cert-row.expired{border-left-color:var(--red);background:rgba(200,32,46,.05)}
+  .cert-row.soon{border-left-color:var(--gold);background:rgba(201,147,58,.07)}
+  .cert-row.ok{border-left-color:#2f9e44}
+  .cert-row.na,.cert-row.none{border-left-color:#c3ccda}
+  .cert-main{flex:1;min-width:0}
+  .cert-nm{font-weight:600;font-size:15px;color:var(--ink);line-height:1.25}
+  .cert-st{font-size:12.5px;font-weight:700;margin-top:3px}
+  .cert-row.expired .cert-st{color:var(--red)}
+  .cert-row.soon .cert-st{color:#b57c1e}
+  .cert-row.ok .cert-st{color:#2f9e44}
+  .cert-row.na .cert-st,.cert-row.none .cert-st{color:var(--mut)}
+  .cert-cal{flex:0 0 auto;border:1px solid var(--navy);background:#fff;color:var(--navy);font-weight:700;
+    font-size:12px;padding:7px 11px;border-radius:9px;cursor:pointer}
+  .cert-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 12px;font-size:12px;color:var(--mut);
+    border-bottom:1px solid var(--line);background:#fff}
+  .cert-legend span{display:flex;align-items:center;gap:5px}
+  .cert-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
   @media print{
     body>*{display:none !important}
     #printArea{display:block !important}
@@ -550,6 +588,18 @@
 
 <div id="printArea"></div>
 
+<!-- CERTIFICATIONS -->
+<div class="screen" id="certScreen">
+  <div class="scr-head">
+    <button class="back" id="certBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Certifications</h2>
+  </div>
+  <div class="scr-search" id="certSearchWrap" style="display:none">
+    <input id="certSearch" type="search" placeholder="Search a member\u2026" enterkeyhint="search">
+  </div>
+  <div class="scr-body" id="certBody"></div>
+</div>
+
 <!-- FILE UPLOAD -->
 <div class="screen" id="uploadScreen">
   <div class="scr-head">
@@ -698,7 +748,7 @@
           }
         }
       }
-      paintHeader(); paintTiles();
+      paintHeader(); paintTiles(); loadCerts();
     });
   }
   function paintHeader(){
@@ -723,6 +773,7 @@
       var adminOnly=isX(t["Admin Only"]);
       if(adminOnly&&!STATE.me.admin) return;
       var b=document.createElement("button");b.className="tile";
+      b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
       var img=r_(t,"Image URL")||r_(t,"Image")||"";
       var iconTile=function(){
         b.className="tile";
@@ -785,6 +836,7 @@
     if(type==="placement"||type==="product"){ openPlacement(); return; }
     if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
     if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
+    if(type==="certifications"||type==="certs"){ openCerts(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -1314,6 +1366,143 @@
     if(e.target.id==="upOpen"){ window.open(UP.link,"_blank","noopener"); return; }
   });
   $("upBack").addEventListener("click",navBack);
+
+  // ---------- Certifications ----------
+  var CERT={loaded:false,rows:[],cols:[],collapsed:{},myWorst:"ok"};
+  var CERT_NAMECOLS={"Last Name":1,"First Name":1,"Unit #":1,"Unit":1};
+  function normUnit(u){ return String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
+  function parseCertDate(s){
+    s=String(s||"");
+    var m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if(m){ var mo=+m[1],da=+m[2],yr=+m[3]; if(yr<100) yr+=2000; var d=new Date(yr,mo-1,da); if(!isNaN(d)) return d; }
+    m=s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(m){ var d2=new Date(+m[1],+m[2]-1,+m[3]); if(!isNaN(d2)) return d2; }
+    return null;
+  }
+  function fmtDate(d){ return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear(); }
+  function certStatus(val){
+    val=String(val||"").trim();
+    if(!val) return {k:"none",label:"Not on file"};
+    var d=parseCertDate(val);
+    if(d){
+      var today=new Date(); today.setHours(0,0,0,0);
+      var days=Math.round((d-today)/86400000);
+      if(days<0) return {k:"expired",label:"Expired "+fmtDate(d),date:d};
+      if(days<=30) return {k:"soon",label:"Expires "+fmtDate(d)+" ("+days+"d)",date:d};
+      return {k:"ok",label:"Valid \u2014 exp "+fmtDate(d),date:d};
+    }
+    var low=val.toLowerCase();
+    if(low.indexOf("missing")>-1) return {k:"expired",label:"Missing"};
+    if(low==="n/a"||low==="na") return {k:"na",label:"N/A"};
+    if(low==="yes"||low.indexOf("complete")>-1||low==="done") return {k:"ok",label:val};
+    return {k:"na",label:val};
+  }
+  var CERT_RANK={expired:3,soon:2,ok:1,na:0,none:0};
+  function memberWorst(row){
+    var worst="ok",wr=1;
+    CERT.cols.forEach(function(c){
+      var st=certStatus(row[c]); var r=CERT_RANK[st.k]||0;
+      if(st.k==="expired"||st.k==="soon"){ if(r>wr){ wr=r; worst=st.k; } }
+    });
+    return wr>=3?"expired":(wr>=2?"soon":"ok");
+  }
+  function loadCerts(){
+    fetchTab("Certifications").then(function(rows){
+      if(!rows||!rows.length){ return; }
+      CERT.rows=rows;
+      CERT.cols=Object.keys(rows[0]).filter(function(k){ return !CERT_NAMECOLS[k] && k; });
+      CERT.loaded=true;
+      // my worst status
+      var me=(STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"";
+      var mine=rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
+      CERT.myWorst = mine.length? worstOf(mine.map(memberWorst)) : "ok";
+      applyCertGlow();
+    }).catch(function(){});
+  }
+  function worstOf(list){ if(list.indexOf("expired")>-1) return "expired"; if(list.indexOf("soon")>-1) return "soon"; return "ok"; }
+  function applyCertGlow(){
+    var btn=document.querySelector('.tile[data-type="certifications"],.tile[data-type="certs"]');
+    if(!btn) return;
+    btn.classList.remove("glow-red","glow-orange");
+    if(!btn.querySelector(".cdot")){ var d=document.createElement("span"); d.className="cdot"; btn.appendChild(d); }
+    if(CERT.myWorst==="expired") btn.classList.add("glow-red");
+    else if(CERT.myWorst==="soon") btn.classList.add("glow-orange");
+  }
+  function closeCerts(){ $("certScreen").classList.remove("open"); }
+  function openCerts(){
+    if(!$("certScreen").classList.contains("open")) navOpen(closeCerts);
+    $("certScreen").classList.add("open");
+    $("certSearchWrap").style.display=isAdmin()?"":"none";
+    if(!CERT.loaded){
+      $("certBody").innerHTML='<div class="empty">Loading\u2026</div>';
+      fetchTab("Certifications").then(function(rows){
+        if(!rows||!rows.length){ $("certBody").innerHTML='<div class="empty">No certifications tab found yet. Add a <b>Certifications</b> tab to your sheet.</div>'; return; }
+        CERT.rows=rows; CERT.cols=Object.keys(rows[0]).filter(function(k){ return !CERT_NAMECOLS[k] && k; }); CERT.loaded=true;
+        renderCerts("");
+      }).catch(function(){ $("certBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
+      return;
+    }
+    renderCerts($("certSearch").value||"");
+  }
+  function certRowHTML(cname,val){
+    var st=certStatus(val);
+    var cal="";
+    if(st.date){
+      cal='<button class="cert-cal" data-cal="'+encodeURIComponent(cname)+'" data-d="'+st.date.getTime()+'">Remind</button>';
+    }
+    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(cname)+
+      '</div><div class="cert-st">'+esc(st.label)+'</div></div>'+cal+'</div>';
+  }
+  function memberCertsHTML(row){
+    return CERT.cols.map(function(c){ return certRowHTML(c,row[c]); }).join("");
+  }
+  function renderCerts(q){
+    var body=$("certBody");
+    var legend='<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
+      '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
+      '<span><i style="background:#2f9e44"></i>Valid</span></div>';
+    if(!isAdmin()){
+      var me=normUnit(STATE.me.unit), mine=CERT.rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
+      if(!mine.length){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
+      body.innerHTML=legend+'<div class="cert-list">'+mine.map(memberCertsHTML).join("")+'</div>';
+      return;
+    }
+    // admin: all members, collapsible, filtered
+    q=(q||"").toLowerCase().trim();
+    var rows=CERT.rows.filter(function(r){
+      if(!q) return true;
+      return ((r["First Name"]||"")+" "+(r["Last Name"]||"")+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
+    });
+    if(!rows.length){ body.innerHTML=legend+'<div class="empty">No member matches.</div>'; return; }
+    var html=legend;
+    rows.forEach(function(r){
+      var key=(r["Unit #"]||r["Unit"]||"")+"|"+(r["Last Name"]||"");
+      var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
+      var name=((r["First Name"]||"")+" "+(r["Last Name"]||"")).trim()+" \u00B7 "+(r["Unit #"]||r["Unit"]||"");
+      var col=CERT.collapsed[key]!==false; // default collapsed
+      html+='<div class="cert-mem'+(col?" collapsed":"")+'" data-k="'+esc(key)+'">'+
+        '<div class="cert-mem-h"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+esc(name)+
+        '<span class="cert-badge-dot" style="background:'+dot+'"></span></div>'+
+        '<div class="cert-list">'+memberCertsHTML(r)+'</div></div>';
+    });
+    body.innerHTML=html;
+  }
+  $("certBody").addEventListener("click",function(e){
+    var h=e.target.closest?e.target.closest(".cert-mem-h"):null;
+    if(h){ var mem=h.parentNode, key=mem.getAttribute("data-k"); CERT.collapsed[key]=!mem.classList.contains("collapsed")?true:false; mem.classList.toggle("collapsed"); return; }
+    var cal=e.target.closest?e.target.closest(".cert-cal"):null;
+    if(cal){
+      var name=decodeURIComponent(cal.getAttribute("data-cal")), exp=new Date(+cal.getAttribute("data-d"));
+      var rem=new Date(exp.getTime()-30*86400000); // 30 days before
+      function ymd(d){ return d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
+      var end=new Date(rem.getTime()+86400000);
+      var title=encodeURIComponent("Renew "+name+" (expires "+fmtDate(exp)+")");
+      var url="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&dates="+ymd(rem)+"/"+ymd(end)+"&details="+encodeURIComponent(name+" expires "+fmtDate(exp)+". Renew before it lapses.");
+      window.open(url,"_blank","noopener");
+    }
+  });
+  $("certBack").addEventListener("click",navBack);
+  $("certSearch").addEventListener("input",function(){ renderCerts(this.value); });
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});
