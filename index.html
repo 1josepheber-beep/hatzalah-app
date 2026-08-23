@@ -626,6 +626,12 @@
       window.open(a.androidStore||a.iosStore||"","_blank","noopener");
     }
   }
+  // ---- Hardware/Back-button navigation: Back closes the top screen, exits only at home ----
+  var navStack=[];
+  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} }
+  function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } }
+  window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } });
+
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
     if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
@@ -648,7 +654,9 @@
       s.onerror=rej; document.head.appendChild(s);
     });
   }
+  function closePlaceScreen(){ $("placeScreen").classList.remove("open"); }
   function openPlacement(){
+    if(!$("placeScreen").classList.contains("open")) navOpen(closePlaceScreen);
     $("placeScreen").classList.add("open");
     $("placeEdit").classList.toggle("hidden",!isAdmin());
     if(PLACE.loaded){ return; }
@@ -705,8 +713,10 @@
     setCabEdit(false);
     drawCab();
     $("cabPhotoWrap").scrollTop=0; $("cabPhotoWrap").scrollLeft=0;
+    if(!$("placeDetail").classList.contains("open")) navOpen(closeCab);
     $("placeDetail").classList.add("open");
   }
+  function closeCab(){ $("placeDetail").classList.remove("open"); setHomeEdit(false); }
   function drawCab(){
     var c=PLACE.cur; if(!c) return;
     var src=c._img||c.img||"";
@@ -764,6 +774,7 @@
     $("itemEditTitle").textContent=isNew?"Add item":"Edit item";
     $("itemName").value=b.n||""; $("itemQty").value=b.q||"";
     $("itemDelete").style.display=isNew?"none":"";
+    if($("itemEdit").classList.contains("hidden")) navOpen(closeItemEdit);
     $("itemEdit").classList.remove("hidden");
     setTimeout(function(){ $("itemName").focus(); },50);
   }
@@ -771,16 +782,17 @@
   function saveItemEdit(){
     var nm=$("itemName").value.trim(); if(!nm){ $("itemName").focus(); return; }
     var qty=$("itemQty").value.trim();
-    if(PLACE.editIdx<0){
+    var isNew=(PLACE.editIdx<0);
+    if(isNew){
       PLACE.cur.bins.push({n:nm,q:qty,x:0.42,y:0.42,w:0.15,h:0.15});
       PLACE.sel=PLACE.cur.bins.length-1;
     }else{ PLACE.cur.bins[PLACE.editIdx].n=nm; PLACE.cur.bins[PLACE.editIdx].q=qty; }
-    closeItemEdit(); drawCab();
-    if(PLACE.editIdx<0) toast("Item added \u2014 drag its box to position it.");
+    drawCab(); navBack();
+    if(isNew) toast("Item added \u2014 drag its box to position it.");
   }
   function deleteItem(){
-    if(PLACE.editIdx<0){ closeItemEdit(); return; }
-    PLACE.cur.bins.splice(PLACE.editIdx,1); PLACE.sel=-1; closeItemEdit(); drawCab();
+    if(PLACE.editIdx<0){ navBack(); return; }
+    PLACE.cur.bins.splice(PLACE.editIdx,1); PLACE.sel=-1; drawCab(); navBack();
   }
   // ----- photo upload -----
   function pickPhoto(){ $("cabFile").value=""; $("cabFile").click(); }
@@ -867,8 +879,8 @@
     toast(msg);
   }
   // ----- bindings -----
-  $("placeBack").addEventListener("click",function(){ $("placeScreen").classList.remove("open"); });
-  $("cabBack").addEventListener("click",function(){ $("placeDetail").classList.remove("open"); setHomeEdit(false); });
+  $("placeBack").addEventListener("click",navBack);
+  $("cabBack").addEventListener("click",navBack);
   $("placeEdit").addEventListener("click",function(){ setHomeEdit(!PLACE.edit); });
   $("cabAdd").addEventListener("click",addCabinet);
   $("cabSaveHome").addEventListener("click",saveDownload);
@@ -877,7 +889,7 @@
   $("cabAddItem").addEventListener("click",function(){ openItemEdit(-1); });
   $("cabSave").addEventListener("click",saveDownload);
   $("itemSave").addEventListener("click",saveItemEdit);
-  $("itemCancel").addEventListener("click",closeItemEdit);
+  $("itemCancel").addEventListener("click",navBack);
   $("itemDelete").addEventListener("click",deleteItem);
   $("cabPhoto").addEventListener("click",function(e){
     if(PLACE.edit) return; // taps handled as drag/select in edit mode
@@ -946,7 +958,9 @@
   ];
 
   function openHospitals(){
-    var scr=$("hospScreen"); scr.classList.add("open");
+    var scr=$("hospScreen");
+    if(!scr.classList.contains("open")) navOpen(closeHospitals);
+    scr.classList.add("open");
     if(!HOSP.loaded){
       $("hospBody").innerHTML='<div class="empty">Loading hospitals…</div>';
       fetchTab("Hospitals").then(function(rows){
@@ -1068,7 +1082,7 @@
     if(tog){ var card=tog.closest(".hcard"); if(card) card.classList.toggle("open"); }
   });
 
-  $("hospBack").addEventListener("click",closeHospitals);
+  $("hospBack").addEventListener("click",navBack);
   $("hospSearch").addEventListener("input",function(){ renderHosp(this.value); });
 
   // ---- Global home search (hospitals + protocols) ----
@@ -1200,6 +1214,7 @@
   function pageLabel(n){ var p=PROTO.pageByN[n]; return (p&&p.l)?p.l:("p."+n); }
 
   function openProtocols(){
+    if(!$("protoScreen").classList.contains("open")) navOpen(closeProtocols);
     $("protoScreen").classList.add("open");
     var b=$("protoSres"); if(b){ b.className="sresults"; b.innerHTML=""; }
     if(PROTO.loaded){ renderProto(""); return; }
@@ -1352,7 +1367,7 @@
     }
   },{passive:false});
 
-  function openReaderPage(n){ $("protoReader").classList.add("open"); showPage(n); }
+  function openReaderPage(n){ if(!$("protoReader").classList.contains("open")) navOpen(closeReader); $("protoReader").classList.add("open"); showPage(n); }
   function showPage(n){
     if(!PROTO.TOTAL) return;
     n=Math.max(1,Math.min(PROTO.TOTAL,n)); PROTO.pos=n;
@@ -1374,8 +1389,8 @@
     var it=e.target.closest?e.target.closest(".pitem"):null;
     if(it){ openReaderPage(parseInt(it.getAttribute("data-page"),10)); }
   });
-  $("protoBack").addEventListener("click",closeProtocols);
-  $("protoReadBack").addEventListener("click",closeReader);
+  $("protoBack").addEventListener("click",navBack);
+  $("protoReadBack").addEventListener("click",navBack);
   $("prPrev").addEventListener("click",function(){ showPage(PROTO.pos-1); });
   $("prNext").addEventListener("click",function(){ showPage(PROTO.pos+1); });
   $("prZoom").addEventListener("click",zoomBtn);
