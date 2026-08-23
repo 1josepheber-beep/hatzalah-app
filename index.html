@@ -1711,11 +1711,15 @@
     if(!PROTO.loaded){
       jobs.push(loadProtocols().then(function(d){ initProto(d); }).catch(function(){}));
     }
+    if(!PLACE.loaded){
+      jobs.push(loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; }).catch(function(){}));
+    }
     return Promise.all(jobs);
   }
 
   var ICO_HOSP='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>';
   var ICO_PROTO='<svg viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/></svg>';
+  var ICO_EQUIP='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
 
   function renderGlobal(q){
     var box=$("sresults");
@@ -1739,6 +1743,18 @@
       pro=pro.slice(0,8);
     }
 
+    var equip=[];
+    if(PLACE.loaded){
+      (PLACE.cabs||[]).forEach(function(c){
+        (c.bins||[]).forEach(function(b,k){
+          if(equip.length>10 || !b.n) return;
+          if(b.n.toLowerCase().indexOf(ql)>-1) equip.push({cabId:c.id,cab:c.name,idx:k,n:b.n,q:b.q});
+        });
+      });
+      equip.sort(function(a,b){ return a.n.toLowerCase().indexOf(ql)-b.n.toLowerCase().indexOf(ql); });
+      equip=equip.slice(0,8);
+    }
+
     var html="";
     if(hosp.length){
       html+='<div class="sr-group">Hospitals</div>';
@@ -1756,10 +1772,18 @@
           '<span>'+esc(p.sub)+'</span></div></div>';
       });
     }
+    if(equip.length){
+      html+='<div class="sr-group">Equipment</div>';
+      equip.forEach(function(r){
+        html+='<div class="sr-item" data-t="e" data-cab="'+esc(r.cabId)+'" data-idx="'+r.idx+'">'+
+          '<div class="sic">'+ICO_EQUIP+'</div><div class="st"><b>'+esc(r.n)+
+          (r.q?' <span style="color:var(--mut);font-weight:600">\u00D7'+esc(r.q)+'</span>':'')+'</b>'+
+          '<span>'+esc(r.cab)+'</span></div></div>';
+      });
+    }
     if(!html){ html='<div class="sr-empty">No matches for “'+esc(q)+'”</div>'; }
     box.innerHTML=html; box.className="sresults show";
   }
-
   var searchTimer=null;
   $("search").addEventListener("input",function(){
     var v=this.value;
@@ -1784,6 +1808,10 @@
       var pg=parseInt(it.getAttribute("data-page"),10);
       openProtocols();
       setTimeout(function(){ $("protoSearch").value=""; if(PROTO.loaded){ renderProto(""); openReaderPage(pg);} },40);
+    }else if(t==="e"){
+      var cabId=it.getAttribute("data-cab"), eidx=parseInt(it.getAttribute("data-idx"),10);
+      openCab(cabId);
+      setTimeout(function(){ selectSlot(eidx,true); },60);
     }
     $("search").value="";
   });
