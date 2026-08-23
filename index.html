@@ -84,6 +84,44 @@
     background:linear-gradient(to top,rgba(6,16,34,.85),rgba(6,16,34,.15) 68%,rgba(6,16,34,0))}
   .tile.imgtile .adm{position:absolute;top:8px;right:8px;z-index:3;margin:0;
     background:rgba(0,0,0,.55);color:#ffcf7a;padding:2px 8px;border-radius:6px}
+
+  /* Product Placement */
+  .cab-grid{padding:12px;display:grid;grid-template-columns:1fr;gap:12px}
+  .cab-card{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:10px;box-shadow:var(--shadow);cursor:pointer;width:100%;
+    -webkit-appearance:none;appearance:none;font:inherit;color:inherit;text-align:left}
+  .cab-card:active{transform:scale(.99)}
+  .cab-card img{width:104px;height:76px;object-fit:cover;border-radius:10px;flex:0 0 auto;background:#5b6472}
+  .cab-card .cc-nm{font-weight:700;font-size:16px;color:var(--ink)}
+  .cab-card .cc-ct{color:var(--mut);font-size:13px;margin-top:3px}
+  .cab-photo-wrap{position:relative;overflow:auto;background:#5b6472;max-height:46vh;
+    -webkit-overflow-scrolling:touch}
+  .cab-photo{position:relative;width:100%;font-size:0;transition:width .15s}
+  .cab-photo.zoom{width:230%}
+  .cab-photo img{width:100%;display:block}
+  .cbin{position:absolute;border:2px solid rgba(255,255,255,.72);border-radius:6px;box-sizing:border-box;
+    cursor:pointer;background:rgba(30,95,174,.08)}
+  .cbin .cbadge{position:absolute;top:-8px;left:-8px;min-width:17px;height:17px;padding:0 3px;border-radius:9px;
+    background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;
+    justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .cbin .cchip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);
+    white-space:nowrap;background:var(--red);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;
+    border-radius:5px;margin-bottom:4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+  .cbin.sel{border-color:var(--red);background:rgba(200,32,46,.22);box-shadow:0 0 0 2px rgba(200,32,46,.45)}
+  .cbin.sel .cbadge{background:var(--red)}
+  .cbin.sel .cchip{display:block}
+  .cab-zoom{position:absolute;right:10px;bottom:10px;z-index:5;border:0;cursor:pointer;
+    background:rgba(9,26,52,.82);color:#fff;font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .cab-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 10px 26px}
+  .cirow{display:flex;align-items:center;gap:11px;padding:11px 8px;border-bottom:1px solid var(--line);cursor:pointer}
+  .cirow:active{background:#f2f5fa}
+  .cirow.sel{background:#eaf0f9}
+  .cinum{width:23px;height:23px;border-radius:7px;background:var(--navy);color:#fff;font-size:12px;font-weight:700;
+    display:grid;place-items:center;flex:0 0 auto}
+  .cirow.sel .cinum{background:var(--red)}
+  .ciname{flex:1;font-weight:600;color:var(--ink);font-size:15px}
+  .ciqty{color:var(--mut);font-size:13px;font-weight:600;flex:0 0 auto}
   .tile .lab{font-size:16px;font-weight:700;line-height:1.15;margin-top:2px}
   .tile .adm{margin-top:2px;font-size:10px;font-weight:700;
     letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
@@ -311,6 +349,30 @@
   </div>
 </div>
 
+<!-- PRODUCT PLACEMENT -->
+<div class="screen" id="placeScreen">
+  <div class="scr-head">
+    <button class="back" id="placeBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Product Placement</h2>
+  </div>
+  <div class="cab-grid" id="cabGrid"></div>
+</div>
+
+<div class="screen" id="placeDetail">
+  <div class="scr-head">
+    <button class="back" id="cabBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Cabinets</button>
+    <h2 id="cabName">Cabinet</h2>
+  </div>
+  <div class="cab-photo-wrap" id="cabPhotoWrap">
+    <div class="cab-photo" id="cabPhoto"><img id="cabImg" alt="Cabinet photo"></div>
+    <button class="cab-zoom" id="cabZoom">Zoom</button>
+  </div>
+  <div class="scr-search">
+    <input id="cabSearch" type="search" placeholder="Find an item in this cabinet\u2026" enterkeyhint="search">
+  </div>
+  <div class="cab-list" id="cabList"></div>
+</div>
+
 <!-- HOSPITALS SCREEN -->
 <div class="screen" id="hospScreen">
   <div class="scr-head">
@@ -519,8 +581,96 @@
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
+    if(type==="placement"||type==="product"){ openPlacement(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
+
+  // ---------- Product Placement (cabinet look-up) ----------
+  var PLACE={loaded:false,cabs:[],cur:null,sel:-1};
+  function loadPlacement(){
+    return new Promise(function(res,rej){
+      if(window.HOH_PLACE){ res(window.HOH_PLACE); return; }
+      var s=document.createElement("script"); s.src="placement.js?v=1";
+      s.onload=function(){ window.HOH_PLACE?res(window.HOH_PLACE):rej(); };
+      s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  function openPlacement(){
+    $("placeScreen").classList.add("open");
+    if(PLACE.loaded){ return; }
+    $("cabGrid").innerHTML='<div class="empty">Loading\u2026</div>';
+    loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; renderCabGrid(); })
+      .catch(function(){ $("cabGrid").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
+  }
+  function renderCabGrid(){
+    var g=$("cabGrid"); g.innerHTML="";
+    if(!PLACE.cabs.length){ g.innerHTML='<div class="empty">No cabinets set up yet.</div>'; return; }
+    PLACE.cabs.forEach(function(c){
+      var d=document.createElement("button"); d.className="cab-card";
+      d.innerHTML='<img src="'+esc(c.img)+'" alt=""><div><div class="cc-nm">'+esc(c.name)+
+        '</div><div class="cc-ct">'+c.bins.length+' item'+(c.bins.length===1?'':'s')+'</div></div>';
+      d.addEventListener("click",function(){ openCab(c.id); });
+      g.appendChild(d);
+    });
+  }
+  function openCab(id){
+    var c=null; for(var i=0;i<PLACE.cabs.length;i++){ if(PLACE.cabs[i].id===id){ c=PLACE.cabs[i]; break; } }
+    if(!c) return;
+    PLACE.cur=c; PLACE.sel=-1;
+    $("cabName").textContent=c.name;
+    $("cabSearch").value="";
+    var boxes="";
+    c.bins.forEach(function(b,k){
+      boxes+='<div class="cbin" data-i="'+k+'" style="left:'+(b.x*100)+'%;top:'+(b.y*100)+
+        '%;width:'+(b.w*100)+'%;height:'+(b.h*100)+'%"><span class="cbadge">'+(k+1)+
+        '</span><span class="cchip">'+esc(b.n)+'</span></div>';
+    });
+    var ph=$("cabPhoto"); ph.classList.remove("zoom"); $("cabZoom").textContent="Zoom";
+    ph.innerHTML='<img id="cabImg" src="'+esc(c.img)+'" alt="">'+boxes;
+    renderCabItems("");
+    $("cabPhotoWrap").scrollTop=0; $("cabPhotoWrap").scrollLeft=0;
+    $("placeDetail").classList.add("open");
+  }
+  function renderCabItems(q){
+    var c=PLACE.cur; if(!c) return;
+    q=(q||"").toLowerCase().trim();
+    var L=$("cabList"); L.innerHTML="";
+    c.bins.forEach(function(b,k){
+      if(q && b.n.toLowerCase().indexOf(q)<0) return;
+      var r=document.createElement("div");
+      r.className="cirow"+(PLACE.sel===k?" sel":""); r.setAttribute("data-i",k);
+      r.innerHTML='<span class="cinum">'+(k+1)+'</span><span class="ciname">'+esc(b.n)+'</span>'+
+        (b.q?'<span class="ciqty">\u00D7'+esc(b.q)+'</span>':'');
+      r.addEventListener("click",function(){ selectSlot(k,true); });
+      L.appendChild(r);
+    });
+    if(q===""&&!L.childNodes.length) L.innerHTML='<div class="empty">No items.</div>';
+    if(q!==""&&!L.childNodes.length) L.innerHTML='<div class="empty">No item matches \u201C'+esc(q)+'\u201D.</div>';
+  }
+  function selectSlot(k,fromList){
+    PLACE.sel=k;
+    var ph=$("cabPhoto");
+    ph.querySelectorAll(".cbin").forEach(function(el){
+      el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
+    var box=ph.querySelector('.cbin[data-i="'+k+'"]');
+    if(box){ var wrap=$("cabPhotoWrap"), br=box.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+      wrap.scrollTop += (br.top-wr.top)-wr.height/2+br.height/2;
+      wrap.scrollLeft += (br.left-wr.left)-wr.width/2+br.width/2; }
+    $("cabList").querySelectorAll(".cirow").forEach(function(el){
+      el.classList.toggle("sel", parseInt(el.getAttribute("data-i"),10)===k); });
+    if(!fromList){ var row=$("cabList").querySelector('.cirow[data-i="'+k+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
+  }
+  $("placeBack").addEventListener("click",function(){ $("placeScreen").classList.remove("open"); });
+  $("cabBack").addEventListener("click",function(){ $("placeDetail").classList.remove("open"); });
+  $("cabPhoto").addEventListener("click",function(e){
+    var b=e.target.closest?e.target.closest(".cbin"):null;
+    if(b) selectSlot(parseInt(b.getAttribute("data-i"),10),false);
+  });
+  $("cabZoom").addEventListener("click",function(){
+    var ph=$("cabPhoto"), z=ph.classList.toggle("zoom");
+    this.textContent=z?"Fit":"Zoom";
+  });
+  $("cabSearch").addEventListener("input",function(){ renderCabItems(this.value); });
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});
