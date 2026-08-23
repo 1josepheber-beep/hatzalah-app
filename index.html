@@ -500,7 +500,8 @@
     var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
     var isAndroid=/Android/.test(ua);
     if(isAndroid&&a.androidPkg){
-      window.location.href="intent://#Intent;package="+a.androidPkg+
+      window.location.href="intent://#Intent;action=android.intent.action.MAIN;"+
+        "category=android.intent.category.LAUNCHER;package="+a.androidPkg+
         ";S.browser_fallback_url="+encodeURIComponent(a.androidStore||"")+";end";
     }else if(isIOS){
       window.location.href=a.iosStore||a.androidStore||"";
