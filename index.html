@@ -274,6 +274,8 @@
   .prof-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
   .prof-name{font-size:19px;font-weight:800;color:var(--ink)}
   .prof-unit{font-size:13px;color:var(--mut);font-weight:700;margin:2px 0 14px}
+  .prof-dob{font-size:13.5px;color:var(--ink);margin:-8px 0 14px}
+  .prof-dob b{font-weight:700}
   .prof-l{display:block;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:14px}
   .prof-l input,.prof-l textarea{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:11px;
     padding:12px 13px;font-size:16px;color:var(--ink);font-weight:400;background:#fff;font-family:inherit;resize:vertical}
@@ -1684,6 +1686,7 @@
     b.innerHTML='<div class="prof-card">'+
       '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
       '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
+      (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
       '<label class="prof-l">Phone<input id="profPhone" type="tel" value="'+esc(r_(row,"Phone"))+'" placeholder="Your phone number"></label>'+
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
