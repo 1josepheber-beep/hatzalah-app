@@ -78,8 +78,12 @@
   .tile .ic{width:42px;height:42px;border-radius:12px;display:flex;
     align-items:center;justify-content:center;background:#eaf0f9;color:var(--navy)}
   .tile .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
-  .tile .ic.img{background:transparent;overflow:hidden}
-  .tile .ic.img img{width:100%;height:100%;object-fit:cover;display:block}
+  .tile.imgtile{padding:0;overflow:hidden;position:relative;justify-content:flex-end}
+  .tile.imgtile img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .tile.imgtile .lab{position:relative;z-index:2;width:100%;margin:0;color:#fff;padding:26px 10px 12px;
+    background:linear-gradient(to top,rgba(6,16,34,.85),rgba(6,16,34,.15) 68%,rgba(6,16,34,0))}
+  .tile.imgtile .adm{position:absolute;top:8px;right:8px;z-index:3;margin:0;
+    background:rgba(0,0,0,.55);color:#ffcf7a;padding:2px 8px;border-radius:6px}
   .tile .lab{font-size:16px;font-weight:700;line-height:1.15;margin-top:2px}
   .tile .adm{margin-top:2px;font-size:10px;font-weight:700;
     letter-spacing:.5px;text-transform:uppercase;color:var(--gold)}
@@ -463,14 +467,20 @@
       if(adminOnly&&!STATE.me.admin) return;
       var b=document.createElement("button");b.className="tile";
       var img=r_(t,"Image URL")||r_(t,"Image")||"";
-      var ico = img ? '<div class="ic img"><img src="'+esc(img)+'" alt=""></div>'
-                    : '<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg></div>';
-      b.innerHTML=ico+'<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
-                  (adminOnly?'<div class="adm">Admin</div>':'');
-      // if a tile image fails to load, fall back to the built-in icon
-      if(img){ var im=b.querySelector(".ic img");
-        if(im) im.onerror=function(){ var box=b.querySelector(".ic");
-          box.className="ic"; box.innerHTML='<svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg>'; }; }
+      var iconTile=function(){
+        b.className="tile";
+        b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg></div>'+
+                    '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
+                    (adminOnly?'<div class="adm">Admin</div>':'');
+      };
+      if(img){
+        b.className="tile imgtile";
+        b.innerHTML='<img class="bg" src="'+esc(img)+'" alt="">'+
+                    '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
+                    (adminOnly?'<div class="adm">Admin</div>':'');
+        var im=b.querySelector("img.bg");
+        if(im) im.onerror=iconTile;   // broken image -> fall back to the built-in icon
+      }else{ iconTile(); }
       b.addEventListener("click",function(){openTile(t);});
       g.appendChild(b);
     });
