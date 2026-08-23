@@ -256,6 +256,7 @@
   .dir-badge{font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--navy);
     background:#eaf0f9;padding:2px 8px;border-radius:6px}
   .dir-unit{font-size:12.5px;color:var(--mut);font-weight:600}
+  .dir-dob{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:5px}
   .dir-act{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
   .dir-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);
     border-radius:11px;padding:10px 13px;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
@@ -1637,6 +1638,8 @@
     body.innerHTML=rows.map(function(r){
       var nm=(r_(r,"First Name")+" "+r_(r,"Last Name")).trim();
       var type=r_(r,"Type"), unit=r_(r,"Unit"), phone=r_(r,"Phone"), addr=r_(r,"Address");
+      var dob=r_(r,"DOB");
+      var canDob = isAdmin() || (STATE.me && normUnit(unit)===normUnit(STATE.me.unit));
       var tel=phone.replace(/[^0-9+]/g,"");
       var acts="";
       if(tel) acts+='<button class="dir-btn call" data-tel="'+esc(tel)+'">'+ICO_PHONE+esc(phone)+'</button>';
@@ -1644,6 +1647,7 @@
       return '<div class="dir-card"><div class="dir-top"><span class="dir-nm">'+esc(nm)+'</span>'+
         (type?'<span class="dir-badge">'+esc(type)+'</span>':'')+
         (unit?'<span class="dir-unit">'+esc(unit)+'</span>':'')+'</div>'+
+        (canDob&&dob?'<div class="dir-dob">DOB: '+esc(dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+'</div>';
     }).join("");
   }
