@@ -98,6 +98,11 @@
   .cpr-b.igel{background:#7a4fd6} .cpr-b.pads{background:#b0531a}
   .cpr-b.rhythm{background:var(--navy)} .cpr-b.rosc{background:#1f9d55}
   .cpr-reset{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:12px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
+  .cpr-save-row{display:flex;gap:10px;align-items:center}
+  .cpr-train{display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:var(--ink);flex:0 0 auto}
+  .cpr-train input{width:20px;height:20px}
+  .cpr-save{flex:1;border:0;background:var(--navy);color:#fff;border-radius:12px;padding:14px;font-weight:800;font-size:15px;cursor:pointer}
+  .cpr-save:disabled{opacity:.6}
   .cpr-log{display:flex;flex-direction:column;gap:5px}
   .cpr-le{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:8px 11px;background:#f6f8fb;border-radius:9px}
   .cpr-le b{flex:0 0 50px;color:var(--navy);font-variant-numeric:tabular-nums}
@@ -753,6 +758,10 @@
       <button class="cpr-b metro" id="cprMetro">Metronome</button>
     </div>
     <div class="cpr-grid" id="cprBtns"></div>
+    <div class="cpr-save-row">
+      <label class="cpr-train"><input type="checkbox" id="cprTrain">Training</label>
+      <button class="cpr-save" id="cprSave">Save code log</button>
+    </div>
     <button class="cpr-reset" id="cprReset">Reset code</button>
     <div class="cpr-log" id="cprLog"></div>
   </div>
@@ -2045,6 +2054,27 @@
     else { cprLogAdd(label); }
   });
   $("cprReset").addEventListener("click",cprReset);
+  function cprLogText(){ return CPR.log.slice().reverse().map(function(e){ return cprFmt(e.t)+"  "+e.label+"  ("+e.clock+")"; }).join("\n"); }
+  function saveCodeLog(){
+    var url=getSetting("Code Log URL","")||getSetting("Profile Update URL","");
+    if(!url){ toast("Saving isn\u2019t set up yet. Tell your coordinator."); return; }
+    if(!CPR.log.length){ toast("Nothing to save yet."); return; }
+    var mode=$("cprTrain").checked?"Training":"Real";
+    var payload={ kind:"codelog", unit:(STATE.me&&STATE.me.unit)||"",
+      name:((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()),
+      mode:mode, duration:cprFmt(CPR.total), shocks:CPR.shocks, epis:CPR.epis, cycles:CPR.cycNum,
+      started:(CPR.log.length?CPR.log[CPR.log.length-1].clock:""), log:cprLogText() };
+    var btn=$("cprSave"); btn.disabled=true; btn.textContent="Saving\u2026";
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+      .then(function(r){ return r.text(); })
+      .then(function(t){ var ok=true; try{ ok=JSON.parse(t).ok!==false; }catch(e){} cprSaveDone(ok); })
+      .catch(function(){ cprSaveDone(true); });
+  }
+  function cprSaveDone(ok){
+    var btn=$("cprSave"); btn.disabled=false; btn.textContent="Save code log";
+    toast(ok?"Code log saved.":"Couldn\u2019t save \u2014 please try again.");
+  }
+  $("cprSave").addEventListener("click",saveCodeLog);
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});
