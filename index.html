@@ -116,6 +116,8 @@
     background:rgba(9,26,52,.82);color:#fff;font-weight:700;font-size:13px;padding:8px 14px;border-radius:10px;
     box-shadow:0 2px 8px rgba(0,0,0,.35)}
   .cab-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 10px 26px}
+  .cab-ord{display:flex;gap:5px;align-items:center;flex:0 0 auto}
+  .ebtn.ord{padding:9px 11px;font-size:13px;line-height:1;font-weight:800}
   .cirow{display:flex;align-items:center;gap:11px;padding:11px 8px;border-bottom:1px solid var(--line);cursor:pointer}
   .cirow:active{background:#f2f5fa}
   .cirow.sel{background:#eaf0f9}
@@ -925,9 +927,16 @@
       d.innerHTML='<img src="'+esc(thumb)+'" alt=""><div style="flex:1"><div class="cc-nm">'+esc(c.name)+
         '</div><div class="cc-ct">'+c.bins.length+' item'+(c.bins.length===1?'':'s')+
         (c.img||c._img?'':' \u00B7 no photo')+'</div></div>'+
-        (PLACE.edit?'<button class="ebtn danger" data-del="'+esc(c.id)+'">Delete</button>':'');
+        (PLACE.edit?'<div class="cab-ord"><button class="ebtn ord" data-up="'+esc(c.id)+'" title="Move up">\u25B2</button>'+
+          '<button class="ebtn ord" data-down="'+esc(c.id)+'" title="Move down">\u25BC</button>'+
+          '<button class="ebtn danger" data-del="'+esc(c.id)+'">Delete</button></div>':'');
       d.addEventListener("click",function(e){
-        if(e.target.getAttribute&&e.target.getAttribute("data-del")){ delCabinet(c.id); return; }
+        var t=e.target;
+        if(t.getAttribute){
+          if(t.getAttribute("data-del")){ delCabinet(c.id); return; }
+          if(t.getAttribute("data-up")){ moveCab(c.id,-1); return; }
+          if(t.getAttribute("data-down")){ moveCab(c.id,1); return; }
+        }
         openCab(c.id);
       });
       g.appendChild(d);
@@ -945,6 +954,12 @@
     var c=cabById(id); if(!c) return;
     if(!confirm("Delete cabinet \u201C"+c.name+"\u201D and all its items?")) return;
     PLACE.cabs=PLACE.cabs.filter(function(x){return x.id!==id;});
+    renderCabGrid();
+  }
+  function moveCab(id,dir){
+    var i=-1; for(var k=0;k<PLACE.cabs.length;k++){ if(PLACE.cabs[k].id===id){ i=k; break; } }
+    if(i<0) return; var j=i+dir; if(j<0||j>=PLACE.cabs.length) return;
+    var tmp=PLACE.cabs[i]; PLACE.cabs[i]=PLACE.cabs[j]; PLACE.cabs[j]=tmp;
     renderCabGrid();
   }
   function cabById(id){ for(var i=0;i<PLACE.cabs.length;i++) if(PLACE.cabs[i].id===id) return PLACE.cabs[i]; return null; }
