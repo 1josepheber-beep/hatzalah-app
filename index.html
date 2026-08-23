@@ -380,6 +380,10 @@
     <h2 id="placeTitle">Product Placement</h2>
     <button class="hbtn hidden" id="placeEdit">Edit</button>
   </div>
+  <div class="scr-search">
+    <input id="placeSearch" type="search" placeholder="Search all items \u2014 \u201CBVM\u201D, \u201Csplint\u201D, \u201Csuction\u201D\u2026" enterkeyhint="search">
+    <div class="sresults" id="placeSres"></div>
+  </div>
   <div class="edit-bar hidden" id="cabHomeBar">
     <button class="ebtn primary" id="cabAdd">+ Add cabinet</button>
     <button class="ebtn" id="cabSaveHome">Save &amp; download</button>
@@ -658,6 +662,7 @@
   function openPlacement(){
     if(!$("placeScreen").classList.contains("open")) navOpen(closePlaceScreen);
     $("placeScreen").classList.add("open");
+    $("placeSearch").value=""; $("placeSres").className="sresults"; $("placeSres").innerHTML="";
     $("placeEdit").classList.toggle("hidden",!isAdmin());
     if(PLACE.loaded){ return; }
     $("cabGrid").innerHTML='<div class="empty">Loading\u2026</div>';
@@ -879,6 +884,42 @@
     toast(msg);
   }
   // ----- bindings -----
+  // ----- search all items across every cabinet -----
+  function renderPlaceSearch(q){
+    var box=$("placeSres"); q=(q||"").trim(); var ql=q.toLowerCase();
+    if(!ql){ box.className="sresults"; box.innerHTML=""; return; }
+    var res=[];
+    PLACE.cabs.forEach(function(c){
+      c.bins.forEach(function(b,k){
+        if(b.n && b.n.toLowerCase().indexOf(ql)>-1) res.push({cabId:c.id,cab:c.name,idx:k,n:b.n,q:b.q});
+      });
+    });
+    res.sort(function(a,b){ return a.n.toLowerCase().indexOf(ql)-b.n.toLowerCase().indexOf(ql); });
+    res=res.slice(0,60);
+    var html="";
+    if(!res.length){ html='<div class="sr-empty">No item matches \u201C'+esc(q)+'\u201D</div>'; }
+    else res.forEach(function(r){
+      html+='<div class="sr-item" data-cab="'+esc(r.cabId)+'" data-idx="'+r.idx+'"><div class="st"><b>'+
+        esc(r.n)+(r.q?' <span style="color:var(--mut);font-weight:600">\u00D7'+esc(r.q)+'</span>':'')+
+        '</b><span>'+esc(r.cab)+'</span></div></div>';
+    });
+    box.innerHTML=html; box.className="sresults show";
+  }
+  $("placeSearch").addEventListener("input",function(){
+    var v=this.value;
+    if(!PLACE.loaded){ loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; renderPlaceSearch(v); }).catch(function(){}); }
+    else renderPlaceSearch(v);
+  });
+  $("placeSres").addEventListener("click",function(e){
+    var it=e.target.closest?e.target.closest(".sr-item"):null; if(!it) return;
+    var cabId=it.getAttribute("data-cab"), idx=parseInt(it.getAttribute("data-idx"),10);
+    $("placeSres").className="sresults"; $("placeSres").innerHTML=""; $("placeSearch").value="";
+    openCab(cabId);
+    setTimeout(function(){ selectSlot(idx,true); },40);
+  });
+  $("placeScreen").addEventListener("click",function(e){
+    if(!e.target.closest || !e.target.closest(".scr-search")){ var b=$("placeSres"); if(b){ b.className="sresults"; b.innerHTML=""; } }
+  });
   $("placeBack").addEventListener("click",navBack);
   $("cabBack").addEventListener("click",navBack);
   $("placeEdit").addEventListener("click",function(){ setHomeEdit(!PLACE.edit); });
