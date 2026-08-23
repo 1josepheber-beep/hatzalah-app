@@ -751,15 +751,8 @@
     <div class="cpr-grid">
       <button class="cpr-b start" id="cprStart">Start</button>
       <button class="cpr-b metro" id="cprMetro">Metronome</button>
-      <button class="cpr-b shock" id="cprShock">Shock</button>
-      <button class="cpr-b epi" id="cprEpiBtn">Gave Epi</button>
-      <button class="cpr-b comp" id="cprComp">Compressor Change</button>
-      <button class="cpr-b rhythm" id="cprRhythm">Pulse / Rhythm</button>
-      <button class="cpr-b o2" id="cprO2">O2 / BVM</button>
-      <button class="cpr-b igel" id="cprIgel">iGel Placed</button>
-      <button class="cpr-b pads" id="cprPads">Pads Applied</button>
-      <button class="cpr-b rosc" id="cprRosc">ROSC</button>
     </div>
+    <div class="cpr-grid" id="cprBtns"></div>
     <button class="cpr-reset" id="cprReset">Reset code</button>
     <div class="cpr-log" id="cprLog"></div>
   </div>
@@ -1849,7 +1842,42 @@
   $("qCpr").addEventListener("click",function(){ closeQMenu(); openCpr(); });
 
   // ---------- Vitals reference ----------
-  var VIT={view:"adult"};
+  var VIT={view:"adult",loaded:false,data:null};
+  function groupVitals(rows){
+    var d={adult:[],pedi:[]}, idx={adult:{},pedi:{}};
+    rows.forEach(function(r){
+      var tab=(r_(r,"Tab")||"").toLowerCase().indexOf("ped")>-1?"pedi":"adult";
+      var sec=r_(r,"Section")||"General";
+      if(!idx[tab][sec]){ idx[tab][sec]={section:sec,rows:[]}; d[tab].push(idx[tab][sec]); }
+      idx[tab][sec].rows.push({item:r_(r,"Item"),value:r_(r,"Value"),v2:r_(r,"Value2"),v3:r_(r,"Value3")});
+    });
+    return d;
+  }
+  function renderVitalsData(view){
+    var groups=VIT.data[view]||[];
+    if(!groups.length) return '<div class="empty">Nothing set up for this tab yet.</div>';
+    var html='<div class="vit-body">';
+    groups.forEach(function(g){
+      var low=g.section.toLowerCase();
+      var color= low.indexOf("medical")>-1?"med": low.indexOf("trauma")>-1?"tra": (low.indexOf("adult vital")>-1?"vit":"nav");
+      html+='<div class="vcard"><div class="vhh '+color+'">'+esc(g.section)+'</div>';
+      var isTable=g.rows.some(function(x){return x.v2||x.v3;});
+      if(isTable){
+        html+='<table class="vtable">';
+        if(low.indexOf("pediatric")>-1) html+='<tr><th>Age</th><th>RR</th><th>HR</th><th>SBP</th></tr>';
+        g.rows.forEach(function(x){ html+='<tr><td>'+esc(x.item)+'</td><td>'+esc(x.value)+'</td><td>'+esc(x.v2)+'</td><td>'+esc(x.v3)+'</td></tr>'; });
+        html+='</table>';
+      } else {
+        g.rows.forEach(function(x){
+          if(!x.value) html+='<div class="vli">'+esc(x.item)+'</div>';
+          else html+='<div class="vrow"><b>'+esc(x.item)+'</b><span>'+esc(x.value)+'</span></div>';
+        });
+      }
+      if(low.indexOf("rule of 9")>-1) html+='<img class="vdiagram" src="ruleof9.webp" alt="Rule of 9s body diagram">';
+      html+='</div>';
+    });
+    return html+'</div>';
+  }
   function _li(x){ return '<div class="vli">'+x+'</div>'; }
   function _row(a,b){ return '<div class="vrow"><b>'+a+'</b><span>'+b+'</span></div>'; }
   function _gcs(a,b){ return '<div class="gcs-row"><b>'+a+'</b><span>'+b+'</span></div>'; }
@@ -1901,13 +1929,17 @@
     VIT.view=v;
     var tabs=document.querySelectorAll(".vit-tab");
     for(var i=0;i<tabs.length;i++) tabs[i].classList.toggle("on", tabs[i].getAttribute("data-v")===v);
-    $("vitalsBody").innerHTML = (v==="pedi") ? vitPedi() : vitAdult();
+    $("vitalsBody").innerHTML = VIT.data ? renderVitalsData(v) : ((v==="pedi") ? vitPedi() : vitAdult());
   }
   function closeVitals(){ $("vitalsScreen").classList.remove("open"); }
   function openVitals(){
     if(!$("vitalsScreen").classList.contains("open")) navOpen(closeVitals);
     $("vitalsScreen").classList.add("open");
-    renderVitals(VIT.view);
+    if(VIT.loaded){ renderVitals(VIT.view); return; }
+    fetchTab("Vitals").then(function(rows){
+      if(rows&&rows.length) VIT.data=groupVitals(rows);
+      VIT.loaded=true; renderVitals(VIT.view);
+    }).catch(function(){ VIT.loaded=true; renderVitals(VIT.view); });
   }
   (function(){ var tabs=document.querySelectorAll(".vit-tab");
     for(var i=0;i<tabs.length;i++){ tabs[i].addEventListener("click",function(){ renderVitals(this.getAttribute("data-v")); }); } })();
@@ -1915,7 +1947,7 @@
 
   // ---------- CPR Tracker ----------
   var CPR={running:false,last:0,total:0,cycle:0,epi:0,cycNum:1,epis:0,shocks:0,tickId:0,
-           metro:false,metroId:0,actx:null,log:[],hadEpi:false};
+           metro:false,metroId:0,actx:null,log:[],hadEpi:false,btnsLoaded:false};
   var CYCLE_MS=120000;
   function cprFmt(ms){ if(ms<0)ms=0; var s=Math.floor(ms/1000); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
   function cprAudio(){ if(!CPR.actx){ try{ CPR.actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(CPR.actx&&CPR.actx.state==="suspended")CPR.actx.resume(); return CPR.actx; }
@@ -1961,7 +1993,7 @@
   function closeCpr(){ $("cprScreen").classList.remove("open"); if(CPR.metro) cprSetMetro(false); }
   function openCpr(){
     if(!$("cprScreen").classList.contains("open")) navOpen(closeCpr);
-    $("cprScreen").classList.add("open"); ensureTick(); cprTick(); renderCprLog();
+    $("cprScreen").classList.add("open"); ensureTick(); cprTick(); renderCprLog(); loadCprBtns();
   }
   function cprReset(){
     if(CPR.total>0 && !confirm("Reset this code? The timers and log will clear.")) return;
@@ -1974,14 +2006,43 @@
   $("cprBack").addEventListener("click",navBack);
   $("cprStart").addEventListener("click",function(){ cprAudio(); cprSetRunning(!CPR.running); });
   $("cprMetro").addEventListener("click",function(){ cprSetMetro(!CPR.metro); });
-  $("cprShock").addEventListener("click",function(){ CPR.shocks++; if(navigator.vibrate)navigator.vibrate(80); cprLogAdd("Shock #"+CPR.shocks); });
-  $("cprEpiBtn").addEventListener("click",function(){ CPR.epis++; CPR.epi=0; CPR.hadEpi=true; cprLogAdd("Epinephrine #"+CPR.epis); cprTick(); });
-  $("cprRhythm").addEventListener("click",function(){ CPR.cycle=0; cprLogAdd("Pulse / rhythm check"); cprTick(); });
-  $("cprComp").addEventListener("click",function(){ if(navigator.vibrate)navigator.vibrate(60); cprLogAdd("Compressor change"); });
-  $("cprO2").addEventListener("click",function(){ cprLogAdd("O2 / BVM"); });
-  $("cprIgel").addEventListener("click",function(){ cprLogAdd("iGel placed"); });
-  $("cprPads").addEventListener("click",function(){ cprLogAdd("Pads applied"); });
-  $("cprRosc").addEventListener("click",function(){ cprLogAdd("ROSC"); if(CPR.running)cprSetRunning(false); if(CPR.metro)cprSetMetro(false); });
+  // sheet-driven event buttons (order/label/color set in the "CPR Buttons" tab)
+  var CPR_COLORS={shock:"#e0902a",epi:"#1e5fae",comp:"#0f8a8a",o2:"#2b8fd6",igel:"#7a4fd6",pads:"#b0531a",rhythm:"#143D75",rosc:"#1f9d55",nav:"#143D75",red:"#c8202e",green:"#1f9d55"};
+  function cprColor(c){ c=String(c||"").trim(); if(c.charAt(0)==="#") return c; return CPR_COLORS[c.toLowerCase()]||CPR_COLORS.nav; }
+  var CPR_DEFAULT_BTNS=[
+    {label:"Pads Applied",act:"log",color:"pads"},
+    {label:"Shock",act:"shock",color:"shock"},
+    {label:"Compressor Change",act:"log",color:"comp"},
+    {label:"BVM Giver Change",act:"log",color:"comp"},
+    {label:"Pulse / Rhythm",act:"rhythm",color:"rhythm"},
+    {label:"Gave Epi",act:"epi",color:"epi"},
+    {label:"O2 / BVM",act:"log",color:"o2"},
+    {label:"iGel Placed",act:"log",color:"igel"},
+    {label:"ROSC",act:"rosc",color:"rosc"}
+  ];
+  function renderCprBtns(list){
+    $("cprBtns").innerHTML=list.map(function(b){
+      return '<button class="cpr-b" data-act="'+esc(b.act)+'" data-label="'+esc(b.label)+'" style="background:'+cprColor(b.color)+'">'+esc(b.label)+'</button>';
+    }).join("");
+  }
+  function loadCprBtns(){
+    if(CPR.btnsLoaded){ return; }
+    fetchTab("CPR Buttons").then(function(rows){
+      var list=(rows||[]).filter(function(r){ var a=String(r_(r,"Active")||"").trim().toLowerCase(); return (a===""||a==="x"||a==="yes"||a==="true") && r_(r,"Label"); })
+        .map(function(r){ return {label:r_(r,"Label"),act:(r_(r,"Action")||"log").toLowerCase(),color:r_(r,"Color")||"nav",order:parseFloat(r_(r,"Order"))||99}; })
+        .sort(function(a,b){ return a.order-b.order; });
+      CPR.btnsLoaded=true; renderCprBtns(list.length?list:CPR_DEFAULT_BTNS);
+    }).catch(function(){ CPR.btnsLoaded=true; renderCprBtns(CPR_DEFAULT_BTNS); });
+  }
+  $("cprBtns").addEventListener("click",function(e){
+    var b=e.target.closest?e.target.closest(".cpr-b"):null; if(!b) return;
+    var act=b.getAttribute("data-act"), label=b.getAttribute("data-label");
+    if(act==="epi"){ CPR.epis++; CPR.epi=0; CPR.hadEpi=true; cprLogAdd(label+" #"+CPR.epis); cprTick(); }
+    else if(act==="shock"){ CPR.shocks++; if(navigator.vibrate)navigator.vibrate(80); cprLogAdd(label+" #"+CPR.shocks); }
+    else if(act==="rhythm"){ CPR.cycle=0; cprLogAdd(label); cprTick(); }
+    else if(act==="rosc"){ cprLogAdd(label); if(CPR.running)cprSetRunning(false); if(CPR.metro)cprSetMetro(false); }
+    else { cprLogAdd(label); }
+  });
   $("cprReset").addEventListener("click",cprReset);
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
