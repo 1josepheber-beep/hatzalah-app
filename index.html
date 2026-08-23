@@ -494,7 +494,11 @@
     }
   };
   function launchApp(key){
-    var a=APPS[String(key||"").trim().toLowerCase()];
+    key=String(key||"").trim();
+    // A raw deep link / scheme typed straight into the Target column is tried directly
+    // (e.g. "pulsara://"). Handy for testing what actually opens the app.
+    if(key.indexOf("://")>-1){ window.location.href=key; return; }
+    var a=APPS[key.toLowerCase()];
     if(!a){ toast("App not set up yet."); return; }
     var ua=navigator.userAgent||"";
     var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
