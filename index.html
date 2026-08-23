@@ -192,6 +192,7 @@
   .eq-sub .eq-cb svg{width:12px;height:12px}
   .eq-edit-hint{margin-left:auto;color:var(--navy);font-size:12px;font-weight:700;flex:0 0 auto}
   #printArea{display:none}
+  .eq-frame{flex:1;width:100%;border:0;background:#fff}
   @media print{
     body>*{display:none !important}
     #printArea{display:block !important}
@@ -530,6 +531,15 @@
 
 <div id="printArea"></div>
 
+<!-- REQUIRED EQUIPMENT (embedded original app) -->
+<div class="screen" id="equipFrameScreen">
+  <div class="scr-head">
+    <button class="back" id="equipFrameBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Required Equipment</h2>
+  </div>
+  <iframe id="equipFrame" class="eq-frame" title="Required Equipment"></iframe>
+</div>
+
 <!-- HOSPITALS SCREEN -->
 <div class="screen" id="hospScreen">
   <div class="scr-head">
@@ -745,7 +755,7 @@
     if(type==="protocols"){ openProtocols(); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
-    if(type==="equipment"||type==="checklist"){ openEquip(); return; }
+    if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -1210,6 +1220,15 @@
   $("eqCancel").addEventListener("click",navBack);
   $("eqDelete").addEventListener("click",deleteEqItem);
   $("equipSearch").addEventListener("input",function(){ EQ.q=this.value; renderEquip(); });
+
+  // ---------- Required Equipment: embedded original app (equipment/) ----------
+  function closeEquipFrame(){ $("equipFrameScreen").classList.remove("open"); }
+  function openEquipFrame(){
+    if(!$("equipFrameScreen").classList.contains("open")) navOpen(closeEquipFrame);
+    var fr=$("equipFrame"); if(!fr.getAttribute("src")) fr.setAttribute("src","equipment/");
+    $("equipFrameScreen").classList.add("open");
+  }
+  $("equipFrameBack").addEventListener("click",navBack);
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});

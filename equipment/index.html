@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ambulance Required Equipment — State + City Minimum</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @page{ size: letter portrait; margin: 0.3in; }
+
+  :root{
+    --state:#1D4ED8; --city:#C2410C; --both:#475569;
+    --ink:#0F172A; --muted:#64748B; --rule:#E2E8F0; --bg:#FFF; --panel:#F8FAFC;
+    --bls:#1D4ED8; --als:#7C3AED; --micu:#BE123C;
+    --ok:#15803D; --ok-bg:#F0FDF4; --ok-line:#BBF7D0;
+    --warn:#B45309; --warn-bg:#FFFBEB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter","Segoe UI",system-ui,sans-serif;font-size:15px;line-height:1.45}
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 18px 80px}
+  header{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:16px}
+  h1{font-size:25px;margin:0 0 4px;letter-spacing:-0.02em}
+  .sub{color:var(--muted);font-size:13px;margin:0}
+
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+  .lg{border-left:5px solid;padding:8px 12px;background:var(--panel);font-size:12.5px;
+    flex:1 1 240px;min-width:0}
+  .lg.src-s{border-color:var(--state)} .lg.src-c{border-color:var(--city)} .lg.src-both{border-color:var(--both)}
+  .lg b{display:block;font-size:13px;margin-bottom:2px}
+  .lg span{color:var(--muted);display:block}
+
+  .note-box{background:#F1F5FA;border-left:4px solid var(--state);padding:10px 12px;font-size:12.5px;margin:10px 0}
+
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:16px 0 6px;
+    position:sticky;top:0;background:var(--bg);padding:10px 0;border-bottom:1px solid var(--rule);z-index:5}
+  button{font:inherit;cursor:pointer;border-radius:2px}
+  .tab{border:1px solid var(--rule);background:#fff;padding:7px 15px;font-weight:600;font-size:13px}
+  .tab[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tab[data-tier="bls"][aria-pressed="true"]{background:var(--bls);border-color:var(--bls)}
+  .tab[data-tier="als"][aria-pressed="true"]{background:var(--als);border-color:var(--als)}
+  .tab[data-tier="micu"][aria-pressed="true"]{background:var(--micu);border-color:var(--micu)}
+  .filt{border:1px solid var(--rule);background:#fff;padding:6px 12px;font-size:12px;font-weight:600}
+  .filt[aria-pressed="true"].fs{background:var(--state);color:#fff;border-color:var(--state)}
+  .filt[aria-pressed="true"].fc{background:var(--city);color:#fff;border-color:var(--city)}
+  .filt[aria-pressed="true"].fb{background:var(--both);color:#fff;border-color:var(--both)}
+  .filt[aria-pressed="true"].fa{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .act{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:7px 14px;font-size:12.5px;font-weight:600}
+  .act.ghost{background:#fff;color:var(--ink)}
+  input[type=search]{border:1px solid var(--rule);padding:7px 10px;font:inherit;font-size:13px;
+    border-radius:2px;min-width:170px;flex:1}
+  .count{font-size:12px;color:var(--muted);white-space:nowrap}
+  .spacer{flex-basis:100%;height:0}
+
+  h2.tier{font-size:15px;text-transform:uppercase;letter-spacing:.09em;margin:26px 0 2px;
+    padding:10px 14px;background:var(--state);color:#fff;border-radius:3px}
+  section[data-tier="bls"] h2.tier{background:var(--bls)}
+  section[data-tier="als"] h2.tier{background:var(--als)}
+  section[data-tier="micu"] h2.tier{background:var(--micu)}
+  /* a matching spine down each section, so scrolling tells you where you are */
+  section[data-tier="bls"] h3.cat{border-left:3px solid var(--bls)}
+  section[data-tier="als"] h3.cat{border-left:3px solid var(--als)}
+  section[data-tier="micu"] h3.cat{border-left:3px solid var(--micu)}
+  section[data-tier] h3.cat{padding-left:8px}
+  section[data-tier="bls"] .tiernote{border-left:3px solid #DBEAFE}
+  section[data-tier="als"] .tiernote{border-left:3px solid #EDE9FE}
+  section[data-tier="micu"] .tiernote{border-left:3px solid #FFE4E6}
+  section[data-tier] .tiernote{padding-left:9px}
+  .tiernote{font-size:12.5px;color:var(--muted);margin:6px 0 12px}
+  h3.cat{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    margin:18px 0 4px;border-bottom:1px solid var(--rule);padding:6px 4px 5px;
+    display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;border-radius:2px}
+  h3.cat:hover{background:var(--panel);color:var(--ink)}
+  h3.cat:focus-visible{outline:2px solid var(--state);outline-offset:1px}
+  .chev{width:0;height:0;border-left:5px solid currentColor;border-top:4px solid transparent;
+    border-bottom:4px solid transparent;transform:rotate(90deg);transition:transform .12s;flex:none}
+  h3.cat.shut .chev{transform:rotate(0deg)}
+  h3.cat.shut{border-bottom-color:var(--border,#DDE1E6)}
+  .catname{flex:1}
+  .catcount{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--muted);
+    background:var(--panel);border-radius:2px;padding:2px 6px}
+  h3.cat:hover .catcount{background:#fff}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+    text-align:left;padding:4px 8px;border-bottom:1px solid var(--rule);font-weight:700}
+  td{padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+  tr.hide{display:none}
+  td.chk{width:30px}
+  td.chk input{width:17px;height:17px;margin-top:2px;cursor:pointer}
+  td.qty{width:88px;font-weight:700;font-variant-numeric:tabular-nums;font-size:13.5px}
+  td.src{width:52px;white-space:nowrap;padding-top:8px}
+  td.ref{width:150px;font-size:12px;color:var(--muted)}
+  td.notes{width:170px}
+  td.notes input{width:100%;border:1px solid transparent;border-bottom:1px solid var(--rule);
+    padding:3px 4px;font:inherit;font-size:12px;background:#fff}
+  td.notes input:focus{outline:none;border:1px solid var(--state);background:#F8FAFD}
+  .b{display:inline-block;width:17px;height:17px;line-height:17px;text-align:center;
+    font-size:10px;font-weight:800;color:#fff;border-radius:2px;margin-right:2px}
+  .b.s{background:var(--state)} .b.c{background:var(--city)}
+  .name{font-weight:500;color:var(--ink)}
+  .sub-note{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+  tr.only-s .name,tr.only-c .name{color:var(--ink);font-weight:600}
+  tr.have{background:#F4F8F4}
+  tr.have .name{opacity:.5;text-decoration:line-through}
+  .gap{font-size:9px;font-weight:800;letter-spacing:.05em;color:var(--warn);background:var(--warn-bg);border:1px solid #FDE68A;border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+
+  .empty{color:var(--muted);font-size:13px;padding:20px 0}
+  .e{border:1px solid var(--rule);padding:4px 6px;font:inherit;font-size:12.5px;border-radius:2px;width:100%;background:#fff}
+  .e:focus{outline:none;border-color:var(--state);background:#F8FAFD}
+  .e.wide{font-size:13.5px;font-weight:500}
+  .e.small{font-size:11.5px;color:var(--muted);margin-top:3px}
+  td.del{width:74px;white-space:nowrap}
+  .x{border:1px solid var(--rule);background:#fff;color:#A3281C;width:24px;height:24px;
+     line-height:1;font-size:15px;font-weight:700;padding:0}
+  .x:hover{background:#FDECEA;border-color:#A3281C}
+  .addrow{border:1px dashed var(--rule);background:#fff;color:var(--muted);font-size:12px;
+     padding:6px 12px;margin:6px 0 2px;width:100%;text-align:left}
+  .addrow:hover{border-color:var(--state);color:var(--state)}
+  tr.row.off{background:repeating-linear-gradient(45deg,#FAFAFB,#FAFAFB 6px,#F2F3F5 6px,#F2F3F5 12px)}
+  tr.row.off td{color:#9AA2AC}
+  tr.row.off .name{color:#9AA2AC;font-style:italic;text-decoration:none}
+  tr.row.off .b{opacity:.35}
+  tr.row.off .subs{display:none}
+  .hidechip{font-size:9px;font-weight:800;letter-spacing:.06em;color:#6B7480;background:#E4E7EB;
+    border-radius:2px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .eye{border:1px solid var(--rule);background:#fff;color:var(--muted);font-size:10px;
+    font-weight:700;padding:2px 6px;margin-right:4px}
+  .eye:hover{border-color:var(--state);color:var(--state)}
+  tr.row.off .eye{background:#E7F2E9;border-color:#BFD6C2;color:#2F6B3C}
+  @media print{ tr.row.off{display:none !important} }
+
+  tr.added .name:before{content:"NEW ";font-size:9px;font-weight:800;color:var(--ok);letter-spacing:.06em}
+  body.editing .gap{display:none}
+
+  @media (max-width:760px){
+    .wrap{padding:16px 12px 60px}
+    h1{font-size:21px}
+    .legend{display:none}
+    .controls{position:static;padding:8px 0}
+    .fgrp{flex-basis:100%;margin:4px 0 0}
+    .fmath{font-size:11px}
+    .ckall{font-size:11px;padding:4px 10px}
+    h3.cat{padding:12px 6px;font-size:12.5px}
+    h2.tier{font-size:13.5px;padding:12px 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .tierck{margin-left:0}
+    .catcount{font-size:11px}
+    .controls .tab,.controls .filt{flex:1 1 auto;font-size:12px;padding:7px 9px}
+    .act{flex:1 1 auto}
+    input[type=search]{flex-basis:100%;min-width:0}
+    .count{width:100%;text-align:right}
+
+    thead{display:none}
+    table,tbody,td{display:block;width:auto}
+    tr.row{display:flex;flex-direction:column;border:1px solid var(--rule);border-radius:6px;
+      padding:12px 12px 10px 46px;margin-bottom:10px;position:relative;border-left:5px solid var(--rule);
+      background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.05)}
+    tr.row.only-s{border-left-color:var(--state)}
+    tr.row.only-c{border-left-color:var(--city)}
+    tr.row:not(.only-s):not(.only-c){border-left-color:var(--both)}
+    tr.row.off{border-left-color:#CBD5E1}
+    td{border:none;padding:2px 0}
+    td.chk{position:absolute;left:12px;top:12px;width:auto;padding:0}
+    td.chk input{width:22px;height:22px}
+    /* item name first, then the supporting detail */
+    td[data-l="Item"]{order:1}
+    td.qty{order:2} td.src{order:3} td.ref{order:4} td.notes{order:5}
+    td[data-l]:before{content:attr(data-l) ": ";font-size:10px;text-transform:uppercase;
+      letter-spacing:.06em;color:var(--muted);font-weight:700}
+    td[data-l="Item"]:before{display:none}
+    td[data-l="Item"] .name{font-size:15px;font-weight:600;line-height:1.3}
+    td.qty{font-size:13px;color:var(--ink);font-weight:600}
+    td.src{margin-top:2px}
+    td.ref{font-size:11.5px}
+    tr.row.have{background:var(--ok-bg);border-color:var(--ok-line)}
+    td.notes input{border:1px solid var(--rule);border-radius:2px;padding:5px;font-size:13px}
+    .sub{font-size:12.5px;padding:4px 8px 4px 6px}
+    .sub input{width:16px;height:16px}
+    .subs{gap:6px}
+    td.del{position:absolute;right:8px;top:8px}
+  }
+
+  .subs{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;margin-top:5px}
+  .sub{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);
+    cursor:pointer;user-select:none;border:1px solid var(--rule);border-radius:2px;padding:2px 6px 2px 4px}
+  .sub:hover{border-color:var(--state);color:var(--ink)}
+  .sub input{width:13px;height:13px;margin:0;cursor:pointer}
+  .sub:has(input:checked){background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok);text-decoration:line-through}
+  .prog{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--muted);
+    background:var(--panel);border-radius:2px;padding:2px 5px}
+  .prog.ok{background:var(--ok-bg);color:var(--ok)}
+  tr.have .subs{opacity:.55}
+  tr.have .name{opacity:.5;text-decoration:line-through}
+
+  #protocol{display:none}
+  #formdoc{display:none}
+
+  /* Sign-in overlay + error banner */
+  #errbar{position:fixed;top:0;left:0;right:0;z-index:99;background:#A3281C;color:#fff;
+    font-size:12.5px;padding:8px 12px;line-height:1.4}
+  #gate{position:fixed;top:0;right:0;bottom:0;left:0;width:100%;height:100%;
+    background:rgba(20,24,31,.55);display:flex;align-items:center;
+    justify-content:center;padding:20px;z-index:2147483000;overflow:auto}
+  #gate[hidden],#errbar[hidden],.catwrap[hidden]{display:none !important}
+  .gatebox{background:#fff;border-radius:4px;padding:22px 22px 18px;max-width:380px;width:100%;
+    box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .gatebox h2{font-size:17px;margin:0 0 4px;letter-spacing:-0.01em}
+  .gatebox p{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.45}
+  .gatebox label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);font-weight:700;margin-bottom:10px}
+  .gatebox label input{display:block;width:100%;margin-top:4px;border:1px solid var(--rule);
+    border-radius:2px;padding:9px 10px;font:inherit;font-size:15px;text-transform:none;letter-spacing:0}
+  .gatebox label input:focus{outline:none;border-color:var(--state);background:#F8FAFD}
+  #gate-go{width:100%;padding:10px;font-size:14px;margin-top:2px;background:var(--ok);border-color:var(--ok)}
+  .gatemsg{font-size:12px;margin:10px 0 0 !important;min-height:16px;color:#A3281C}
+  .gatefoot{font-size:11px;margin:10px 0 0 !important;color:var(--muted)}
+  #resetauth{color:var(--muted)}
+  @media print{ #gate,#errbar{display:none !important} }
+
+  /* Inventory checklist form — structure copied from the Hatzalah BLS form (12-6-22) */
+  @media print{
+    body.form-mode header, body.form-mode .legend, body.form-mode .note-box,
+    body.form-mode .controls, body.form-mode #list, body.form-mode footer,
+    body.form-mode .fmath, body.form-mode .savestate, body.form-mode #protocol{display:none !important}
+    body.form-mode #formdoc{display:block}
+  }
+  #formdoc{font-family:Calibri,Carlito,"Segoe UI",Arial,sans-serif;color:#000;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    padding:0.35in 0.35in 0.3in}
+  .fm-unit{page-break-after:always}
+  .fm-unit:last-child{page-break-after:auto}
+  .fm-title{font-size:12.2pt;font-weight:700;text-align:center;color:#2E75B6;margin:0 0 8pt}
+  .fm-idbox{border:0.75pt solid #000;padding:7pt 10pt;margin:0 0 10pt;font-size:7.5pt;text-align:center}
+  .fm-grid{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  .fm-grid > tbody > tr > td{vertical-align:top;padding:0}
+  .fm-grid > tbody > tr > td.L{width:49%;padding-right:11pt}
+  .fm-grid > tbody > tr > td.R{width:51%}
+  table.fm-blk{width:100%;border-collapse:collapse;table-layout:fixed;margin-bottom:5pt}
+  table.fm-blk col.n{width:auto}
+  table.fm-blk col.q{width:20pt}
+  table.fm-blk col.k{width:14pt}
+  table.fm-blk col.c{width:52pt}
+  table.fm-blk th{font-size:6.2pt;font-weight:700;text-align:left;padding:0.8pt 3pt;
+    border:0.5pt solid #BFBFBF;line-height:1.15;background:#fff}
+  table.fm-blk th.cat{background:#00B0F0;color:#fff;border-color:#00B0F0;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  table.fm-blk th.q,table.fm-blk th.k{text-align:center}
+  table.fm-blk th.blank{border-color:#fff}
+  table.fm-blk td{border:0.5pt solid #BFBFBF;padding:0.8pt 3pt;font-size:6.2pt;line-height:1.08;
+    vertical-align:top}
+  table.fm-blk td.q{text-align:center}
+  table.fm-blk td.k{text-align:center;font-family:"Segoe UI Symbol",DejaVu Sans,Arial,sans-serif}
+  .fm-src{font-size:5pt;color:#808080;font-weight:700;margin-left:2pt;vertical-align:super}
+  .fm-signbox{border:0.75pt solid #000;padding:8pt 10pt;margin-top:12pt;font-size:7.5pt}
+  .fm-signbox + .fm-signbox{margin-top:7pt}
+  .fm-signbox .r{float:right}
+  .fm-foot{font-size:6.5pt;color:#000;margin:8pt 0 0}
+
+  .ckall.on{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+  .tierck{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.5);color:#fff;vertical-align:2px}
+  .tierck:hover{background:#fff;border-color:#fff;color:var(--state)}
+  .tierck.on{background:var(--ok);border-color:var(--ok);color:#fff}
+
+  /* Protocol-style PDF — mirrors HoH Medical Protocols §9.03 layout */
+  #protocol{font-family:"Times New Roman",Times,serif;color:#000;padding:0.35in 0.35in 0.3in}
+  .pr-head{margin-bottom:16pt}
+  .pr-head h1{font-family:inherit;font-size:15pt;font-weight:700;margin:0 0 6pt;letter-spacing:0}
+  .pr-head p{font-size:8.5pt;line-height:1.35;margin:0 0 3pt;color:#000}
+  .pr-key sup{font-weight:700}
+  .pr-sec{page-break-before:always}
+  .pr-sec:first-of-type{page-break-before:auto}
+  .pr-sec h2{font-family:inherit;font-size:11.5pt;font-weight:700;margin:0 0 6pt;
+    background:none;color:#000;padding:0;text-transform:none;letter-spacing:0;border:none}
+  .pr-lead{font-size:9pt;margin:0 0 8pt}
+  .pr-list{column-count:2;column-gap:26pt;list-style:none;margin:0;padding:0;font-size:9pt;line-height:1.5}
+  .pr-list li{break-inside:avoid;padding-left:9pt;text-indent:-9pt;margin-bottom:1pt}
+  .pr-list sup{font-size:6pt;font-weight:700;margin-left:2pt;color:#444}
+  .pr-foot{font-size:8pt;margin-top:14pt;padding-top:6pt;border-top:1px solid #000;
+    column-span:all;break-before:avoid}
+
+  .savestate{font-size:11.5px;color:var(--ok);margin:4px 0 0;padding-left:2px;min-height:15px}
+  .excl{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none}
+  .excl input{cursor:pointer}
+  #publish{background:var(--ok);border-color:var(--ok)}
+  #formbtn{background:var(--state);border-color:var(--state)}
+
+  @media print{
+    body.protocol-mode header,
+    body.protocol-mode .legend,
+    body.protocol-mode .note-box,
+    body.protocol-mode .controls,
+    body.protocol-mode #list,
+    body.protocol-mode .fmath,
+    body.protocol-mode .savestate,
+    body.protocol-mode #formdoc,
+    body.protocol-mode footer{display:none !important}
+    body.protocol-mode #protocol{display:block}
+  }
+
+  footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--rule);font-size:11.5px;color:var(--muted)}
+
+  @media print{
+    .controls,.legend,.note-box,td.notes input,.addrow,td.del,.ckall,.fmath,.chev,.catcount,.savestate{display:none}
+    .catwrap[hidden]{display:block !important}
+    h3.cat{display:block;cursor:auto}
+    .subs{gap:3px 8px}
+    .sub{font-size:8.5px;padding:1px 4px}
+    .prog{display:none}
+    td.notes{width:170px;border-bottom:1px solid var(--rule)}
+    body{font-size:10px}
+    .wrap{max-width:none;padding:0}
+    h2.tier{background:none;color:var(--ink);border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);padding:4px 0}
+    tr{page-break-inside:avoid} h3.cat{page-break-after:avoid}
+    section{page-break-before:always} section:first-of-type{page-break-before:auto}
+  }
+</style>
+</head>
+<body class="">
+<div id="errbar" hidden=""></div>
+<script>
+window.__BUILD__ = "b32 · 2026-07-17 13:46";
+window.addEventListener('error', function(e){
+  var b = document.getElementById('errbar');
+  if (!b) return;
+  b.hidden = false;
+  b.textContent = 'Script error: ' + (e.message || e) +
+    (e.filename ? '  [line ' + e.lineno + ']' : '') + '  — build ' + window.__BUILD__;
+});
+window.addEventListener('unhandledrejection', function(e){
+  var b = document.getElementById('errbar');
+  if (!b) return;
+  b.hidden = false;
+  b.textContent = 'Failed: ' + ((e.reason && e.reason.message) || e.reason) + '  — build ' + window.__BUILD__;
+});
+</script>
+
+<div id="gate" hidden="">
+  <div class="gatebox">
+    <h2>Admin sign-in</h2>
+    <p id="gate-sub">Paste the GitHub token to use this checklist. This device will remember it — you will not be asked again.</p>
+    <label>GitHub token
+      <input id="gate-token" type="password" placeholder="github_pat_..." autocapitalize="off" spellcheck="false">
+    </label>
+    <button class="act" id="gate-go">Continue</button>
+    <p class="gatemsg" id="gate-msg"></p>
+    <p class="gatefoot" id="gate-where"></p>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header>
+  <h1>Ambulance Required Equipment</h1>
+  <p class="sub">The minimum you must carry: State of Texas + City of Houston, merged. Quantities are the <b>higher</b> of the two — carry that number once, not once per agency.</p>
+</header>
+
+<div class="legend">
+  <div class="lg src-s"><b>S — State of Texas</b><span>25 TAC §157.11</span></div>
+  <div class="lg src-c"><b>C — City of Houston</b><span>HHD EMS, Minimum Equipment for Ambulances, Ver 9.16.25</span></div>
+  <div class="lg src-both"><b>S + C — Both</b><span>Required by both. One item satisfies both agencies.</span></div>
+</div>
+
+<div class="note-box">
+  <b>"Our past list" is reference, not requirement.</b> That column shows what Hatzalah's §9.03 (Thestrup, eff. 12/20/24) carried, so you can see where your old list already covers a requirement, falls short, or doesn't mention it. A <span class="gap">GAP</span> tag means your old list had nothing for that item — worth a look, but it's not automatically a violation, since some rows are vehicle or paperwork checks rather than kit.
+</div>
+
+<div class="controls">
+  <button class="tab" data-tier="all" aria-pressed="true">All tiers</button>
+  <button class="tab" data-tier="bls" aria-pressed="false">BLS</button>
+  <button class="tab" data-tier="als" aria-pressed="false">ALS</button>
+  <button class="tab" data-tier="micu" aria-pressed="false">MICU</button>
+  <span style="width:10px"></span>
+  <span class="fgrp">Requires:</span>
+  <button class="filt fa" data-f="all" aria-pressed="true" data-label="All">All (109)</button>
+  <button class="filt fs" data-f="s" data-label="State">State (56)</button>
+  <button class="filt fc" data-f="c" data-label="City">City (103)</button>
+  <span class="fgrp">Overlap:</span>
+  <button class="filt fb" data-f="both" data-label="Both">Both (50)</button>
+  <button class="filt fs" data-f="sonly" data-label="State only">State only (6)</button>
+  <button class="filt fc" data-f="conly" data-label="City only">City only (53)</button>
+  <div class="spacer"></div>
+  <input type="search" id="q" placeholder="Search equipment…">
+  <button class="act" id="publish">Publish to site</button>
+  <button class="act ghost" id="foldall">Collapse all</button>
+  <button class="act ghost" id="edit">Edit list</button>
+  <button class="act" id="xlsx">Download Excel</button>
+  <button class="act" id="formbtn">Download checklist form</button>
+  <button class="act ghost" id="pdf">Save as PDF</button>
+  <label class="excl"><input type="checkbox" id="onlychk"> PDF: only what I checked</label>
+  <button class="act ghost" id="clear">Clear all checks &amp; notes</button>
+  <span class="count" id="count"></span>
+</div>
+
+<p class="fmath" id="fmath"></p>
+<p class="savestate" id="savestate"></p>
+
+
+<div id="list"></div>
+<div id="protocol" aria-hidden="true"></div>
+<div id="formdoc" aria-hidden="true"></div>
+<script id="saved-state" type="application/json">{"savedAt":"7/17/2026, 10:49:00 AM","t":1784303340286,"rows":[{"id":1,"tier":"bls","cat":"Vehicle Requirements","name":"Current registration","qty":"1","src":"c","note":"","ours":"Current Vehicle Inspection Sticker","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":2,"tier":"bls","cat":"Vehicle Requirements","name":"Name of service on both sides","qty":"—","src":"sc","note":"State §157.11(e)(7): min 2-inch contrasting lettering, plus \"TX\" + license number","ours":"Part of ambulance ","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":3,"tier":"bls","cat":"Vehicle Requirements","name":"No smoking signs in front and rear","qty":"2","src":"sc","note":"","ours":"No-Smoking Signs (1 Cab & 1 Patient Area)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Front (cab)","have":false},{"label":"Rear (patient compartment)","have":false}]},{"id":4,"tier":"bls","cat":"Vehicle Requirements","name":"Tires in good condition","qty":"4","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":5,"tier":"bls","cat":"Vehicle Requirements","name":"Doors in acceptable condition","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":6,"tier":"bls","cat":"Vehicle Requirements","name":"All items stored securely","qty":"—","src":"sc","note":"State §157.11(j)(2): secured at time of patient care","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":7,"tier":"bls","cat":"Vehicle Requirements","name":"Dome lights","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":8,"tier":"bls","cat":"Vehicle Requirements","name":"Seat belts front / rear","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":9,"tier":"bls","cat":"Vehicle Requirements","name":"Emergency lights","qty":"—","src":"sc","note":"State §157.11(k)(8)(B): operable emergency warning devices","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":10,"tier":"bls","cat":"Vehicle Requirements","name":"Siren","qty":"—","src":"sc","note":"State §157.11(k)(8)(B): operable emergency warning devices","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":11,"tier":"bls","cat":"Vehicle Requirements","name":"Vehicle horn","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":12,"tier":"bls","cat":"Vehicle Requirements","name":"Vehicle lights","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":13,"tier":"bls","cat":"Vehicle Requirements","name":"Windshield free of obstructions","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":14,"tier":"bls","cat":"Vehicle Requirements","name":"Communication equipment","qty":"—","src":"sc","note":"State §157.11(e)(5): capable of contacting appropriate medical resources","ours":"Radio (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":15,"tier":"bls","cat":"Vehicle Requirements","name":"Steps and body free of major damage","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":16,"tier":"bls","cat":"Vehicle Requirements","name":"Positive locks on cabinets and seats","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":17,"tier":"bls","cat":"Vehicle Requirements","name":"Free from electrical hazards","qty":"—","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":18,"tier":"bls","cat":"Vehicle Requirements","name":"Clean equipment patient area","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":19,"tier":"bls","cat":"Vehicle Requirements","name":"Environmental system — heating and cooling","qty":"—","src":"s","note":"NOT ON HHD SHEET. State §157.11(e)(4): must protect medications per manufacturer spec","ours":"Air Conditioner/Heater","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":20,"tier":"bls","cat":"Documentation","name":"Current protocols signed by medical director","qty":"1","src":"sc","note":"","ours":"Medical Treatment Guidelines signed by MD (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":21,"tier":"bls","cat":"Documentation","name":"Current TDSHS vehicle authorization","qty":"1","src":"sc","note":"State: original, correct level, displayed in patient compartment","ours":"Current TDSHS License","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":22,"tier":"bls","cat":"Documentation","name":"Current proof of insurance","qty":"1","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":23,"tier":"bls","cat":"Documentation","name":"CoH ambulance service permit","qty":"1","src":"c","note":"","ours":"City of Houston Permit (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":24,"tier":"bls","cat":"Documentation","name":"CoH ambulance driver's permit","qty":"1","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":25,"tier":"bls","cat":"Documentation","name":"Vehicle is listed on vehicle information page","qty":"—","src":"c","note":"","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":26,"tier":"bls","cat":"Documentation","name":"Equipment, supply and medication list available to crew","qty":"1","src":"s","note":"NOT ON HHD SHEET. State §157.11(k)(8)(A): current and complete","ours":"Yes","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":27,"tier":"bls","cat":"Safety Equipment","name":"Emergency road triangles or non-flammable reflective devices","qty":"3","src":"c","note":"","ours":"Emergency Reflective Triangle (3)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":28,"tier":"bls","cat":"Safety Equipment","name":"Fire extinguisher- mounted, tagged, accessible from patient area","qty":"1","src":"sc","note":"State §157.11(k)(8)(G) adds: 5-pound ABC, currently inspected","ours":"Fire Extinguisher Mounted and Tagged (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"5-lb ABC","have":false},{"label":"Mounted","have":false},{"label":"Tagged / currently inspected","have":false},{"label":"Accessible from patient area","have":false}]},{"id":29,"tier":"bls","cat":"Safety Equipment","name":"Flashlight with charger or extra batteries","qty":"1","src":"sc","note":"State: portable, battery-powered — a pen-light does not satisfy","ours":"Flashlight (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":30,"tier":"bls","cat":"Safety Equipment","name":"Current HAZMAT ERG","qty":"1","src":"sc","note":"Both require the CURRENT edition — ERG 2024 is current, next due 2028. Electronic version acceptable to state.","ours":"ERG, 2016 or newer (1) — two editions stale","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":31,"tier":"bls","cat":"Safety Equipment","name":"Reflective vests","qty":"2","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":32,"tier":"bls","cat":"Safety Equipment","name":"Powered equipment: manual feature, spare batteries, or alternate power","qty":"—","src":"s","note":"NOT ON HHD SHEET. State §157.11(j)(2): applies to every powered patient-care device","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":33,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"KED or short board","qty":"1","src":"sc","note":"","ours":"Extrication Device (KED) (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":34,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Long spine board","qty":"1","src":"sc","note":"State §157.11(k)(1)(J): spinal immobilization device","ours":"Backboard (long) w/ Tape (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":35,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Cervical collars infant- adult","qty":"1 ea","src":"sc","note":"State: rigid cervical immobilization device","ours":"Adult (2), Pediatric (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Infant","have":false},{"label":"Pediatric","have":false},{"label":"Adult","have":false}]},{"id":36,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Stretcher","qty":"1","src":"sc","note":"State: patient fully restrained per manufacturer recommendation","ours":"Multi-Level Stretcher (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":37,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Stair chair or mega mover","qty":"1","src":"c","note":"","ours":"Stair Chair (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":38,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Pediatric restraint System","qty":"1","src":"c","note":"","ours":"Car Seat or Equivalent (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":39,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Extremity splint","qty":"2","src":"sc","note":"","ours":"Splint Pack or 2 short / 2 med / 2 long","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":40,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Femoral (traction) splint","qty":"1","src":"c","note":"","ours":"Traction Splint for Adult & Child (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":41,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Pelvis stabilizing device or material","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":42,"tier":"bls","cat":"Transportation, Immobilization and Splinting","name":"Equipment to meet special patient needs","qty":"—","src":"s","note":"NOT ON HHD SHEET. State §157.11(k)(1)(L): defined by your medical director","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":43,"tier":"bls","cat":"Oxygen & Suction","name":"Mounted oxygen cylinder (>200 psi)","qty":"1","src":"sc","note":"","ours":"\"H\" Cylinder w/ Regulator (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":44,"tier":"bls","cat":"Oxygen & Suction","name":"Portable oxygen cylinder w/ regulator","qty":"1","src":"sc","note":"","ours":"\"D\" Cylinder (2) + \"D\" Regulator (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":45,"tier":"bls","cat":"Oxygen & Suction","name":"Nasal cannula pediatric - adult","qty":"1 ea","src":"sc","note":"","ours":"Adult (2), Pediatric (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Pediatric","have":false},{"label":"Adult","have":false}]},{"id":46,"tier":"bls","cat":"Oxygen & Suction","name":"Non-rebreather or simple face mask pediatric - adult","qty":"1 ea","src":"sc","note":"","ours":"NRB Adult (2), NRB Child (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Pediatric","have":false},{"label":"Adult","have":false}]},{"id":47,"tier":"bls","cat":"Oxygen & Suction","name":"BVM infant - adult","qty":"1 ea","src":"sc","note":"State: bag valve mask units, oxygen capable","ours":"Adult (1), Child (1), Infant w/ neonatal mask (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Infant","have":false},{"label":"Child","have":false},{"label":"Adult","have":false}]},{"id":48,"tier":"bls","cat":"Oxygen & Suction","name":"OPA (40mm, 60mm, 80mm, 90mm, 100mm, &110mm)","qty":"1 ea","src":"sc","note":"","ours":"Adult (2), Child (2), Infant (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"40mm","have":false},{"label":"60mm","have":false},{"label":"80mm","have":false},{"label":"90mm","have":false},{"label":"100mm","have":false},{"label":"110mm","have":false}]},{"id":49,"tier":"bls","cat":"Oxygen & Suction","name":"NPA (16fr or smaller, 18fr-24fr, & 26fr or larger)","qty":"1 ea","src":"c","note":"","ours":"Multiple Sizes (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"16fr or smaller","have":false},{"label":"18fr-24fr","have":false},{"label":"26fr or larger","have":false}]},{"id":50,"tier":"bls","cat":"Oxygen & Suction","name":"Mounted and Portable Suction w/ intact cannister","qty":"1","src":"sc","note":"","ours":"Wall Mount (1), Portable (1), Spare Canister (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Mounted / wall unit","have":false},{"label":"Portable unit","have":false},{"label":"Intact cannister","have":false}]},{"id":51,"tier":"bls","cat":"Oxygen & Suction","name":"Suction catheter (5 or 6, 8 or 10, 12 or 14, 16 or 18)","qty":"1 ea.","src":"c","note":"","ours":"Multiple Sizes","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"5 or 6","have":false},{"label":"8 or 10","have":false},{"label":"12 or 14","have":false},{"label":"16 or 18","have":false}]},{"id":52,"tier":"bls","cat":"Oxygen & Suction","name":"Rigid suction catheter","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":53,"tier":"bls","cat":"Trauma & Bandaging","name":"Commercial arterial tourniquet","qty":"2","src":"sc","note":"","ours":"Tourniquet (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":54,"tier":"bls","cat":"Trauma & Bandaging","name":"4x4 sterile","qty":"25","src":"sc","note":"","ours":"Dressing, 4x4, Sterile (8)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":55,"tier":"bls","cat":"Trauma & Bandaging","name":"4x4 non- sterile","qty":"25","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":56,"tier":"bls","cat":"Trauma & Bandaging","name":"Adhesive bandage","qty":"1 bx","src":"sc","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":57,"tier":"bls","cat":"Trauma & Bandaging","name":"Adhesive tape","qty":"2","src":"sc","note":"","ours":"Tape, Adhesive (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":58,"tier":"bls","cat":"Trauma & Bandaging","name":"Occlusive dressing / chest seal","qty":"2","src":"sc","note":"","ours":"Chest Seal (2), Dressing Occlusive (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":59,"tier":"bls","cat":"Trauma & Bandaging","name":"Fluid for irrigation of wounds","qty":"1","src":"c","note":"","ours":"Sterile Saline or Water Bottle (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":60,"tier":"bls","cat":"Trauma & Bandaging","name":"Elastic (ACE) bandage","qty":"2","src":"sc","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":61,"tier":"bls","cat":"Infection Control","name":"Hand cleaner / sanitizer","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":62,"tier":"bls","cat":"Infection Control","name":"Mounted sharps container","qty":"1","src":"sc","note":"","ours":"Sharps Container (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":63,"tier":"bls","cat":"Infection Control","name":"Emesis bag, basin, or bed pan","qty":"2 ea","src":"c","note":"","ours":"Disposable Bed Pan (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":64,"tier":"bls","cat":"Infection Control","name":"Biohazard bags","qty":"1","src":"sc","note":"","ours":"Bio-Hazard Bag (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":65,"tier":"bls","cat":"Infection Control","name":"General trash bags","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":66,"tier":"bls","cat":"Infection Control","name":"Disinfectant wipes or solution","qty":"1","src":"c","note":"","ours":"Disinfectant/Cleaner (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":67,"tier":"bls","cat":"Infection Control","name":"Examination gloves","qty":"1 bx.","src":"sc","note":"State: protective, non-porous","ours":"1 box each XL, Lg, Med","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":68,"tier":"bls","cat":"Infection Control","name":"Eye protection","qty":"2","src":"sc","note":"","ours":"Eyewear, Protective (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":69,"tier":"bls","cat":"Infection Control","name":"Gowns","qty":"2","src":"sc","note":"State: medical protective gowns or equivalent","ours":"Gown, Protective (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":70,"tier":"bls","cat":"Infection Control","name":"Surgical masks","qty":"2","src":"c","note":"","ours":"Masks, Protective (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":71,"tier":"bls","cat":"Infection Control","name":"N95 masks","qty":"2","src":"sc","note":"State §157.11(k)(8)(C)(iii) is stricter: one per crew member. Carry the greater of 2 or crew size.","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":72,"tier":"bls","cat":"Infection Control","name":"Personal cleansing supplies","qty":"—","src":"s","note":"NOT ON HHD SHEET. State §157.11(k)(8)(C)(v)","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":73,"tier":"bls","cat":"Vitals & Diagnostics","name":"Glucometer w/ test strips & disposable lancets","qty":"1","src":"sc","note":"","ours":"Blood Glucometer Kit (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":74,"tier":"bls","cat":"Vitals & Diagnostics","name":"Oral glucose","qty":"1","src":"c","note":"","ours":"Glucose, Oral (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":75,"tier":"bls","cat":"Vitals & Diagnostics","name":"Pulse oximeter with pediatric - adult capabilities","qty":"1","src":"sc","note":"","ours":"Pulse Oximeter (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":76,"tier":"bls","cat":"Vitals & Diagnostics","name":"Stethoscope","qty":"1","src":"sc","note":"","ours":"Stethoscope (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":77,"tier":"bls","cat":"Vitals & Diagnostics","name":"Blood pressure cuffs infant - adult","qty":"1 ea","src":"sc","note":"","ours":"Adult (1), Child (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Infant","have":false},{"label":"Child","have":false},{"label":"Adult","have":false}]},{"id":78,"tier":"bls","cat":"Vitals & Diagnostics","name":"Thermometer (w/ covers if oral)","qty":"1","src":"sc","note":"","ours":"Thermometer (1) + Probes (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Thermometer","have":false},{"label":"Covers (if oral)","have":false}]},{"id":79,"tier":"bls","cat":"Miscellaneous","name":"Trauma shears","qty":"1","src":"c","note":"","ours":"Trauma Shears (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":80,"tier":"bls","cat":"Miscellaneous","name":"Triage marking system or 10 tags","qty":"25","src":"sc","note":"MERGED: HHD sheet says 10 tags; state §157.11(k)(8)(J) requires 25 — or documented RAC triage plan participation","ours":"Disaster Tags (10)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":81,"tier":"bls","cat":"Miscellaneous","name":"Cold pack","qty":"2","src":"c","note":"","ours":"Cold Pack (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":82,"tier":"bls","cat":"Miscellaneous","name":"Heat pack","qty":"2","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":83,"tier":"bls","cat":"Miscellaneous","name":"Emergency blanket","qty":"2","src":"c","note":"","ours":"Blanket (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":84,"tier":"bls","cat":"Miscellaneous","name":"Alcohol swabs or topical antiseptic towelettes","qty":"20","src":"c","note":"","ours":"Alcohol Preps (10)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":85,"tier":"bls","cat":"Miscellaneous","name":"Pediatric dosing","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":86,"tier":"bls","cat":"Miscellaneous","name":"OB Kit w/ baby bunting and bulb suction","qty":"1","src":"c","note":"","ours":"O.B. Kit, Sterile (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":87,"tier":"bls","cat":"Cardiovascular Care","name":"AED w/ no errors","qty":"1","src":"sc","note":"State: external cardiac defibrillator appropriate to staffing level","ours":"AED (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":88,"tier":"bls","cat":"Cardiovascular Care","name":"Spare battery","qty":"1","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":89,"tier":"bls","cat":"Cardiovascular Care","name":"Adult & Pediatric defibrillator pads (compatible with AED)","qty":"2ea","src":"sc","note":"State §157.11(k)(1)(O): two sets adult AND two sets pediatric","ours":"AED Pads Adult (1), AED Pads Infant/Child (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Adult — set 1","have":false},{"label":"Adult — set 2","have":false},{"label":"Pediatric — set 1","have":false},{"label":"Pediatric — set 2","have":false}]},{"id":90,"tier":"bls","cat":"Medications","name":"Epinephrine for anaphylaxis w/ delivery capability (pediatric & adult)","qty":"1ea","src":"sc","note":"State §157.11(k)(1)(Q): auto injector or similar device","ours":"EpiPen Adult (1) + EpiPen Jr (1), or Certadose Kit","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Pediatric","have":false},{"label":"Adult","have":false}]},{"id":91,"tier":"bls","cat":"Medications","name":"Filter needles if using ampule","qty":"1ea","src":"c","note":"","ours":"—","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":92,"tier":"bls","cat":"Medications","name":"Naloxone w/ appropriate delivery system","qty":"1","src":"c","note":"","ours":"Naloxone Single Dose Spray (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":93,"tier":"bls","cat":"Medications","name":"Other medications per protocols w/ appropriate delivery devices","qty":"—","src":"sc","note":"State §157.11(k)(1)(N)","ours":"Albuterol (3), Nebulizers (4)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":94,"tier":"bls","cat":"Medications","name":"Pediatric and neonatal equipment per endorsed national standards","qty":"—","src":"s","note":"NOT A WHITE BOX — from the HHD sheet footnote and state §157.11(e)(1). Must sit inside the MD-approved list at every level.","ours":"Infant Insulating Device (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":95,"tier":"als","cat":"Intubation & Airways","name":"Magill forceps","qty":"1","src":"c","note":"","ours":"Adult (1), Pediatric (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":96,"tier":"als","cat":"Intubation & Airways","name":"Supraglottic airway devices infant - adult","qty":"1 ea","src":"sc","note":"State §157.11(k)(2)(C): advanced airway equipment","ours":"iGel Supraglottic Device (4 sizes)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Infant","have":false},{"label":"Child","have":false},{"label":"Adult","have":false}]},{"id":97,"tier":"als","cat":"Intubation & Airways","name":"Chest decompression needle 14g x 1.5\" or greater or other commercially available size","qty":"2","src":"c","note":"","ours":"Chest decompression needle (3 sizes)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":98,"tier":"als","cat":"Intubation & Airways","name":"Continuous waveform capnography","qty":"—","src":"sc","note":"State §157.11(k)(7): required when performing or monitoring ET intubation","ours":"ETCO₂ Filterline (1), ETCO₂ Nasal Cannula (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":99,"tier":"als","cat":"Intubation & Airways","name":"Laryngoscope handle & blades (size 0 -4)","qty":"1 ea","src":"c","note":"HHD sheet: under \"If not using supraglottic:\"","ours":"Handle (2), Blades Adult/Peds/Infant (1 ea), Spare Battery (2)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Handle","have":false},{"label":"Blade 0","have":false},{"label":"Blade 1","have":false},{"label":"Blade 2","have":false},{"label":"Blade 3","have":false},{"label":"Blade 4","have":false}]},{"id":100,"tier":"als","cat":"Intubation & Airways","name":"ET tubes 3.0- 8.0","qty":"1 ea","src":"c","note":"HHD sheet: under \"If not using supraglottic:\"","ours":"MICU: cuffed 6.0–9.0 (3), uncuffed 2.5–5.5 (3)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"3.0","have":false},{"label":"3.5","have":false},{"label":"4.0","have":false},{"label":"4.5","have":false},{"label":"5.0","have":false},{"label":"5.5","have":false},{"label":"6.0","have":false},{"label":"6.5","have":false},{"label":"7.0","have":false},{"label":"7.5","have":false},{"label":"8.0","have":false}]},{"id":101,"tier":"als","cat":"Medication Delivery & Vascular Access","name":"Isotonic crystalloid fluids per protocol","qty":"—","src":"sc","note":"State §157.11(k)(2)(A)(v): IV initiation and maintenance of fluids","ours":"Sodium Chloride, IV Bag (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":102,"tier":"als","cat":"Medication Delivery & Vascular Access","name":"Administration tubing (macro & micro)","qty":"1 ea","src":"c","note":"","ours":"Micro Drip (1), Regular Macro Drip (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"Macro drip","have":false},{"label":"Micro drip","have":false}]},{"id":103,"tier":"als","cat":"Medication Delivery & Vascular Access","name":"Other medications per protocols w/ appropriate delivery devices","qty":"—","src":"c","note":"","ours":"Aspirin 81mg (24), Ipratropium (3), Narcan 2mg (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":104,"tier":"micu","cat":"MICU equipment & medications","name":"Cardiac monitor w/ ECG acquisition and trans-cutaneous pacing","qty":"—","src":"sc","note":"State §157.11(k)(3)(C) adds: transmitting 12-lead capability","ours":"ECG Monitor/Defibrillator (1)","have":false,"notes":"","added":false,"off":false,"subs":[{"label":"ECG acquisition","have":false},{"label":"Trans-cutaneous pacing","have":false},{"label":"Transmitting 12-lead (state)","have":false}]},{"id":105,"tier":"micu","cat":"MICU equipment & medications","name":"Extra batteries for monitor","qty":"1","src":"c","note":"","ours":"ECG Monitor Spare Battery (2)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":106,"tier":"micu","cat":"MICU equipment & medications","name":"Extra paper","qty":"1","src":"c","note":"","ours":"ECG Paper (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":107,"tier":"micu","cat":"MICU equipment & medications","name":"Electrodes","qty":"1 set","src":"c","note":"","ours":"ECG Electrode (10)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":108,"tier":"micu","cat":"MICU equipment & medications","name":"Specialized equipment per protocols","qty":"—","src":"c","note":"","ours":"Video Laryngoscope (1), EZ-IO (1)","have":false,"notes":"","added":false,"off":false,"subs":[]},{"id":109,"tier":"micu","cat":"MICU equipment & medications","name":"Other medications per protocol w/ appropriate delivery devices","qty":"—","src":"sc","note":"State §157.11(k)(3)(D): pharmaceuticals as required by MD protocols","ours":"Full MICU drug box — see §9.03(C)","have":false,"notes":"","added":false,"off":false,"subs":[]}]}</script>
+
+<footer>
+  Build b32 · 2026-07-17 13:46· <a href="#" id="resetauth">Sign out of this device</a> ·
+  Sources: 25 TAC §157.11 (current through Reg. 50 No. 26, Jun 27 2025) and Houston Health Department EMS Program, "Minimum Equipment for Ambulances," Ver 9.16.25. Reference column: Hatzalah of Houston Medical Protocols §9.03, Lars Thestrup MD, eff. 12/20/2024. Working aid, not a legal opinion — the controlling documents are the rule, the current HHD sheet, and your medical director's signed equipment list. State §157.11(c)(7)(R) also points to an equipment checklist on the DSHS provider application, which is not reflected here.
+</footer>
+
+</div>
+
+<script>
+// [item, requiredQty, src, note, ourPastList]
+// src: "s" state only | "c" city only | "sc" both
+const DATA = {
+  bls: {
+    note: "Required on every ambulance. Titles and categories mirror the HHD sheet (Ver 9.16.25) exactly. State §157.11(k)(1) + (k)(8) rows are marked S.",
+    cats: {
+      "Vehicle Requirements": [
+        ["Current registration","—","c","","Current Vehicle Inspection Sticker"],
+        ["Name of service on both sides","—","sc","State §157.11(e)(7): min 2-inch contrasting lettering, plus \"TX\" + license number","—"],
+        ["No smoking signs in front and rear","—","sc","","No-Smoking Signs (1 Cab & 1 Patient Area)"],
+        ["Tires in good condition","—","c","","—"],
+        ["Doors in acceptable condition","—","c","","—"],
+        ["All items stored securely","—","sc","State §157.11(j)(2): secured at time of patient care","—"],
+        ["Dome lights","—","c","","—"],
+        ["Seat belts front / rear","—","c","","—"],
+        ["Emergency lights","—","sc","State §157.11(k)(8)(B): operable emergency warning devices","—"],
+        ["Siren","—","sc","State §157.11(k)(8)(B): operable emergency warning devices","—"],
+        ["Vehicle horn","—","c","","—"],
+        ["Vehicle lights","—","c","","—"],
+        ["Windshield free of obstructions","—","c","","—"],
+        ["Communication equipment","—","sc","State §157.11(e)(5): capable of contacting appropriate medical resources","Radio (1)"],
+        ["Steps and body free of major damage","—","c","","—"],
+        ["Positive locks on cabinets and seats","—","c","","—"],
+        ["Free from electrical hazards","—","c","","—"],
+        ["Clean equipment patient area","—","c","","—"],
+        ["Environmental system — heating and cooling","—","s","NOT ON HHD SHEET. State §157.11(e)(4): must protect medications per manufacturer spec","Air Conditioner/Heater"]
+      ],
+      "Documentation": [
+        ["Current protocols signed by medical director","—","sc","","Medical Treatment Guidelines signed by MD (1)"],
+        ["Current TDSHS vehicle authorization","—","sc","State: original, correct level, displayed in patient compartment","Current TDSHS License"],
+        ["Current proof of insurance","—","c","","—"],
+        ["CoH ambulance service permit","—","c","","City of Houston Permit (1)"],
+        ["CoH ambulance driver's permit","—","c","","—"],
+        ["Vehicle is listed on vehicle information page","—","c","","—"],
+        ["Equipment, supply and medication list available to crew","—","s","NOT ON HHD SHEET. State §157.11(k)(8)(A): current and complete","—"]
+      ],
+      "Safety Equipment": [
+        ["Emergency road triangles or non-flammable reflective devices","3","c","","Emergency Reflective Triangle (3)"],
+        ["Fire extinguisher- mounted, tagged, accessible from patient area","1","sc","State §157.11(k)(8)(G) adds: 5-pound ABC, currently inspected","Fire Extinguisher Mounted and Tagged (1)"],
+        ["Flashlight with charger or extra batteries","1","sc","State: portable, battery-powered — a pen-light does not satisfy","Flashlight (1)"],
+        ["Current HAZMAT ERG","1","sc","Both require the CURRENT edition — ERG 2024 is current, next due 2028. Electronic version acceptable to state.","ERG, 2016 or newer (1) — two editions stale"],
+        ["Reflective vests","2","c","","—"],
+        ["Powered equipment: manual feature, spare batteries, or alternate power","—","s","NOT ON HHD SHEET. State §157.11(j)(2): applies to every powered patient-care device","—"]
+      ],
+      "Transportation, Immobilization and Splinting": [
+        ["KED or short board","1","sc","","Extrication Device (KED) (1)"],
+        ["Long spine board","1","sc","State §157.11(k)(1)(J): spinal immobilization device","Backboard (long) w/ Tape (1)"],
+        ["Cervical collars infant- adult","1 ea","sc","State: rigid cervical immobilization device","Adult (2), Pediatric (2)"],
+        ["Stretcher","1","sc","State: patient fully restrained per manufacturer recommendation","Multi-Level Stretcher (1)"],
+        ["Stair chair or mega mover","1","c","","Stair Chair (1)"],
+        ["Pediatric restraint System","1","c","","Car Seat or Equivalent (1)"],
+        ["Extremity splint","2","sc","","Splint Pack or 2 short / 2 med / 2 long"],
+        ["Femoral (traction) splint","1","c","","Traction Splint for Adult & Child (1)"],
+        ["Pelvis stabilizing device or material","1","c","","—"],
+        ["Equipment to meet special patient needs","—","s","NOT ON HHD SHEET. State §157.11(k)(1)(L): defined by your medical director","—"]
+      ],
+      "Oxygen & Suction": [
+        ["Mounted oxygen cylinder (>200 psi)","1","sc","","\"H\" Cylinder w/ Regulator (1)"],
+        ["Portable oxygen cylinder w/ regulator","1","sc","","\"D\" Cylinder (2) + \"D\" Regulator (1)"],
+        ["Nasal cannula pediatric - adult","1 ea","sc","","Adult (2), Pediatric (2)"],
+        ["Non-rebreather or simple face mask pediatric - adult","1 ea","sc","","NRB Adult (2), NRB Child (2)"],
+        ["BVM infant - adult","1 ea","sc","State: bag valve mask units, oxygen capable","Adult (1), Child (1), Infant w/ neonatal mask (1)"],
+        ["OPA (40mm, 60mm, 80mm, 90mm, 100mm, &110mm)","1 ea","sc","","Adult (2), Child (2), Infant (2)"],
+        ["NPA (16fr or smaller, 18fr-24fr, & 26fr or larger)","1 ea","c","","Multiple Sizes (2)"],
+        ["Mounted and Portable Suction w/ intact cannister","1","sc","","Wall Mount (1), Portable (1), Spare Canister (1)"],
+        ["Suction catheter (5 or 6, 8 or 10, 12 or 14, 16 or 18)","1 ea.","c","","Multiple Sizes"],
+        ["Rigid suction catheter","1","c","","—"]
+      ],
+      "Trauma & Bandaging": [
+        ["Commercial arterial tourniquet","2","sc","","Tourniquet (2)"],
+        ["4x4 sterile","25","sc","","Dressing, 4x4, Sterile (8)"],
+        ["4x4 non- sterile","25","c","","—"],
+        ["Adhesive bandage","1 bx","sc","","—"],
+        ["Adhesive tape","2","sc","","Tape, Adhesive (2)"],
+        ["Occlusive dressing / chest seal","2","sc","","Chest Seal (2), Dressing Occlusive (1)"],
+        ["Fluid for irrigation of wounds","1","c","","Sterile Saline or Water Bottle (1)"],
+        ["Elastic (ACE) bandage","2","sc","","—"]
+      ],
+      "Infection Control": [
+        ["Hand cleaner / sanitizer","1","c","","—"],
+        ["Mounted sharps container","1","sc","","Sharps Container (1)"],
+        ["Emesis bag, basin, or bed pan","2 ea","c","","Disposable Bed Pan (1)"],
+        ["Biohazard bags","1","sc","","Bio-Hazard Bag (2)"],
+        ["General trash bags","1","c","","—"],
+        ["Disinfectant wipes or solution","1","c","","Disinfectant/Cleaner (1)"],
+        ["Examination gloves","1 bx.","sc","State: protective, non-porous","1 box each XL, Lg, Med"],
+        ["Eye protection","2","sc","","Eyewear, Protective (2)"],
+        ["Gowns","2","sc","State: medical protective gowns or equivalent","Gown, Protective (2)"],
+        ["Surgical masks","2","c","","Masks, Protective (2)"],
+        ["N95 masks","2","sc","State §157.11(k)(8)(C)(iii) is stricter: one per crew member. Carry the greater of 2 or crew size.","—"],
+        ["Personal cleansing supplies","—","s","NOT ON HHD SHEET. State §157.11(k)(8)(C)(v)","—"]
+      ],
+      "Vitals & Diagnostics": [
+        ["Glucometer w/ test strips & disposable lancets","1","sc","","Blood Glucometer Kit (1)"],
+        ["Oral glucose","1","c","","Glucose, Oral (1)"],
+        ["Pulse oximeter with pediatric - adult capabilities","1","sc","","Pulse Oximeter (1)"],
+        ["Stethoscope","1","sc","","Stethoscope (1)"],
+        ["Blood pressure cuffs infant - adult","1 ea","sc","","Adult (1), Child (1)"],
+        ["Thermometer (w/ covers if oral)","1","sc","","Thermometer (1) + Probes (2)"]
+      ],
+      "Miscellaneous": [
+        ["Trauma shears","1","c","","Trauma Shears (2)"],
+        ["Triage marking system or 10 tags","25","sc","MERGED: HHD sheet says 10 tags; state §157.11(k)(8)(J) requires 25 — or documented RAC triage plan participation","Disaster Tags (10)"],
+        ["Cold pack","2","c","","Cold Pack (2)"],
+        ["Heat pack","2","c","","—"],
+        ["Emergency blanket","2","c","","Blanket (2)"],
+        ["Alcohol swabs or topical antiseptic towelettes","20","c","","Alcohol Preps (10)"],
+        ["Pediatric dosing","1","c","","—"],
+        ["OB Kit w/ baby bunting and bulb suction","1","c","","O.B. Kit, Sterile (1)"]
+      ],
+      "Cardiovascular Care": [
+        ["AED w/ no errors","1","sc","State: external cardiac defibrillator appropriate to staffing level","AED (1)"],
+        ["Spare battery","1","c","","—"],
+        ["Adult & Pediatric defibrillator pads (compatible with AED)","2ea","sc","State §157.11(k)(1)(O): two sets adult AND two sets pediatric","AED Pads Adult (1), AED Pads Infant/Child (1)"]
+      ],
+      "Medications": [
+        ["Epinephrine for anaphylaxis w/ delivery capability (pediatric & adult)","1ea","sc","State §157.11(k)(1)(Q): auto injector or similar device","EpiPen Adult (1) + EpiPen Jr (1), or Certadose Kit"],
+        ["Filter needles if using ampule","1ea","c","","—"],
+        ["Naloxone w/ appropriate delivery system","1","c","","Naloxone Single Dose Spray (2)"],
+        ["Other medications per protocols w/ appropriate delivery devices","—","sc","State §157.11(k)(1)(N)","Albuterol (3), Nebulizers (4)"],
+        ["Pediatric and neonatal equipment per endorsed national standards","—","s","NOT A WHITE BOX — from the HHD sheet footnote and state §157.11(e)(1). Must sit inside the MD-approved list at every level.","Infant Insulating Device (1)"]
+      ]
+    }
+  },
+  als: {
+    note: "Everything in BLS, PLUS the following. State §157.11(k)(2): all BLS equipment + advanced airway equipment. City: ALS section.",
+    cats: {
+      "Intubation & Airways": [
+        ["Magill forceps","1","c","","Adult (1), Pediatric (1)"],
+        ["Supraglottic airway devices infant - adult","1 ea","sc","State §157.11(k)(2)(C): advanced airway equipment","iGel Supraglottic Device (4 sizes)"],
+        ["Chest decompression needle 14g x 1.5\" or greater or other commercially available size","2","c","","Chest decompression needle (3 sizes)"],
+        ["Continuous waveform capnography","—","sc","State §157.11(k)(7): required when performing or monitoring ET intubation","ETCO₂ Filterline (1), ETCO₂ Nasal Cannula (1)"],
+        ["Laryngoscope handle & blades (size 0 -4)","1 ea","c","HHD sheet: under \"If not using supraglottic:\"","Handle (2), Blades Adult/Peds/Infant (1 ea), Spare Battery (2)"],
+        ["ET tubes 3.0- 8.0","1 ea","c","HHD sheet: under \"If not using supraglottic:\"","MICU: cuffed 6.0–9.0 (3), uncuffed 2.5–5.5 (3)"]
+      ],
+      "Medication Delivery & Vascular Access": [
+        ["Isotonic crystalloid fluids per protocol","—","sc","State §157.11(k)(2)(A)(v): IV initiation and maintenance of fluids","Sodium Chloride, IV Bag (2)"],
+        ["Administration tubing (macro & micro)","1 ea","c","","Micro Drip (1), Regular Macro Drip (1)"],
+        ["Other medications per protocols w/ appropriate delivery devices","—","c","","Aspirin 81mg (24), Ipratropium (3), Narcan 2mg (2)"]
+      ]
+    }
+  },
+  micu: {
+    note: "Everything in BLS and ALS, PLUS the following. State §157.11(k)(3): all BLS and ALS equipment + transmitting 12-lead monitor-defibrillator + pharmaceuticals per MD protocol. City: MICU section.",
+    cats: {
+      "MICU equipment & medications": [
+        ["Cardiac monitor w/ ECG acquisition and trans-cutaneous pacing","—","sc","State §157.11(k)(3)(C) adds: transmitting 12-lead capability","ECG Monitor/Defibrillator (1)"],
+        ["Extra batteries for monitor","1","c","","ECG Monitor Spare Battery (2)"],
+        ["Extra paper","1","c","","ECG Paper (1)"],
+        ["Electrodes","1 set","c","","ECG Electrode (10)"],
+        ["Specialized equipment per protocols","—","c","","Video Laryngoscope (1), EZ-IO (1)"],
+        ["Other medications per protocol w/ appropriate delivery devices","—","sc","State §157.11(k)(3)(D): pharmaceuticals as required by MD protocols","Full MICU drug box — see §9.03(C)"]
+      ]
+    }
+  }
+};
+
+// Sizes / parts that a single HHD box actually expands into.
+// The box title stays exactly as printed on the sheet; these are the checkboxes inside it.
+const SUBS = {
+  'No smoking signs in front and rear': ['Front (cab)','Rear (patient compartment)'],
+  'Fire extinguisher- mounted, tagged, accessible from patient area': ['5-lb ABC','Mounted','Tagged / currently inspected','Accessible from patient area'],
+  'Cervical collars infant- adult': ['Infant','Pediatric','Adult'],
+  'Nasal cannula pediatric - adult': ['Pediatric','Adult'],
+  'Non-rebreather or simple face mask pediatric - adult': ['Pediatric','Adult'],
+  'BVM infant - adult': ['Infant','Child','Adult'],
+  'OPA (40mm, 60mm, 80mm, 90mm, 100mm, &110mm)': ['40mm','60mm','80mm','90mm','100mm','110mm'],
+  'NPA (16fr or smaller, 18fr-24fr, & 26fr or larger)': ['16fr or smaller','18fr-24fr','26fr or larger'],
+  'Mounted and Portable Suction w/ intact cannister': ['Mounted / wall unit','Portable unit','Intact cannister'],
+  'Suction catheter (5 or 6, 8 or 10, 12 or 14, 16 or 18)': ['5 or 6','8 or 10','12 or 14','16 or 18'],
+  'Blood pressure cuffs infant - adult': ['Infant','Child','Adult'],
+  'Thermometer (w/ covers if oral)': ['Thermometer','Covers (if oral)'],
+  'Adult & Pediatric defibrillator pads (compatible with AED)': ['Adult — set 1','Adult — set 2','Pediatric — set 1','Pediatric — set 2'],
+  'Epinephrine for anaphylaxis w/ delivery capability (pediatric & adult)': ['Pediatric','Adult'],
+  'Supraglottic airway devices infant - adult': ['Infant','Child','Adult'],
+  'Laryngoscope handle & blades (size 0 -4)': ['Handle','Blade 0','Blade 1','Blade 2','Blade 3','Blade 4'],
+  'ET tubes 3.0- 8.0': ['3.0','3.5','4.0','4.5','5.0','5.5','6.0','6.5','7.0','7.5','8.0'],
+  'Administration tubing (macro & micro)': ['Macro drip','Micro drip'],
+  'Cardiac monitor w/ ECG acquisition and trans-cutaneous pacing': ['ECG acquisition','Trans-cutaneous pacing','Transmitting 12-lead (state)']
+};
+
+// sub-lists that are genuine sizes/variants -> each becomes its own protocol-PDF line.
+// everything else is an attribute of one object and stays on one line.
+const SPLIT = new Set([
+  'Cervical collars infant- adult',
+  'Nasal cannula pediatric - adult',
+  'Non-rebreather or simple face mask pediatric - adult',
+  'BVM infant - adult',
+  'OPA (40mm, 60mm, 80mm, 90mm, 100mm, &110mm)',
+  'NPA (16fr or smaller, 18fr-24fr, & 26fr or larger)',
+  'Suction catheter (5 or 6, 8 or 10, 12 or 14, 16 or 18)',
+  'Blood pressure cuffs infant - adult',
+  'Supraglottic airway devices infant - adult',
+  'ET tubes 3.0- 8.0',
+  'Administration tubing (macro & micro)',
+  'Laryngoscope handle & blades (size 0 -4)',
+  'Adult & Pediatric defibrillator pads (compatible with AED)',
+  'Epinephrine for anaphylaxis w/ delivery capability (pediatric & adult)'
+]);
+
+const TIER_LABEL = {bls:"BLS — Basic Life Support", als:"ALS — Advanced Life Support", micu:"MICU — Mobile Intensive Care Unit"};
+const SRC_NAME = {s:"State of Texas", c:"City of Houston"};
+const SRC_LABEL = {s:"State only", c:"City only", sc:"State + City"};
+
+// flatten into one editable model
+function buildDefault(){
+  const out = []; let n = 0;
+  for (const tier of ['bls','als','micu'])
+    for (const [cat, items] of Object.entries(DATA[tier].cats))
+      for (const [name, qty, src, note, ours] of items)
+        out.push({id:++n, tier, cat, name, qty, src, note:note||'', ours:ours||'—',
+                  have:false, notes:'', added:false, off:false,
+                  subs:(SUBS[name]||[]).map(l=>({label:l, have:false}))});
+  return out;
+}
+
+const LSKEY = 'hoh-ambulance-equipment-v1';
+const ok = st => st && Array.isArray(st.rows) && st.rows.length;
+
+let baked = null, local = null;
+try { baked = JSON.parse(document.getElementById('saved-state').textContent); } catch(e){}
+try { local = JSON.parse(localStorage.getItem(LSKEY) || 'null'); } catch(e){}
+
+let MODEL, seq, loadNote = '';
+
+// Newest wins. A file published from another device beats stale local edits.
+if (ok(local) && ok(baked) && (local.t||0) <= (baked.t||0)){
+  try { localStorage.removeItem(LSKEY); } catch(e){}
+  local = null;
+  loadNote = 'Loaded the published version — it is newer than this browser\u2019s unsaved edits.';
+}
+
+if (ok(local)){
+  MODEL = local.rows;
+  loadNote = 'Unsaved edits on this device, ' + (local.savedAt||'') + '. Press Publish to site to share them.';
+} else if (ok(baked)){
+  MODEL = baked.rows;
+  loadNote = 'Published version, saved ' + (baked.savedAt||'earlier') + '.';
+} else {
+  MODEL = buildDefault();
+}
+seq = Math.max(0, ...MODEL.map(r=>r.id||0));
+
+// Normalise every row, whatever version of the file it was saved by.
+function fixRow(r){
+  if (!Array.isArray(r.subs)) r.subs = [];
+  r.subs = r.subs.filter(x => x && typeof x.label === 'string').map(x => ({label:x.label, have:!!x.have}));
+  if (typeof r.off !== 'boolean') r.off = false;
+  if (typeof r.have !== 'boolean') r.have = false;
+  if (typeof r.notes !== 'string') r.notes = '';
+  if (typeof r.note !== 'string') r.note = '';
+  if (typeof r.ours !== 'string') r.ours = '—';
+  if (typeof r.qty !== 'string') r.qty = String(r.qty ?? '');
+  if (!['s','c','sc'].includes(r.src)) r.src = 'c';
+  if (typeof r.added !== 'boolean') r.added = false;
+  return r;
+}
+MODEL.forEach(fixRow);
+
+function snapshot(){
+  const d = new Date();
+  return {savedAt: d.toLocaleString('en-US'), t: d.getTime(), rows: MODEL};
+}
+function autosave(){
+  try {
+    localStorage.setItem(LSKEY, JSON.stringify(snapshot()));
+    const el = document.getElementById('savestate');
+    if (el) el.textContent = 'Changes saved in this browser';
+  } catch(e){
+    const el = document.getElementById('savestate');
+    if (el) el.textContent = 'This browser blocks storage — changes last until you close the tab. Publish to keep them.';
+  }
+}
+
+const MATCH = {
+  all:()=>true, s:x=>x.includes('s'), c:x=>x.includes('c'),
+  both:x=>x==='sc', sonly:x=>x==='s', conly:x=>x==='c'
+};
+
+let tier='all', filt='all', q='', editing=false;
+const collapsed = new Set();
+const ckey = (t,c) => t+'::'+c;
+const list = document.getElementById('list');
+const esc = v => String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+function visible(r){
+  if (tier!=='all' && r.tier!==tier) return false;
+  if (!MATCH[filt](r.src)) return false;
+  if (q && !(r.name+' '+r.note+' '+r.ours+' '+r.notes).toLowerCase().includes(q)) return false;
+  return true;
+}
+
+function render(){
+  let html='';
+  for (const t of ['bls','als','micu']){
+    const inTier = MODEL.filter(r=>r.tier===t);
+    if (tier!=='all' && tier!==t) continue;
+    const shown = inTier.filter(visible);
+    if (!shown.length && !editing) continue;
+    html += `<section data-tier="${t}"><h2 class="tier">${TIER_LABEL[t]}
+      <button class="ckall tierck" data-tier="${t}">Check all</button></h2>
+      <p class="tiernote">${DATA[t].note}</p>`;
+    const cats = [...new Set(inTier.map(r=>r.cat))];
+    for (const cat of cats){
+      const rs = shown.filter(r=>r.cat===cat);
+      if (!rs.length) continue;
+      const key = ckey(t, cat);
+      const isOpen = !collapsed.has(key) || !!q;
+      const done = rs.filter(r=>r.have).length;
+      html += `<h3 class="cat${isOpen?'':' shut'}" data-key="${esc(key)}" role="button" tabindex="0"
+          aria-expanded="${isOpen}">
+        <span class="chev" aria-hidden="true"></span><span class="catname">${esc(cat)}</span>
+        <span class="catcount">${done}/${rs.length}</span>
+        <button class="ckall" data-tier="${t}" data-cat="${esc(cat)}">Check all</button></h3>
+        <div class="catwrap"${isOpen?'':' hidden'}><table><thead><tr>
+        <th></th><th>Required</th><th>Item</th><th>Src</th><th>Our past list</th><th>Notes</th>${editing?'<th></th>':''}
+      </tr></thead><tbody>`;
+      for (const r of rs) html += rowHTML(r);
+      html += `</tbody></table>`;
+      if (editing) html += `<button class="addrow" data-tier="${t}" data-cat="${esc(cat)}">+ Add item to ${esc(cat)}</button>`;
+      html += `</div>`;
+    }
+    html += `</section>`;
+  }
+  list.innerHTML = html || `<p class="empty">Nothing matches that filter.</p>`;
+  MODEL.forEach(r=>{
+    if (!r.subs.length) return;
+    const el = list.querySelector(`tr[data-id="${r.id}"] .have`);
+    if (!el) return;
+    const done = r.subs.filter(x=>x.have).length;
+    el.indeterminate = done>0 && done<r.subs.length;
+  });
+  document.querySelectorAll('.ckall').forEach(b=>{
+    const rs = scopeRows(b.dataset.tier, b.dataset.cat || null);
+    const on = rs.filter(r=>r.have).length;
+    const all = rs.length && on===rs.length;
+    b.textContent = all ? `Uncheck all (${rs.length})` : `Check all (${on}/${rs.length})`;
+    b.classList.toggle('on', !!all);
+  });
+  const totalCats = [...document.querySelectorAll('h3.cat')].length;
+  const openCats = [...document.querySelectorAll('h3.cat:not(.shut)')].length;
+  document.getElementById('foldall').textContent = openCats ? 'Collapse all' : 'Expand all';
+  counts();
+  const all = MODEL.filter(r=>tier==='all'||r.tier===tier);
+  const pool = all.filter(active);
+  const hid = all.length - pool.length;
+  const n = f => pool.filter(r=>MATCH[f](r.src)).length;
+  document.getElementById('fmath').textContent =
+    `${pool.length} items = ${n('sonly')} state only + ${n('both')} required by both + ${n('conly')} city only. ` +
+    `"State" (${n('s')}) and "City" (${n('c')}) each include the ${n('both')} shared items.` +
+    (hid ? ` ${hid} hidden — greyed out, not printed.` : '');
+  document.getElementById('count').textContent = `${MODEL.filter(visible).length} shown`;
+}
+
+function rowHTML(r){
+  const only = r.src.length===1 ? ` only-${r.src}` : '';
+  const badges = [...r.src].map(x=>`<span class="b ${x}" title="${SRC_NAME[x]}">${x.toUpperCase()}</span>`).join('');
+  const gap = (!r.ours || r.ours==='—') ? '<span class="gap">GAP</span>' : '';
+  if (editing) return `<tr class="row edit${r.off?' off':''}" data-id="${r.id}">
+    <td class="chk"><input type="checkbox" class="have" ${r.have?'checked':''}></td>
+    <td class="qty"><input class="e" data-k="qty" value="${esc(r.qty)}"></td>
+    <td><input class="e wide" data-k="name" value="${esc(r.name)}">
+        <input class="e small" data-k="note" value="${esc(r.note)}" placeholder="detail / citation">
+        <input class="e small" data-k="_subs" value="${esc(r.subs.map(x=>x.label).join(', '))}" placeholder="sizes / parts, comma separated"></td>
+    <td class="src"><select class="e" data-k="src">
+      ${['s','c','sc'].map(v=>`<option value="${v}"${r.src===v?' selected':''}>${SRC_LABEL[v]}</option>`).join('')}
+    </select></td>
+    <td class="ref"><input class="e small" data-k="ours" value="${esc(r.ours)}"></td>
+    <td class="notes"><input class="nt" value="${esc(r.notes)}" placeholder="…"></td>
+    <td class="del">
+      <button class="eye" title="${r.off?'Show this item again':'Hide from lists and printouts'}">${r.off?'Show':'Hide'}</button>
+      <button class="x" title="Delete row permanently">×</button></td>
+  </tr>`;
+  return `<tr class="row${only}${r.have?' have':''}${r.added?' added':''}${r.off?' off':''}" data-id="${r.id}">
+    <td class="chk"><input type="checkbox" class="have" ${r.have?'checked':''} ${r.off?'disabled':''}></td>
+    <td class="qty" data-l="Required">${esc(r.qty)}</td>
+    <td data-l="Item"><span class="name">${esc(r.name)}</span>${r.off?'<span class="hidechip">HIDDEN</span>':gap}${r.note?`<span class="sub-note">${esc(r.note)}</span>`:''}${subHTML(r)}</td>
+    <td class="src" data-l="Source">${badges}</td>
+    <td class="ref" data-l="Our past list">${esc(r.ours)}</td>
+    <td class="notes" data-l="Notes"><input class="nt" value="${esc(r.notes)}" placeholder="…"></td>
+  </tr>`;
+}
+
+function counts(){
+  const pool = MODEL.filter(r=>(tier==='all'||r.tier===tier) && active(r));
+  document.querySelectorAll('.filt').forEach(b=>{
+    if (!b.dataset.label) b.dataset.label=b.textContent.trim();
+    b.textContent = `${b.dataset.label} (${pool.filter(r=>MATCH[b.dataset.f](r.src)).length})`;
+  });
+}
+
+const active = r => !r.off;
+function scopeRows(t, cat){
+  return MODEL.filter(r => r.tier===t && (!cat || r.cat===cat) && visible(r) && active(r));
+}
+function setHave(r, v){
+  r.have = v;
+  r.subs.forEach(x=>x.have = v);
+}
+function roll(r){
+  if (!r.subs.length) return;
+  r.have = r.subs.every(x=>x.have);
+}
+function subHTML(r){
+  if (!r.subs.length) return '';
+  const done = r.subs.filter(x=>x.have).length;
+  return `<div class="subs">
+    <span class="prog${done===r.subs.length?' ok':''}">${done}/${r.subs.length}</span>
+    ${r.subs.map((x,i)=>`<label class="sub"><input type="checkbox" class="subchk" data-i="${i}" ${x.have?'checked':''}> ${esc(x.label)}</label>`).join('')}
+  </div>`;
+}
+
+const get = e => MODEL.find(r=>r.id === +e.target.closest('tr').dataset.id);
+
+list.addEventListener('input', e=>{
+  if (e.target.classList.contains('nt')) { get(e).notes = e.target.value; autosave(); }
+  else if (e.target.classList.contains('e') && e.target.dataset.k === '_subs'){
+    const r = get(e);
+    const want = e.target.value.split(',').map(x=>x.trim()).filter(Boolean);
+    const prev = Object.fromEntries(r.subs.map(x=>[x.label, x.have]));
+    r.subs = want.map(l=>({label:l, have: !!prev[l]}));
+    roll(r);
+  }
+  else if (e.target.classList.contains('e')) get(e)[e.target.dataset.k] = e.target.value;
+  autosave();
+});
+list.addEventListener('change', e=>{
+  if (e.target.classList.contains('subchk')){
+    const r = get(e);
+    r.subs[+e.target.dataset.i].have = e.target.checked;
+    roll(r); render();
+  }
+  else if (e.target.classList.contains('have')){
+    const r = get(e); r.have = e.target.checked;
+    if (r.subs.length){ r.subs.forEach(x=>x.have = r.have); render(); }
+    else e.target.closest('tr').classList.toggle('have', r.have);
+  } else if (e.target.classList.contains('e') && e.target.dataset.k==='src'){
+    get(e).src = e.target.value; counts();
+  }
+  autosave();
+});
+function toggleCat(h){
+  const k = h.dataset.key;
+  if (collapsed.has(k)) collapsed.delete(k); else collapsed.add(k);
+  render();
+}
+list.addEventListener('keydown', e=>{
+  const h = e.target.closest('h3.cat');
+  if (h && (e.key==='Enter' || e.key===' ')){ e.preventDefault(); toggleCat(h); }
+});
+list.addEventListener('click', e=>{
+  const h = e.target.closest('h3.cat');
+  if (h && !e.target.classList.contains('ckall')){ toggleCat(h); return; }
+  if (e.target.classList.contains('eye')){
+    const r = get(e);
+    r.off = !r.off;
+    if (r.off) setHave(r, false);
+    render(); autosave();
+    return;
+  }
+  if (e.target.classList.contains('x')){
+    const r = get(e);
+    if (confirm(`Delete "${r.name}"?`)){ MODEL = MODEL.filter(x=>x.id!==r.id); render(); autosave(); }
+  }
+  if (e.target.classList.contains('ckall')){
+    const {tier:t, cat} = e.target.dataset;
+    const rs = scopeRows(t, cat || null);
+    const allOn = rs.length && rs.every(r=>r.have);
+    rs.forEach(r=>setHave(r, !allOn));
+    render(); autosave();
+    return;
+  }
+  if (e.target.classList.contains('addrow')){
+    const {tier:t, cat} = e.target.dataset;
+    const idx = MODEL.map(r=>r.cat===cat && r.tier===t).lastIndexOf(true);
+    MODEL.splice(idx+1, 0, {id:++seq, tier:t, cat, name:'New item', qty:'1', src:'c',
+                            note:'', ours:'—', have:false, notes:'', added:true, off:false,
+                            subs:[]});
+    render(); autosave();
+    const el = [...document.querySelectorAll('tr.row')].find(x=>+x.dataset.id===seq);
+    if (el) el.querySelector('[data-k="name"]').select();
+  }
+});
+
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  tier=b.dataset.tier;
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  render();
+}));
+document.querySelectorAll('.filt').forEach(b=>b.addEventListener('click',()=>{
+  filt=b.dataset.f;
+  document.querySelectorAll('.filt').forEach(x=>x.setAttribute('aria-pressed', x===b));
+  render();
+}));
+document.getElementById('q').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();render();});
+
+const editBtn = document.getElementById('edit');
+editBtn.addEventListener('click',()=>{
+  editing=!editing;
+  editBtn.textContent = editing ? 'Done editing' : 'Edit list';
+  editBtn.classList.toggle('ghost', !editing);
+  document.body.classList.toggle('editing', editing);
+  render();
+});
+
+document.getElementById('clear').addEventListener('click',()=>{
+  if (!confirm('Clear every checkmark and every note, in all three tiers?')) return;
+  MODEL.forEach(r=>{r.have=false; r.notes=''; r.subs.forEach(x=>x.have=false);});
+  render(); autosave();
+});
+const SEC = {bls:'A. Minimum BLS Ambulance Equipment',
+             als:'B. Minimum ALS Equipment',
+             micu:'C. Minimum MICU Equipment'};
+const LEAD = {
+  bls:'',
+  als:'All BLS Equipment listed in A (Minimum BLS Equipment), plus:',
+  micu:'All BLS Equipment listed in A and all ALS Equipment listed in B, plus:'
+};
+
+// "Oropharyngeal airways — 40, 60..." -> "Oropharyngeal airways"
+const base = n => n.split(' — ')[0].replace(/\s*\([^)]*\)\s*$/,'').trim();
+
+function protocolLines(t){
+  const out = [];
+  for (const r of MODEL.filter(x=>x.tier===t && active(x))){
+    const qty = (r.qty && r.qty !== '—') ? ` (${r.qty})` : '';
+    if (r.subs.length && SPLIT.has(r.name)){
+      for (const sx of r.subs) out.push({txt:`${base(r.name)}, ${sx.label}${qty}`, src:r.src, have:sx.have});
+    } else if (r.subs.length){
+      const parts = r.subs.map(x=>x.label).join(', ');
+      out.push({txt:`${r.name} — ${parts}${qty}`, src:r.src, have:r.have});
+    } else {
+      out.push({txt:`${r.name}${qty}`, src:r.src, have:r.have});
+    }
+  }
+  return out.sort((a,b)=>a.txt.localeCompare(b.txt,'en',{sensitivity:'base'}));
+}
+
+function buildProtocol(){
+  const onlyChecked = document.getElementById('onlychk').checked;
+  let h = `<div class="pr-head"><h1>Minimum Equipment Requirements</h1>
+    <p>Combined minimum of 25 TAC §157.11 (State of Texas) and Houston Health Department
+    "Minimum Equipment for Ambulances" Ver 9.16.25 (City of Houston).
+    Where both require an item, the higher quantity is shown once.</p>
+    <p class="pr-key"><sup>S</sup> state only &nbsp;·&nbsp; <sup>C</sup> city only &nbsp;·&nbsp; <sup>SC</sup> both</p></div>`;
+  for (const t of ['bls','als','micu']){
+    let lines = protocolLines(t);
+    if (onlyChecked) lines = lines.filter(l=>l.have);
+    h += `<section class="pr-sec"><h2>${SEC[t]}</h2>`;
+    if (LEAD[t]) h += `<p class="pr-lead">${LEAD[t]}</p>`;
+    h += `<ul class="pr-list">` + lines.map(l =>
+      `<li>${esc(l.txt)}<sup>${l.src.toUpperCase()}</sup></li>`).join('') + `</ul>`;
+    h += `<p class="pr-foot">Compiled ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}
+      &nbsp;·&nbsp; Reviewed by: ______________________________ &nbsp;&nbsp; Date: ____________</p></section>`;
+  }
+  document.getElementById('protocol').innerHTML = h;
+}
+
+// ---------- publish to GitHub ----------
+const GHKEY = 'hoh-ambulance-gh-v1';
+
+let MEMGH = null;
+let STORAGE_OK = true;
+const ghLoad = () => {
+  if (MEMGH) return MEMGH;
+  try { return JSON.parse(localStorage.getItem(GHKEY)||'null') || {}; } catch(e){ return {}; }
+};
+function ghStore(cfg){
+  MEMGH = cfg;
+  try { localStorage.setItem(GHKEY, JSON.stringify(cfg)); STORAGE_OK = true; }
+  catch(e){ STORAGE_OK = false; }
+  return STORAGE_OK;
+}
+
+// Work out owner/repo from the GitHub Pages URL: owner.github.io/repo/
+function ghGuess(){
+  const h = location.hostname || '';
+  const m = /^([^.]+)\.github\.io$/i.exec(h);
+  if (!m) return {};
+  const owner = m[1];
+  const seg = (location.pathname || '/').split('/').filter(Boolean);
+  const repo = seg.length ? seg[0] : owner + '.github.io';
+  return {owner, repo};
+}
+
+function target(){
+  const g = ghLoad(), guess = ghGuess();
+  return {
+    owner: g.owner || guess.owner || '',
+    repo:  g.repo  || guess.repo  || '',
+    branch: g.branch || 'main'
+  };
+}
+
+
+
+const gate = document.getElementById('gate');
+
+function openGate(){
+  const t = target();
+  document.getElementById('gate-msg').textContent = '';
+  document.getElementById('gate-where').textContent = t.owner && t.repo
+    ? `Publishes to ${t.owner}/${t.repo}`
+    : 'Open this from your GitHub Pages address so it knows the repo.';
+  gate.hidden = false;
+  setTimeout(()=>document.getElementById('gate-token').focus(), 50);
+}
+
+function gateSubmit(){
+  const msg = document.getElementById('gate-msg');
+  try {
+    const token = document.getElementById('gate-token').value.trim();
+    msg.textContent = 'Working…';
+    const t = target();
+    if (!token){ msg.textContent = 'Paste the GitHub token.'; return; }
+    if (!t.owner || !t.repo){ msg.textContent = 'Open this page from your GitHub Pages address.'; return; }
+    const kept = ghStore({owner:t.owner, repo:t.repo, branch:t.branch, token});
+    gate.hidden = true;
+    say(kept ? 'Signed in on this device.'
+             : 'Signed in for now. This browser blocks storage, so you will be asked again next visit.');
+  } catch(err){
+    msg.textContent = 'Sign-in failed: ' + ((err && err.message) || err);
+  }
+}
+
+document.getElementById('gate-go').addEventListener('click', gateSubmit);
+gate.addEventListener('keydown', e=>{ if (e.key === 'Enter') gateSubmit(); });
+
+document.getElementById('resetauth').addEventListener('click', e=>{
+  e.preventDefault();
+  if (!confirm('Forget the saved token on this device?')) return;
+  MEMGH = null;
+  try { localStorage.removeItem(GHKEY); } catch(err){}
+  openGate();
+});
+
+async function ensureToken(){
+  const g = ghLoad();
+  return g.token ? g : null;
+}
+
+
+
+
+
+function bakedHTML(){
+  const doc = document.documentElement.cloneNode(true);
+
+  // Anything generated at runtime gets emptied — it is rebuilt on load.
+  ['#list','#protocol','#formdoc'].forEach(sel=>{
+    const el = doc.querySelector(sel); if (el) el.innerHTML = '';
+  });
+
+  // Reset transient UI, or the published page arrives frozen mid-click.
+  const set = (sel, txt) => { const el = doc.querySelector(sel); if (el) el.textContent = txt; };
+  set('#publish', 'Publish to site');
+  set('#edit', 'Edit list');
+  set('#foldall', 'Collapse all');
+  set('#savestate', '');
+  set('#fmath', '');
+  set('#count', '');
+  set('#gate-msg', '');
+  set('#errbar', '');
+  doc.querySelectorAll('button').forEach(b=>b.removeAttribute('disabled'));
+  const gate = doc.querySelector('#gate'); if (gate) gate.hidden = true;
+  const bar = doc.querySelector('#errbar'); if (bar) bar.hidden = true;
+  const body = doc.querySelector('body');
+  if (body) body.classList.remove('form-mode','protocol-mode','editing');
+
+  // never publish typed-in values (the token lives in one of these)
+  doc.querySelectorAll('input').forEach(i=>{ i.removeAttribute('value'); i.removeAttribute('checked'); });
+
+  doc.querySelector('#saved-state').textContent = JSON.stringify(snapshot());
+  return '<!DOCTYPE html>\n' + doc.outerHTML;
+}
+
+function b64(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  const chunk = 0x8000;
+  for (let i=0; i<bytes.length; i+=chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i+chunk));
+  return btoa(bin);
+}
+
+const say = t => { document.getElementById('savestate').textContent = t; };
+
+document.getElementById('publish').addEventListener('click', async ()=>{
+  say('Publishing…');
+  const g = await ensureToken();
+  if (!g || !g.token || !g.owner || !g.repo){ openGate(); return; }
+  const btn = document.getElementById('publish');
+  btn.disabled = true; btn.textContent = 'Publishing…';
+  const url = `https://api.github.com/repos/${g.owner}/${g.repo}/contents/equipment/index.html`;
+  const hdr = {Authorization:'Bearer '+g.token, Accept:'application/vnd.github+json'};
+  try {
+    let sha;
+    const cur = await fetch(`${url}?ref=${encodeURIComponent(g.branch||'main')}`, {headers:hdr});
+    if (cur.ok) sha = (await cur.json()).sha;
+    else if (cur.status !== 404) throw new Error('Could not read the file: ' + cur.status);
+
+    const res = await fetch(url, {
+      method:'PUT', headers:{...hdr,'Content-Type':'application/json'},
+      body: JSON.stringify({
+        message: 'Update equipment list — ' + new Date().toLocaleString('en-US'),
+        content: b64(bakedHTML()),
+        branch: g.branch || 'main',
+        ...(sha ? {sha} : {})
+      })
+    });
+    if (!res.ok){
+      const j = await res.json().catch(()=>({}));
+      throw new Error((j.message || res.status) + '');
+    }
+    try { localStorage.removeItem(LSKEY); } catch(e){}
+    say('Published. The site updates in about a minute — reload then.');
+  } catch(err){
+    const m = String(err.message||err);
+    say('Publish failed: ' + m + (/Bad credentials|401/.test(m) ? ' — check the token.' :
+        /404|Not Found/.test(m) ? ' — check owner/repo, and that the token can reach this repo.' : ''));
+  } finally {
+    btn.disabled = false; btn.textContent = 'Publish to site';
+  }
+});
+
+
+
+document.getElementById('foldall').addEventListener('click',()=>{
+  const keys = [];
+  for (const t of ['bls','als','micu'])
+    for (const cat of new Set(MODEL.filter(r=>r.tier===t).map(r=>r.cat))) keys.push(ckey(t,cat));
+  const anyOpen = keys.some(k=>!collapsed.has(k));
+  collapsed.clear();
+  if (anyOpen) keys.forEach(k=>collapsed.add(k));
+  render();
+});
+// ---------- Hatzalah inventory checklist form ----------
+// Layout measured from BLS_Ambulance_Checklist_-_Hatzalah_of_Houston__12-6-22_.pdf:
+// portrait letter, Calibri 6.7pt, two columns, per block: Name | Qty | tickbox | Comments,
+// category label on a #00B0F0 bar in white bold.
+const FM_TITLE = {bls:'BLS Ambulance Inventory Checklist',
+                  als:'ALS Ambulance Inventory Checklist',
+                  micu:'MICU Ambulance Inventory Checklist'};
+// (Exp Date/Comments dropped — every block just says Comments)
+
+function fmBlocks(t){
+  const rows = MODEL.filter(r => r.tier === t && active(r));
+  const out = [];
+  for (const cat of new Set(rows.map(r=>r.cat))){
+    const items = rows.filter(r=>r.cat===cat);
+    if (items.length) out.push({cat, items});
+  }
+  return out;
+}
+
+function fmSplit(blocks){
+  const cost = b => b.items.length + 2;
+  const total = blocks.reduce((n,b)=>n+cost(b), 0);
+  const left = [], right = [];
+  let acc = 0;
+  for (const b of blocks){
+    if (acc + cost(b)/2 <= total/2){ left.push(b); acc += cost(b); }
+    else right.push(b);
+  }
+  return [left, right];
+}
+
+function fmBlockHTML(b){
+  let h = `<table class="fm-blk">
+    <colgroup><col class="n"><col class="q"><col class="k"><col class="c"></colgroup>
+    <thead><tr>
+      <th class="cat">${esc(b.cat)}</th>
+      <th class="q">Qty</th><th class="k">&#10003;</th>
+      <th>Comments</th>
+    </tr></thead><tbody>`;
+  for (const r of b.items){
+    const qty = (r.qty && r.qty !== '—') ? esc(r.qty) : '';
+    h += `<tr><td>${esc(r.name)}<span class="fm-src">${r.src.toUpperCase()}</span></td>
+      <td class="q">${qty}</td><td class="k">&#9744;</td><td>&nbsp;</td></tr>`;
+  }
+  return h + `</tbody></table>`;
+}
+
+function buildForm(){
+  const tiers = (tier === 'all') ? ['bls','als','micu'] : [tier];
+  const today = new Date().toLocaleDateString('en-US');
+  let h = '';
+  for (const t of tiers){
+    const blocks = fmBlocks(t);
+    if (!blocks.length) continue;
+    const [L, R] = fmSplit(blocks);
+    h += `<div class="fm-unit">
+      <p class="fm-title">Hatzalah of Houston &ndash; ${FM_TITLE[t]}</p>
+      <div class="fm-idbox">Name____________________________________&nbsp;&nbsp;&nbsp;
+        Unit # __________&nbsp;&nbsp;&nbsp; Inspection Date _________/________/________</div>
+      <table class="fm-grid"><tr>
+        <td class="L">${L.map(fmBlockHTML).join('')}</td>
+        <td class="R">${R.map(fmBlockHTML).join('')}</td>
+      </tr></table>
+      <div class="fm-signbox">Inspected by:_______________________________________________
+        <span class="r">DATE: ______________________</span></div>
+      <div class="fm-signbox">Lars Thestrup, MD :__________________________________________
+        <span class="r">DATE: ______________________</span></div>
+      <p class="fm-foot">Updated on ${today}<br>
+        <span style="font-size:6pt;color:#555">State 25 TAC &sect;157.11 + City of Houston HHD Ver 9.16.25 &middot; Qty is the higher of the two &middot;
+        <b>S</b> state only, <b>C</b> city only, <b>SC</b> both</span></p>
+    </div>`;
+  }
+  document.getElementById('formdoc').innerHTML = h;
+}
+
+function printAs(mode){
+  document.body.classList.remove('form-mode','protocol-mode');
+  if (mode) document.body.classList.add(mode);
+  // let the browser apply the styles before the preview snapshots the page
+  const go = () => window.print();
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(()=>requestAnimationFrame(go));
+  else setTimeout(go, 30);
+}
+
+document.getElementById('formbtn').addEventListener('click',()=>{
+  buildForm();
+  printAs('form-mode');
+});
+
+document.getElementById('pdf').addEventListener('click',()=>{
+  buildProtocol();
+  printAs('protocol-mode');
+});
+
+
+function collect(t){
+  const out = [];
+  for (const r of MODEL.filter(x=>x.tier===t)){
+    out.push({
+      "Have": r.have?"YES":(r.subs.some(x=>x.have)?"PARTIAL":""),
+      "Category": r.cat,
+      "Item": r.name,
+      "Required Qty": r.qty,
+      "Required By": SRC_LABEL[r.src] || r.src,
+      "Detail": r.note,
+      "Our Past List (§9.03)": r.ours,
+      "Notes": r.notes,
+      "Added by us": r.added?"YES":"",
+      "Hidden": r.off?"YES":""
+    });
+    for (const sx of r.subs) out.push({
+      "Have": sx.have?"YES":"",
+      "Category": r.cat,
+      "Item": "    \u21B3 " + sx.label,
+      "Required Qty": "", "Required By": "", "Detail": "",
+      "Our Past List (§9.03)": "", "Notes": "", "Added by us": "", "Hidden": ""
+    });
+  }
+  return out;
+}
+
+document.getElementById('xlsx').addEventListener('click',()=>{
+  if (typeof XLSX === 'undefined'){
+    const all = ['bls','als','micu'].flatMap(t=>collect(t).map(o=>({Tier:t.toUpperCase(),...o})));
+    const heads = Object.keys(all[0]);
+    const q2 = v => `"${String(v??'').replace(/"/g,'""')}"`;
+    const csv = [heads.map(q2).join(','), ...all.map(r=>heads.map(h=>q2(r[h])).join(','))].join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    a.download = 'ambulance-required-equipment.csv'; a.click();
+    alert('Excel library did not load (no internet). Downloaded as CSV — opens in Excel.');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  for (const t of ['bls','als','micu']){
+    const ws = XLSX.utils.json_to_sheet(collect(t));
+    ws['!cols']=[{wch:6},{wch:26},{wch:52},{wch:16},{wch:14},{wch:60},{wch:34},{wch:26},{wch:11},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws, t.toUpperCase());
+  }
+  XLSX.writeFile(wb, 'ambulance-required-equipment.xlsx');
+});
+
+for (const t of ['bls','als','micu'])
+  for (const cat of new Set(MODEL.filter(r=>r.tier===t).map(r=>r.cat)))
+    collapsed.add(ckey(t, cat));
+
+if (!ghLoad().token) openGate();
+
+render();
+if (loadNote && !document.getElementById('savestate').textContent)
+  document.getElementById('savestate').textContent = loadNote;
+</script>
+
+
+</body></html>
