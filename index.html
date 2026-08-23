@@ -11,6 +11,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hatzalah">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6Z479MLSKZ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-6Z479MLSKZ");</script>
 <style>
   :root{
     --navy:#143D75; --navy-d:#0e2c56; --red:#C8202E; --gold:#C9933A;
@@ -750,6 +752,7 @@
         }
       }
       paintHeader(); paintTiles(); loadCerts();
+      try{ if(window.gtag && STATE.me && STATE.me.unit){ gtag('set',{user_id:STATE.me.unit}); gtag('set','user_properties',{unit:STATE.me.unit,role:(STATE.me.admin?"admin":"member")}); } }catch(e){}
     });
   }
   function paintHeader(){
@@ -830,6 +833,7 @@
 
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
+    try{ if(window.gtag) gtag('event','tile_tap',{ tile_label:r_(t,"Label")||"", tile_type:type||"", member_unit:(STATE.me&&STATE.me.unit)||"" }); }catch(e){}
     if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
