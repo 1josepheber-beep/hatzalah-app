@@ -855,15 +855,15 @@
     PLACE.cabs.forEach(function(c){
       if(c._dirty && c._img){
         var ext=c._img.indexOf("image/webp")>-1?"webp":"jpg";
-        var fn="cabinets/cab_"+c.id+"_"+Date.now().toString(36)+"."+ext;
-        c.img=fn; imgDls.push({name:fn.split("/").pop(),blob:dataURLtoBlob(c._img)});
+        var fn="cab_"+c.id+"_"+Date.now().toString(36)+"."+ext;
+        c.img=fn; imgDls.push({name:fn,blob:dataURLtoBlob(c._img)});
         c._dirty=false;
       }
     });
     dlBlob("placement.js", new Blob([serializePlace()],{type:"text/javascript"}));
     imgDls.forEach(function(d,i){ setTimeout(function(){ dlBlob(d.name,d.blob); }, 500*(i+1)); });
     var msg="Downloaded placement.js"+(imgDls.length?(" + "+imgDls.length+" photo(s)"):"")+
-      ". Put placement.js in your hatzalah-app folder"+(imgDls.length?", and the photo(s) in the cabinets folder":"")+", then commit & push.";
+      ". Put them all in your hatzalah-app folder, then commit & push.";
     toast(msg);
   }
   // ----- bindings -----
