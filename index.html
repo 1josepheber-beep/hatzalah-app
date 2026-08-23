@@ -239,6 +239,7 @@
   .cert-row.na,.cert-row.none{border-left-color:#c3ccda}
   .cert-main{flex:1;min-width:0}
   .cert-nm{font-weight:600;font-size:15px;color:var(--ink);line-height:1.25}
+  .cert-num{font-size:12px;color:var(--mut);margin-top:2px}
   .cert-st{font-size:12.5px;font-weight:700;margin-top:3px}
   .cert-row.expired .cert-st{color:var(--red)}
   .cert-row.soon .cert-st{color:#b57c1e}
@@ -461,7 +462,7 @@
     <h2>Protocols</h2>
   </div>
   <div class="scr-search">
-    <input id="protoSearch" type="search" placeholder="Search \u2014 \u201Cchest pain\u201D, \u201Cepi\u201D, \u201Cburns\u201D, \u201Ccroup\u201D\u2026" enterkeyhint="search">
+    <input id="protoSearch" type="search" placeholder="Search protocols" enterkeyhint="search">
     <div class="sresults" id="protoSres"></div>
   </div>
   <div class="fcount" id="protoCount"></div>
@@ -493,7 +494,7 @@
     <button class="hbtn hidden" id="placeEdit">Edit</button>
   </div>
   <div class="scr-search">
-    <input id="placeSearch" type="search" placeholder="Search all items \u2014 \u201CBVM\u201D, \u201Csplint\u201D, \u201Csuction\u201D\u2026" enterkeyhint="search">
+    <input id="placeSearch" type="search" placeholder="Search equipment" enterkeyhint="search">
     <div class="sresults" id="placeSres"></div>
   </div>
   <div class="edit-bar hidden" id="cabHomeBar">
@@ -519,7 +520,7 @@
     <button class="cab-zoom" id="cabZoom">Zoom</button>
   </div>
   <div class="scr-search">
-    <input id="cabSearch" type="search" placeholder="Find an item in this cabinet\u2026" enterkeyhint="search">
+    <input id="cabSearch" type="search" placeholder="Search this cabinet" enterkeyhint="search">
   </div>
   <div class="cab-list" id="cabList"></div>
 </div>
@@ -552,7 +553,7 @@
     <button class="ebtn" id="equipSave">Save &amp; download</button>
   </div>
   <div class="eq-tools">
-    <input id="equipSearch" type="search" placeholder="Search equipment\u2026" enterkeyhint="search">
+    <input id="equipSearch" type="search" placeholder="Search equipment" enterkeyhint="search">
     <div class="eq-chips" id="equipTiers"></div>
     <div class="eq-progwrap"><div class="eq-prog" id="equipProg"></div>
       <div class="eq-exports">
@@ -595,7 +596,7 @@
     <h2>Certifications</h2>
   </div>
   <div class="scr-search" id="certSearchWrap" style="display:none">
-    <input id="certSearch" type="search" placeholder="Search a member\u2026" enterkeyhint="search">
+    <input id="certSearch" type="search" placeholder="Search members" enterkeyhint="search">
   </div>
   <div class="scr-body" id="certBody"></div>
 </div>
@@ -1368,8 +1369,7 @@
   $("upBack").addEventListener("click",navBack);
 
   // ---------- Certifications ----------
-  var CERT={loaded:false,rows:[],cols:[],collapsed:{},myWorst:"ok"};
-  var CERT_NAMECOLS={"Last Name":1,"First Name":1,"Unit #":1,"Unit":1};
+  var CERT={loaded:false,rows:[],byUnit:{},members:[],collapsed:{},myWorst:"ok"};
   function normUnit(u){ return String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
   function parseCertDate(s){
     s=String(s||"");
@@ -1382,13 +1382,13 @@
   function fmtDate(d){ return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear(); }
   function certStatus(val){
     val=String(val||"").trim();
-    if(!val) return {k:"none",label:"Not on file"};
+    if(!val) return {k:"none",label:"No expiration on file"};
     var d=parseCertDate(val);
     if(d){
       var today=new Date(); today.setHours(0,0,0,0);
       var days=Math.round((d-today)/86400000);
       if(days<0) return {k:"expired",label:"Expired "+fmtDate(d),date:d};
-      if(days<=30) return {k:"soon",label:"Expires "+fmtDate(d)+" ("+days+"d)",date:d};
+      if(days<=30) return {k:"soon",label:"Expires "+fmtDate(d)+" ("+days+" days)",date:d};
       return {k:"ok",label:"Valid \u2014 exp "+fmtDate(d),date:d};
     }
     var low=val.toLowerCase();
@@ -1397,29 +1397,29 @@
     if(low==="yes"||low.indexOf("complete")>-1||low==="done") return {k:"ok",label:val};
     return {k:"na",label:val};
   }
-  var CERT_RANK={expired:3,soon:2,ok:1,na:0,none:0};
-  function memberWorst(row){
-    var worst="ok",wr=1;
-    CERT.cols.forEach(function(c){
-      var st=certStatus(row[c]); var r=CERT_RANK[st.k]||0;
-      if(st.k==="expired"||st.k==="soon"){ if(r>wr){ wr=r; worst=st.k; } }
+  function groupCerts(rows){
+    CERT.rows=rows; CERT.byUnit={}; var order=[];
+    rows.forEach(function(r){
+      var u=normUnit(r["Unit #"]||r["Unit"]);
+      if(!CERT.byUnit[u]){ CERT.byUnit[u]={unit:(r["Unit #"]||r["Unit"]||""),last:r["Last Name"]||"",first:r["First Name"]||"",rows:[]}; order.push(u); }
+      CERT.byUnit[u].rows.push(r);
     });
-    return wr>=3?"expired":(wr>=2?"soon":"ok");
+    CERT.members=order.map(function(u){ return CERT.byUnit[u]; });
+  }
+  function memberWorst(rows){
+    var w="ok";
+    rows.forEach(function(r){ var k=certStatus(r["Expiration"]).k; if(k==="expired") w="expired"; else if(k==="soon"&&w!=="expired") w="soon"; });
+    return w;
   }
   function loadCerts(){
     fetchTab("Certifications").then(function(rows){
-      if(!rows||!rows.length){ return; }
-      CERT.rows=rows;
-      CERT.cols=Object.keys(rows[0]).filter(function(k){ return !CERT_NAMECOLS[k] && k; });
-      CERT.loaded=true;
-      // my worst status
+      if(!rows||!rows.length) return;
+      groupCerts(rows); CERT.loaded=true;
       var me=(STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"";
-      var mine=rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
-      CERT.myWorst = mine.length? worstOf(mine.map(memberWorst)) : "ok";
+      CERT.myWorst = CERT.byUnit[me]? memberWorst(CERT.byUnit[me].rows) : "ok";
       applyCertGlow();
     }).catch(function(){});
   }
-  function worstOf(list){ if(list.indexOf("expired")>-1) return "expired"; if(list.indexOf("soon")>-1) return "soon"; return "ok"; }
   function applyCertGlow(){
     var btn=document.querySelector('.tile[data-type="certifications"],.tile[data-type="certs"]');
     if(!btn) return;
@@ -1437,63 +1437,59 @@
       $("certBody").innerHTML='<div class="empty">Loading\u2026</div>';
       fetchTab("Certifications").then(function(rows){
         if(!rows||!rows.length){ $("certBody").innerHTML='<div class="empty">No certifications tab found yet. Add a <b>Certifications</b> tab to your sheet.</div>'; return; }
-        CERT.rows=rows; CERT.cols=Object.keys(rows[0]).filter(function(k){ return !CERT_NAMECOLS[k] && k; }); CERT.loaded=true;
-        renderCerts("");
+        groupCerts(rows); CERT.loaded=true; renderCerts("");
       }).catch(function(){ $("certBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
       return;
     }
     renderCerts($("certSearch").value||"");
   }
-  function certRowHTML(cname,val){
-    var st=certStatus(val);
-    var cal="";
-    if(st.date){
-      cal='<button class="cert-cal" data-cal="'+encodeURIComponent(cname)+'" data-d="'+st.date.getTime()+'">Remind</button>';
-    }
-    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(cname)+
-      '</div><div class="cert-st">'+esc(st.label)+'</div></div>'+cal+'</div>';
+  function certRowHTML(r){
+    var st=certStatus(r["Expiration"]), num=String(r["Number"]||"").trim();
+    var cal = st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(r["Certification"])+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
+    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(r["Certification"])+'</div>'+
+      (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
+      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+'</div>';
   }
-  function memberCertsHTML(row){
-    return CERT.cols.map(function(c){ return certRowHTML(c,row[c]); }).join("");
+  function memberCertsHTML(m){ return m.rows.map(certRowHTML).join(""); }
+  function certLegend(){
+    return '<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
+      '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
+      '<span><i style="background:#2f9e44"></i>Valid</span></div>';
   }
   function renderCerts(q){
     var body=$("certBody");
-    var legend='<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
-      '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
-      '<span><i style="background:#2f9e44"></i>Valid</span></div>';
     if(!isAdmin()){
-      var me=normUnit(STATE.me.unit), mine=CERT.rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
-      if(!mine.length){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
-      body.innerHTML=legend+'<div class="cert-list">'+mine.map(memberCertsHTML).join("")+'</div>';
+      var me=normUnit(STATE.me.unit), m=CERT.byUnit[me];
+      if(!m){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
+      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(m)+'</div>';
       return;
     }
-    // admin: all members, collapsible, filtered
     q=(q||"").toLowerCase().trim();
-    var rows=CERT.rows.filter(function(r){
+    var mems=CERT.members.filter(function(m){
       if(!q) return true;
-      return ((r["First Name"]||"")+" "+(r["Last Name"]||"")+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
+      return ((m.first||"")+" "+(m.last||"")+" "+(m.unit||"")).toLowerCase().indexOf(q)>-1;
     });
-    if(!rows.length){ body.innerHTML=legend+'<div class="empty">No member matches.</div>'; return; }
-    var html=legend;
-    rows.forEach(function(r){
-      var key=(r["Unit #"]||r["Unit"]||"")+"|"+(r["Last Name"]||"");
-      var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
-      var name=((r["First Name"]||"")+" "+(r["Last Name"]||"")).trim()+" \u00B7 "+(r["Unit #"]||r["Unit"]||"");
-      var col=CERT.collapsed[key]!==false; // default collapsed
+    if(!mems.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
+    var html=certLegend();
+    mems.forEach(function(m){
+      var key=normUnit(m.unit)||m.last, w=memberWorst(m.rows);
+      var dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
+      var name=((m.first||"")+" "+(m.last||"")).trim()+" \u00B7 "+(m.unit||"");
+      var col=CERT.collapsed[key]!==false;
       html+='<div class="cert-mem'+(col?" collapsed":"")+'" data-k="'+esc(key)+'">'+
         '<div class="cert-mem-h"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+esc(name)+
         '<span class="cert-badge-dot" style="background:'+dot+'"></span></div>'+
-        '<div class="cert-list">'+memberCertsHTML(r)+'</div></div>';
+        '<div class="cert-list">'+memberCertsHTML(m)+'</div></div>';
     });
     body.innerHTML=html;
   }
   $("certBody").addEventListener("click",function(e){
     var h=e.target.closest?e.target.closest(".cert-mem-h"):null;
-    if(h){ var mem=h.parentNode, key=mem.getAttribute("data-k"); CERT.collapsed[key]=!mem.classList.contains("collapsed")?true:false; mem.classList.toggle("collapsed"); return; }
+    if(h){ var mem=h.parentNode, key=mem.getAttribute("data-k"); CERT.collapsed[key]=mem.classList.contains("collapsed")?false:true; mem.classList.toggle("collapsed"); return; }
     var cal=e.target.closest?e.target.closest(".cert-cal"):null;
     if(cal){
       var name=decodeURIComponent(cal.getAttribute("data-cal")), exp=new Date(+cal.getAttribute("data-d"));
-      var rem=new Date(exp.getTime()-30*86400000); // 30 days before
+      var rem=new Date(exp.getTime()-30*86400000);
       function ymd(d){ return d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
       var end=new Date(rem.getTime()+86400000);
       var title=encodeURIComponent("Renew "+name+" (expires "+fmtDate(exp)+")");
@@ -1946,9 +1942,18 @@
     if(pts.length<2) PZ.g=null;
     if(pts.length===1){ PZ.pan={x:pts[0].x,y:pts[0].y,tx:PZ.tx,ty:PZ.ty}; }
     if(pts.length===0){
+      var start=PZ.pan;
       PZ.pan=null;
-      // double-tap detection
       var t=Date.now(), p=relXY(e);
+      // swipe left/right to flip pages, only when not zoomed in
+      if(start && PZ.scale<=PZ.min+0.05){
+        var sdx=p.x-start.x, sdy=p.y-start.y;
+        if(Math.abs(sdx)>55 && Math.abs(sdx)>Math.abs(sdy)*1.8){
+          showPage(sdx<0?PROTO.pos+1:PROTO.pos-1);
+          PZ.lastTap=0; return;
+        }
+      }
+      // double-tap detection
       if(t-PZ.lastTap<300 && Math.abs(p.x-PZ.lastX)<30 && Math.abs(p.y-PZ.lastY)<30){
         if(PZ.scale>PZ.min+0.02) pzReset(); else pzZoomTo(p.x,p.y,2.6);
         PZ.lastTap=0;
