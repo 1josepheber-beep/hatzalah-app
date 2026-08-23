@@ -485,11 +485,35 @@
       g.appendChild(b);
     });
   }
+  var APPS={
+    pulsara:{
+      name:"Pulsara",
+      androidPkg:"com.pulsara.stopapps",
+      androidStore:"https://play.google.com/store/apps/details?id=com.pulsara.stopapps",
+      iosStore:"https://apps.apple.com/us/app/pulsara-medical-communication/id873184192"
+    }
+  };
+  function launchApp(key){
+    var a=APPS[String(key||"").trim().toLowerCase()];
+    if(!a){ toast("App not set up yet."); return; }
+    var ua=navigator.userAgent||"";
+    var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    var isAndroid=/Android/.test(ua);
+    if(isAndroid&&a.androidPkg){
+      window.location.href="intent://#Intent;package="+a.androidPkg+
+        ";S.browser_fallback_url="+encodeURIComponent(a.androidStore||"")+";end";
+    }else if(isIOS){
+      window.location.href=a.iosStore||a.androidStore||"";
+    }else{
+      window.open(a.androidStore||a.iosStore||"","_blank","noopener");
+    }
+  }
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
     if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
+    if(type==="app"){ launchApp(r_(t,"Target")); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
