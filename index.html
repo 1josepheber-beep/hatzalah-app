@@ -848,7 +848,7 @@
 
   function fetchTab(name){
     var url="https://docs.google.com/spreadsheets/d/"+SHEET_ID+
-            "/gviz/tq?tqx=out:csv&sheet="+encodeURIComponent(name)+"&t="+Date.now();
+            "/gviz/tq?tqx=out:csv&headers=1&sheet="+encodeURIComponent(name)+"&t="+Date.now();
     return fetch(url,{cache:"no-store"}).then(function(r){return r.text();}).then(function(t){
       var rows=parseCSV(t);
       if(!rows.length) return [];
@@ -1937,7 +1937,7 @@
     $("vitalsScreen").classList.add("open");
     if(VIT.loaded){ renderVitals(VIT.view); return; }
     fetchTab("Vitals").then(function(rows){
-      if(rows&&rows.length) VIT.data=groupVitals(rows);
+      if(rows&&rows.length && ("Section" in rows[0] || "Tab" in rows[0])) VIT.data=groupVitals(rows);
       VIT.loaded=true; renderVitals(VIT.view);
     }).catch(function(){ VIT.loaded=true; renderVitals(VIT.view); });
   }
