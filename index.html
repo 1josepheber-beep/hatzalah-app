@@ -1369,7 +1369,8 @@
   $("upBack").addEventListener("click",navBack);
 
   // ---------- Certifications ----------
-  var CERT={loaded:false,rows:[],byUnit:{},members:[],collapsed:{},myWorst:"ok"};
+  var CERT={loaded:false,rows:[],certCols:[],collapsed:{},myWorst:"ok"};
+  var CERT_NAMECOLS={"Last Name":1,"First Name":1,"Unit #":1,"Unit":1};
   function normUnit(u){ return String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
   function parseCertDate(s){
     s=String(s||"");
@@ -1397,26 +1398,34 @@
     if(low==="yes"||low.indexOf("complete")>-1||low==="done") return {k:"ok",label:val};
     return {k:"na",label:val};
   }
-  function groupCerts(rows){
-    CERT.rows=rows; CERT.byUnit={}; var order=[];
-    rows.forEach(function(r){
-      var u=normUnit(r["Unit #"]||r["Unit"]);
-      if(!CERT.byUnit[u]){ CERT.byUnit[u]={unit:(r["Unit #"]||r["Unit"]||""),last:r["Last Name"]||"",first:r["First Name"]||"",rows:[]}; order.push(u); }
-      CERT.byUnit[u].rows.push(r);
+  function computeCertCols(row){
+    var keys=Object.keys(row).filter(function(k){ return !CERT_NAMECOLS[k] && k; });
+    var bases=[], map={};
+    keys.forEach(function(k){
+      var base,field;
+      if(/ Exp$/.test(k)){ base=k.replace(/ Exp$/,""); field="exp"; }
+      else if(/ #$/.test(k)){ base=k.replace(/ #$/,""); field="num"; }
+      else { base=k; field="single"; }
+      if(!map[base]){ map[base]={name:base}; bases.push(base); }
+      if(field==="exp") map[base].expKey=k;
+      else if(field==="num") map[base].numKey=k;
+      else map[base].singleKey=k;
     });
-    CERT.members=order.map(function(u){ return CERT.byUnit[u]; });
+    return bases.map(function(b){ return map[b]; });
   }
-  function memberWorst(rows){
+  function certExpVal(row,c){ return (c.expKey?row[c.expKey]:"") || (c.singleKey?row[c.singleKey]:"") || ""; }
+  function memberWorst(row){
     var w="ok";
-    rows.forEach(function(r){ var k=certStatus(r["Expiration"]).k; if(k==="expired") w="expired"; else if(k==="soon"&&w!=="expired") w="soon"; });
+    CERT.certCols.forEach(function(c){ var k=certStatus(certExpVal(row,c)).k; if(k==="expired") w="expired"; else if(k==="soon"&&w!=="expired") w="soon"; });
     return w;
   }
   function loadCerts(){
     fetchTab("Certifications").then(function(rows){
       if(!rows||!rows.length) return;
-      groupCerts(rows); CERT.loaded=true;
+      CERT.rows=rows; CERT.certCols=computeCertCols(rows[0]); CERT.loaded=true;
       var me=(STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"";
-      CERT.myWorst = CERT.byUnit[me]? memberWorst(CERT.byUnit[me].rows) : "ok";
+      var mine=rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
+      CERT.myWorst = mine.length? memberWorst(mine[0]) : "ok";
       applyCertGlow();
     }).catch(function(){});
   }
@@ -1437,20 +1446,21 @@
       $("certBody").innerHTML='<div class="empty">Loading\u2026</div>';
       fetchTab("Certifications").then(function(rows){
         if(!rows||!rows.length){ $("certBody").innerHTML='<div class="empty">No certifications tab found yet. Add a <b>Certifications</b> tab to your sheet.</div>'; return; }
-        groupCerts(rows); CERT.loaded=true; renderCerts("");
+        CERT.rows=rows; CERT.certCols=computeCertCols(rows[0]); CERT.loaded=true; renderCerts("");
       }).catch(function(){ $("certBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
       return;
     }
     renderCerts($("certSearch").value||"");
   }
-  function certRowHTML(r){
-    var st=certStatus(r["Expiration"]), num=String(r["Number"]||"").trim();
-    var cal = st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(r["Certification"])+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
-    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(r["Certification"])+'</div>'+
+  function certRowHTML(row,c){
+    var exp=certExpVal(row,c), num=(c.numKey?String(row[c.numKey]||"").trim():"");
+    var st=certStatus(exp);
+    var cal= st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(c.name)+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
+    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
       '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+'</div>';
   }
-  function memberCertsHTML(m){ return m.rows.map(certRowHTML).join(""); }
+  function memberCertsHTML(row){ return CERT.certCols.map(function(c){ return certRowHTML(row,c); }).join(""); }
   function certLegend(){
     return '<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
       '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
@@ -1459,27 +1469,27 @@
   function renderCerts(q){
     var body=$("certBody");
     if(!isAdmin()){
-      var me=normUnit(STATE.me.unit), m=CERT.byUnit[me];
-      if(!m){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
-      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(m)+'</div>';
+      var me=normUnit(STATE.me.unit), mine=CERT.rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
+      if(!mine.length){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
+      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(mine[0])+'</div>';
       return;
     }
     q=(q||"").toLowerCase().trim();
-    var mems=CERT.members.filter(function(m){
+    var rows=CERT.rows.filter(function(r){
       if(!q) return true;
-      return ((m.first||"")+" "+(m.last||"")+" "+(m.unit||"")).toLowerCase().indexOf(q)>-1;
+      return ((r["First Name"]||"")+" "+(r["Last Name"]||"")+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
     });
-    if(!mems.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
+    if(!rows.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
     var html=certLegend();
-    mems.forEach(function(m){
-      var key=normUnit(m.unit)||m.last, w=memberWorst(m.rows);
-      var dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
-      var name=((m.first||"")+" "+(m.last||"")).trim()+" \u00B7 "+(m.unit||"");
+    rows.forEach(function(r){
+      var key=normUnit(r["Unit #"]||r["Unit"])||(r["Last Name"]||"");
+      var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
+      var name=((r["First Name"]||"")+" "+(r["Last Name"]||"")).trim()+" \u00B7 "+(r["Unit #"]||r["Unit"]||"");
       var col=CERT.collapsed[key]!==false;
       html+='<div class="cert-mem'+(col?" collapsed":"")+'" data-k="'+esc(key)+'">'+
         '<div class="cert-mem-h"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+esc(name)+
         '<span class="cert-badge-dot" style="background:'+dot+'"></span></div>'+
-        '<div class="cert-list">'+memberCertsHTML(m)+'</div></div>';
+        '<div class="cert-list">'+memberCertsHTML(r)+'</div></div>';
     });
     body.innerHTML=html;
   }
