@@ -193,6 +193,25 @@
   .eq-edit-hint{margin-left:auto;color:var(--navy);font-size:12px;font-weight:700;flex:0 0 auto}
   #printArea{display:none}
   .eq-frame{flex:1;width:100%;border:0;background:#fff}
+  /* File Upload */
+  .up-body{flex:1;overflow-y:auto;padding:16px 14px 30px}
+  .up-intro{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:12px}
+  .up-list{display:flex;flex-direction:column;gap:10px}
+  .up-type{width:100%;text-align:left;border:1px solid var(--line);background:var(--card);
+    border-radius:13px;padding:15px 16px;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer;
+    box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+  .up-type:active{transform:scale(.99)}
+  .up-type::before{content:"\1F4CE";font-size:17px}
+  .up-step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;
+    margin-top:12px;box-shadow:var(--shadow)}
+  .up-step-h{font-size:15px;color:var(--ink);margin-bottom:14px}
+  .up-name{font-size:14px;color:var(--mut);font-weight:600;line-height:1.5}
+  .up-fname{display:inline-block;margin-top:6px;font-size:19px;font-weight:800;color:var(--navy);
+    background:#eaf0f9;padding:8px 14px;border-radius:10px;letter-spacing:.3px}
+  .up-copy{margin-left:8px;font-size:12px;font-weight:700;color:var(--navy);background:transparent;
+    border:1px solid var(--navy);border-radius:8px;padding:6px 10px;cursor:pointer;vertical-align:middle}
+  .up-note{font-size:13px;color:var(--mut);margin:14px 0 16px;line-height:1.5}
+  .up-open{width:100%;font-size:16px;padding:14px}
   @media print{
     body>*{display:none !important}
     #printArea{display:block !important}
@@ -531,6 +550,15 @@
 
 <div id="printArea"></div>
 
+<!-- FILE UPLOAD -->
+<div class="screen" id="uploadScreen">
+  <div class="scr-head">
+    <button class="back" id="upBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>File Upload</h2>
+  </div>
+  <div class="up-body" id="upBody"></div>
+</div>
+
 <!-- REQUIRED EQUIPMENT (embedded original app) -->
 <div class="screen" id="equipFrameScreen">
   <div class="scr-head">
@@ -756,6 +784,7 @@
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
     if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
+    if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -1229,6 +1258,62 @@
     $("equipFrameScreen").classList.add("open");
   }
   $("equipFrameBack").addEventListener("click",navBack);
+
+  // ---------- File Upload (routes to Egnyte upload link) ----------
+  var UP={loaded:false,types:[],link:"",cur:null};
+  var UP_DEFAULT_LINK="https://houstonhatzalah.egnyte.com/ul/s21HNn96UH";
+  var UP_DEFAULT_TYPES=["Good Will Agreement","Resignation","Immunizations","License Plate","Driver's License","EMT/Paramedic TX License","Car Insurance","American Heart BLS","ACLS","PALS","COH E-Permit","HFD Waiver","HIPAA","HIPAA Awareness","Jurisprudence less than 4 years old","Epi Training Yearly","Evoc Course","Hazmat","BBP","SOP's","L&S Policy"];
+  function closeUpload(){ $("uploadScreen").classList.remove("open"); }
+  function openUpload(target){
+    UP.link=(target&&target.trim())||UP_DEFAULT_LINK;
+    if(!$("uploadScreen").classList.contains("open")) navOpen(closeUpload);
+    $("uploadScreen").classList.add("open");
+    if(UP.loaded){ renderUploadPicker(); return; }
+    $("upBody").innerHTML='<div class="empty">Loading\u2026</div>';
+    fetchTab("Uploads").then(function(rows){
+      var t=rows.map(function(r){ return (r["Document Type"]||r["Type"]||r["Name"]||r["Label"]||"").trim(); }).filter(Boolean);
+      UP.types=t.length?t:UP_DEFAULT_TYPES.slice();
+      UP.loaded=true; renderUploadPicker();
+    }).catch(function(){ UP.types=UP_DEFAULT_TYPES.slice(); UP.loaded=true; renderUploadPicker(); });
+  }
+  function renderUploadPicker(){
+    var b=$("upBody");
+    if(!UP.types.length){
+      b.innerHTML='<div class="empty">No document types set up yet.<br><br>Add a tab named <b>Uploads</b> to your Google Sheet with a <b>Document Type</b> column, and list each type (Drivers License, CPR Card, etc.).</div>';
+      return;
+    }
+    var html='<div class="up-intro">What are you uploading?</div><div class="up-list">';
+    UP.types.forEach(function(t){ html+='<button class="up-type" data-t="'+esc(t)+'">'+esc(t)+'</button>'; });
+    html+='</div>';
+    b.innerHTML=html;
+  }
+  function showUploadStep(t){
+    UP.cur=t;
+    var unit=(STATE.me&&STATE.me.unit)?STATE.me.unit:"";
+    var fname=t+(unit?" "+unit:"");
+    $("upBody").innerHTML=
+      '<button class="ebtn" id="upBackList">\u2039 Back to list</button>'+
+      '<div class="up-step">'+
+        '<div class="up-step-h">Uploading: <b>'+esc(t)+'</b></div>'+
+        '<div class="up-name">Please name your file:<br><span class="up-fname" id="upFname">'+esc(fname)+'</span>'+
+          '<button class="up-copy" id="upCopy">Copy</button></div>'+
+        '<div class="up-note">The upload page opens in your browser. Choose your file, then rename it to the name above so we know who it\u2019s from.</div>'+
+        '<button class="ebtn primary up-open" id="upOpen">Open upload page</button>'+
+      '</div>';
+  }
+  $("upBody").addEventListener("click",function(e){
+    var tb=e.target.closest?e.target.closest(".up-type"):null;
+    if(tb){ showUploadStep(tb.getAttribute("data-t")); return; }
+    if(e.target.id==="upBackList"){ renderUploadPicker(); return; }
+    if(e.target.id==="upCopy"){
+      var fn=$("upFname")?$("upFname").textContent:"";
+      if(navigator.clipboard){ navigator.clipboard.writeText(fn).then(function(){ toast("Copied: "+fn); },function(){ toast(fn); }); }
+      else toast(fn);
+      return;
+    }
+    if(e.target.id==="upOpen"){ window.open(UP.link,"_blank","noopener"); return; }
+  });
+  $("upBack").addEventListener("click",navBack);
 
   function dial(num){ if(!num){toast("No number set.");return;} window.location.href="tel:"+num.replace(/\s+/g,""); }
   $("mcBtn").addEventListener("click",function(){dial(getSetting("Medical Control Number",""));});
