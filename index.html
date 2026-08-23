@@ -834,7 +834,7 @@
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
     try{ if(window.gtag) gtag('event','tile_tap',{ tile_label:r_(t,"Label")||"", tile_type:type||"", member_unit:(STATE.me&&STATE.me.unit)||"" }); }catch(e){}
-    if(type==="link"){var u=r_(t,"Target");if(u)window.open(u,"_blank","noopener");else toast("No link set for this tile.");return;}
+    if(type==="link"){var u=r_(t,"Target");if(!u){toast("No link set for this tile.");return;} if(/^(tel:|mailto:)/i.test(u)){location.href=u;}else{window.open(u,"_blank","noopener");} return;}
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
@@ -1720,6 +1720,7 @@
   var ICO_HOSP='<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/></svg>';
   var ICO_PROTO='<svg viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/></svg>';
   var ICO_EQUIP='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
+  var ICO_TILE='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
 
   function renderGlobal(q){
     var box=$("sresults");
@@ -1755,7 +1756,22 @@
       equip=equip.slice(0,8);
     }
 
+    var tiles=[];
+    (STATE.tiles||[]).forEach(function(t,ti){
+      if(isX(t["Admin Only"]) && !(STATE.me&&STATE.me.admin)) return;
+      var hay=((r_(t,"Label")||"")+" "+(r_(t,"Target")||"")+" "+(r_(t,"Type")||"")).toLowerCase();
+      if(hay.indexOf(ql)>-1) tiles.push({ti:ti,label:r_(t,"Label")||""});
+    });
+    tiles=tiles.slice(0,6);
+
     var html="";
+    if(tiles.length){
+      html+='<div class="sr-group">Shortcuts</div>';
+      tiles.forEach(function(x){
+        html+='<div class="sr-item" data-t="t" data-ti="'+x.ti+'">'+
+          '<div class="sic">'+ICO_TILE+'</div><div class="st"><b>'+esc(x.label)+'</b><span>Open</span></div></div>';
+      });
+    }
     if(hosp.length){
       html+='<div class="sr-group">Hospitals</div>';
       hosp.forEach(function(r){
@@ -1812,6 +1828,9 @@
       var cabId=it.getAttribute("data-cab"), eidx=parseInt(it.getAttribute("data-idx"),10);
       openCab(cabId);
       setTimeout(function(){ selectSlot(eidx,true); },60);
+    }else if(t==="t"){
+      var tile=STATE.tiles[parseInt(it.getAttribute("data-ti"),10)];
+      if(tile) openTile(tile);
     }
     $("search").value="";
   });
