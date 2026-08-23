@@ -2038,6 +2038,7 @@
     var b=e.target.closest?e.target.closest(".cpr-b"):null; if(!b) return;
     var act=b.getAttribute("data-act"), label=b.getAttribute("data-label");
     if(act==="epi"){ CPR.epis++; CPR.epi=0; CPR.hadEpi=true; cprLogAdd(label+" #"+CPR.epis); cprTick(); }
+    else if(act==="start"){ cprAudio(); if(!CPR.running){ CPR.running=true; CPR.last=Date.now(); ensureTick(); var sb=$("cprStart"); sb.classList.add("on"); sb.textContent="Pause"; } cprLogAdd(label); }
     else if(act==="shock"){ CPR.shocks++; if(navigator.vibrate)navigator.vibrate(80); cprLogAdd(label+" #"+CPR.shocks); }
     else if(act==="rhythm"){ CPR.cycle=0; cprLogAdd(label); cprTick(); }
     else if(act==="rosc"){ cprLogAdd(label); if(CPR.running)cprSetRunning(false); if(CPR.metro)cprSetMetro(false); }
