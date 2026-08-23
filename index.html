@@ -1610,9 +1610,13 @@
       DIR.loaded=true; buildDirChips(); renderDir();
     }).catch(function(){ $("dirBody").innerHTML='<div class="empty">No Directory tab found yet. Add a <b>Directory</b> tab to your sheet.</div>'; });
   }
+  function dirActive(r){
+    var a=String(r_(r,"Active")||"").trim().toLowerCase();
+    return a===""||a==="x"||a==="yes"||a==="true";
+  }
   function buildDirChips(){
     var types=[], seen={};
-    DIR.rows.forEach(function(r){ var t=r_(r,"Type"); if(t&&!seen[t.toLowerCase()]){ seen[t.toLowerCase()]=1; types.push(t); } });
+    DIR.rows.filter(dirActive).forEach(function(r){ var t=r_(r,"Type"); if(t&&!seen[t.toLowerCase()]){ seen[t.toLowerCase()]=1; types.push(t); } });
     var box=$("dirChips"); box.innerHTML="";
     [["all","All"]].concat(types.map(function(t){return [t.toLowerCase(),t];})).forEach(function(c){
       var b=document.createElement("button"); b.className="dir-chip"+(DIR.type===c[0]?" on":""); b.textContent=c[1];
@@ -1623,6 +1627,7 @@
   function renderDir(){
     var body=$("dirBody"), q=DIR.q.toLowerCase().trim();
     var rows=DIR.rows.filter(function(r){
+      if(!dirActive(r)) return false;
       if(DIR.type!=="all" && (r_(r,"Type")||"").toLowerCase()!==DIR.type) return false;
       if(q){ var hay=(r_(r,"First Name")+" "+r_(r,"Last Name")+" "+r_(r,"Unit")+" "+r_(r,"Type")+" "+r_(r,"Phone")).toLowerCase(); if(hay.indexOf(q)<0) return false; }
       return true;
