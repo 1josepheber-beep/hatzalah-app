@@ -1793,10 +1793,19 @@
       var name=decodeURIComponent(cal.getAttribute("data-cal")), exp=new Date(+cal.getAttribute("data-d"));
       var rem=new Date(exp.getTime()-30*86400000);
       function ymd(d){ return d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
-      var end=new Date(rem.getTime()+86400000);
-      var title=encodeURIComponent("Renew "+name+" (expires "+fmtDate(exp)+")");
-      var url="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+title+"&dates="+ymd(rem)+"/"+ymd(end)+"&details="+encodeURIComponent(name+" expires "+fmtDate(exp)+". Renew before it lapses.");
-      window.open(url,"_blank","noopener");
+      function nd(d){ return new Date(d.getTime()+86400000); }
+      function ie(s){ return String(s).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
+      var expStr=fmtDate(exp), now=Date.now();
+      function ev(uid,start,sum,desc){
+        return "BEGIN:VEVENT\r\nUID:"+uid+"@hatzalah\r\nDTSTAMP:"+ymd(new Date())+"T000000Z\r\nDTSTART;VALUE=DATE:"+ymd(start)+
+          "\r\nDTEND;VALUE=DATE:"+ymd(nd(start))+"\r\nSUMMARY:"+ie(sum)+"\r\nDESCRIPTION:"+ie(desc)+"\r\nEND:VEVENT";
+      }
+      var ics="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Hatzalah of Houston//Certs//EN\r\nCALSCALE:GREGORIAN\r\n"+
+        ev("hoh-rem-"+now, rem, "Renew "+name+" (expires "+expStr+")", "Renew "+name+" before it lapses on "+expStr+".")+"\r\n"+
+        ev("hoh-exp-"+now, exp, name+" EXPIRES today", name+" expiration date.")+"\r\n"+
+        "END:VCALENDAR";
+      dlBlob((name.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"")||"cert")+"_reminders.ics", new Blob([ics],{type:"text/calendar"}));
+      toast("Calendar file downloaded \u2014 open it to add both reminders.");
     }
   });
   $("certBack").addEventListener("click",navBack);
