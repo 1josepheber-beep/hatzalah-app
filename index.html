@@ -973,8 +973,9 @@
   function r_(o,k){return String(o[k]==null?"":o[k]).trim();}
   function isX(v){v=String(v==null?"":v).trim().toLowerCase();return v==="x"||v==="yes"||v==="true"||v==="1";}
 
+  function tabRange(name){ return /^[A-Za-z0-9_]+$/.test(name) ? name : "'"+String(name).replace(/'/g,"''")+"'"; }
   function fetchTab(name){
-    var url="https://sheets.googleapis.com/v4/spreadsheets/"+SHEET_ID+"/values/"+encodeURIComponent("'"+name+"'")+"?majorDimension=ROWS";
+    var url="https://sheets.googleapis.com/v4/spreadsheets/"+SHEET_ID+"/values/"+encodeURIComponent(tabRange(name))+"?majorDimension=ROWS";
     function go(tok){ return fetch(url,{headers:{Authorization:"Bearer "+tok}}); }
     return gToken().then(go).then(function(r){
       if(r.status===401) return gToken(true).then(go);
