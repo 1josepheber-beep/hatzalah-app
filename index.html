@@ -2503,10 +2503,13 @@
     }
     if(window.HOH_ERG){
       var et=window.HOH_ERG.text, erg=[];
+      var unhit=(/^\d{3,4}$/.test(ql) && window.HOH_ERG.un && window.HOH_ERG.un[ql]) ? window.HOH_ERG.un[ql] : null;
       for(var ei=0;ei<et.length;ei++){ var gi=et[ei].indexOf(ql); if(gi>-1){ var gs=Math.max(0,gi-20);
         erg.push({n:ei+1, snip:"\u2026"+et[ei].slice(gs,gi+ql.length+30).trim()+"\u2026"}); if(erg.length>=6) break; } }
-      if(erg.length){
+      if(unhit || erg.length){
         html+='<div class="sr-group">ERG 2024</div>';
+        if(unhit){ var ugp=154+(unhit.g-111)*2;
+          html+='<div class="sr-item" data-t="eg" data-page="'+ugp+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>UN '+esc(ql)+' \u00B7 '+esc(unhit.n)+'</b><span>Guide '+unhit.g+' \u2014 open the guide</span></div></div>'; }
         erg.forEach(function(r){ html+='<div class="sr-item" data-t="eg" data-page="'+r.n+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>Page '+r.n+'</b><span>'+esc(r.snip)+'</span></div></div>'; });
       }
     }
@@ -2820,8 +2823,13 @@
     var t=window.HOH_ERG.text, res=[];
     for(var i=0;i<t.length;i++){ var idx=t[i].indexOf(ql); if(idx>-1){ var st=Math.max(0,idx-24);
       res.push({n:i+1, snip:"\u2026"+t[i].slice(st,idx+ql.length+40).trim()+"\u2026"}); if(res.length>=60) break; } }
-    if(!res.length){ body.innerHTML='<div class="empty">No pages match \u201C'+esc(q)+'\u201D</div>'; return; }
-    body.innerHTML=res.map(function(r){ return '<div class="sr-item" data-page="'+r.n+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>Page '+r.n+'</b><span>'+esc(r.snip)+'</span></div></div>'; }).join("");
+    var top="";
+    if(/^\d{3,4}$/.test(ql) && window.HOH_ERG.un && window.HOH_ERG.un[ql]){
+      var u=window.HOH_ERG.un[ql], gp=154+(u.g-111)*2;
+      top='<div class="sr-item erg-un" data-page="'+gp+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>UN '+esc(ql)+' \u00B7 '+esc(u.n)+'</b><span>Guide '+u.g+' \u2014 open the guide</span></div></div>';
+    }
+    if(!res.length && !top){ body.innerHTML='<div class="empty">No pages match \u201C'+esc(q)+'\u201D</div>'; return; }
+    body.innerHTML=top+res.map(function(r){ return '<div class="sr-item" data-page="'+r.n+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>Page '+r.n+'</b><span>'+esc(r.snip)+'</span></div></div>'; }).join("");
   }
   $("ergBody").addEventListener("click",function(e){
     var it=e.target.closest?e.target.closest(".sr-item,.erg-qb"):null;
