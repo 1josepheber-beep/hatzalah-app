@@ -2300,7 +2300,13 @@
     });
   }
   $("gBtn").addEventListener("click",gSignIn);
-  (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); } else setTimeout(gBoot,150); })();
+  function gTrySilent(){
+    $("gLoad").classList.remove("hidden");
+    gRequest({prompt:""}).then(function(){ return gVerify(); })
+      .then(function(){ $("gLoad").classList.add("hidden"); startAfterGoogle(); })
+      .catch(function(){ $("gLoad").classList.add("hidden"); });
+  }
+  (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); gTrySilent(); } else setTimeout(gBoot,150); })();
 
 
 
