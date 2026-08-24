@@ -2321,7 +2321,7 @@
     tryLogin(pw).then(function(ok){if(ok)afterLogin();});}
   function afterLogin(){
     var b=bioGet();
-    if(b&&b.enabled){ enter(); return; }
+    if(b&&b.enabled){ markUnlocked(); enter(); return; }
     bioAvail().then(function(ok){
       if(ok){ $("gate").classList.add("hidden"); $("biooffer").classList.remove("hidden"); }
       else enter();
@@ -2329,18 +2329,20 @@
   }
   $("bioOfferYes").addEventListener("click",function(){
     $("bioOfferErr").textContent="";
-    bioEnroll().then(function(){ $("biooffer").classList.add("hidden"); enter(); })
+    bioEnroll().then(function(){ markUnlocked(); $("biooffer").classList.add("hidden"); enter(); })
       .catch(function(){ $("bioOfferErr").textContent="Couldn\u2019t set up \u2014 you can enable it later in your profile."; });
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
   $("signout").addEventListener("click",function(){
     if(confirm("Sign out on this device? You'll need your password to get back in.")){
-      localStorage.removeItem(LS);bioClear();location.reload();}});
+      localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");location.reload();}});
 
   function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
     boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
 
   var BIO_KEY="hoh_bio_v1";
+  function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }
+  function isUnlocked(){ try{return Date.now()<parseInt(localStorage.getItem("hoh_unlock_until")||"0",10);}catch(e){return false;} }
   function bioGet(){ try{return JSON.parse(localStorage.getItem(BIO_KEY)||"null");}catch(e){return null;} }
   function bioSet(o){ try{localStorage.setItem(BIO_KEY,JSON.stringify(o));}catch(e){} }
   function bioClear(){ try{localStorage.removeItem(BIO_KEY);}catch(e){} }
@@ -2369,11 +2371,11 @@
   }
   function showBioGate(){
     $("biogate").classList.remove("hidden"); $("bioErr").textContent="";
-    bioUnlock().then(function(){ $("biogate").classList.add("hidden"); enter(); }).catch(function(){});
+    bioUnlock().then(function(){ markUnlocked(); $("biogate").classList.add("hidden"); enter(); }).catch(function(){});
   }
   $("bioBtn").addEventListener("click",function(){
     $("bioErr").textContent="";
-    bioUnlock().then(function(){ $("biogate").classList.add("hidden"); enter(); })
+    bioUnlock().then(function(){ markUnlocked(); $("biogate").classList.add("hidden"); enter(); })
       .catch(function(){ $("bioErr").textContent="Couldn\u2019t verify. Try again, or use your password."; });
   });
   $("bioPw").addEventListener("click",function(){
@@ -2386,7 +2388,7 @@
     if(saved&&saved.pw){
       STATE.me=saved;
       var b=bioGet();
-      if(b&&b.enabled){ showBioGate(); } else { enter(); }
+      if(b&&b.enabled){ if(isUnlocked()){ enter(); } else { showBioGate(); } } else { enter(); }
     }
     else{ $("gate").classList.remove("hidden"); setTimeout(function(){$("pw").focus();},200); }
   }
