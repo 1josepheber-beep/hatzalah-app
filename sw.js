@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v10";
+var CACHE="hoh-v11";
 var SHELL=["./","./index.html","./proto_index.js","./placement.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("install",function(e){
   self.skipWaiting();
@@ -28,7 +28,7 @@ self.addEventListener("fetch",function(e){
 
   // Protocol page images: CACHE-FIRST (they never change). Once viewed, they load
   // instantly and work fully offline; only fetch from network on first view.
-  if(url.origin===location.origin && (url.pathname.indexOf("/protocols/")>-1||url.pathname.indexOf("/cabinets/")>-1)){
+  if(url.origin===location.origin && (url.pathname.indexOf("/protocols/")>-1||url.pathname.indexOf("/cabinets/")>-1||url.pathname.indexOf("/erg/")>-1)){
     e.respondWith(
       caches.match(req).then(function(hit){
         if(hit && hit.ok) return hit;

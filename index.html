@@ -113,6 +113,9 @@
   .nt-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
   .nt-h{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:11px}
   .nt-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+  .nt-date-l{display:block;font-size:12px;font-weight:700;color:var(--mut);margin-bottom:11px}
+  .nt-date-l input{display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px;color:var(--ink);font-family:inherit}
+  .nt-date-l input:focus{outline:none;border-color:var(--navy)}
   .nt-fields label{display:flex;flex-direction:column;font-size:12px;font-weight:700;color:var(--mut);gap:4px}
   .nt-fields input{border:1px solid var(--line);border-radius:9px;padding:10px;font-size:16px;color:var(--ink);width:100%;box-sizing:border-box}
   .nt-fields input:focus{outline:none;border-color:var(--navy)}
@@ -774,6 +777,7 @@
   <div class="notes-body">
     <div class="nt-card">
       <div class="nt-h">New entry</div>
+      <label class="nt-date-l">Date<input id="ntDate" type="date"></label>
       <div class="nt-fields">
         <label>HR<input id="ntHr" type="text" inputmode="numeric"></label>
         <label>RR<input id="ntRr" type="text" inputmode="numeric"></label>
@@ -857,6 +861,16 @@
     <h2>Required Equipment</h2>
   </div>
   <iframe id="equipFrame" class="eq-frame" title="Required Equipment"></iframe>
+</div>
+
+<!-- ERG 2024 -->
+<div class="screen" id="ergScreen">
+  <div class="scr-head">
+    <button class="back" id="ergBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>ERG 2024</h2>
+  </div>
+  <div class="scr-search"><input id="ergSearch" type="search" placeholder="Search material or UN number" enterkeyhint="search"></div>
+  <div class="scr-body" id="ergBody"></div>
 </div>
 
 <!-- HOSPITALS SCREEN -->
@@ -1083,6 +1097,7 @@
     if(type==="link"){var u=r_(t,"Target");if(!u){toast("No link set for this tile.");return;} if(/^(tel:|mailto:)/i.test(u)){location.href=u;}else{window.open(u,"_blank","noopener");} return;}
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
+    if(type==="erg"){ openErg(); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
     if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
@@ -1910,11 +1925,18 @@
   function notesKey(){ return NOTES_PREFIX + ((STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"anon"); }
   function notesLoad(){ NOTES={entries:[]}; try{ var s=JSON.parse(localStorage.getItem(notesKey())||"null"); if(s&&s.entries) NOTES=s; }catch(e){} }
   function notesSave(){ try{ localStorage.setItem(notesKey(),JSON.stringify(NOTES)); }catch(e){} }
-  function notesStamp(){ var d=new Date(); return d.toLocaleDateString([], {month:"numeric",day:"numeric",year:"numeric"})+"  "+d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); }
+  function ntToday(){ var d=new Date(); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+  function notesStamp(){
+    var dv=$("ntDate").value, dateStr;
+    if(dv){ var p=dv.split("-"); dateStr=(+p[1])+"/"+(+p[2])+"/"+p[0]; }
+    else { dateStr=new Date().toLocaleDateString([], {month:"numeric",day:"numeric",year:"numeric"}); }
+    return dateStr+"  "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+  }
   function closeNotes(){ $("notesScreen").classList.remove("open"); }
   function openNotes(){
     if(!$("notesScreen").classList.contains("open")) navOpen(closeNotes);
     $("notesScreen").classList.add("open");
+    if(!$("ntDate").value) $("ntDate").value=ntToday();
     notesLoad(); renderNtEntries();
   }
   function ntVals(){ return {hr:$("ntHr").value.trim(),rr:$("ntRr").value.trim(),bp:$("ntBp").value.trim(),spo2:$("ntSpo2").value.trim(),temp:$("ntTemp").value.trim(),bgl:$("ntBgl").value.trim(),note:$("ntNote").value.trim()}; }
@@ -1933,7 +1955,7 @@
   function ntAdd(){
     var f=ntVals();
     if(!(f.hr||f.rr||f.bp||f.spo2||f.temp||f.bgl||f.note)){ toast("Fill in something first."); return; }
-    f.stamp=notesStamp(); NOTES.entries.unshift(f); notesSave(); ntClearFields(); renderNtEntries(); toast("Entry saved.");
+    f.stamp=notesStamp(); NOTES.entries.unshift(f); notesSave(); ntClearFields(); $("ntDate").value=ntToday(); renderNtEntries(); toast("Entry saved.");
   }
   function ntCopyAll(){
     if(!NOTES.entries.length){ toast("Nothing to copy."); return; }
@@ -2381,6 +2403,7 @@
     if(!PLACE.loaded){
       jobs.push(loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; }).catch(function(){}));
     }
+    if(!window.HOH_ERG){ jobs.push(loadErg().catch(function(){})); }
     return Promise.all(jobs);
   }
 
@@ -2388,6 +2411,7 @@
   var ICO_PROTO='<svg viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/></svg>';
   var ICO_EQUIP='<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>';
   var ICO_TILE='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
+  var ICO_ERG='<svg viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12z"/><path d="M12 8v5" stroke="#fff"/><circle cx="12" cy="16.5" r="0.8" fill="#fff" stroke="none"/></svg>';
 
   function renderGlobal(q){
     var box=$("sresults");
@@ -2464,6 +2488,15 @@
           '<span>'+esc(r.cab)+'</span></div></div>';
       });
     }
+    if(window.HOH_ERG){
+      var et=window.HOH_ERG.text, erg=[];
+      for(var ei=0;ei<et.length;ei++){ var gi=et[ei].indexOf(ql); if(gi>-1){ var gs=Math.max(0,gi-20);
+        erg.push({n:ei+1, snip:"\u2026"+et[ei].slice(gs,gi+ql.length+30).trim()+"\u2026"}); if(erg.length>=6) break; } }
+      if(erg.length){
+        html+='<div class="sr-group">ERG 2024</div>';
+        erg.forEach(function(r){ html+='<div class="sr-item" data-t="eg" data-page="'+r.n+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>Page '+r.n+'</b><span>'+esc(r.snip)+'</span></div></div>'; });
+      }
+    }
     if(!html){ html='<div class="sr-empty">No matches for “'+esc(q)+'”</div>'; }
     box.innerHTML=html; box.className="sresults show";
   }
@@ -2498,6 +2531,8 @@
     }else if(t==="t"){
       var tile=STATE.tiles[parseInt(it.getAttribute("data-ti"),10)];
       if(tile) openTile(tile);
+    }else if(t==="eg"){
+      openReaderPage(parseInt(it.getAttribute("data-page"),10),"erg");
     }
     $("search").value="";
   });
@@ -2703,18 +2738,28 @@
     }
   },{passive:false});
 
-  function openReaderPage(n){ if(!$("protoReader").classList.contains("open")) navOpen(closeReader); $("protoReader").classList.add("open"); showPage(n); }
+  var RDR={book:"proto",base:"protocols/",total:0,pos:1};
+  function setBook(b){
+    if(b==="erg"){ RDR.book="erg"; RDR.base="erg/"; RDR.total=(window.HOH_ERG?window.HOH_ERG.pages:392); }
+    else { RDR.book="proto"; RDR.base="protocols/"; RDR.total=PROTO.TOTAL; }
+  }
+  function openReaderPage(n, book){ setBook(book||"proto"); if(!$("protoReader").classList.contains("open")) navOpen(closeReader); $("protoReader").classList.add("open"); showPage(n); }
   function showPage(n){
-    if(!PROTO.TOTAL) return;
-    n=Math.max(1,Math.min(PROTO.TOTAL,n)); PROTO.pos=n;
-    var o=protoOwner(n);
-    $("prTitle").textContent=o?o.name:"Protocols";
-    $("prCat").textContent="Page "+pageLabel(n)+"  \u00B7  "+n+" / "+PROTO.TOTAL;
+    if(!RDR.total) return;
+    n=Math.max(1,Math.min(RDR.total,n)); RDR.pos=n; PROTO.pos=n;
+    if(RDR.book==="erg"){
+      $("prTitle").textContent="ERG 2024";
+      $("prCat").textContent="Page "+n+" / "+RDR.total;
+    } else {
+      var o=protoOwner(n);
+      $("prTitle").textContent=o?o.name:"Protocols";
+      $("prCat").textContent="Page "+pageLabel(n)+"  \u00B7  "+n+" / "+PROTO.TOTAL;
+    }
     prImg.onload=function(){ pzReset(); };
-    prImg.src="protocols/p"+pad3(n)+".webp";
+    prImg.src=RDR.base+"p"+pad3(n)+".webp";
     if(prHint) prHint.classList.remove("gone");
-    $("prPrev").disabled=n<=1; $("prNext").disabled=n>=PROTO.TOTAL;
-    [n-1,n+1].forEach(function(m){ if(m>=1&&m<=PROTO.TOTAL){ var im=new Image(); im.src="protocols/p"+pad3(m)+".webp"; } });
+    $("prPrev").disabled=n<=1; $("prNext").disabled=n>=RDR.total;
+    [n-1,n+1].forEach(function(m){ if(m>=1&&m<=RDR.total){ var im=new Image(); im.src=RDR.base+"p"+pad3(m)+".webp"; } });
   }
   function closeReader(){ $("protoReader").classList.remove("open"); }
   function zoomBtn(){ if(PZ.scale>PZ.min+0.02) pzReset(); else pzZoomTo(PZ.cw/2,PZ.ch*0.32,2.6); }
@@ -2730,6 +2775,44 @@
   $("prPrev").addEventListener("click",function(){ showPage(PROTO.pos-1); });
   $("prNext").addEventListener("click",function(){ showPage(PROTO.pos+1); });
   $("prZoom").addEventListener("click",zoomBtn);
+
+  // ---------- ERG 2024 (book reader, reuses the protocols reader) ----------
+  function loadErg(){
+    return new Promise(function(res,rej){
+      if(window.HOH_ERG){ res(window.HOH_ERG); return; }
+      var s=document.createElement("script"); s.src="erg_index.js";
+      s.onload=function(){ window.HOH_ERG?res(window.HOH_ERG):rej(); };
+      s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  function closeErg(){ $("ergScreen").classList.remove("open"); }
+  function openErg(){
+    if(!$("ergScreen").classList.contains("open")) navOpen(closeErg);
+    $("ergScreen").classList.add("open");
+    if(window.HOH_ERG){ renderErg($("ergSearch").value||""); return; }
+    $("ergBody").innerHTML='<div class="empty">Loading\u2026</div>';
+    loadErg().then(function(){ renderErg($("ergSearch").value||""); }).catch(function(){ $("ergBody").innerHTML='<div class="empty">Couldn\u2019t load. Check your internet and open this again.</div>'; });
+  }
+  function renderErg(q){
+    var body=$("ergBody"); q=(q||"").trim(); var ql=q.toLowerCase();
+    if(!ql){
+      body.innerHTML='<button class="ebtn primary" id="ergOpen" style="width:100%;padding:14px;font-size:16px">Open the guidebook</button>'+
+        '<div class="empty">Search a material name (e.g. \u201Cchlorine\u201D) or a UN/ID number (e.g. \u201C1017\u201D) to jump to its page.</div>';
+      $("ergOpen").addEventListener("click",function(){ openReaderPage(1,"erg"); });
+      return;
+    }
+    var t=window.HOH_ERG.text, res=[];
+    for(var i=0;i<t.length;i++){ var idx=t[i].indexOf(ql); if(idx>-1){ var st=Math.max(0,idx-24);
+      res.push({n:i+1, snip:"\u2026"+t[i].slice(st,idx+ql.length+40).trim()+"\u2026"}); if(res.length>=60) break; } }
+    if(!res.length){ body.innerHTML='<div class="empty">No pages match \u201C'+esc(q)+'\u201D</div>'; return; }
+    body.innerHTML=res.map(function(r){ return '<div class="sr-item" data-page="'+r.n+'"><div class="sic">'+ICO_ERG+'</div><div class="st"><b>Page '+r.n+'</b><span>'+esc(r.snip)+'</span></div></div>'; }).join("");
+  }
+  $("ergBody").addEventListener("click",function(e){
+    var it=e.target.closest?e.target.closest(".sr-item"):null;
+    if(it){ openReaderPage(parseInt(it.getAttribute("data-page"),10),"erg"); }
+  });
+  $("ergBack").addEventListener("click",navBack);
+  $("ergSearch").addEventListener("input",function(){ renderErg(this.value); });
   // Protocols screen search = same tappable dropdown as the home page
   function renderProtoDropdown(q){
     var box=$("protoSres");
