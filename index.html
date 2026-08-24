@@ -548,6 +548,13 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sr-item .st span{font-size:11px;color:var(--mut)}
   .sr-empty{padding:16px 14px;color:var(--mut);font-size:13px;text-align:center}
+  @media (min-width:680px){
+    body{background:var(--bg)}
+    #app{max-width:600px;margin:0 auto;min-height:100vh;background:#fff;box-shadow:0 0 44px rgba(9,26,52,.14)}
+    .screen,.preader{left:50%;transform:translateX(-50%);width:100%;max-width:600px;box-shadow:0 0 44px rgba(9,26,52,.2)}
+    .sheet-wrap{justify-content:center}
+    .sheet{max-width:600px}
+  }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
