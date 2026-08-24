@@ -953,7 +953,7 @@
   var LS="hoh_member_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var ORG_DOMAIN="houstonhatzalah.org";
-  var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null};
+  var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null,verified:false};
   function gInit(){
     if(G.client||!(window.google&&google.accounts&&google.accounts.oauth2)) return;
     G.client=google.accounts.oauth2.initTokenClient({
@@ -962,12 +962,16 @@
       hosted_domain:ORG_DOMAIN,
       callback:function(resp){
         var p=G.pending; G.pending=null;
-        if(resp&&resp.access_token){ G.token=resp.access_token; G.exp=Date.now()+((resp.expires_in?resp.expires_in:3300)*1000)-60000; if(p)p.resolve(resp.access_token); }
+        if(resp&&resp.access_token){ G.token=resp.access_token; G.exp=Date.now()+((resp.expires_in?resp.expires_in:3300)*1000)-60000; if(G.verified) saveGTok(); if(p)p.resolve(resp.access_token); }
         else if(p){ p.reject(resp&&resp.error||"no-token"); }
       },
       error_callback:function(err){ var p=G.pending; G.pending=null; if(p)p.reject((err&&err.type)||"error"); }
     });
   }
+  var GTOK_KEY="hoh_gtok_v1";
+  function saveGTok(){ try{ localStorage.setItem(GTOK_KEY,JSON.stringify({t:G.token,e:G.exp,m:G.email})); }catch(e){} }
+  function clearGTok(){ try{ localStorage.removeItem(GTOK_KEY); }catch(e){} }
+  function loadGTok(){ try{ var o=JSON.parse(localStorage.getItem(GTOK_KEY)||"null"); if(o&&o.t&&Date.now()<o.e){ G.token=o.t; G.exp=o.e; G.email=o.m||""; G.verified=true; return true; } }catch(e){} return false; }
   function gRequest(opts){
     return new Promise(function(resolve,reject){
       if(!G.client){ reject("not-ready"); return; }
@@ -988,7 +992,7 @@
         var email=String(u&&u.email||"").toLowerCase();
         var ok=(u&&u.hd===ORG_DOMAIN)||email.slice(-(ORG_DOMAIN.length+1))==="@"+ORG_DOMAIN;
         if(!ok) throw "not-org";
-        G.email=email; return u;
+        G.email=email; G.verified=true; saveGTok(); return u;
       });
   }
 
@@ -2349,7 +2353,7 @@
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
   $("signout").addEventListener("click",function(){
     if(confirm("Sign out on this device? You'll need your password to get back in.")){
-      localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");location.reload();}});
+      localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}});
 
   function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
     boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
@@ -2413,7 +2417,7 @@
     }).catch(function(err){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false;
       if(err==="not-org"){ $("gErr").textContent="Use your @houstonhatzalah.org account.";
-        try{ if(G.token) google.accounts.oauth2.revoke(G.token,function(){}); }catch(e){} G.token=""; G.exp=0; }
+        try{ if(G.token) google.accounts.oauth2.revoke(G.token,function(){}); }catch(e){} G.token=""; G.exp=0; G.verified=false; clearGTok(); }
       else if(err==="not-ready"){ $("gErr").textContent="Still loading \u2014 try again in a moment."; }
       else { $("gErr").textContent="Sign-in failed. Please try again."; }
     });
@@ -2425,7 +2429,7 @@
       .then(function(){ $("gLoad").classList.add("hidden"); startAfterGoogle(); })
       .catch(function(){ $("gLoad").classList.add("hidden"); });
   }
-  (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); gTrySilent(); } else setTimeout(gBoot,150); })();
+  (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(gBoot,150); })();
 
 
 
