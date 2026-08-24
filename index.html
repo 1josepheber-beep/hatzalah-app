@@ -1908,29 +1908,43 @@
       box.appendChild(b);
     });
   }
+  function dirMerged(){
+    var map={}, order=[];
+    DIR.rows.forEach(function(r){
+      if(!dirActive(r)) return;
+      var first=r_(r,"First Name"), last=r_(r,"Last Name");
+      var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
+      if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),types:[]}; order.push(key); }
+      var m=map[key], t=r_(r,"Type");
+      if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
+      if(!m.unit) m.unit=r_(r,"Unit");
+      if(!m.phone) m.phone=r_(r,"Phone");
+      if(!m.address) m.address=r_(r,"Address");
+      if(!m.dob) m.dob=r_(r,"DOB");
+    });
+    return order.map(function(k){return map[k];});
+  }
   function renderDir(){
     var body=$("dirBody"), q=DIR.q.toLowerCase().trim();
-    var rows=DIR.rows.filter(function(r){
-      if(!dirActive(r)) return false;
-      if(DIR.type!=="all" && (r_(r,"Type")||"").toLowerCase()!==DIR.type) return false;
-      if(q){ var hay=(r_(r,"First Name")+" "+r_(r,"Last Name")+" "+r_(r,"Unit")+" "+r_(r,"Type")+" "+r_(r,"Phone")).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+    var people=dirMerged().filter(function(p){
+      if(DIR.type!=="all" && p.types.map(function(t){return t.toLowerCase();}).indexOf(DIR.type)<0) return false;
+      if(q){ var hay=(p.first+" "+p.last+" "+p.unit+" "+p.types.join(" ")+" "+p.phone).toLowerCase(); if(hay.indexOf(q)<0) return false; }
       return true;
     });
-    rows.sort(function(a,b){ return (r_(a,"Last Name")+r_(a,"First Name")).toLowerCase().localeCompare((r_(b,"Last Name")+r_(b,"First Name")).toLowerCase()); });
-    if(!rows.length){ body.innerHTML='<div class="empty">No matches.</div>'; return; }
-    body.innerHTML=rows.map(function(r){
-      var nm=(r_(r,"First Name")+" "+r_(r,"Last Name")).trim();
-      var type=r_(r,"Type"), unit=r_(r,"Unit"), phone=r_(r,"Phone"), addr=r_(r,"Address");
-      var dob=r_(r,"DOB");
-      var canDob = isAdmin() || (STATE.me && normUnit(unit)===normUnit(STATE.me.unit));
-      var tel=phone.replace(/[^0-9+]/g,"");
+    people.sort(function(a,b){ return (a.last+" "+a.first).toLowerCase().localeCompare((b.last+" "+b.first).toLowerCase()); });
+    if(!people.length){ body.innerHTML='<div class="empty">No matches.</div>'; return; }
+    body.innerHTML=people.map(function(p){
+      var nm=(p.last?(p.last+(p.first?", "+p.first:"")):p.first).trim();
+      var typeStr=p.types.join(" / ");
+      var canDob = isAdmin() || (STATE.me && normUnit(p.unit)===normUnit(STATE.me.unit));
+      var tel=(p.phone||"").replace(/[^0-9+]/g,"");
       var acts="";
-      if(tel) acts+='<button class="dir-btn call" data-tel="'+esc(tel)+'">'+ICO_PHONE+esc(phone)+'</button>';
-      if(addr) acts+='<button class="dir-btn map" data-addr="'+esc(addr)+'">'+ICO_PIN+'<span>'+esc(addr)+'</span></button>';
+      if(tel) acts+='<button class="dir-btn call" data-tel="'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</button>';
+      if(p.address) acts+='<button class="dir-btn map" data-addr="'+esc(p.address)+'">'+ICO_PIN+'<span>'+esc(p.address)+'</span></button>';
       return '<div class="dir-card"><div class="dir-top"><span class="dir-nm">'+esc(nm)+'</span>'+
-        (type?'<span class="dir-badge">'+esc(type)+'</span>':'')+
-        (unit?'<span class="dir-unit">'+esc(unit)+'</span>':'')+'</div>'+
-        (canDob&&dob?'<div class="dir-dob">DOB: '+esc(dob)+'</div>':'')+
+        (typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+
+        (p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+        (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+'</div>';
     }).join("");
   }
