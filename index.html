@@ -1205,7 +1205,7 @@
         var r=rows[i];
         var active=String(r["Active"]||"").trim().toLowerCase();
         if(!(active===""||active==="x"||active==="yes"||active==="true")) continue;
-        if(String(r["Password"]||"").trim()===pw.trim()){ hit=r; break; }
+        if(String(r["Password"]||"").trim().toLowerCase()===pw.trim().toLowerCase()){ hit=r; break; }
       }
       $("pwLoad").classList.add("hidden");
       if(!hit){ $("pwErr").textContent="Password not recognized. Check with your coordinator."; return false; }
@@ -1243,9 +1243,9 @@
       // Refresh the logged-in member from the roster so status/admin/unit changes in the
       // sheet take effect on next open (no need to sign out and back in).
       if(STATE.me&&STATE.me.pw){
-        var rows=res[2]||[], mp=String(STATE.me.pw).trim(), found=null;
+        var rows=res[2]||[], mp=String(STATE.me.pw).trim().toLowerCase(), found=null;
         for(var i=0;i<rows.length;i++){
-          if(String(rows[i]["Password"]||"").trim()===mp){ found=rows[i]; break; }
+          if(String(rows[i]["Password"]||"").trim().toLowerCase()===mp){ found=rows[i]; break; }
         }
         var act=found?String(found["Active"]||"").trim().toLowerCase():"";
         var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
