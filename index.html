@@ -2212,9 +2212,9 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '<div class="prof-pw"><div class="prof-pw-h">Change password</div>'+
-        '<div class="prof-pw-note">Ask a coordinator for a one-time activation code, then set your new password.</div>'+
-        '<label class="prof-l">Activation code<input id="pwCode" type="text" autocomplete="off" placeholder="Code from your coordinator"></label>'+
-        '<label class="prof-l">New password<input id="pwNew" type="text" autocomplete="off" placeholder="Choose a new password"></label>'+
+        '<label class="prof-l">Current password<input id="pwCur" type="password" autocomplete="off" placeholder="Your current password"></label>'+
+        '<label class="prof-l">New password<input id="pwNew" type="password" autocomplete="off" placeholder="Choose a new password"></label>'+
+        '<label class="prof-l">Confirm new password<input id="pwNew2" type="password" autocomplete="off" placeholder="Re-enter new password"></label>'+
         '<button class="ebtn primary" id="pwSave">Update password</button>'+
         '<div class="prof-note" id="pwNote"></div></div>'+
       '</div>'+
@@ -2225,24 +2225,25 @@
     renderBioRow();
   }
   function changePassword(){
-    var code=$("pwCode").value.trim(), np=$("pwNew").value.trim(), note=$("pwNote");
+    var cur=$("pwCur").value.trim(), np=$("pwNew").value.trim(), np2=$("pwNew2").value.trim(), note=$("pwNote");
     note.style.color=""; note.textContent="";
-    if(!code){ note.textContent="Enter your activation code."; return; }
+    if(!cur){ note.textContent="Enter your current password."; return; }
     if(np.length<4){ note.textContent="New password must be at least 4 characters."; return; }
+    if(np!==np2){ note.textContent="The new passwords don\u2019t match."; return; }
     var url=getSetting("Profile Update URL","");
     if(!url){ note.textContent="Saving isn\u2019t set up yet."; return; }
     var btn=$("pwSave"); btn.disabled=true; btn.textContent="Updating\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"pw",unit:(STATE.me&&STATE.me.unit)||"",code:code,newpw:np})})
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"pw",unit:(STATE.me&&STATE.me.unit)||"",cur:cur,newpw:np})})
       .then(function(r){return r.text();}).then(function(t){
         var res={}; try{res=JSON.parse(t);}catch(e){}
         btn.disabled=false; btn.textContent="Update password";
         if(res.ok===false){
-          note.textContent = (res.error==="bad code") ? "That activation code isn\u2019t right \u2014 ask your coordinator for a new one." : "Couldn\u2019t update. Try again.";
+          note.textContent = (res.error==="bad current") ? "Your current password isn\u2019t right." : "Couldn\u2019t update. Try again.";
           return;
         }
         STATE.me.pw=np; try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
-        $("pwCode").value=""; $("pwNew").value="";
-        note.style.color="#2f9e44"; note.textContent="Password updated. Use it next time you sign in.";
+        $("pwCur").value=""; $("pwNew").value=""; $("pwNew2").value="";
+        note.style.color="#2f9e44"; note.textContent="Password updated.";
         toast("Password updated.");
       }).catch(function(){ btn.disabled=false; btn.textContent="Update password"; note.textContent="Couldn\u2019t reach the server \u2014 check your connection."; });
   }
