@@ -417,6 +417,7 @@
   .cert-modal-btns button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-modal-btns .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cert-mem{border-bottom:1px solid var(--line)}
+  .cert-upload-all{display:block;width:calc(100% - 24px);margin:14px 12px 24px;border:1px dashed var(--navy);background:#f4f7fb;color:var(--navy);border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-mem-h{display:flex;align-items:center;gap:9px;padding:13px 12px;cursor:pointer;font-weight:800;
     font-size:15px;color:var(--ink);background:#f2f5fa}
   .cert-mem-h .car{width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2.4;transition:transform .15s}
@@ -2017,7 +2018,8 @@
     if(!isAdmin()){
       var me=normUnit(STATE.me.unit), mine=CERT.rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
       if(!mine.length){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
-      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(mine[0])+'</div>';
+      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(mine[0])+'</div>'+
+        '<button class="cert-upload-all" id="certUploadAll">Upload another document</button>';
       return;
     }
     q=(q||"").toLowerCase().trim();
@@ -2040,6 +2042,7 @@
     body.innerHTML=html;
   }
   $("certBody").addEventListener("click",function(e){
+    if(e.target && e.target.id==="certUploadAll"){ openUpload(""); return; }
     var h=e.target.closest?e.target.closest(".cert-mem-h"):null;
     if(h){ var mem=h.parentNode, key=mem.getAttribute("data-k"); CERT.collapsed[key]=mem.classList.contains("collapsed")?false:true; mem.classList.toggle("collapsed"); return; }
     var cal=e.target.closest?e.target.closest(".cert-cal"):null;
@@ -2531,6 +2534,7 @@
     var mode=$("cprTrain").checked?"Training":"Real";
     var payload={ kind:"codelog", unit:(STATE.me&&STATE.me.unit)||"",
       name:((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()),
+      email:(G.email||""),
       mode:mode, duration:cprFmt(CPR.total), shocks:CPR.shocks, epis:CPR.epis, cycles:CPR.cycNum,
       started:(CPR.log.length?CPR.log[CPR.log.length-1].clock:""), log:cprLogText() };
     var btn=$("cprSave"); btn.disabled=true; btn.textContent="Saving\u2026";
