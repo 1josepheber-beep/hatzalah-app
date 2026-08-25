@@ -2477,6 +2477,7 @@
   var CPR={running:false,last:0,total:0,cycle:0,epi:0,cycNum:1,epis:0,shocks:0,tickId:0,
            metro:false,metroId:0,actx:null,log:[],hadEpi:false,btnsLoaded:false};
   var CYCLE_MS=120000;
+  function cycleMs(){ var m=parseFloat(getSetting("CPR Cycle Minutes","2")); if(!isFinite(m)||m<=0) m=2; return Math.round(m*60000); }
   function cprFmt(ms){ if(ms<0)ms=0; var s=Math.floor(ms/1000); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
   function cprAudio(){ if(!CPR.actx){ try{ CPR.actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(CPR.actx&&CPR.actx.state==="suspended")CPR.actx.resume(); return CPR.actx; }
   function beep(freq,dur,vol){ var c=cprAudio(); if(!c)return; var o=c.createOscillator(),g=c.createGain(); o.frequency.value=freq; o.connect(g); g.connect(c.destination); g.gain.setValueAtTime(vol||0.2,c.currentTime); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+(dur||0.06)); o.start(); o.stop(c.currentTime+(dur||0.06)); }
@@ -2489,12 +2490,13 @@
     var now=Date.now();
     if(CPR.running){
       var dt=now-CPR.last; CPR.total+=dt; CPR.cycle+=dt; if(CPR.hadEpi)CPR.epi+=dt;
-      if(CPR.cycle>=CYCLE_MS){ CPR.cycle-=CYCLE_MS; CPR.cycNum++; cycleAlert(); cprLogAdd("Rhythm check \u00B7 switch compressor (cycle "+CPR.cycNum+")"); }
+      var cyc=cycleMs();
+      if(CPR.cycle>=cyc){ CPR.cycle-=cyc; CPR.cycNum++; cycleAlert(); cprLogAdd("Rhythm check \u00B7 switch compressor (cycle "+CPR.cycNum+")"); }
     }
     CPR.last=now;
     $("cprNow").textContent="Time now  "+cprClock();
     $("cprTotal").textContent=cprFmt(CPR.total);
-    $("cprCycle").textContent=cprFmt(CYCLE_MS-CPR.cycle);
+    $("cprCycle").textContent=cprFmt(cycleMs()-CPR.cycle);
     $("cprCycNum").textContent=CPR.cycNum;
     $("cprEpi").textContent=CPR.hadEpi?cprFmt(CPR.epi):"0:00";
     var eb=$("cprEpiBox"); eb.classList.remove("due","over");
