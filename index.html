@@ -405,6 +405,7 @@
   .tile.glow-red .cdot{display:block;background:var(--red)}
   .tile.glow-orange .cdot{display:block;background:var(--gold)}
   .cert-up{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto;margin-left:6px}
+  .cert-edit{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto;margin-left:6px}
   .cert-modal{position:absolute;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;justify-content:center;z-index:8;padding:20px}
   .cert-modal.hidden{display:none}
   .cert-modal-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
@@ -902,7 +903,7 @@
       <div class="cert-modal-err" id="certModalErr"></div>
       <div class="cert-modal-btns">
         <button id="certModalCancel">Cancel</button>
-        <button id="certModalSave" class="primary">Save &amp; upload file</button>
+        <button id="certModalSave" class="primary">Save date</button>
       </div>
     </div>
   </div>
@@ -1862,17 +1863,18 @@
   var UP_DEFAULT_LINK="https://houstonhatzalah.egnyte.com/ul/s21HNn96UH";
   var UP_DEFAULT_TYPES=["Good Will Agreement","Resignation","Immunizations","License Plate","Driver's License","EMT/Paramedic TX License","Car Insurance","American Heart BLS","ACLS","PALS","COH E-Permit","HFD Waiver","HIPAA","HIPAA Awareness","Jurisprudence less than 4 years old","Epi Training Yearly","Evoc Course","Hazmat","BBP","SOP's","L&S Policy"];
   function closeUpload(){ $("uploadScreen").classList.remove("open"); }
-  function openUpload(target){
+  function openUpload(target, preset){
     UP.link=(target&&target.trim())||UP_DEFAULT_LINK;
     if(!$("uploadScreen").classList.contains("open")) navOpen(closeUpload);
     $("uploadScreen").classList.add("open");
-    if(UP.loaded){ renderUploadPicker(); return; }
+    function done(){ if(preset) showUploadStep(preset); else renderUploadPicker(); }
+    if(UP.loaded){ done(); return; }
     $("upBody").innerHTML='<div class="empty">Loading\u2026</div>';
     fetchTab("Uploads").then(function(rows){
       var t=rows.map(function(r){ return (r["Document Type"]||r["Type"]||r["Name"]||r["Label"]||"").trim(); }).filter(Boolean);
       UP.types=t.length?t:UP_DEFAULT_TYPES.slice();
-      UP.loaded=true; renderUploadPicker();
-    }).catch(function(){ UP.types=UP_DEFAULT_TYPES.slice(); UP.loaded=true; renderUploadPicker(); });
+      UP.loaded=true; done();
+    }).catch(function(){ UP.types=UP_DEFAULT_TYPES.slice(); UP.loaded=true; done(); });
   }
   function renderUploadPicker(){
     var b=$("upBody");
@@ -2001,10 +2003,11 @@
     var exp=certExpVal(row,c), num=(c.numKey?String(row[c.numKey]||"").trim():"");
     var st=certStatus(exp);
     var cal= st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(c.name)+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
-    var up= editable? '<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey||"")+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Upload</button>':'';
+    var edit = (editable && (c.expKey||c.singleKey)) ? '<button class="cert-edit" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey)+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Edit date</button>' : '';
+    var up = editable ? '<button class="cert-up" data-cert="'+esc(c.name)+'">Upload</button>' : '';
     return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
-      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+up+'</div>';
+      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+edit+up+'</div>';
   }
   function memberCertsHTML(row){
     var me=STATE.me?normUnit(STATE.me.unit):"";
@@ -2074,11 +2077,15 @@
   // ---- Per-cert upload + expiration update ----
   var CERTUP=null;
   document.addEventListener("click",function(ev){
-    var b=ev.target.closest?ev.target.closest(".cert-up"):null; if(!b) return;
-    CERTUP={cert:b.getAttribute("data-cert"), col:b.getAttribute("data-col"), unit:b.getAttribute("data-unit")};
-    $("certModalH").textContent="Update "+CERTUP.cert;
-    $("certModalErr").textContent=""; $("certModalDate").value="";
-    $("certModal").classList.remove("hidden");
+    var e=ev.target.closest?ev.target.closest(".cert-edit"):null;
+    if(e){
+      CERTUP={cert:e.getAttribute("data-cert"), col:e.getAttribute("data-col"), unit:e.getAttribute("data-unit")};
+      $("certModalH").textContent="Edit "+CERTUP.cert+" expiration";
+      $("certModalErr").textContent=""; $("certModalDate").value="";
+      $("certModal").classList.remove("hidden"); return;
+    }
+    var u=ev.target.closest?ev.target.closest(".cert-up"):null;
+    if(u){ openUpload("", u.getAttribute("data-cert")); return; }
   });
   $("certModalCancel").addEventListener("click",function(){ $("certModal").classList.add("hidden"); CERTUP=null; });
   $("certModalSave").addEventListener("click",function(){
@@ -2090,13 +2097,13 @@
     var url=getSetting("Profile Update URL","");
     var btn=$("certModalSave"); btn.disabled=true; btn.textContent="Saving\u2026";
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"cert",unit:CERTUP.unit,col:CERTUP.col,value:mdy,cert:CERTUP.cert})})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} 
-        btn.disabled=false; btn.textContent="Save & upload file";
+      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){}
+        btn.disabled=false; btn.textContent="Save date";
         if(!ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
-        var cert=CERTUP.cert; $("certModal").classList.add("hidden"); CERTUP=null;
-        CERT.loaded=false; toast("Expiration saved. Opening the uploader\u2026");
-        openUpload(""); 
-      }).catch(function(){ btn.disabled=false; btn.textContent="Save & upload file"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
+        $("certModal").classList.add("hidden"); CERTUP=null;
+        CERT.loaded=false; toast("Expiration date updated.");
+        openCerts();
+      }).catch(function(){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
   });
 
   // ---------- Directory ----------
