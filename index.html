@@ -95,6 +95,18 @@
   .avail-hint{display:block;font-size:12px;color:var(--mut);font-weight:500;margin-top:8px}
   .avail-loc{font-size:13px;color:var(--mut);margin-top:14px;min-height:18px}
   .avail-note{font-size:12.5px;color:var(--mut);text-align:center;padding:0 8px;line-height:1.5}
+  .avail-h{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:10px}
+  .sched-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+  .sched-form label{display:flex;flex-direction:column;font-size:12px;font-weight:700;color:var(--mut);gap:4px}
+  .sched-form input{border:1px solid var(--line);border-radius:9px;padding:9px;font-size:15px;color:var(--ink);width:100%;box-sizing:border-box}
+  .sched-add{width:100%;margin-top:12px;border:0;background:var(--navy);color:#fff;border-radius:11px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
+  .sched-list{display:flex;flex-direction:column;gap:9px}
+  .sched-slot{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+  .ss-main{flex:1;min-width:0}
+  .ss-lbl{font-weight:700;font-size:14px;color:var(--ink);display:block}
+  .ss-tag{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--mut)}
+  .ss-tag.on{color:#2f9e44}
+  .ss-del{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto}
   /* Dispatcher board */
   .board-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
   .board-map{height:230px;width:100%;background:#e9eef4;display:none}
@@ -975,13 +987,26 @@
   </div>
   <div class="avail-body">
     <div class="avail-card">
-      <div class="avail-state" id="availState">Not available</div>
-      <label class="avail-hours">Available for <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
-        <span class="avail-hint">Leave blank to stay on until you turn it off.</span></label>
-      <button class="avail-toggle" id="availToggle">Go available</button>
+      <div class="avail-h">Available now</div>
+      <div class="avail-state" id="availState">Not available now</div>
+      <label class="avail-hours">For <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
+        <span class="avail-hint">Blank = until you turn it off.</span></label>
+      <button class="avail-toggle" id="availToggle">Go available now</button>
       <div class="avail-loc" id="availLoc"></div>
     </div>
-    <div class="avail-note">While you&rsquo;re available, dispatch can see your status, phone, and location. Location uses GPS if you allow it &mdash; otherwise your home address.</div>
+    <div class="avail-card">
+      <div class="avail-h">Schedule a time</div>
+      <div class="sched-form">
+        <label>Date<input id="schDate" type="date"></label>
+        <label>From<input id="schFrom" type="time"></label>
+        <label>To<input id="schTo" type="time"></label>
+      </div>
+      <button class="sched-add" id="schAdd">Add to schedule</button>
+      <div class="avail-hint" style="margin-top:9px">Scheduled times use your home address for location.</div>
+    </div>
+    <div class="avail-h" style="padding:2px 4px 0">Your availability</div>
+    <div class="sched-list" id="schList"></div>
+    <div class="avail-note">While you&rsquo;re available, dispatch sees your status, phone, and location.</div>
   </div>
 </div>
 
@@ -3106,64 +3131,99 @@
   $("ergBack").addEventListener("click",navBack);
   $("ergSearch").addEventListener("input",function(){ renderErg(this.value); });
 
-  // ---------- My Availability ----------
-  var AVL={on:false};
+  // ---------- My Availability (scheduler) ----------
+  var AVL={on:false, slots:[]};
   function closeAvail(){ $("availScreen").classList.remove("open"); }
+  function slotStart(r){ var v=r_(r,"Start"); return v?(new Date(v).getTime()||0):0; }
+  function slotEnd(r){ var v=r_(r,"End"); return v?(new Date(v).getTime()||0):0; }
+  function slotActive(s,e){ var now=Date.now(); return s>0 && s<=now && (!e || e>now); }
+  function slotLabel(s,e){
+    var ds=new Date(s), day=ds.toLocaleDateString([], {weekday:"short",month:"short",day:"numeric"});
+    var t1=ds.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
+    return e ? (day+" "+t1+"\u2013"+new Date(e).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})) : (day+" "+t1+" \u00B7 until off");
+  }
   function openAvail(){
     if(!$("availScreen").classList.contains("open")) navOpen(closeAvail);
-    $("availScreen").classList.add("open");
-    $("availLoc").textContent=""; availUI(false);
-    var me=STATE.me?normUnit(STATE.me.unit):"";
-    fetchTab("Availability").then(function(rows){
-      var mine=(rows||[]).filter(function(r){ return normUnit(r_(r,"Unit"))===me; })[0];
-      var on=false;
-      if(mine && r_(mine,"Available").toLowerCase()==="yes"){
-        var until=r_(mine,"Until"); on=!until || (new Date(until).getTime()>Date.now());
-      }
-      AVL.on=on; availUI(true);
-    }).catch(function(){ availUI(true); });
+    $("availScreen").classList.add("open"); $("availLoc").textContent="";
+    if($("schDate") && !$("schDate").value){ var d=new Date(); $("schDate").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+    loadSlots();
   }
-  function availUI(ready){
-    $("availState").textContent=AVL.on?"You are AVAILABLE":"Not available";
+  function loadSlots(){
+    $("schList").innerHTML='<div class="empty">Loading\u2026</div>';
+    var me=STATE.me?normUnit(STATE.me.unit):"";
+    fetchTab("Schedule").then(function(rows){
+      AVL.slots=(rows||[]).filter(function(r){ return normUnit(r_(r,"Unit"))===me && r_(r,"ID"); })
+        .map(function(r){ var s=slotStart(r),e=slotEnd(r); return {id:r_(r,"ID"),s:s,e:e,src:r_(r,"Loc Source"),label:r_(r,"Label")||slotLabel(s,e)}; })
+        .filter(function(x){ return !x.e || x.e>Date.now(); })
+        .sort(function(a,b){ return a.s-b.s; });
+      AVL.on=AVL.slots.some(function(x){ return slotActive(x.s,x.e); });
+      availUI(); renderSlots();
+    }).catch(function(){ AVL.slots=[]; AVL.on=false; availUI(); $("schList").innerHTML='<div class="empty">Couldn\u2019t load your schedule.</div>'; });
+  }
+  function availUI(){
+    $("availState").textContent=AVL.on?"You are AVAILABLE now":"Not available now";
     $("availState").classList.toggle("on",AVL.on);
-    var b=$("availToggle"); b.textContent=AVL.on?"Go off":"Go available"; b.classList.toggle("on",AVL.on); b.disabled=!ready;
+    var b=$("availToggle"); b.disabled=false; b.textContent=AVL.on?"Go off now":"Go available now"; b.classList.toggle("on",AVL.on);
     var h=$("availHdr"); if(h) h.classList.toggle("on",AVL.on);
   }
-  function setAvail(on){
-    var hours=on?String($("availHours").value||"").trim():"";
-    $("availToggle").disabled=true;
-    if(on){
-      $("availLoc").textContent="Getting your location\u2026";
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(
-          function(pos){ postAvail(true,hours,pos.coords.latitude,pos.coords.longitude,"gps"); },
-          function(){ postAvail(true,hours,"","","home"); },
-          {enableHighAccuracy:true,timeout:8000,maximumAge:60000});
-      } else postAvail(true,hours,"","","home");
-    } else postAvail(false,"","","","");
+  function renderSlots(){
+    if(!AVL.slots.length){ $("schList").innerHTML='<div class="empty">No availability set.</div>'; return; }
+    $("schList").innerHTML=AVL.slots.map(function(x){
+      var act=slotActive(x.s,x.e);
+      return '<div class="sched-slot"><div class="ss-main"><span class="ss-lbl">'+esc(x.label)+'</span>'+
+        '<span class="ss-tag '+(act?"on":"")+'">'+(act?"Active now":"Upcoming")+'</span></div>'+
+        '<button class="ss-del" data-id="'+esc(x.id)+'">Remove</button></div>';
+    }).join("");
   }
-  function postAvail(on,hours,lat,lng,src){
+  function schPost(payload,after){
     var url=getSetting("Profile Update URL","");
     if(!url){ toast("Saving isn\u2019t set up yet."); $("availToggle").disabled=false; return; }
-    var payload={kind:"avail",unit:(STATE.me&&STATE.me.unit)||"",available:on?"Yes":"No",hours:hours,lat:(lat===""?"":lat),lng:(lng===""?"":lng),locSource:on?src:""};
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(t){
-        var ok=true; try{ ok=JSON.parse(t).ok!==false; }catch(e){}
-        if(!ok) throw "fail";
-        AVL.on=on; availUI(true);
-        $("availLoc").textContent = on ? (src==="gps"?"Shared live GPS location.":"Using your home address.") : "";
-        toast(on?"You\u2019re now available.":"Marked unavailable.");
-      }).catch(function(){ availUI(true); toast("Couldn\u2019t save \u2014 check your connection and try again."); });
+      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok)throw"f"; if(after)after(); })
+      .catch(function(){ $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); });
   }
-  $("availToggle").addEventListener("click",function(){ setAvail(!AVL.on); });
+  function addSlot(s,e,src,lat,lng,msg){
+    var id="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    schPost({kind:"sched",action:"add",id:id,unit:(STATE.me&&STATE.me.unit)||"",
+      start:new Date(s).toISOString(), end:(e?new Date(e).toISOString():""), label:slotLabel(s,e),
+      lat:(lat==null?"":lat), lng:(lng==null?"":lng), locSource:src},
+      function(){ toast(msg||"Added."); loadSlots(); });
+  }
+  function goNow(){
+    if(AVL.on){
+      var actives=AVL.slots.filter(function(x){return slotActive(x.s,x.e);}); if(!actives.length) return;
+      var n=actives.length, done=0; $("availToggle").disabled=true;
+      actives.forEach(function(x){ schPost({kind:"sched",action:"del",id:x.id},function(){ if(++done===n){ toast("Marked unavailable."); loadSlots(); } }); });
+      return;
+    }
+    var hours=String($("availHours").value||"").trim();
+    var end = hours ? (Date.now()+parseFloat(hours)*3600000) : 0;
+    $("availToggle").disabled=true; $("availLoc").textContent="Getting your location\u2026";
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ addSlot(Date.now(),end,"gps",pos.coords.latitude,pos.coords.longitude,"You\u2019re now available."); },
+        function(){ addSlot(Date.now(),end,"home",null,null,"You\u2019re now available (home address)."); },
+        {enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+    } else addSlot(Date.now(),end,"home",null,null,"You\u2019re now available.");
+  }
+  function addScheduled(){
+    var d=$("schDate").value, f=$("schFrom").value, t=$("schTo").value;
+    if(!d||!f||!t){ toast("Pick a date, from and to."); return; }
+    var s=new Date(d+"T"+f).getTime(), e=new Date(d+"T"+t).getTime();
+    if(!isFinite(s)||!isFinite(e)){ toast("Check the times."); return; }
+    if(e<=s) e+=24*3600000;
+    addSlot(s,e,"home",null,null,"Added to schedule.");
+  }
+  $("availToggle").addEventListener("click",goNow);
+  $("schAdd").addEventListener("click",addScheduled);
+  $("schList").addEventListener("click",function(ev){ var b=ev.target.closest?ev.target.closest(".ss-del"):null; if(b){ schPost({kind:"sched",action:"del",id:b.getAttribute("data-id")},function(){ loadSlots(); }); } });
   $("availBack").addEventListener("click",navBack);
   $("availHdr").addEventListener("click",openAvail);
   function updateAvailBtn(){
     if(!STATE.me) return;
     var me=normUnit(STATE.me.unit);
-    fetchTab("Availability").then(function(rows){
-      var mine=(rows||[]).filter(function(r){return normUnit(r_(r,"Unit"))===me;})[0];
-      var on=false; if(mine&&r_(mine,"Available").toLowerCase()==="yes"){ var u=r_(mine,"Until"); on=!u||new Date(u).getTime()>Date.now(); }
+    fetchTab("Schedule").then(function(rows){
+      var on=(rows||[]).some(function(r){ return normUnit(r_(r,"Unit"))===me && slotActive(slotStart(r),slotEnd(r)); });
       AVL.on=on; var b=$("availHdr"); if(b) b.classList.toggle("on",on);
     }).catch(function(){});
   }
@@ -3196,32 +3256,39 @@
     if(!list.length){ $("boardList").innerHTML='<div class="empty">No responders available right now.</div>'; boardMap([]); return; }
     $("boardList").innerHTML=list.map(function(p){
       var badge=p.status?'<span class="brd-badge '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span>':'';
-      var ago=timeAgo(p.updated), tel=(p.phone||"").replace(/[^0-9+]/g,"");
+      var tel=(p.phone||"").replace(/[^0-9+]/g,"");
+      var until=p.until?("until "+new Date(p.until).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"no end set";
       var loc="";
       if(p.lat!=null&&p.lng!=null) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng+'" target="_blank" rel="noopener">'+ICO_PIN+'GPS location</a>';
       else if(p.address) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">'+ICO_PIN+esc(p.address)+'</a>';
       return '<div class="brd-card"><div class="brd-top"><span class="brd-nm">'+esc(p.name)+'</span>'+badge+'</div>'+
-        '<div class="brd-sub">Unit '+esc(p.unit)+(ago?' \u00B7 '+ago:'')+(p.src==="gps"?' \u00B7 GPS':(p.address?' \u00B7 home':''))+'</div>'+
+        '<div class="brd-sub">Unit '+esc(p.unit)+' \u00B7 '+until+(p.src==="gps"?' \u00B7 GPS':(p.address?' \u00B7 home':''))+'</div>'+
         '<div class="brd-act">'+(tel?'<a class="brd-call" href="tel:'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</a>':'')+loc+'</div></div>';
     }).join("");
     boardMap(list.filter(function(p){return p.lat!=null&&p.lng!=null;}));
   }
   function loadBoard(){
-    Promise.all([fetchTab("Availability"),fetchTab("Directory"),fetchTab("Members")]).then(function(res){
-      var avail=res[0]||[], dir=res[1]||[], mem=res[2]||[], now=Date.now();
+    Promise.all([fetchTab("Schedule"),fetchTab("Directory"),fetchTab("Members")]).then(function(res){
+      var sched=res[0]||[], dir=res[1]||[], mem=res[2]||[], now=Date.now();
       var dirBy={}, memBy={};
       dir.forEach(function(r){ dirBy[normUnit(r_(r,"Unit"))]=r; });
       mem.forEach(function(r){ memBy[normUnit(r_(r,"Unit #")||r_(r,"Unit"))]=r; });
+      var byUnit={};
+      sched.forEach(function(a){
+        var s=slotStart(a), e=slotEnd(a); if(!slotActive(s,e)) return;
+        var u=normUnit(r_(a,"Unit")); if(!u) return;
+        var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng")), src=r_(a,"Loc Source");
+        var cand={unit:r_(a,"Unit"), until:e, lat:isFinite(lat)?lat:null, lng:isFinite(lng)?lng:null, src:src};
+        var prev=byUnit[u];
+        if(!prev || (src==="gps"&&prev.src!=="gps")) byUnit[u]=cand;
+      });
       var list=[];
-      avail.forEach(function(a){
-        if(r_(a,"Available").toLowerCase()!=="yes") return;
-        var until=r_(a,"Until"); if(until && new Date(until).getTime()<now) return;
-        var u=normUnit(r_(a,"Unit")), d=dirBy[u]||{}, m=memBy[u]||{};
-        var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng"));
-        list.push({ unit:r_(a,"Unit"),
-          name:(r_(d,"Last Name")?(r_(d,"Last Name")+", "+r_(d,"First Name")):r_(a,"Unit")),
+      Object.keys(byUnit).forEach(function(u){
+        var a=byUnit[u], d=dirBy[u]||{}, m=memBy[u]||{};
+        list.push({ unit:a.unit,
+          name:(r_(d,"Last Name")?(r_(d,"Last Name")+", "+r_(d,"First Name")):a.unit),
           status:r_(m,"Status")||"", phone:r_(d,"Phone"), address:r_(d,"Address"),
-          lat:isFinite(lat)?lat:null, lng:isFinite(lng)?lng:null, src:r_(a,"Loc Source"), updated:r_(a,"Updated") });
+          lat:a.lat, lng:a.lng, src:a.src, until:a.until });
       });
       var ord={primary:0,backup:1,observer:2};
       list.sort(function(x,y){ var a=ord[(x.status||"").toLowerCase()]; a=a==null?3:a; var b=ord[(y.status||"").toLowerCase()]; b=b==null?3:b; return a-b || x.name.localeCompare(y.name); });
