@@ -404,8 +404,14 @@
     box-shadow:0 1px 3px rgba(0,0,0,.35)}
   .tile.glow-red .cdot{display:block;background:var(--red)}
   .tile.glow-orange .cdot{display:block;background:var(--gold)}
-  .cert-up{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto;margin-left:6px}
-  .cert-edit{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto;margin-left:6px}
+  .cert-up{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto}
+  .cert-edit{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto}
+  .cert-btns{display:flex;gap:6px;flex:0 0 auto;align-items:center}
+  @media (max-width:600px){
+    .cert-row{align-items:stretch}
+    .cert-btns{flex-direction:column;width:104px}
+    .cert-btns button{width:100%;margin-left:0}
+  }
   .cert-modal{position:absolute;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;justify-content:center;z-index:8;padding:20px}
   .cert-modal.hidden{display:none}
   .cert-modal-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
@@ -2007,7 +2013,7 @@
     var up = editable ? '<button class="cert-up" data-cert="'+esc(c.name)+'">Upload</button>' : '';
     return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
-      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+edit+up+'</div>';
+      '<div class="cert-st">'+esc(st.label)+'</div></div><div class="cert-btns">'+cal+edit+up+'</div></div>';
   }
   function memberCertsHTML(row){
     var me=STATE.me?normUnit(STATE.me.unit):"";
