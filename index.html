@@ -40,6 +40,10 @@
   .qbtn{flex:0 0 auto;width:38px;height:38px;border-radius:10px;border:0;background:rgba(255,255,255,.16);
     display:grid;place-items:center;cursor:pointer}
   .qbtn svg{width:21px;height:21px;fill:#ffd24a;stroke:none}
+  .availbtn svg{fill:none;stroke:rgba(255,255,255,.85);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .availbtn.on{background:#2f9e44}
+  .availbtn.on svg{stroke:#fff}
+  body.dmode .availbtn,body.dmode #qActions,body.dmode #rstatus{display:none}
   .qbtn:active{opacity:.65}
   .sheet-wrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.4);display:flex;align-items:flex-end}
   .sheet-wrap.hidden{display:none}
@@ -78,6 +82,35 @@
     padding:14px 15px;font-size:15px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;gap:11px}
   .erg-qb::before{content:"\203A";color:var(--navy);font-weight:800;font-size:20px;line-height:1}
   .erg-qb:active{transform:scale(.99)}
+  /* Availability */
+  .avail-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+  .avail-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);text-align:center}
+  .avail-state{font-size:18px;font-weight:800;color:var(--mut);margin-bottom:16px}
+  .avail-state.on{color:#2f9e44}
+  .avail-toggle{width:100%;border:0;border-radius:13px;padding:18px;font-size:18px;font-weight:800;color:#fff;background:#2f9e44;cursor:pointer}
+  .avail-toggle.on{background:var(--red)}
+  .avail-toggle:disabled{opacity:.6}
+  .avail-hours{display:block;margin-top:16px;font-size:14px;color:var(--ink);font-weight:600}
+  .avail-hours input{width:70px;border:1px solid var(--line);border-radius:9px;padding:9px;font-size:16px;text-align:center;margin:0 4px}
+  .avail-hint{display:block;font-size:12px;color:var(--mut);font-weight:500;margin-top:8px}
+  .avail-loc{font-size:13px;color:var(--mut);margin-top:14px;min-height:18px}
+  .avail-note{font-size:12.5px;color:var(--mut);text-align:center;padding:0 8px;line-height:1.5}
+  /* Dispatcher board */
+  .board-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  .board-map{height:230px;width:100%;background:#e9eef4;display:none}
+  .board-meta{padding:10px 14px;font-size:13px;font-weight:700;color:var(--mut);border-bottom:1px solid var(--line)}
+  .board-list{padding:12px;display:flex;flex-direction:column;gap:10px}
+  .brd-card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px;box-shadow:var(--shadow)}
+  .brd-top{display:flex;align-items:center;gap:10px}
+  .brd-nm{flex:1;font-weight:800;font-size:15.5px;color:var(--ink)}
+  .brd-badge{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:#fff;padding:3px 9px;border-radius:999px;background:var(--mut)}
+  .brd-badge.primary{background:#2f9e44}.brd-badge.backup{background:#e0902a}.brd-badge.observer{background:#7a8699}
+  .brd-sub{font-size:12.5px;color:var(--mut);margin-top:4px}
+  .brd-act{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .brd-call,.brd-loc{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+  .brd-call{color:#fff;background:var(--navy);border-color:var(--navy)}
+  .brd-loc{color:var(--navy);background:#fff}
+  .brd-call svg,.brd-loc svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2}
   .gcs-row{display:flex;gap:8px;padding:9px 13px;border-top:1px solid var(--line);font-size:13px}
   .gcs-row b{flex:0 0 74px;color:var(--navy)} .gcs-row span{color:var(--ink)}
   /* CPR tracker */
@@ -630,6 +663,7 @@
       <div class="hmid">
         <button class="qbtn" id="qActions" aria-label="Quick actions"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 10-13h-7l1-7z"/></svg></button>
         <div class="rstatus hidden" id="rstatus"></div>
+        <button class="qbtn availbtn" id="availHdr" aria-label="My availability"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg></button>
       </div>
       <div class="unit" id="unitWrap"><small>Unit</small><b id="unit">—</b></div>
     </div>
@@ -920,6 +954,37 @@
   <iframe id="equipFrame" class="eq-frame" title="Required Equipment"></iframe>
 </div>
 
+<!-- DISPATCHER BOARD -->
+<div class="screen" id="boardScreen">
+  <div class="scr-head">
+    <button class="back" id="boardBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Responder Status</h2>
+  </div>
+  <div class="board-body">
+    <div id="boardMap" class="board-map"></div>
+    <div class="board-meta" id="boardMeta"></div>
+    <div id="boardList" class="board-list"></div>
+  </div>
+</div>
+
+<!-- MY AVAILABILITY -->
+<div class="screen" id="availScreen">
+  <div class="scr-head">
+    <button class="back" id="availBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>My Availability</h2>
+  </div>
+  <div class="avail-body">
+    <div class="avail-card">
+      <div class="avail-state" id="availState">Not available</div>
+      <button class="avail-toggle" id="availToggle">Go available</button>
+      <label class="avail-hours">Auto-clear after <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
+        <span class="avail-hint">Leave blank to stay on until you turn it off.</span></label>
+      <div class="avail-loc" id="availLoc"></div>
+    </div>
+    <div class="avail-note">While you\u2019re available, dispatch can see your status, phone, and location. Location uses GPS if you allow it \u2014 otherwise your home address.</div>
+  </div>
+</div>
+
 <!-- ERG 2024 -->
 <div class="screen" id="ergScreen">
   <div class="scr-head">
@@ -1044,7 +1109,7 @@
       }
       $("pwLoad").classList.add("hidden");
       if(!hit){ $("pwErr").textContent="Password not recognized. Check with your coordinator."; return false; }
-      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),status:r_(hit,"Status"),pw:pw.trim()};
+      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),dispatcher:isX(hit["Dispatcher"]),status:r_(hit,"Status"),pw:pw.trim()};
       localStorage.setItem(LS,JSON.stringify(me)); STATE.me=me; return true;
     }).catch(function(){
       $("pwLoad").classList.add("hidden");
@@ -1096,7 +1161,7 @@
         STATE.me.last=r_(h,"Last Name")||STATE.me.last;
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
-      paintHeader(); paintTiles(); loadCerts();
+      paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
       try{ if(window.gtag && STATE.me && STATE.me.unit){ gtag('set',{user_id:STATE.me.unit}); gtag('set','user_properties',{unit:STATE.me.unit,role:(STATE.me.admin?"admin":"member")}); } }catch(e){}
     });
   }
@@ -1183,6 +1248,8 @@
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
     if(type==="erg"){ openErg(); return; }
+    if(type==="availability"){ openAvail(); return; }
+    if(type==="board"){ openBoard(false); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
     if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
@@ -2356,7 +2423,7 @@
       localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}});
 
   function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
-    boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
+    boot().then(function(){ if(STATE.me&&STATE.me.dispatcher){ document.body.classList.add("dmode"); openBoard(true); } }).catch(function(){toast("Couldn't load the app. Check your internet.");});}
 
   var BIO_KEY="hoh_bio_v1";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }
@@ -3033,6 +3100,136 @@
   });
   $("ergBack").addEventListener("click",navBack);
   $("ergSearch").addEventListener("input",function(){ renderErg(this.value); });
+
+  // ---------- My Availability ----------
+  var AVL={on:false};
+  function closeAvail(){ $("availScreen").classList.remove("open"); }
+  function openAvail(){
+    if(!$("availScreen").classList.contains("open")) navOpen(closeAvail);
+    $("availScreen").classList.add("open");
+    $("availLoc").textContent=""; availUI(false);
+    var me=STATE.me?normUnit(STATE.me.unit):"";
+    fetchTab("Availability").then(function(rows){
+      var mine=(rows||[]).filter(function(r){ return normUnit(r_(r,"Unit"))===me; })[0];
+      var on=false;
+      if(mine && r_(mine,"Available").toLowerCase()==="yes"){
+        var until=r_(mine,"Until"); on=!until || (new Date(until).getTime()>Date.now());
+      }
+      AVL.on=on; availUI(true);
+    }).catch(function(){ availUI(true); });
+  }
+  function availUI(ready){
+    $("availState").textContent=AVL.on?"You are AVAILABLE":"Not available";
+    $("availState").classList.toggle("on",AVL.on);
+    var b=$("availToggle"); b.textContent=AVL.on?"Go off":"Go available"; b.classList.toggle("on",AVL.on); b.disabled=!ready;
+    var h=$("availHdr"); if(h) h.classList.toggle("on",AVL.on);
+  }
+  function setAvail(on){
+    var hours=on?String($("availHours").value||"").trim():"";
+    $("availToggle").disabled=true;
+    if(on){
+      $("availLoc").textContent="Getting your location\u2026";
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          function(pos){ postAvail(true,hours,pos.coords.latitude,pos.coords.longitude,"gps"); },
+          function(){ postAvail(true,hours,"","","home"); },
+          {enableHighAccuracy:true,timeout:8000,maximumAge:60000});
+      } else postAvail(true,hours,"","","home");
+    } else postAvail(false,"","","","");
+  }
+  function postAvail(on,hours,lat,lng,src){
+    var url=getSetting("Profile Update URL","");
+    if(!url){ toast("Saving isn\u2019t set up yet."); $("availToggle").disabled=false; return; }
+    var payload={kind:"avail",unit:(STATE.me&&STATE.me.unit)||"",available:on?"Yes":"No",hours:hours,lat:(lat===""?"":lat),lng:(lng===""?"":lng),locSource:on?src:""};
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+      .then(function(r){return r.text();}).then(function(){
+        AVL.on=on; availUI(true);
+        $("availLoc").textContent = on ? (src==="gps"?"Shared live GPS location.":"Using your home address.") : "";
+        toast(on?"You\u2019re now available.":"Marked unavailable.");
+      }).catch(function(){ availUI(true); toast("Couldn\u2019t update \u2014 try again."); });
+  }
+  $("availToggle").addEventListener("click",function(){ setAvail(!AVL.on); });
+  $("availBack").addEventListener("click",navBack);
+  $("availHdr").addEventListener("click",openAvail);
+  function updateAvailBtn(){
+    if(!STATE.me) return;
+    var me=normUnit(STATE.me.unit);
+    fetchTab("Availability").then(function(rows){
+      var mine=(rows||[]).filter(function(r){return normUnit(r_(r,"Unit"))===me;})[0];
+      var on=false; if(mine&&r_(mine,"Available").toLowerCase()==="yes"){ var u=r_(mine,"Until"); on=!u||new Date(u).getTime()>Date.now(); }
+      AVL.on=on; var b=$("availHdr"); if(b) b.classList.toggle("on",on);
+    }).catch(function(){});
+  }
+
+  // ---------- Dispatcher board ----------
+  var BOARD={pollId:0,lock:false,lmap:null};
+  function timeAgo(ts){ if(!ts) return ""; var t=new Date(ts).getTime(); if(!isFinite(t)) return ""; var m=Math.round((Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+" min ago"; var h=Math.floor(m/60); return h+"h "+(m%60)+"m ago"; }
+  function ensureLeaflet(){
+    if(window.L) return Promise.resolve();
+    return new Promise(function(res,rej){
+      var css=document.createElement("link"); css.rel="stylesheet"; css.href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"; document.head.appendChild(css);
+      var s=document.createElement("script"); s.src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"; s.onload=function(){res();}; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+  function boardMap(pts){
+    var el=$("boardMap");
+    if(!pts.length){ el.style.display="none"; return; }
+    el.style.display="block";
+    ensureLeaflet().then(function(){
+      if(!BOARD.lmap){ BOARD.lmap=L.map("boardMap"); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00A9 OpenStreetMap"}).addTo(BOARD.lmap); BOARD.lmap._mk=[]; }
+      (BOARD.lmap._mk||[]).forEach(function(m){ BOARD.lmap.removeLayer(m); }); BOARD.lmap._mk=[];
+      var g=[];
+      pts.forEach(function(p){ var mk=L.marker([p.lat,p.lng]).addTo(BOARD.lmap).bindPopup(esc(p.name)+"<br>Unit "+esc(p.unit)); BOARD.lmap._mk.push(mk); g.push([p.lat,p.lng]); });
+      if(g.length) BOARD.lmap.fitBounds(g,{padding:[30,30],maxZoom:14});
+      setTimeout(function(){ BOARD.lmap.invalidateSize(); },120);
+    }).catch(function(){ el.style.display="none"; });
+  }
+  function renderBoard(list){
+    $("boardMeta").textContent=list.length?(list.length+" available \u00B7 as of "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"Refreshing\u2026";
+    if(!list.length){ $("boardList").innerHTML='<div class="empty">No responders available right now.</div>'; boardMap([]); return; }
+    $("boardList").innerHTML=list.map(function(p){
+      var badge=p.status?'<span class="brd-badge '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span>':'';
+      var ago=timeAgo(p.updated), tel=(p.phone||"").replace(/[^0-9+]/g,"");
+      var loc="";
+      if(p.lat!=null&&p.lng!=null) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng+'" target="_blank" rel="noopener">'+ICO_PIN+'GPS location</a>';
+      else if(p.address) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">'+ICO_PIN+esc(p.address)+'</a>';
+      return '<div class="brd-card"><div class="brd-top"><span class="brd-nm">'+esc(p.name)+'</span>'+badge+'</div>'+
+        '<div class="brd-sub">Unit '+esc(p.unit)+(ago?' \u00B7 '+ago:'')+(p.src==="gps"?' \u00B7 GPS':(p.address?' \u00B7 home':''))+'</div>'+
+        '<div class="brd-act">'+(tel?'<a class="brd-call" href="tel:'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</a>':'')+loc+'</div></div>';
+    }).join("");
+    boardMap(list.filter(function(p){return p.lat!=null&&p.lng!=null;}));
+  }
+  function loadBoard(){
+    Promise.all([fetchTab("Availability"),fetchTab("Directory"),fetchTab("Members")]).then(function(res){
+      var avail=res[0]||[], dir=res[1]||[], mem=res[2]||[], now=Date.now();
+      var dirBy={}, memBy={};
+      dir.forEach(function(r){ dirBy[normUnit(r_(r,"Unit"))]=r; });
+      mem.forEach(function(r){ memBy[normUnit(r_(r,"Unit #")||r_(r,"Unit"))]=r; });
+      var list=[];
+      avail.forEach(function(a){
+        if(r_(a,"Available").toLowerCase()!=="yes") return;
+        var until=r_(a,"Until"); if(until && new Date(until).getTime()<now) return;
+        var u=normUnit(r_(a,"Unit")), d=dirBy[u]||{}, m=memBy[u]||{};
+        var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng"));
+        list.push({ unit:r_(a,"Unit"),
+          name:(r_(d,"Last Name")?(r_(d,"Last Name")+", "+r_(d,"First Name")):r_(a,"Unit")),
+          status:r_(m,"Status")||"", phone:r_(d,"Phone"), address:r_(d,"Address"),
+          lat:isFinite(lat)?lat:null, lng:isFinite(lng)?lng:null, src:r_(a,"Loc Source"), updated:r_(a,"Updated") });
+      });
+      var ord={primary:0,backup:1,observer:2};
+      list.sort(function(x,y){ var a=ord[(x.status||"").toLowerCase()]; a=a==null?3:a; var b=ord[(y.status||"").toLowerCase()]; b=b==null?3:b; return a-b || x.name.localeCompare(y.name); });
+      renderBoard(list);
+    }).catch(function(){ $("boardList").innerHTML='<div class="empty">Couldn\u2019t load. Check your connection.</div>'; });
+  }
+  function closeBoard(){ clearInterval(BOARD.pollId); $("boardScreen").classList.remove("open"); }
+  function openBoard(lock){
+    BOARD.lock=!!lock; $("boardBack").style.display=lock?"none":"";
+    $("boardScreen").classList.add("open");
+    if(!lock) navOpen(closeBoard);
+    $("boardMeta").textContent="Loading\u2026"; $("boardList").innerHTML="";
+    loadBoard(); clearInterval(BOARD.pollId); BOARD.pollId=setInterval(loadBoard,25000);
+  }
+  $("boardBack").addEventListener("click",function(){ if(!BOARD.lock) navBack(); });
   // Protocols screen search = same tappable dropdown as the home page
   function renderProtoDropdown(q){
     var box=$("protoSres");
