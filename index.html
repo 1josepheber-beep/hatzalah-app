@@ -976,9 +976,9 @@
   <div class="avail-body">
     <div class="avail-card">
       <div class="avail-state" id="availState">Not available</div>
-      <button class="avail-toggle" id="availToggle">Go available</button>
-      <label class="avail-hours">Auto-clear after <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
+      <label class="avail-hours">Available for <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
         <span class="avail-hint">Leave blank to stay on until you turn it off.</span></label>
+      <button class="avail-toggle" id="availToggle">Go available</button>
       <div class="avail-loc" id="availLoc"></div>
     </div>
     <div class="avail-note">While you\u2019re available, dispatch can see your status, phone, and location. Location uses GPS if you allow it \u2014 otherwise your home address.</div>
@@ -3142,11 +3142,13 @@
     if(!url){ toast("Saving isn\u2019t set up yet."); $("availToggle").disabled=false; return; }
     var payload={kind:"avail",unit:(STATE.me&&STATE.me.unit)||"",available:on?"Yes":"No",hours:hours,lat:(lat===""?"":lat),lng:(lng===""?"":lng),locSource:on?src:""};
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(){
+      .then(function(r){return r.text();}).then(function(t){
+        var ok=true; try{ ok=JSON.parse(t).ok!==false; }catch(e){}
+        if(!ok) throw "fail";
         AVL.on=on; availUI(true);
         $("availLoc").textContent = on ? (src==="gps"?"Shared live GPS location.":"Using your home address.") : "";
         toast(on?"You\u2019re now available.":"Marked unavailable.");
-      }).catch(function(){ availUI(true); toast("Couldn\u2019t update \u2014 try again."); });
+      }).catch(function(){ availUI(true); toast("Couldn\u2019t save \u2014 check your connection and try again."); });
   }
   $("availToggle").addEventListener("click",function(){ setAvail(!AVL.on); });
   $("availBack").addEventListener("click",navBack);
@@ -3185,7 +3187,7 @@
     }).catch(function(){ el.style.display="none"; });
   }
   function renderBoard(list){
-    $("boardMeta").textContent=list.length?(list.length+" available \u00B7 as of "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"Refreshing\u2026";
+    $("boardMeta").textContent=list.length?(list.length+" available \u00B7 as of "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"0 available";
     if(!list.length){ $("boardList").innerHTML='<div class="empty">No responders available right now.</div>'; boardMap([]); return; }
     $("boardList").innerHTML=list.map(function(p){
       var badge=p.status?'<span class="brd-badge '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span>':'';
