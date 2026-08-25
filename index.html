@@ -123,6 +123,16 @@
   .call-clear{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:10px;padding:0 14px;font-weight:700;font-size:13px;cursor:pointer;flex:0 0 auto}
   .brd-dist{flex:0 0 auto;font-size:14px;font-weight:800;color:var(--navy);background:#eef2f8;border-radius:999px;padding:3px 10px}
   .pac-container{z-index:100000!important}
+  .board-upcoming-h{font-weight:800;color:var(--navy);font-size:15px;padding:14px 14px 6px}
+  #boardUpcoming{padding:0 12px 16px;display:flex;flex-direction:column;gap:9px}
+  .up-group{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .up-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f4f7fb;border:0;padding:13px 14px;font-size:15px;font-weight:800;color:var(--ink);cursor:pointer}
+  .up-count{background:var(--navy);color:#fff;border-radius:999px;font-size:12px;font-weight:800;padding:2px 9px}
+  .up-body{padding:4px 0}
+  .up-body.hidden{display:none}
+  .up-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+  .up-nm{flex:1;font-weight:700;font-size:14px;color:var(--ink)}
+  .up-t{font-size:13px;color:var(--mut);font-weight:600}
   .board-map{height:230px;width:100%;background:#e9eef4;display:none}
   .board-meta{padding:10px 14px;font-size:13px;font-weight:700;color:var(--mut);border-bottom:1px solid var(--line)}
   .board-list{padding:12px;display:flex;flex-direction:column;gap:10px}
@@ -996,6 +1006,8 @@
     <div id="boardMap" class="board-map"></div>
     <div class="board-meta" id="boardMeta"></div>
     <div id="boardList" class="board-list"></div>
+    <div class="board-upcoming-h" id="boardUpcomingH" style="display:none">Upcoming schedule</div>
+    <div id="boardUpcoming"></div>
   </div>
 </div>
 
@@ -1181,6 +1193,7 @@
     return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Members")]).then(function(res){
       STATE.settings={};
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
+      STATE.availOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Availability","on")||"").trim());
       STATE.tiles=res[1].filter(function(t){
         if(!r_(t,"Label")) return false;
         var a=String(t["Active"]||"").trim().toLowerCase();
@@ -1212,7 +1225,10 @@
         STATE.me.last=r_(h,"Last Name")||STATE.me.last;
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
-      if(STATE.me && STATE.me.dispatcher){
+      if(!STATE.availOn){
+        STATE.tiles=STATE.tiles.filter(function(t){ var ty=(r_(t,"Type")||"").toLowerCase(); return ty!=="availability"&&ty!=="board"; });
+      }
+      if(STATE.availOn && STATE.me && STATE.me.dispatcher){
         var bt=STATE.tiles.filter(function(t){return (r_(t,"Type")||"").toLowerCase()==="board";})[0];
         if(bt){ var c={}; for(var k in bt) c[k]=bt[k]; c["Admin Only"]=""; c["Active"]="X"; STATE.tiles=[c]; }
         else STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
@@ -1223,6 +1239,7 @@
     });
   }
   function paintHeader(){
+    var ab=$("availHdr"); if(ab) ab.style.display=(STATE.availOn===false)?"none":"";
     $("unit").textContent=STATE.me.unit||"—";
     $("mcLabel").textContent=getSetting("Medical Control Label","Medical Control");
     $("dispLabel").textContent=getSetting("Dispatch Label","Dispatch");
@@ -3176,6 +3193,7 @@
     return e ? (day+" "+t1+"\u2013"+new Date(e).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})) : (day+" "+t1+" \u00B7 until off");
   }
   function openAvail(){
+    if(STATE.availOn===false){ toast("Availability is turned off."); return; }
     if(!$("availScreen").classList.contains("open")) navOpen(closeAvail);
     $("availScreen").classList.add("open"); $("availLoc").textContent="";
     if($("schDate") && !$("schDate").value){ var d=new Date(); $("schDate").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
@@ -3285,7 +3303,7 @@
   $("availBack").addEventListener("click",navBack);
   $("availHdr").addEventListener("click",openAvail);
   function updateAvailBtn(){
-    if(!STATE.me) return;
+    if(!STATE.me || STATE.availOn===false) return;
     var me=normUnit(STATE.me.unit);
     fetchTab("Schedule").then(function(rows){
       var on=(rows||[]).some(function(r){ return normUnit(r_(r,"Unit"))===me && slotActive(slotStart(r),slotEnd(r)); });
@@ -3392,14 +3410,20 @@
       var dirBy={}, memBy={};
       dir.forEach(function(r){ dirBy[normUnit(r_(r,"Unit"))]=r; });
       mem.forEach(function(r){ memBy[normUnit(r_(r,"Unit #")||r_(r,"Unit"))]=r; });
-      var byUnit={};
+      var byUnit={}, future=[];
       sched.forEach(function(a){
-        var s=slotStart(a), e=slotEnd(a); if(!slotActive(s,e)) return;
-        var u=normUnit(r_(a,"Unit")); if(!u) return;
-        var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng")), src=r_(a,"Loc Source");
-        var cand={unit:r_(a,"Unit"), until:e, lat:(src==="none"?null:(isFinite(lat)?lat:null)), lng:(src==="none"?null:(isFinite(lng)?lng:null)), src:src};
-        var prev=byUnit[u];
-        if(!prev || (src==="gps"&&prev.src!=="gps")) byUnit[u]=cand;
+        var s=slotStart(a), e=slotEnd(a); var u=normUnit(r_(a,"Unit")); if(!u) return;
+        var d=dirBy[u]||{}, m=memBy[u]||{};
+        var name=(r_(d,"Last Name")?(r_(d,"Last Name")+", "+r_(d,"First Name")):r_(a,"Unit"));
+        var status=r_(m,"Status")||"";
+        if(slotActive(s,e)){
+          var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng")), src=r_(a,"Loc Source");
+          var cand={unit:r_(a,"Unit"), until:e, lat:(src==="none"?null:(isFinite(lat)?lat:null)), lng:(src==="none"?null:(isFinite(lng)?lng:null)), src:src};
+          var prev=byUnit[u];
+          if(!prev || (src==="gps"&&prev.src!=="gps")) byUnit[u]=cand;
+        } else if(s>now){
+          future.push({unit:r_(a,"Unit"), s:s, e:e, name:name, status:status});
+        }
       });
       var list=[];
       Object.keys(byUnit).forEach(function(u){
@@ -3411,11 +3435,44 @@
       });
       var ord={primary:0,backup:1,observer:2};
       list.sort(function(x,y){ var a=ord[(x.status||"").toLowerCase()]; a=a==null?3:a; var b=ord[(y.status||"").toLowerCase()]; b=b==null?3:b; return a-b || x.name.localeCompare(y.name); });
-      resolveAndRender(list);
+      resolveAndRender(list); renderUpcoming(future);
     }).catch(function(){ $("boardList").innerHTML='<div class="empty">Couldn\u2019t load. Check your connection.</div>'; });
   }
+  function dateLabel(s){
+    var d=new Date(s), d0=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+    var t=new Date(), t0=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+    var diff=Math.round((d0-t0)/86400000);
+    if(diff===0) return "Today"; if(diff===1) return "Tomorrow";
+    return d.toLocaleDateString([], {weekday:"long",month:"short",day:"numeric"});
+  }
+  function renderUpcoming(future){
+    var box=$("boardUpcoming"), hdr=$("boardUpcomingH");
+    if(!future.length){ box.innerHTML=""; hdr.style.display="none"; return; }
+    hdr.style.display=""; future.sort(function(a,b){return a.s-b.s;});
+    var groups={}, order=[];
+    future.forEach(function(f){
+      var d=new Date(f.s), key=d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();
+      if(!groups[key]){ groups[key]={label:dateLabel(f.s), items:[]}; order.push(key); }
+      groups[key].items.push(f);
+    });
+    box.innerHTML=order.map(function(k,gi){
+      var g=groups[k];
+      var rows=g.items.map(function(f){
+        var badge=f.status?'<span class="brd-badge '+esc(f.status.toLowerCase())+'">'+esc(f.status)+'</span>':'';
+        var t=new Date(f.s).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(f.e?"\u2013"+new Date(f.e).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"");
+        return '<div class="up-row"><span class="up-nm">'+esc(f.name)+'</span><span class="up-t">'+t+'</span>'+badge+'</div>';
+      }).join("");
+      return '<div class="up-group"><button class="up-head" data-g="'+gi+'"><span>'+esc(g.label)+'</span><span class="up-count">'+g.items.length+'</span></button><div class="up-body hidden" data-body="'+gi+'">'+rows+'</div></div>';
+    }).join("");
+  }
+  document.addEventListener("click",function(ev){
+    var h=ev.target.closest?ev.target.closest(".up-head"):null; if(!h) return;
+    var body=h.parentNode.querySelector(".up-body"); if(body) body.classList.toggle("hidden");
+    h.classList.toggle("open");
+  });
   function closeBoard(){ clearInterval(BOARD.pollId); $("boardScreen").classList.remove("open"); }
   function openBoard(lock){
+    if(STATE.availOn===false){ toast("Availability is turned off."); return; }
     BOARD.lock=!!lock; $("boardBack").style.display=lock?"none":"";
     $("boardScreen").classList.add("open");
     if(!lock) navOpen(closeBoard);
