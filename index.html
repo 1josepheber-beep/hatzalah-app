@@ -3462,7 +3462,7 @@
         var t=new Date(f.s).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})+(f.e?"\u2013"+new Date(f.e).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"");
         return '<div class="up-row"><span class="up-nm">'+esc(f.name)+'</span><span class="up-t">'+t+'</span>'+badge+'</div>';
       }).join("");
-      return '<div class="up-group"><button class="up-head" data-g="'+gi+'"><span>'+esc(g.label)+'</span><span class="up-count">'+g.items.length+'</span></button><div class="up-body hidden" data-body="'+gi+'">'+rows+'</div></div>';
+      return '<div class="up-group"><button class="up-head open" data-g="'+gi+'"><span>'+esc(g.label)+'</span><span class="up-count">'+g.items.length+'</span></button><div class="up-body" data-body="'+gi+'">'+rows+'</div></div>';
     }).join("");
   }
   document.addEventListener("click",function(ev){
