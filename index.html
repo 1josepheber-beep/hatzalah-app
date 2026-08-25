@@ -1331,28 +1331,40 @@
   var APPS={
     pulsara:{
       name:"Pulsara",
+      scheme:"com.pulsara://openapp",
       androidPkg:"com.pulsara.stopapps",
       androidStore:"https://play.google.com/store/apps/details?id=com.pulsara.stopapps",
       iosStore:"https://apps.apple.com/us/app/pulsara-medical-communication/id873184192"
     }
   };
+  function schemeToIntent(scheme,pkg,fallback){
+    var m=String(scheme).match(/^([^:]+):\/\/(.*)$/); if(!m) return null;
+    return "intent://"+m[2]+"#Intent;scheme="+m[1]+";package="+pkg+
+      (fallback?";S.browser_fallback_url="+encodeURIComponent(fallback):"")+";end";
+  }
+  function openScheme(scheme){
+    try{
+      var a=document.createElement("a"); a.href=scheme; a.style.display="none";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ if(a.parentNode) a.parentNode.removeChild(a); },400);
+    }catch(e){ try{ window.location.href=scheme; }catch(e2){} }
+  }
   function launchApp(key){
     key=String(key||"").trim();
-    // A raw deep link / scheme typed straight into the Target column is tried directly
-    // (e.g. "pulsara://"). Handy for testing what actually opens the app.
-    if(key.indexOf("://")>-1){ window.location.href=key; return; }
+    if(key.indexOf("://")>-1){ openScheme(key); return; }
     var a=APPS[key.toLowerCase()];
     if(!a){ toast("App not set up yet."); return; }
     var ua=navigator.userAgent||"";
     var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
     var isAndroid=/Android/.test(ua);
-    if(isAndroid&&a.androidPkg){
-      window.location.href="intent://#Intent;action=android.intent.action.MAIN;"+
-        "category=android.intent.category.LAUNCHER;package="+a.androidPkg+
-        ";S.browser_fallback_url="+encodeURIComponent(a.androidStore||"")+";end";
-    }else if(isIOS){
-      window.location.href=a.iosStore||a.androidStore||"";
-    }else{
+    if(isAndroid && a.androidPkg){
+      var url = a.scheme ? schemeToIntent(a.scheme, a.androidPkg, a.androidStore)
+        : "intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+a.androidPkg+";S.browser_fallback_url="+encodeURIComponent(a.androidStore||"")+";end";
+      window.location.href=url;
+    } else if(isIOS){
+      if(a.scheme){ openScheme(a.scheme); var fb=a.iosStore||a.androidStore||""; if(fb) setTimeout(function(){ if(!document.hidden) window.location.href=fb; },1200); }
+      else window.location.href=a.iosStore||a.androidStore||"";
+    } else {
       window.open(a.androidStore||a.iosStore||"","_blank","noopener");
     }
   }
