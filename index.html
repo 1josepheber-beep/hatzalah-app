@@ -96,6 +96,8 @@
   .avail-loc{font-size:13px;color:var(--mut);margin-top:14px;min-height:18px}
   .avail-note{font-size:12.5px;color:var(--mut);text-align:center;padding:0 8px;line-height:1.5}
   .avail-h{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:10px}
+  .avail-share{display:flex;align-items:center;gap:9px;justify-content:center;margin:14px 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
+  .avail-share input{width:20px;height:20px}
   .sched-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
   .sched-form label{display:flex;flex-direction:column;font-size:12px;font-weight:700;color:var(--mut);gap:4px}
   .sched-form input{border:1px solid var(--line);border-radius:9px;padding:9px;font-size:15px;color:var(--ink);width:100%;box-sizing:border-box}
@@ -993,6 +995,7 @@
       <div class="avail-state" id="availState">Not available now</div>
       <label class="avail-hours">For <input id="availHours" type="number" min="1" max="24" inputmode="numeric" placeholder="hrs"> hours
         <span class="avail-hint">Blank = until you turn it off.</span></label>
+      <label class="avail-share"><input type="checkbox" id="availShare" checked> Share my location with dispatch</label>
       <button class="avail-toggle" id="availToggle">Go available now</button>
       <div class="avail-loc" id="availLoc"></div>
     </div>
@@ -3208,7 +3211,10 @@
     }
     var hours=String($("availHours").value||"").trim();
     var end = hours ? (Date.now()+parseFloat(hours)*3600000) : 0;
-    $("availToggle").disabled=true; $("availLoc").textContent="Getting your location\u2026";
+    var share=$("availShare").checked;
+    $("availToggle").disabled=true;
+    if(!share){ $("availLoc").textContent=""; addSlot(Date.now(),end,"none",null,null,"You\u2019re available (location hidden)."); return; }
+    $("availLoc").textContent="Getting your location\u2026";
     if(navigator.geolocation){
       navigator.geolocation.getCurrentPosition(
         function(pos){ addSlot(Date.now(),end,"gps",pos.coords.latitude,pos.coords.longitude,"You\u2019re now available."); },
@@ -3222,7 +3228,7 @@
     var s=new Date(d+"T"+f).getTime(), e=new Date(d+"T"+t).getTime();
     if(!isFinite(s)||!isFinite(e)){ toast("Check the times."); return; }
     if(e<=s) e+=24*3600000;
-    addSlot(s,e,"home",null,null,"Added to schedule.");
+    addSlot(s,e,($("availShare").checked?"home":"none"),null,null,"Added to schedule.");
   }
   $("availToggle").addEventListener("click",goNow);
   $("schAdd").addEventListener("click",addScheduled);
@@ -3272,7 +3278,7 @@
       if(p.lat!=null&&p.lng!=null) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng+'" target="_blank" rel="noopener">'+ICO_PIN+'GPS location</a>';
       else if(p.address) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">'+ICO_PIN+esc(p.address)+'</a>';
       return '<div class="brd-card"><div class="brd-top"><span class="brd-nm">'+esc(p.name)+'</span>'+badge+'</div>'+
-        '<div class="brd-sub">Unit '+esc(p.unit)+' \u00B7 '+until+(p.src==="gps"?' \u00B7 GPS':(p.address?' \u00B7 home':''))+'</div>'+
+        '<div class="brd-sub">Unit '+esc(p.unit)+' \u00B7 '+until+(p.src==="gps"?' \u00B7 GPS':(p.src==="none"?' \u00B7 location hidden':(p.address?' \u00B7 home':'')))+'</div>'+
         '<div class="brd-act">'+(tel?'<a class="brd-call" href="tel:'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</a>':'')+loc+'</div></div>';
     }).join("");
     boardMap(list.filter(function(p){return p.lat!=null&&p.lng!=null;}));
@@ -3288,7 +3294,7 @@
         var s=slotStart(a), e=slotEnd(a); if(!slotActive(s,e)) return;
         var u=normUnit(r_(a,"Unit")); if(!u) return;
         var lat=parseFloat(r_(a,"Lat")), lng=parseFloat(r_(a,"Lng")), src=r_(a,"Loc Source");
-        var cand={unit:r_(a,"Unit"), until:e, lat:isFinite(lat)?lat:null, lng:isFinite(lng)?lng:null, src:src};
+        var cand={unit:r_(a,"Unit"), until:e, lat:(src==="none"?null:(isFinite(lat)?lat:null)), lng:(src==="none"?null:(isFinite(lng)?lng:null)), src:src};
         var prev=byUnit[u];
         if(!prev || (src==="gps"&&prev.src!=="gps")) byUnit[u]=cand;
       });
@@ -3297,7 +3303,7 @@
         var a=byUnit[u], d=dirBy[u]||{}, m=memBy[u]||{};
         list.push({ unit:a.unit,
           name:(r_(d,"Last Name")?(r_(d,"Last Name")+", "+r_(d,"First Name")):a.unit),
-          status:r_(m,"Status")||"", phone:r_(d,"Phone"), address:r_(d,"Address"),
+          status:r_(m,"Status")||"", phone:r_(d,"Phone"), address:(a.src==="none"?"":r_(d,"Address")),
           lat:a.lat, lng:a.lng, src:a.src, until:a.until });
       });
       var ord={primary:0,backup:1,observer:2};
