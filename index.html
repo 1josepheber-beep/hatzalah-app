@@ -404,6 +404,18 @@
     box-shadow:0 1px 3px rgba(0,0,0,.35)}
   .tile.glow-red .cdot{display:block;background:var(--red)}
   .tile.glow-orange .cdot{display:block;background:var(--gold)}
+  .cert-up{border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:8px;padding:7px 11px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto;margin-left:6px}
+  .cert-modal{position:absolute;inset:0;background:rgba(20,30,50,.45);display:flex;align-items:center;justify-content:center;z-index:8;padding:20px}
+  .cert-modal.hidden{display:none}
+  .cert-modal-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .cert-modal-h{font-weight:800;font-size:16px;color:var(--ink);margin-bottom:14px}
+  .cert-modal-l{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--mut)}
+  .cert-modal-l input{border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px;color:var(--ink)}
+  .cert-modal-note{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.4}
+  .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
+  .cert-modal-btns{display:flex;gap:10px;margin-top:14px}
+  .cert-modal-btns button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
+  .cert-modal-btns .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cert-mem{border-bottom:1px solid var(--line)}
   .cert-mem-h{display:flex;align-items:center;gap:9px;padding:13px 12px;cursor:pointer;font-weight:800;
     font-size:15px;color:var(--ink);background:#f2f5fa}
@@ -433,6 +445,9 @@
   .dir-badge{font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:var(--navy);
     background:#eaf0f9;padding:2px 8px;border-radius:6px}
   .dir-unit{font-size:12.5px;color:var(--mut);font-weight:600}
+  .dir-level{font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;color:#fff;padding:2px 8px;border-radius:6px;background:#7a8699}
+  .dir-level.als{background:#2f9e44}
+  .dir-level.emt,.dir-level.bls{background:#2a6fb5}
   .dir-dob{font-size:12.5px;color:var(--mut);font-weight:600;margin-top:5px}
   .dir-act{display:flex;gap:9px;margin-top:10px;flex-wrap:wrap}
   .dir-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);
@@ -875,6 +890,18 @@
     <input id="certSearch" type="search" placeholder="Search members" enterkeyhint="search">
   </div>
   <div class="scr-body" id="certBody"></div>
+  <div class="cert-modal hidden" id="certModal">
+    <div class="cert-modal-box">
+      <div class="cert-modal-h" id="certModalH">Update certification</div>
+      <label class="cert-modal-l">New expiration date<input type="date" id="certModalDate"></label>
+      <div class="cert-modal-note">Saves this date to your record, then opens the uploader for the document.</div>
+      <div class="cert-modal-err" id="certModalErr"></div>
+      <div class="cert-modal-btns">
+        <button id="certModalCancel">Cancel</button>
+        <button id="certModalSave" class="primary">Save &amp; upload file</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- QUICK ACTIONS SHEET -->
@@ -1966,15 +1993,20 @@
     }
     renderCerts($("certSearch").value||"");
   }
-  function certRowHTML(row,c){
+  function certRowHTML(row,c,editable){
     var exp=certExpVal(row,c), num=(c.numKey?String(row[c.numKey]||"").trim():"");
     var st=certStatus(exp);
     var cal= st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(c.name)+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
+    var up= editable? '<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey||"")+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Upload</button>':'';
     return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
-      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+'</div>';
+      '<div class="cert-st">'+esc(st.label)+'</div></div>'+cal+up+'</div>';
   }
-  function memberCertsHTML(row){ return CERT.certCols.map(function(c){ return certRowHTML(row,c); }).join(""); }
+  function memberCertsHTML(row){
+    var me=STATE.me?normUnit(STATE.me.unit):"";
+    var editable = isAdmin() || normUnit(r_(row,"Unit #")||r_(row,"Unit"))===me;
+    return CERT.certCols.map(function(c){ return certRowHTML(row,c,editable); }).join("");
+  }
   function certLegend(){
     return '<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
       '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
@@ -2033,6 +2065,34 @@
   $("certBack").addEventListener("click",navBack);
   $("certSearch").addEventListener("input",function(){ renderCerts(this.value); });
 
+  // ---- Per-cert upload + expiration update ----
+  var CERTUP=null;
+  document.addEventListener("click",function(ev){
+    var b=ev.target.closest?ev.target.closest(".cert-up"):null; if(!b) return;
+    CERTUP={cert:b.getAttribute("data-cert"), col:b.getAttribute("data-col"), unit:b.getAttribute("data-unit")};
+    $("certModalH").textContent="Update "+CERTUP.cert;
+    $("certModalErr").textContent=""; $("certModalDate").value="";
+    $("certModal").classList.remove("hidden");
+  });
+  $("certModalCancel").addEventListener("click",function(){ $("certModal").classList.add("hidden"); CERTUP=null; });
+  $("certModalSave").addEventListener("click",function(){
+    if(!CERTUP) return;
+    var v=$("certModalDate").value;
+    if(!v){ $("certModalErr").textContent="Pick the new expiration date."; return; }
+    if(!CERTUP.col){ $("certModalErr").textContent="This item has no date field to update."; return; }
+    var p=v.split("-"), mdy=(+p[1])+"/"+(+p[2])+"/"+p[0];
+    var url=getSetting("Profile Update URL","");
+    var btn=$("certModalSave"); btn.disabled=true; btn.textContent="Saving\u2026";
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"cert",unit:CERTUP.unit,col:CERTUP.col,value:mdy,cert:CERTUP.cert})})
+      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} 
+        btn.disabled=false; btn.textContent="Save & upload file";
+        if(!ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
+        var cert=CERTUP.cert; $("certModal").classList.add("hidden"); CERTUP=null;
+        CERT.loaded=false; toast("Expiration saved. Opening the uploader\u2026");
+        openUpload(""); 
+      }).catch(function(){ btn.disabled=false; btn.textContent="Save & upload file"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
+  });
+
   // ---------- Directory ----------
   var DIR={loaded:false,rows:[],type:"all",q:""};
   var ICO_PHONE='<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.6a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.5-1.1a2 2 0 012.1-.5c.8.3 1.7.5 2.6.6a2 2 0 011.7 2z"/></svg>';
@@ -2068,13 +2128,14 @@
       if(!dirActive(r)) return;
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
-      if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),types:[]}; order.push(key); }
+      if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
       if(!m.phone) m.phone=r_(r,"Phone");
       if(!m.address) m.address=r_(r,"Address");
       if(!m.dob) m.dob=r_(r,"DOB");
+      if(!m.level) m.level=r_(r,"Level");
     });
     return order.map(function(k){return map[k];});
   }
@@ -2096,6 +2157,7 @@
       if(tel) acts+='<button class="dir-btn call" data-tel="'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</button>';
       if(p.address) acts+='<button class="dir-btn map" data-addr="'+esc(p.address)+'">'+ICO_PIN+'<span>'+esc(p.address)+'</span></button>';
       return '<div class="dir-card"><div class="dir-top"><span class="dir-nm">'+esc(nm)+'</span>'+
+        (p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+
         (typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+
         (p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
