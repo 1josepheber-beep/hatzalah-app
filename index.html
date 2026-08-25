@@ -111,6 +111,12 @@
   .ss-del{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;cursor:pointer;flex:0 0 auto}
   /* Dispatcher board */
   .board-body{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+  .call-bar{display:flex;gap:8px;padding:11px 12px;border-bottom:1px solid var(--line);background:#fff;position:relative}
+  .call-bar input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:15px;color:var(--ink);box-sizing:border-box}
+  .call-bar input:focus{outline:none;border-color:var(--navy)}
+  .call-clear{border:1px solid var(--line);background:#fff;color:var(--red);border-radius:10px;padding:0 14px;font-weight:700;font-size:13px;cursor:pointer;flex:0 0 auto}
+  .brd-dist{flex:0 0 auto;font-size:14px;font-weight:800;color:var(--navy);background:#eef2f8;border-radius:999px;padding:3px 10px}
+  .pac-container{z-index:100000!important}
   .board-map{height:230px;width:100%;background:#e9eef4;display:none}
   .board-meta{padding:10px 14px;font-size:13px;font-weight:700;color:var(--mut);border-bottom:1px solid var(--line)}
   .board-list{padding:12px;display:flex;flex-direction:column;gap:10px}
@@ -977,6 +983,10 @@
     <h2>Responder Status</h2>
   </div>
   <div class="board-body">
+    <div class="call-bar">
+      <input id="callAddr" type="text" placeholder="Search call address to rank by closest" autocomplete="off">
+      <button id="callClear" class="call-clear" style="display:none">Clear</button>
+    </div>
     <div id="boardMap" class="board-map"></div>
     <div class="board-meta" id="boardMeta"></div>
     <div id="boardList" class="board-list"></div>
@@ -1047,6 +1057,7 @@
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
   var LS="hoh_member_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
+  var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
   var ORG_DOMAIN="houstonhatzalah.org";
   var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null,verified:false};
   function gInit(){
@@ -1194,8 +1205,7 @@
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
       if(STATE.me && STATE.me.dispatcher){
-        var boardTiles=STATE.tiles.filter(function(t){return (r_(t,"Type")||"").toLowerCase()==="board";});
-        STATE.tiles = boardTiles.length ? boardTiles : [{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
+        STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
@@ -3245,7 +3255,60 @@
   }
 
   // ---------- Dispatcher board ----------
-  var BOARD={pollId:0,lock:false,lmap:null};
+  var BOARD={pollId:0,lock:false,lmap:null}, CALL=null, CALL_AC=null, GEOCACHE={};
+  function ensureGMaps(){
+    if(window.google && google.maps && google.maps.places) return Promise.resolve();
+    if(ensureGMaps._p) return ensureGMaps._p;
+    ensureGMaps._p=new Promise(function(res,rej){
+      window.__gmReady=function(){ res(); };
+      var s=document.createElement("script");
+      s.src="https://maps.googleapis.com/maps/api/js?key="+GMAPS_KEY+"&libraries=places&callback=__gmReady";
+      s.async=true; s.onerror=rej; document.head.appendChild(s);
+    });
+    return ensureGMaps._p;
+  }
+  function initCallSearch(){
+    ensureGMaps().then(function(){
+      if(CALL_AC || !$("callAddr")) return;
+      CALL_AC=new google.maps.places.Autocomplete($("callAddr"),{fields:["geometry","formatted_address"],componentRestrictions:{country:"us"}});
+      CALL_AC.addListener("place_changed",function(){
+        var p=CALL_AC.getPlace();
+        if(p&&p.geometry&&p.geometry.location){
+          CALL={lat:p.geometry.location.lat(),lng:p.geometry.location.lng(),label:p.formatted_address||$("callAddr").value};
+          $("callClear").style.display=""; loadBoard();
+        }
+      });
+    }).catch(function(){ toast("Address search unavailable \u2014 check the Maps key."); });
+  }
+  function geocode(addr){
+    if(GEOCACHE[addr]) return Promise.resolve(GEOCACHE[addr]);
+    return ensureGMaps().then(function(){
+      return new Promise(function(res){
+        new google.maps.Geocoder().geocode({address:addr},function(r,status){
+          if(status==="OK"&&r[0]){ var l=r[0].geometry.location, ll={lat:l.lat(),lng:l.lng()}; GEOCACHE[addr]=ll; res(ll); }
+          else res(null);
+        });
+      });
+    }).catch(function(){ return null; });
+  }
+  function haversine(la1,lo1,la2,lo2){
+    var R=3958.8, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180;
+    var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+  function rankAndRender(list){
+    if(!CALL){ renderBoard(list); return; }
+    var jobs=list.map(function(p){
+      if(p.lat!=null&&p.lng!=null) return Promise.resolve(p);
+      if(p.address){ return geocode(p.address).then(function(ll){ if(ll){p.lat=ll.lat;p.lng=ll.lng;} return p; }); }
+      return Promise.resolve(p);
+    });
+    Promise.all(jobs).then(function(items){
+      items.forEach(function(p){ p.dist=(p.lat!=null&&p.lng!=null)?haversine(CALL.lat,CALL.lng,p.lat,p.lng):null; });
+      items.sort(function(a,b){ if(a.dist==null&&b.dist==null) return 0; if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
+      renderBoard(items);
+    });
+  }
   function timeAgo(ts){ if(!ts) return ""; var t=new Date(ts).getTime(); if(!isFinite(t)) return ""; var m=Math.round((Date.now()-t)/60000); if(m<1) return "just now"; if(m<60) return m+" min ago"; var h=Math.floor(m/60); return h+"h "+(m%60)+"m ago"; }
   function ensureLeaflet(){
     if(window.L) return Promise.resolve();
@@ -3262,22 +3325,24 @@
       if(!BOARD.lmap){ BOARD.lmap=L.map("boardMap"); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00A9 OpenStreetMap"}).addTo(BOARD.lmap); BOARD.lmap._mk=[]; }
       (BOARD.lmap._mk||[]).forEach(function(m){ BOARD.lmap.removeLayer(m); }); BOARD.lmap._mk=[];
       var g=[];
-      pts.forEach(function(p){ var mk=L.marker([p.lat,p.lng]).addTo(BOARD.lmap).bindPopup(esc(p.name)+"<br>Unit "+esc(p.unit)); BOARD.lmap._mk.push(mk); g.push([p.lat,p.lng]); });
+      pts.forEach(function(p){ var mk=L.marker([p.lat,p.lng]).addTo(BOARD.lmap).bindPopup(esc(p.name)+"<br>Unit "+esc(p.unit)+(p.dist!=null?"<br>"+(p.dist<10?p.dist.toFixed(1):Math.round(p.dist))+" mi":"")); BOARD.lmap._mk.push(mk); g.push([p.lat,p.lng]); });
+      if(CALL){ var cm=L.circleMarker([CALL.lat,CALL.lng],{radius:9,color:"#c8202e",fillColor:"#c8202e",fillOpacity:.9}).addTo(BOARD.lmap).bindPopup("Call: "+esc(CALL.label)); BOARD.lmap._mk.push(cm); g.push([CALL.lat,CALL.lng]); }
       if(g.length) BOARD.lmap.fitBounds(g,{padding:[30,30],maxZoom:14});
       setTimeout(function(){ BOARD.lmap.invalidateSize(); },120);
     }).catch(function(){ el.style.display="none"; });
   }
   function renderBoard(list){
-    $("boardMeta").textContent=list.length?(list.length+" available \u00B7 as of "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"0 available";
+    $("boardMeta").textContent=(CALL?("Closest to "+CALL.label+" \u00B7 "):"")+(list.length?(list.length+" available"):"0 available");
     if(!list.length){ $("boardList").innerHTML='<div class="empty">No responders available right now.</div>'; boardMap([]); return; }
     $("boardList").innerHTML=list.map(function(p){
       var badge=p.status?'<span class="brd-badge '+esc(p.status.toLowerCase())+'">'+esc(p.status)+'</span>':'';
       var tel=(p.phone||"").replace(/[^0-9+]/g,"");
       var until=p.until?("until "+new Date(p.until).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})):"no end set";
+      var dist=(p.dist!=null)?'<span class="brd-dist">'+(p.dist<10?p.dist.toFixed(1):Math.round(p.dist))+' mi</span>':'';
       var loc="";
-      if(p.lat!=null&&p.lng!=null) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng+'" target="_blank" rel="noopener">'+ICO_PIN+'GPS location</a>';
+      if(p.lat!=null&&p.lng!=null) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+p.lat+','+p.lng+'" target="_blank" rel="noopener">'+ICO_PIN+'Map</a>';
       else if(p.address) loc='<a class="brd-loc" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">'+ICO_PIN+esc(p.address)+'</a>';
-      return '<div class="brd-card"><div class="brd-top"><span class="brd-nm">'+esc(p.name)+'</span>'+badge+'</div>'+
+      return '<div class="brd-card"><div class="brd-top"><span class="brd-nm">'+esc(p.name)+'</span>'+dist+badge+'</div>'+
         '<div class="brd-sub">Unit '+esc(p.unit)+' \u00B7 '+until+(p.src==="gps"?' \u00B7 GPS':(p.src==="none"?' \u00B7 location hidden':(p.address?' \u00B7 home':'')))+'</div>'+
         '<div class="brd-act">'+(tel?'<a class="brd-call" href="tel:'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</a>':'')+loc+'</div></div>';
     }).join("");
@@ -3308,7 +3373,7 @@
       });
       var ord={primary:0,backup:1,observer:2};
       list.sort(function(x,y){ var a=ord[(x.status||"").toLowerCase()]; a=a==null?3:a; var b=ord[(y.status||"").toLowerCase()]; b=b==null?3:b; return a-b || x.name.localeCompare(y.name); });
-      renderBoard(list);
+      rankAndRender(list);
     }).catch(function(){ $("boardList").innerHTML='<div class="empty">Couldn\u2019t load. Check your connection.</div>'; });
   }
   function closeBoard(){ clearInterval(BOARD.pollId); $("boardScreen").classList.remove("open"); }
@@ -3317,8 +3382,10 @@
     $("boardScreen").classList.add("open");
     if(!lock) navOpen(closeBoard);
     $("boardMeta").textContent="Loading\u2026"; $("boardList").innerHTML="";
+    initCallSearch();
     loadBoard(); clearInterval(BOARD.pollId); BOARD.pollId=setInterval(loadBoard,25000);
   }
+  $("callClear").addEventListener("click",function(){ CALL=null; $("callAddr").value=""; $("callClear").style.display="none"; loadBoard(); });
   $("boardBack").addEventListener("click",function(){ if(!BOARD.lock) navBack(); });
   // Protocols screen search = same tappable dropdown as the home page
   function renderProtoDropdown(q){
