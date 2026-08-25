@@ -2129,7 +2129,9 @@
     if(!row){
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
-        '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>';
+        '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
+        '<button class="signout" id="profSignout">Sign out of this device</button>';
+      $("profSignout").addEventListener("click",doSignout);
       return;
     }
     b.innerHTML='<div class="prof-card">'+
@@ -2140,8 +2142,10 @@
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
-      '<div class="prof-bio" id="profBioWrap"></div></div>';
+      '<div class="prof-bio" id="profBioWrap"></div></div>'+
+      '<button class="signout" id="profSignout">Sign out of this device</button>';
     $("profSave").addEventListener("click",saveProfile);
+    $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
   }
   function renderBioRow(){
@@ -2501,9 +2505,11 @@
       .catch(function(){ $("bioOfferErr").textContent="Couldn\u2019t set up \u2014 you can enable it later in your profile."; });
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
-  $("signout").addEventListener("click",function(){
+  function doSignout(){
     if(confirm("Sign out on this device? You'll need your password to get back in.")){
-      localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}});
+      localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}
+  }
+  $("signout").addEventListener("click",doSignout);
 
   function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
     boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
