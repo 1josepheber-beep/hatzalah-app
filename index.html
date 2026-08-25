@@ -1172,7 +1172,7 @@
   function tabRange(name){ return /^[A-Za-z0-9_]+$/.test(name) ? name : "'"+String(name).replace(/'/g,"''")+"'"; }
   function fetchTab(name){
     var url="https://sheets.googleapis.com/v4/spreadsheets/"+SHEET_ID+"/values/"+encodeURIComponent(tabRange(name))+"?majorDimension=ROWS";
-    function go(tok){ return fetch(url,{headers:{Authorization:"Bearer "+tok}}); }
+    function go(tok){ return fetch(url,{headers:{Authorization:"Bearer "+tok},cache:"no-store"}); }
     return gToken().then(go).then(function(r){
       if(r.status===401) return gToken(true).then(go);
       return r;
