@@ -43,7 +43,7 @@
   .availbtn svg{fill:none;stroke:rgba(255,255,255,.85);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .availbtn.on{background:#2f9e44}
   .availbtn.on svg{stroke:#fff}
-  body.dmode .availbtn,body.dmode #qActions,body.dmode #rstatus{display:none}
+  body.dmode .availbtn,body.dmode #qActions{display:none}
   .qbtn:active{opacity:.65}
   .sheet-wrap{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.4);display:flex;align-items:flex-end}
   .sheet-wrap.hidden{display:none}
@@ -198,6 +198,8 @@
     text-transform:uppercase;background:rgba(255,255,255,.14);color:#fff;white-space:nowrap;line-height:1}
   .rstatus .dot{width:11px;height:11px;border-radius:50%;background:#fff;flex:0 0 auto}
   .rstatus.primary{background:rgba(38,166,91,.26);color:#e2ffef}
+  .rstatus.dispatcher{background:rgba(255,255,255,.18);color:#fff}
+  .rstatus.dispatcher .dot{background:#7fd0ff}
   .rstatus.primary .dot{background:#37d67a}
   .rstatus.backup{background:rgba(201,147,58,.28);color:#ffedd0}
   .rstatus.backup .dot{background:#f2b04a}
@@ -1148,6 +1150,7 @@
     book:'<path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/><path d="M5 19a2 2 0 012-2h11"/>',
     grid:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',
     check:'<path d="M20 6L9 17l-5-5"/>',
+    board:'<path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
     link:'<path d="M10 14a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 10a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>'
   };
   function icon(n){return ICONS[n]||ICONS.link;}
@@ -1188,7 +1191,8 @@
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
       if(STATE.me && STATE.me.dispatcher){
-        STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X"}];
+        var boardTiles=STATE.tiles.filter(function(t){return (r_(t,"Type")||"").toLowerCase()==="board";});
+        STATE.tiles = boardTiles.length ? boardTiles : [{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
@@ -1201,14 +1205,20 @@
     $("dispLabel").textContent=getSetting("Dispatch Label","Dispatch");
     $("gateOrg").textContent=getSetting("Org Name","Hatzalah of Houston");
     $("search").placeholder=getSetting("Search Placeholder","Search…");
-    var el=$("rstatus"), st=(STATE.me&&STATE.me.status?String(STATE.me.status):"").trim();
-    var key=st.toLowerCase();
-    el.className="rstatus";
-    if(!st){ el.classList.add("hidden"); el.innerHTML=""; }
-    else{
-      el.classList.add(key==="primary"||key==="backup"||key==="observer"?key:"observer");
-      var label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
-      el.innerHTML='<span class="dot"></span>'+esc(label);
+    var el=$("rstatus");
+    if(STATE.me && STATE.me.dispatcher){
+      el.className="rstatus dispatcher";
+      el.innerHTML='<span class="dot"></span>Dispatcher';
+    } else {
+      var st=(STATE.me&&STATE.me.status?String(STATE.me.status):"").trim();
+      var key=st.toLowerCase();
+      el.className="rstatus";
+      if(!st){ el.classList.add("hidden"); el.innerHTML=""; }
+      else{
+        el.classList.add(key==="primary"||key==="backup"||key==="observer"?key:"observer");
+        var label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
+        el.innerHTML='<span class="dot"></span>'+esc(label);
+      }
     }
   }
   function paintTiles(){
@@ -1221,7 +1231,7 @@
       var img=r_(t,"Image URL")||r_(t,"Image")||"";
       var iconTile=function(){
         b.className="tile";
-        b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon"))+'</svg></div>'+
+        b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg></div>'+
                     '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
                     (adminOnly?'<div class="adm">Admin</div>':'');
       };
