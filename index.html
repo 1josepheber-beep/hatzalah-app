@@ -3566,7 +3566,7 @@
         deferred.prompt();
         deferred.userChoice.then(function(){ deferred=null; hideBar(); });
       }else if(isIOS()){
-        sub.textContent="Tap the Share button, then \u201CAdd to Home Screen.\u201D";
+        sub.innerHTML="1. If this opened inside another app (like WhatsApp), tap the \u22ef or Share button \u2192 <b>Open in Safari</b>.<br>2. In Safari, tap the Share button, then <b>Add to Home Screen</b>.";
         go.style.display="none";
       }
     });
@@ -3574,10 +3574,10 @@
     // Once installed, hide immediately and it won't come back (standalone check)
     window.addEventListener("appinstalled", hideBar);
 
-    // iOS never fires beforeinstallprompt: show manual steps each visit until installed
+    // iOS never fires beforeinstallprompt: show a How-to-install button until installed
     if(isIOS() && !standalone()){
-      sub.textContent="Tap Share, then \u201CAdd to Home Screen.\u201D";
-      go.style.display="none";
+      go.style.display=""; go.textContent="How to install";
+      sub.textContent="Add this app to your home screen.";
       showBar();
     }
   })();
