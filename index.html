@@ -96,6 +96,10 @@
   .avail-loc{font-size:13px;color:var(--mut);margin-top:14px;min-height:18px}
   .avail-note{font-size:12.5px;color:var(--mut);text-align:center;padding:0 8px;line-height:1.5}
   .avail-h{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:10px}
+  .busy-ov{position:absolute;inset:0;background:rgba(255,255,255,.65);display:flex;align-items:center;justify-content:center;z-index:6}
+  .busy-ov.hidden{display:none}
+  .spin{width:40px;height:40px;border:4px solid #d0d7e2;border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .avail-share{display:flex;align-items:center;gap:9px;justify-content:center;margin:14px 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
   .avail-share input{width:20px;height:20px}
   .sched-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
@@ -999,6 +1003,7 @@
     <button class="back" id="availBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
     <h2>My Availability</h2>
   </div>
+  <div class="busy-ov hidden" id="availBusy"><div class="spin"></div></div>
   <div class="avail-body">
     <div class="avail-card">
       <div class="avail-h">Available now</div>
@@ -1205,7 +1210,9 @@
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
       if(STATE.me && STATE.me.dispatcher){
-        STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
+        var bt=STATE.tiles.filter(function(t){return (r_(t,"Type")||"").toLowerCase()==="board";})[0];
+        if(bt){ var c={}; for(var k in bt) c[k]=bt[k]; c["Admin Only"]=""; c["Active"]="X"; STATE.tiles=[c]; }
+        else STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
@@ -3171,6 +3178,7 @@
     if($("schDate") && !$("schDate").value){ var d=new Date(); $("schDate").value=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
     loadSlots();
   }
+  function availBusy(on){ var b=$("availBusy"); if(b) b.classList.toggle("hidden",!on); }
   function loadSlots(){
     $("schList").innerHTML='<div class="empty">Loading\u2026</div>';
     var me=STATE.me?normUnit(STATE.me.unit):"";
@@ -3180,8 +3188,8 @@
         .filter(function(x){ return !x.e || x.e>Date.now(); })
         .sort(function(a,b){ return a.s-b.s; });
       AVL.on=AVL.slots.some(function(x){ return slotActive(x.s,x.e); });
-      availUI(); renderSlots();
-    }).catch(function(){ AVL.slots=[]; AVL.on=false; availUI(); $("schList").innerHTML='<div class="empty">Couldn\u2019t load your schedule.</div>'; });
+      availBusy(false); availUI(); renderSlots();
+    }).catch(function(){ availBusy(false); AVL.slots=[]; AVL.on=false; availUI(); $("schList").innerHTML='<div class="empty">Couldn\u2019t load your schedule.</div>'; });
   }
   function availUI(){
     $("availState").textContent=AVL.on?"You are AVAILABLE now":"Not available now";
@@ -3200,10 +3208,11 @@
   }
   function schPost(payload,after){
     var url=getSetting("Profile Update URL","");
-    if(!url){ toast("Saving isn\u2019t set up yet."); $("availToggle").disabled=false; return; }
+    if(!url){ toast("Saving isn\u2019t set up yet."); availBusy(false); $("availToggle").disabled=false; return; }
+    availBusy(true);
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
       .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok)throw"f"; if(after)after(); })
-      .catch(function(){ $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); });
+      .catch(function(){ availBusy(false); $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   function addSlot(s,e,src,lat,lng,msg){
     var id="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -3213,8 +3222,9 @@
       function(){ toast(msg||"Added."); loadSlots(); });
   }
   function goNow(){
+    availBusy(true);
     if(AVL.on){
-      var actives=AVL.slots.filter(function(x){return slotActive(x.s,x.e);}); if(!actives.length) return;
+      var actives=AVL.slots.filter(function(x){return slotActive(x.s,x.e);}); if(!actives.length){ availBusy(false); return; }
       var n=actives.length, done=0; $("availToggle").disabled=true;
       actives.forEach(function(x){ schPost({kind:"sched",action:"del",id:x.id},function(){ if(++done===n){ toast("Marked unavailable."); loadSlots(); } }); });
       return;
@@ -3296,16 +3306,17 @@
     var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
-  function rankAndRender(list){
-    if(!CALL){ renderBoard(list); return; }
+  function resolveAndRender(list){
     var jobs=list.map(function(p){
       if(p.lat!=null&&p.lng!=null) return Promise.resolve(p);
       if(p.address){ return geocode(p.address).then(function(ll){ if(ll){p.lat=ll.lat;p.lng=ll.lng;} return p; }); }
       return Promise.resolve(p);
     });
     Promise.all(jobs).then(function(items){
-      items.forEach(function(p){ p.dist=(p.lat!=null&&p.lng!=null)?haversine(CALL.lat,CALL.lng,p.lat,p.lng):null; });
-      items.sort(function(a,b){ if(a.dist==null&&b.dist==null) return 0; if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
+      if(CALL){
+        items.forEach(function(p){ p.dist=(p.lat!=null&&p.lng!=null)?haversine(CALL.lat,CALL.lng,p.lat,p.lng):null; });
+        items.sort(function(a,b){ if(a.dist==null&&b.dist==null) return 0; if(a.dist==null) return 1; if(b.dist==null) return -1; return a.dist-b.dist; });
+      }
       renderBoard(items);
     });
   }
@@ -3318,11 +3329,9 @@
     });
   }
   function boardMap(pts){
-    var el=$("boardMap");
-    if(!pts.length){ el.style.display="none"; return; }
-    el.style.display="block";
+    var el=$("boardMap"); el.style.display="block";
     ensureLeaflet().then(function(){
-      if(!BOARD.lmap){ BOARD.lmap=L.map("boardMap"); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00A9 OpenStreetMap"}).addTo(BOARD.lmap); BOARD.lmap._mk=[]; }
+      if(!BOARD.lmap){ BOARD.lmap=L.map("boardMap").setView([29.76,-95.37],10); L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"\u00A9 OpenStreetMap"}).addTo(BOARD.lmap); BOARD.lmap._mk=[]; }
       (BOARD.lmap._mk||[]).forEach(function(m){ BOARD.lmap.removeLayer(m); }); BOARD.lmap._mk=[];
       var g=[];
       pts.forEach(function(p){ var mk=L.marker([p.lat,p.lng]).addTo(BOARD.lmap).bindPopup(esc(p.name)+"<br>Unit "+esc(p.unit)+(p.dist!=null?"<br>"+(p.dist<10?p.dist.toFixed(1):Math.round(p.dist))+" mi":"")); BOARD.lmap._mk.push(mk); g.push([p.lat,p.lng]); });
@@ -3373,7 +3382,7 @@
       });
       var ord={primary:0,backup:1,observer:2};
       list.sort(function(x,y){ var a=ord[(x.status||"").toLowerCase()]; a=a==null?3:a; var b=ord[(y.status||"").toLowerCase()]; b=b==null?3:b; return a-b || x.name.localeCompare(y.name); });
-      rankAndRender(list);
+      resolveAndRender(list);
     }).catch(function(){ $("boardList").innerHTML='<div class="empty">Couldn\u2019t load. Check your connection.</div>'; });
   }
   function closeBoard(){ clearInterval(BOARD.pollId); $("boardScreen").classList.remove("open"); }
