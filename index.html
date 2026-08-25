@@ -981,7 +981,7 @@
       <button class="avail-toggle" id="availToggle">Go available</button>
       <div class="avail-loc" id="availLoc"></div>
     </div>
-    <div class="avail-note">While you\u2019re available, dispatch can see your status, phone, and location. Location uses GPS if you allow it \u2014 otherwise your home address.</div>
+    <div class="avail-note">While you&rsquo;re available, dispatch can see your status, phone, and location. Location uses GPS if you allow it &mdash; otherwise your home address.</div>
   </div>
 </div>
 
@@ -1156,11 +1156,16 @@
         var h=found;
         STATE.me.status=r_(h,"Status");
         STATE.me.admin=isX(h["Admin"]);
+        STATE.me.dispatcher=isX(h["Dispatcher"]);
         STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
         STATE.me.first=r_(h,"First Name")||STATE.me.first;
         STATE.me.last=r_(h,"Last Name")||STATE.me.last;
         try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
       }
+      if(STATE.me && STATE.me.dispatcher){
+        STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X"}];
+        document.body.classList.add("dmode");
+      } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
       try{ if(window.gtag && STATE.me && STATE.me.unit){ gtag('set',{user_id:STATE.me.unit}); gtag('set','user_properties',{unit:STATE.me.unit,role:(STATE.me.admin?"admin":"member")}); } }catch(e){}
     });
@@ -2423,7 +2428,7 @@
       localStorage.removeItem(LS);bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}});
 
   function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
-    boot().then(function(){ if(STATE.me&&STATE.me.dispatcher){ document.body.classList.add("dmode"); openBoard(true); } }).catch(function(){toast("Couldn't load the app. Check your internet.");});}
+    boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
 
   var BIO_KEY="hoh_bio_v1";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }
