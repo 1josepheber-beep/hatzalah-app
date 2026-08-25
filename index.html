@@ -470,6 +470,9 @@
   .prof-dob{font-size:13.5px;color:var(--ink);margin:-8px 0 14px}
   .prof-dob b{font-weight:700}
   .prof-bio{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .prof-pw{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .prof-pw-h{font-weight:800;color:var(--navy);font-size:15px;margin-bottom:6px}
+  .prof-pw-note{font-size:12.5px;color:var(--mut);margin-bottom:10px;line-height:1.4}
   .prof-bio-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14.5px;font-weight:700;color:var(--ink)}
   .bio-toggle{border:1px solid var(--line);background:#eef1f6;color:var(--mut);border-radius:999px;padding:7px 18px;font-weight:800;font-size:13px;cursor:pointer}
   .bio-toggle.on{background:#2f9e44;color:#fff;border-color:#2f9e44}
@@ -2207,11 +2210,41 @@
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
-      '<div class="prof-bio" id="profBioWrap"></div></div>'+
+      '<div class="prof-bio" id="profBioWrap"></div>'+
+      '<div class="prof-pw"><div class="prof-pw-h">Change password</div>'+
+        '<div class="prof-pw-note">Ask a coordinator for a one-time activation code, then set your new password.</div>'+
+        '<label class="prof-l">Activation code<input id="pwCode" type="text" autocomplete="off" placeholder="Code from your coordinator"></label>'+
+        '<label class="prof-l">New password<input id="pwNew" type="text" autocomplete="off" placeholder="Choose a new password"></label>'+
+        '<button class="ebtn primary" id="pwSave">Update password</button>'+
+        '<div class="prof-note" id="pwNote"></div></div>'+
+      '</div>'+
       '<button class="signout" id="profSignout">Sign out of this device</button>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
+    $("pwSave").addEventListener("click",changePassword);
     renderBioRow();
+  }
+  function changePassword(){
+    var code=$("pwCode").value.trim(), np=$("pwNew").value.trim(), note=$("pwNote");
+    note.style.color=""; note.textContent="";
+    if(!code){ note.textContent="Enter your activation code."; return; }
+    if(np.length<4){ note.textContent="New password must be at least 4 characters."; return; }
+    var url=getSetting("Profile Update URL","");
+    if(!url){ note.textContent="Saving isn\u2019t set up yet."; return; }
+    var btn=$("pwSave"); btn.disabled=true; btn.textContent="Updating\u2026";
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"pw",unit:(STATE.me&&STATE.me.unit)||"",code:code,newpw:np})})
+      .then(function(r){return r.text();}).then(function(t){
+        var res={}; try{res=JSON.parse(t);}catch(e){}
+        btn.disabled=false; btn.textContent="Update password";
+        if(res.ok===false){
+          note.textContent = (res.error==="bad code") ? "That activation code isn\u2019t right \u2014 ask your coordinator for a new one." : "Couldn\u2019t update. Try again.";
+          return;
+        }
+        STATE.me.pw=np; try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
+        $("pwCode").value=""; $("pwNew").value="";
+        note.style.color="#2f9e44"; note.textContent="Password updated. Use it next time you sign in.";
+        toast("Password updated.");
+      }).catch(function(){ btn.disabled=false; btn.textContent="Update password"; note.textContent="Couldn\u2019t reach the server \u2014 check your connection."; });
   }
   function renderBioRow(){
     var w=$("profBioWrap"); if(!w) return;
