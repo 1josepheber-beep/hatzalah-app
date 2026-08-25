@@ -102,6 +102,8 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .avail-share{display:flex;align-items:center;gap:9px;justify-content:center;margin:14px 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
   .avail-share input{width:20px;height:20px}
+  .avail-loctoggle{width:100%;margin-top:10px;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
+  .avail-loctoggle.hidden{display:none}
   .sched-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
   .sched-form label{display:flex;flex-direction:column;font-size:12px;font-weight:700;color:var(--mut);gap:4px}
   .sched-form input{border:1px solid var(--line);border-radius:9px;padding:9px;font-size:15px;color:var(--ink);width:100%;box-sizing:border-box}
@@ -1012,6 +1014,7 @@
         <span class="avail-hint">Blank = until you turn it off.</span></label>
       <label class="avail-share"><input type="checkbox" id="availShare" checked> Share my location with dispatch</label>
       <button class="avail-toggle" id="availToggle">Go available now</button>
+      <button class="avail-loctoggle hidden" id="availLocToggle">Hide my location</button>
       <div class="avail-loc" id="availLoc"></div>
     </div>
     <div class="avail-card">
@@ -1021,8 +1024,8 @@
         <label>From<input id="schFrom" type="time"></label>
         <label>To<input id="schTo" type="time"></label>
       </div>
+      <label class="avail-share" style="margin-top:12px"><input type="checkbox" id="schShare" checked> Share my location during this time</label>
       <button class="sched-add" id="schAdd">Add to schedule</button>
-      <div class="avail-hint" style="margin-top:9px">Scheduled times use your home address for location.</div>
     </div>
     <div class="avail-h" style="padding:2px 4px 0">Your availability</div>
     <div class="sched-list" id="schList"></div>
@@ -3192,11 +3195,37 @@
     }).catch(function(){ availBusy(false); AVL.slots=[]; AVL.on=false; availUI(); $("schList").innerHTML='<div class="empty">Couldn\u2019t load your schedule.</div>'; });
   }
   function availUI(){
+    var actives=AVL.slots.filter(function(x){return slotActive(x.s,x.e);});
+    AVL.sharing = actives.some(function(x){ return x.src && x.src!=="none"; });
     $("availState").textContent=AVL.on?"You are AVAILABLE now":"Not available now";
     $("availState").classList.toggle("on",AVL.on);
     var b=$("availToggle"); b.disabled=false; b.textContent=AVL.on?"Go off now":"Go available now"; b.classList.toggle("on",AVL.on);
     var h=$("availHdr"); if(h) h.classList.toggle("on",AVL.on);
+    var sh=document.querySelector(".avail-share"), hr=document.querySelector(".avail-hours"), lt=$("availLocToggle");
+    if(sh) sh.style.display=AVL.on?"none":"";
+    if(hr) hr.style.display=AVL.on?"none":"";
+    if(lt){ if(AVL.on){ lt.classList.remove("hidden"); lt.textContent=AVL.sharing?"Hide my location":"Share my location"; } else lt.classList.add("hidden"); }
   }
+  function toggleActiveLoc(){
+    var actives=AVL.slots.filter(function(x){return slotActive(x.s,x.e);});
+    if(!actives.length) return;
+    var goingShare=!AVL.sharing;
+    availBusy(true);
+    function apply(src,lat,lng){
+      var n=actives.length, done=0;
+      actives.forEach(function(x){
+        schPost({kind:"sched",action:"setloc",id:x.id,lat:(lat==null?"":lat),lng:(lng==null?"":lng),locSource:src},function(){
+          if(++done===n){ toast(goingShare?"Location shared.":"Location hidden."); loadSlots(); }
+        });
+      });
+    }
+    if(goingShare){
+      $("availLoc").textContent="Getting your location\u2026";
+      if(navigator.geolocation){ navigator.geolocation.getCurrentPosition(function(pos){ apply("gps",pos.coords.latitude,pos.coords.longitude); },function(){ apply("home",null,null); },{enableHighAccuracy:true,timeout:8000,maximumAge:60000}); }
+      else apply("home",null,null);
+    } else apply("none",null,null);
+  }
+  $("availLocToggle").addEventListener("click",toggleActiveLoc);
   function renderSlots(){
     if(!AVL.slots.length){ $("schList").innerHTML='<div class="empty">No availability set.</div>'; return; }
     $("schList").innerHTML=AVL.slots.map(function(x){
@@ -3248,7 +3277,7 @@
     var s=new Date(d+"T"+f).getTime(), e=new Date(d+"T"+t).getTime();
     if(!isFinite(s)||!isFinite(e)){ toast("Check the times."); return; }
     if(e<=s) e+=24*3600000;
-    addSlot(s,e,($("availShare").checked?"home":"none"),null,null,"Added to schedule.");
+    addSlot(s,e,($("schShare").checked?"home":"none"),null,null,"Added to schedule.");
   }
   $("availToggle").addEventListener("click",goNow);
   $("schAdd").addEventListener("click",addScheduled);
