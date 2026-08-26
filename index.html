@@ -693,7 +693,7 @@
     <div class="err" id="gErr"></div>
     <div class="load hidden" id="gLoad">Signing in&hellip;</div>
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
-    <button id="viewDemo" class="demolink">View demo</button>
+    <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
 </div>
 
@@ -2828,8 +2828,7 @@
     });
   }
   $("gBtn").addEventListener("click",gSignIn);
-  $("viewDemo").addEventListener("click",function(){ $("ggate").classList.add("hidden"); $("guestgate").classList.remove("hidden"); setTimeout(function(){$("guestCode").focus();},150); });
-  $("guestBack").addEventListener("click",function(){ $("guestgate").classList.add("hidden"); $("ggate").classList.remove("hidden"); });
+  $("viewDemo").addEventListener("click",function(){ $("ggate").classList.add("hidden"); $("guestgate").classList.remove("hidden"); setTimeout(function(){$("guestCode").focus();},150); });  $("guestBack").addEventListener("click",function(){ $("guestgate").classList.add("hidden"); $("ggate").classList.remove("hidden"); });
   $("guestBtn").addEventListener("click",function(){ guestLogin($("guestCode").value); });
   $("guestCode").addEventListener("keydown",function(e){ if(e.key==="Enter") guestLogin($("guestCode").value); });
   $("demoExit").addEventListener("click",exitDemo);
@@ -2839,6 +2838,14 @@
       .then(function(){ $("gLoad").classList.add("hidden"); startAfterGoogle(); })
       .catch(function(){ $("gLoad").classList.add("hidden"); });
   }
+  function checkDemoEnabled(){
+    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:"__probe__"})})
+      .then(function(r){return r.text();}).then(function(t){
+        var res={}; try{res=JSON.parse(t);}catch(e){}
+        if(res && res.error!=="off"){ var v=$("viewDemo"); if(v) v.classList.remove("hidden"); }
+      }).catch(function(){});
+  }
+  checkDemoEnabled();
   (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(gBoot,150); })();
 
 
