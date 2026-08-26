@@ -424,6 +424,7 @@
   .cert-modal-btns button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-modal-btns .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cert-mem{border-bottom:1px solid var(--line)}
+  .cert-adminnote{background:#eaf0f9;color:var(--navy);font-weight:800;font-size:12.5px;padding:9px 12px;text-align:center;border-bottom:1px solid var(--line)}
   .cert-upload-all{display:block;width:calc(100% - 24px);margin:14px 12px 24px;border:1px dashed var(--navy);background:#f4f7fb;color:var(--navy);border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-mem-h{display:flex;align-items:center;gap:9px;padding:13px 12px;cursor:pointer;font-weight:800;
     font-size:15px;color:var(--ink);background:#f2f5fa}
@@ -1254,7 +1255,11 @@
   }
   function demoCerts(){
     return [
-      {"Last Name":"Cohen","First Name":"Sample","Unit #":"DEMO","Driver's License Exp":"6/6/2029","Driver's License #":"TX-DEMO-1234","State EMT/Paramedic License Exp":"7/31/2027","State EMT/Paramedic License #":"P-55512","NREMT Exp":"3/31/2028","NREMT #":"M5140001","American Heart BLS Exp":"12/12/2027","ACLS Exp":"5/1/2027","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"}
+      {"Last Name":"Cohen","First Name":"Sample","Unit #":"DEMO","Driver's License Exp":"6/6/2029","Driver's License #":"TX-DEMO-1234","State EMT/Paramedic License Exp":"7/31/2027","State EMT/Paramedic License #":"P-55512","NREMT Exp":"3/31/2028","NREMT #":"M5140001","American Heart BLS Exp":"12/12/2027","ACLS Exp":"5/1/2027","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"},
+      {"Last Name":"Berger","First Name":"Avi","Unit #":"H-201","Driver's License Exp":"9/15/2028","Driver's License #":"TX-DEMO-2201","State EMT/Paramedic License Exp":"10/10/2026","State EMT/Paramedic License #":"E-22014","NREMT Exp":"10/31/2026","NREMT #":"M5140142","American Heart BLS Exp":"1/20/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"},
+      {"Last Name":"Friedman","First Name":"Dovid","Unit #":"H-202","Driver's License Exp":"4/2/2029","Driver's License #":"TX-DEMO-2202","State EMT/Paramedic License Exp":"6/30/2028","State EMT/Paramedic License #":"P-22025","NREMT Exp":"6/30/2028","NREMT #":"M5140177","American Heart BLS Exp":"8/1/2027","ACLS Exp":"9/1/2027","PALS Exp":"9/1/2027","HIPAA":"Completed","EVOC Course":"Completed"},
+      {"Last Name":"Katz","First Name":"Miriam","Unit #":"D-301","Driver's License Exp":"11/5/2027","Driver's License #":"TX-DEMO-3301","State EMT/Paramedic License Exp":"","State EMT/Paramedic License #":"","NREMT Exp":"","NREMT #":"","American Heart BLS Exp":"5/15/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":""},
+      {"Last Name":"Green","First Name":"Yosef","Unit #":"H-203","Driver's License Exp":"2/1/2027","Driver's License #":"TX-DEMO-2203","State EMT/Paramedic License Exp":"5/31/2026","State EMT/Paramedic License #":"E-22036","NREMT Exp":"5/31/2026","NREMT #":"M5140166","American Heart BLS Exp":"3/1/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"}
     ];
   }
   var DEMO={on:false, name:"", tabs:{}};
@@ -2164,7 +2169,7 @@
       return ((r["First Name"]||"")+" "+(r["Last Name"]||"")+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
     });
     if(!rows.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
-    var html=certLegend();
+    var html=(STATE.demo?'<div class="cert-adminnote">Admin view \u2014 showing all responders\u2019 certifications</div>':'')+certLegend();
     rows.forEach(function(r){
       var key=normUnit(r["Unit #"]||r["Unit"])||(r["Last Name"]||"");
       var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
