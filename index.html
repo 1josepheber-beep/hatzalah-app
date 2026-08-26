@@ -672,8 +672,10 @@
   .demolink{background:none;border:0;color:#5b6b85;font-weight:700;font-size:13.5px;text-decoration:underline;cursor:pointer;margin-top:12px;padding:6px}
   .gsolid{background:var(--navy);color:#fff}
   #guestCode{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:11px;padding:13px;font-size:16px;margin-bottom:10px}
-  .demobar{display:none;align-items:center;justify-content:center;gap:12px;background:#b3541e;color:#fff;font-weight:800;font-size:12.5px;letter-spacing:.4px;padding:7px 12px;position:sticky;top:0;z-index:60}
+  .demobar{display:none;align-items:center;justify-content:center;gap:12px;background:#b3541e;color:#fff;font-weight:800;font-size:12.5px;letter-spacing:.4px;position:fixed;top:0;left:0;right:0;height:34px;box-sizing:border-box;z-index:60}
   body.demo .demobar{display:flex}
+  body.demo #app{padding-top:34px}
+  body.demo .screen,body.demo .preader{top:34px}
   .demobar button{background:rgba(255,255,255,.22);border:0;color:#fff;font-weight:800;font-size:12px;padding:5px 12px;border-radius:7px;cursor:pointer}
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
