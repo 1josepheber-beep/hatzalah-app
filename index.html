@@ -1526,7 +1526,7 @@
     if(!$("placeScreen").classList.contains("open")) navOpen(closePlaceScreen);
     $("placeScreen").classList.add("open");
     $("placeSearch").value=""; $("placeSres").className="sresults"; $("placeSres").innerHTML="";
-    $("placeEdit").classList.toggle("hidden",!isAdmin());
+    $("placeEdit").classList.toggle("hidden",!isAdmin()||STATE.demo);
     if(PLACE.loaded){ return; }
     $("cabGrid").innerHTML='<div class="empty">Loading\u2026</div>';
     loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; renderCabGrid(); })
@@ -1832,7 +1832,7 @@
   function openEquip(){
     if(!$("equipScreen").classList.contains("open")) navOpen(closeEquip);
     $("equipScreen").classList.add("open");
-    $("equipEdit").classList.toggle("hidden",!isAdmin());
+    $("equipEdit").classList.toggle("hidden",!isAdmin()||STATE.demo);
     if(EQ.loaded){ renderEquip(); return; }
     $("equipBody").innerHTML='<div class="empty">Loading\u2026</div>';
     loadEquip().then(function(d){ EQ.d=d; EQ.loaded=true; buildTierChips(); renderEquip(); })
@@ -1999,6 +1999,7 @@
   var UP_DEFAULT_TYPES=["Good Will Agreement","Resignation","Immunizations","License Plate","Driver's License","EMT/Paramedic TX License","Car Insurance","American Heart BLS","ACLS","PALS","COH E-Permit","HFD Waiver","HIPAA","HIPAA Awareness","Jurisprudence less than 4 years old","Epi Training Yearly","Evoc Course","Hazmat","BBP","SOP's","L&S Policy"];
   function closeUpload(){ $("uploadScreen").classList.remove("open"); }
   function openUpload(target, preset){
+    if(demoNo()) return;
     UP.link=(target&&target.trim())||UP_DEFAULT_LINK;
     if(!$("uploadScreen").classList.contains("open")) navOpen(closeUpload);
     $("uploadScreen").classList.add("open");
