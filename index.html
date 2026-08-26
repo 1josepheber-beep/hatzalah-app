@@ -1364,6 +1364,7 @@
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
       STATE.availOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Availability","on")||"").trim());
       STATE.locOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Location","on")||"").trim());
+      if(STATE.demo){ STATE.availOn=true; STATE.locOn=true; }
       document.body.classList.toggle("locoff", STATE.locOn===false);
       STATE.tiles=res[1].filter(function(t){
         if(!r_(t,"Label")) return false;
@@ -3784,7 +3785,7 @@
     if(!lock) navOpen(closeBoard);
     $("boardMeta").textContent="Loading\u2026"; $("boardList").innerHTML="";
     if(STATE.locOn!==false) initCallSearch();
-    loadBoard(); clearInterval(BOARD.pollId); BOARD.pollId=setInterval(loadBoard,25000);
+    setTimeout(loadBoard, 360); clearInterval(BOARD.pollId); BOARD.pollId=setInterval(loadBoard,25000);
   }
   $("callClear").addEventListener("click",function(){ CALL=null; $("callAddr").value=""; $("callClear").style.display="none"; loadBoard(); });
   $("boardBack").addEventListener("click",function(){ if(!BOARD.lock) navBack(); });
