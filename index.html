@@ -1258,16 +1258,33 @@
     ];
   }
   var DEMO={on:false, name:"", tabs:{}};
+  function demoSchedule(){
+    var now=Date.now(), h=3600000, iso=function(t){ return new Date(t).toISOString(); };
+    return [
+      {ID:"g1",Unit:"DEMO",Start:iso(now-1.5*h),End:iso(now+3*h),Label:"Primary",Lat:"29.7420",Lng:"-95.4100","Loc Source":"gps",Created:""},
+      {ID:"g2",Unit:"H-201",Start:iso(now-0.5*h),End:iso(now+2.5*h),Label:"Backup",Lat:"29.7250",Lng:"-95.3900","Loc Source":"gps",Created:""},
+      {ID:"g3",Unit:"H-202",Start:iso(now-1*h),End:iso(now+4*h),Label:"Observer",Lat:"29.7600",Lng:"-95.3640","Loc Source":"gps",Created:""},
+      {ID:"g4",Unit:"H-203",Start:iso(now-0.75*h),End:iso(now+1.5*h),Label:"Backup",Lat:"29.7080",Lng:"-95.4230","Loc Source":"gps",Created:""},
+      {ID:"g5",Unit:"D-301",Start:iso(now+5*h),End:iso(now+9*h),Label:"Primary",Lat:"",Lng:"","Loc Source":"",Created:""}
+    ];
+  }
   function demoTabs(returned){
     var t={ Members:demoMembers(), Directory:demoDirectory(), Hospitals:demoHospitals(), Certifications:demoCerts(),
-      Schedule:[], Availability:[], "Code Logs":[], Changes:[], Guests:[] };
-    if(returned && returned.tiles) t.Tiles=returned.tiles;
-    if(returned && returned.settings){ var s=returned.settings; s["Dispatch Number"]="713-555-0100"; s["Medical Control Number"]="713-555-0111"; t.Settings=Object.keys(s).map(function(k){ return {"Setting":k,"Value":s[k]}; }); }
+      Schedule:demoSchedule(), Availability:[], "Code Logs":[], Changes:[], Guests:[] };
+    var tiles = (returned && returned.tiles) ? returned.tiles.slice() : [];
+    tiles.push({Label:"Responder Location", Type:"board", Order:"90", Icon:"", Image:"", Target:"", "Admin Only":"", Active:"X"});
+    t.Tiles = tiles;
+    if(returned && returned.settings){
+      var s=returned.settings;
+      s["Dispatch Number"]="713-555-0100"; s["Medical Control Number"]="713-555-0111";
+      s["Availability"]="on"; s["Location"]="on";
+      t.Settings=Object.keys(s).map(function(k){ return {"Setting":k,"Value":s[k]}; });
+    }
     return t;
   }
   function startGuest(resp){
     DEMO.on=true; STATE.demo=true; DEMO.name=resp.name||"Guest"; DEMO.tabs=demoTabs(resp);
-    STATE.me={first:"Demo",last:"User",unit:"DEMO",admin:false,dispatcher:false,status:"Primary",pw:"",demo:true,gaUnit:DEMO.name};
+    STATE.me={first:"Demo",last:"User",unit:"DEMO",admin:true,dispatcher:false,status:"Primary",pw:"",demo:true,gaUnit:DEMO.name};
     document.body.classList.add("demo");
     $("ggate").classList.add("hidden"); if($("guestgate")) $("guestgate").classList.add("hidden");
     $("app").classList.remove("hidden");
