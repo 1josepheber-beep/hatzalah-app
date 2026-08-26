@@ -720,7 +720,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 2.0</div>
+  <div class="ver-line">Version 2.1</div>
 </div>
 
 <div class="gate hidden" id="demoLoad">
@@ -810,7 +810,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 2.0</div>
+  <div class="ver-line">Version 2.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2215,6 +2215,18 @@
     }).catch(function(){ APT.items=aptFallback(); APT.loaded=true; return APT.items; });
   }
   function aptMatches(a,q){ return (a.name+" "+a.address+" "+a.slug.replace(/-/g," ")).toLowerCase().indexOf(q)>-1; }
+  function aptLabelMatch(label,q){
+    label=String(label||""); q=String(q||"").trim(); if(!q) return false;
+    if(/^\d+$/.test(q)){
+      var n=parseInt(q,10);
+      var re=/(\d+)\s*[-\u2010\u2011\u2012\u2013\u2014\u2015]\s*(\d+)/g, m;
+      while((m=re.exec(label))){ var a=parseInt(m[1],10), b=parseInt(m[2],10); if(a>b){ var t=a;a=b;b=t; } if(n>=a&&n<=b) return true; }
+      var nums=label.match(/\d+/g)||[];
+      for(var i=0;i<nums.length;i++){ if(parseInt(nums[i],10)===n) return true; }
+      return false;
+    }
+    return label.toLowerCase().indexOf(q.toLowerCase())>-1;
+  }
   var CHEV='<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   function renderAptList(q){
     q=(q||"").toLowerCase().trim();
@@ -2610,7 +2622,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2630,7 +2642,7 @@
         '<button class="ebtn primary" id="pwSave">Update password</button>'+
         '<div class="prof-note" id="pwNote"></div></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     $("pwSave").addEventListener("click",changePassword);
@@ -3374,7 +3386,7 @@
     Object.keys(APTM.by||{}).forEach(function(slug){
       (APTM.by[slug]||[]).forEach(function(m){
         if(aptmk.length>=8) return;
-        if(m.label && m.label.toLowerCase().indexOf(ql)>-1){
+        if(m.label && aptLabelMatch(m.label, q)){
           var a=(APT.items||[]).filter(function(x){return x.slug===slug;})[0];
           aptmk.push({slug:slug, label:m.label, complex:(a?a.name:slug)});
         }
