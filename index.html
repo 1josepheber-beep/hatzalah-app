@@ -3686,9 +3686,13 @@
       pts.forEach(function(p){ var mk=L.marker([p.lat,p.lng]).addTo(BOARD.lmap).bindPopup(esc(p.name)+"<br>Unit "+esc(p.unit)+(p.dist!=null?"<br>"+(p.dist<10?p.dist.toFixed(1):Math.round(p.dist))+" mi":"")); BOARD.lmap._mk.push(mk); g.push([p.lat,p.lng]); });
       if(CALL){ var cm=L.circleMarker([CALL.lat,CALL.lng],{radius:9,color:"#c8202e",fillColor:"#c8202e",fillOpacity:.9}).addTo(BOARD.lmap).bindPopup("Call: "+esc(CALL.label)); BOARD.lmap._mk.push(cm); g.push([CALL.lat,CALL.lng]); }
       if(g.length) BOARD.lmap.fitBounds(g,{padding:[30,30],maxZoom:14});
-      setTimeout(function(){ if(BOARD.lmap){ BOARD.lmap.invalidateSize(); if(g.length) BOARD.lmap.fitBounds(g,{padding:[30,30],maxZoom:14}); } },130);
-      setTimeout(function(){ if(BOARD.lmap) BOARD.lmap.invalidateSize(); },450);
-      setTimeout(function(){ if(BOARD.lmap) BOARD.lmap.invalidateSize(); },900);
+      if(BOARD._riv) clearInterval(BOARD._riv);
+      var rn=0; BOARD._riv=setInterval(function(){
+        if(!BOARD.lmap){ clearInterval(BOARD._riv); return; }
+        BOARD.lmap.invalidateSize();
+        if(rn===2 && g.length){ try{ BOARD.lmap.fitBounds(g,{padding:[30,30],maxZoom:14}); }catch(e){} }
+        if(++rn>=10) clearInterval(BOARD._riv);
+      },180);
     }).catch(function(){ el.style.display="none"; });
   }
   function renderBoard(list){
