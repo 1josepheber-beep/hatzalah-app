@@ -721,7 +721,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 2.5</div>
+  <div class="ver-line">Version 2.6</div>
 </div>
 
 <div class="gate hidden" id="demoLoad">
@@ -811,7 +811,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 2.5</div>
+  <div class="ver-line">Version 2.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2241,7 +2241,7 @@
           if(units.length>=25) return;
           if(m.label && aptLabelMatch(m.label,q)){
             var a=APT.items.filter(function(x){return x.slug===slug;})[0];
-            units.push({slug:slug, label:m.label, complex:(a?a.name:slug)});
+            units.push({slug:slug, label:m.label, complex:(a?a.name:slug), addr:(a?a.address:"")});
           }
         });
       });
@@ -2251,7 +2251,7 @@
     if(units.length){
       html+='<div class="apt-group">Buildings</div>';
       html+=units.map(function(u){
-        return '<button class="apt-item" data-slug="'+esc(u.slug)+'" data-name="'+esc(u.complex)+'" data-label="'+esc(u.label)+'"><span class="apt-nm">'+esc(u.label)+'</span><span class="apt-addr">'+esc(u.complex)+'</span>'+CHEV+'</button>';
+        return '<button class="apt-item" data-slug="'+esc(u.slug)+'" data-name="'+esc(u.complex)+'" data-label="'+esc(u.label)+'"><span class="apt-nm">'+esc(u.label)+'</span><span class="apt-addr">'+esc(u.addr||u.complex)+'</span>'+CHEV+'</button>';
       }).join("");
     }
     if(complexes.length){
@@ -2649,7 +2649,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2669,7 +2669,7 @@
         '<button class="ebtn primary" id="pwSave">Update password</button>'+
         '<div class="prof-note" id="pwNote"></div></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     $("pwSave").addEventListener("click",changePassword);
@@ -3415,7 +3415,7 @@
         if(aptmk.length>=8) return;
         if(m.label && aptLabelMatch(m.label, q)){
           var a=(APT.items||[]).filter(function(x){return x.slug===slug;})[0];
-          aptmk.push({slug:slug, label:m.label, complex:(a?a.name:slug)});
+          aptmk.push({slug:slug, label:m.label, complex:(a?a.name:slug), addr:(a?a.address:"")});
         }
       });
     });
@@ -3425,7 +3425,7 @@
       html+='<div class="sr-group">Buildings</div>';
       aptmk.forEach(function(m){
         html+='<div class="sr-item" data-t="aptm" data-slug="'+esc(m.slug)+'" data-label="'+esc(m.label)+'">'+
-          '<div class="sic">'+ICO_PIN2+'</div><div class="st"><b>'+esc(m.label)+'</b><span>'+esc(m.complex)+'</span></div></div>';
+          '<div class="sic">'+ICO_PIN2+'</div><div class="st"><b>'+esc(m.label)+'</b><span>'+esc(m.addr||m.complex)+'</span></div></div>';
       });
     }
     if(apts.length){
