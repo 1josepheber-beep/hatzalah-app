@@ -1304,11 +1304,22 @@
       .then(function(r){return r.text();}).then(function(t){
         var res={}; try{res=JSON.parse(t);}catch(e){}
         if(btn){ btn.disabled=false; btn.textContent="Enter demo"; }
-        if(res.ok){ startGuest(res); }
+        if(res.ok){ try{localStorage.setItem("hoh_demo",code);}catch(e){} startGuest(res); }
         else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn\u2019t valid or is inactive."; }
       }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent="Enter demo"; } if(err) err.textContent="Couldn\u2019t reach the server. Try again."; });
   }
-  function exitDemo(){ document.body.classList.remove("demo"); DEMO.on=false; STATE.demo=false; STATE.me=null; location.reload(); }
+  function exitDemo(){ try{localStorage.removeItem("hoh_demo");}catch(e){} document.body.classList.remove("demo"); DEMO.on=false; STATE.demo=false; STATE.me=null; location.reload(); }
+  function resumeDemo(){
+    var code=null; try{ code=localStorage.getItem("hoh_demo"); }catch(e){}
+    if(!code) return false;
+    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:code})})
+      .then(function(r){return r.text();}).then(function(t){
+        var res={}; try{res=JSON.parse(t);}catch(e){}
+        if(res.ok){ startGuest(res); }
+        else { try{localStorage.removeItem("hoh_demo");}catch(e){} checkDemoEnabled(); }
+      }).catch(function(){});
+    return true;
+  }
   function demoNo(){ if(STATE.demo){ toast("Demo mode \u2014 changes aren\u2019t saved."); return true; } return false; }
   function tryLogin(pw){
     $("pwErr").textContent=""; $("pwLoad").classList.remove("hidden");
@@ -2845,7 +2856,7 @@
         if(res && res.error!=="off"){ var v=$("viewDemo"); if(v) v.classList.remove("hidden"); }
       }).catch(function(){});
   }
-  checkDemoEnabled();
+  if(!resumeDemo()) checkDemoEnabled();
   (function gBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(gBoot,150); })();
 
 

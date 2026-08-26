@@ -55,6 +55,8 @@ self.addEventListener("fetch",function(e){
     return;
   }
 
-  // Anything else: try cache, then network
-  e.respondWith(caches.match(req).then(function(hit){ return hit || fetch(req); }));
+  // Cross-origin (map tiles, Leaflet, Google Maps/APIs, fonts): DON'T intercept.
+  // Letting the browser fetch these natively keeps the installed PWA's service
+  // worker from breaking the map and other third-party resources.
+  return;
 });
