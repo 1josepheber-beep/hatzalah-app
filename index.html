@@ -1198,15 +1198,27 @@
   function getSetting(k,def){return STATE.settings[k]!=null&&STATE.settings[k]!==""?STATE.settings[k]:def;}
 
   function normPw(s){ return String(s||"").trim().toLowerCase().replace(/[\u2018\u2019\u201B\u02BC]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g,"-").replace(/\s+/g," "); }
+  function sha256hex(str){
+    try{
+      return crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(str))).then(function(buf){
+        return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ("0"+b.toString(16)).slice(-2); }).join("");
+      });
+    }catch(e){ return Promise.resolve(""); }
+  }
+  function isHash(v){ return /^[a-f0-9]{64}$/i.test(String(v||"").trim()); }
+  function pwMatch(stored, typedNorm, typedHash){
+    stored=String(stored||"").trim();
+    return isHash(stored) ? (stored.toLowerCase()===typedHash) : (normPw(stored)===typedNorm);
+  }
   function tryLogin(pw){
     $("pwErr").textContent=""; $("pwLoad").classList.remove("hidden");
-    return fetchTab("Members").then(function(rows){
-      var hit=null;
+    return Promise.all([fetchTab("Members"), sha256hex(normPw(pw))]).then(function(res){
+      var rows=res[0], typedHash=res[1], typedNorm=normPw(pw), hit=null;
       for(var i=0;i<rows.length;i++){
         var r=rows[i];
         var active=String(r["Active"]||"").trim().toLowerCase();
         if(!(active===""||active==="x"||active==="yes"||active==="true")) continue;
-        if(normPw(r["Password"])===normPw(pw)){ hit=r; break; }
+        if(pwMatch(r["Password"], typedNorm, typedHash)){ hit=r; break; }
       }
       $("pwLoad").classList.add("hidden");
       if(!hit){ $("pwErr").textContent="Password not recognized. Check with your coordinator."; return false; }
@@ -1230,7 +1242,7 @@
   function icon(n){return ICONS[n]||ICONS.link;}
 
   function boot(){
-    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Members")]).then(function(res){
+    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Members"),(STATE.me&&STATE.me.pw)?sha256hex(normPw(STATE.me.pw)):Promise.resolve("")]).then(function(res){
       STATE.settings={};
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
       STATE.availOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Availability","on")||"").trim());
@@ -1244,9 +1256,9 @@
       // Refresh the logged-in member from the roster so status/admin/unit changes in the
       // sheet take effect on next open (no need to sign out and back in).
       if(STATE.me&&STATE.me.pw){
-        var rows=res[2]||[], mp=normPw(STATE.me.pw), found=null;
+        var rows=res[2]||[], mp=normPw(STATE.me.pw), mpHash=res[3]||"", found=null;
         for(var i=0;i<rows.length;i++){
-          if(normPw(rows[i]["Password"])===mp){ found=rows[i]; break; }
+          if(pwMatch(rows[i]["Password"], mp, mpHash)){ found=rows[i]; break; }
         }
         var act=found?String(found["Active"]||"").trim().toLowerCase():"";
         var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
