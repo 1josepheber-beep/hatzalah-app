@@ -721,7 +721,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 2.7</div>
+  <div class="ver-line">Version 2.8</div>
 </div>
 
 <div class="gate hidden" id="demoLoad">
@@ -811,7 +811,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 2.7</div>
+  <div class="ver-line">Version 2.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2069,7 +2069,7 @@
   function closeEquipFrame(){ $("equipFrameScreen").classList.remove("open"); }
   function openEquipFrame(){
     if(!$("equipFrameScreen").classList.contains("open")) navOpen(closeEquipFrame);
-    var fr=$("equipFrame"); if(!fr.getAttribute("src")) fr.setAttribute("src","equipment/");
+    var fr=$("equipFrame"); if(!fr.getAttribute("src")) fr.setAttribute("src","https://1josepheber-beep.github.io/ambulance-equipment/");
     $("equipFrameScreen").classList.add("open");
   }
   $("equipFrameBack").addEventListener("click",navBack);
@@ -2654,7 +2654,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2674,7 +2674,7 @@
         '<button class="ebtn primary" id="pwSave">Update password</button>'+
         '<div class="prof-note" id="pwNote"></div></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     $("pwSave").addEventListener("click",changePassword);
