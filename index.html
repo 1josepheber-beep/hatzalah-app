@@ -725,7 +725,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 3.3</div>
+  <div class="ver-line">Version 3.4</div>
 </div>
 
 <div class="updbar hidden" id="updBar"><span>A new version is available.</span><button id="updBtn">Refresh</button></div>
@@ -813,7 +813,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 3.3</div>
+  <div class="ver-line">Version 3.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1447,11 +1447,15 @@
         return a===""||a==="x"||a==="yes"||a==="true";
       }).sort(function(a,b){return (parseFloat(a["Order"])||99)-(parseFloat(b["Order"])||99);});
       // Refresh the logged-in member from the roster so status/admin/unit changes in the
-      // sheet take effect on next open (no need to sign out and back in).
-      if(STATE.me&&STATE.me.pw){
-        var rows=res[2]||[], mp=normPw(STATE.me.pw), mpHash=res[3]||"", found=null;
-        for(var i=0;i<rows.length;i++){
-          if(pwMatch(rows[i]["Password"], mp, mpHash)){ found=rows[i]; break; }
+      // sheet take effect on next open. Match by email (new) or password (legacy sessions).
+      if(STATE.me&&(STATE.me.email||STATE.me.pw)){
+        var rows=res[2]||[], found=null;
+        var myEmail=String(STATE.me.email||"").trim().toLowerCase();
+        if(myEmail){
+          for(var i=0;i<rows.length;i++){ if(String(r_(rows[i],"Email")||"").trim().toLowerCase()===myEmail){ found=rows[i]; break; } }
+        } else {
+          var mp=normPw(STATE.me.pw), mpHash=res[3]||"";
+          for(var i=0;i<rows.length;i++){ if(pwMatch(rows[i]["Password"], mp, mpHash)){ found=rows[i]; break; } }
         }
         var act=found?String(found["Active"]||"").trim().toLowerCase():"";
         var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
@@ -1459,8 +1463,7 @@
           try{localStorage.removeItem(LS);}catch(e){}
           STATE.me=null;
           $("app").classList.add("hidden");
-          $("gate").classList.remove("hidden");
-          if($("pwErr")) $("pwErr").textContent="Your access has been deactivated. Contact your coordinator.";
+          $("ggate").classList.remove("hidden");
           return;
         }
         var h=found;
@@ -2673,7 +2676,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2687,7 +2690,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
