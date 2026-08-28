@@ -725,7 +725,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 3.5</div>
+  <div class="ver-line">Version 3.6</div>
 </div>
 
 <div class="updbar hidden" id="updBar"><span>A new version is available.</span><button id="updBtn">Refresh</button></div>
@@ -813,7 +813,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 3.5</div>
+  <div class="ver-line">Version 3.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1373,7 +1373,7 @@
         else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn\u2019t valid or is inactive."; }
       }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent="Enter demo"; } if(err) err.textContent="Couldn\u2019t reach the server. Try again."; });
   }
-  function exitDemo(){ try{localStorage.removeItem("hoh_demo");}catch(e){} document.body.classList.remove("demo"); DEMO.on=false; STATE.demo=false; STATE.me=null; location.reload(); }
+  function exitDemo(){ try{localStorage.removeItem("hoh_demo"); localStorage.setItem("hoh_signedout","1");}catch(e){} document.body.classList.remove("demo"); DEMO.on=false; STATE.demo=false; STATE.me=null; location.reload(); }
   function resumeDemo(){
     var code=null; try{ code=localStorage.getItem("hoh_demo"); }catch(e){}
     if(!code) return false;
@@ -2676,7 +2676,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2690,7 +2690,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
