@@ -725,7 +725,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 3.4</div>
+  <div class="ver-line">Version 3.5</div>
 </div>
 
 <div class="updbar hidden" id="updBar"><span>A new version is available.</span><button id="updBtn">Refresh</button></div>
@@ -813,7 +813,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 3.4</div>
+  <div class="ver-line">Version 3.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1387,7 +1387,7 @@
   }
   function demoNo(){ if(STATE.demo){ toast("Demo mode \u2014 changes aren\u2019t saved."); return true; } return false; }
   function resolveByEmail(){
-    return fetchTab("Members").then(function(rows){
+    return fetchTab("Roster").then(function(rows){
       var em=String(G.email||"").trim().toLowerCase();
       if(!em) return null;
       for(var i=0;i<rows.length;i++){
@@ -1404,7 +1404,7 @@
   }
   function tryLogin(pw){
     $("pwErr").textContent=""; $("pwLoad").classList.remove("hidden");
-    return Promise.all([fetchTab("Members"), sha256hex(normPw(pw))]).then(function(res){
+    return Promise.all([fetchTab("Roster"), sha256hex(normPw(pw))]).then(function(res){
       var rows=res[0], typedHash=res[1], typedNorm=normPw(pw), hit=null;
       for(var i=0;i<rows.length;i++){
         var r=rows[i];
@@ -1434,7 +1434,7 @@
   function icon(n){return ICONS[n]||ICONS.link;}
 
   function boot(){
-    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Members"),(STATE.me&&STATE.me.pw)?sha256hex(normPw(STATE.me.pw)):Promise.resolve("")]).then(function(res){
+    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Roster"),(STATE.me&&STATE.me.pw)?sha256hex(normPw(STATE.me.pw)):Promise.resolve("")]).then(function(res){
       STATE.settings={};
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
       STATE.availOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Availability","on")||"").trim());
@@ -2587,7 +2587,7 @@
     $("dirScreen").classList.add("open");
     if(DIR.loaded){ renderDir(); return; }
     $("dirBody").innerHTML='<div class="empty">Loading\u2026</div>';
-    fetchTab("Directory").then(function(rows){
+    fetchTab("Roster").then(function(rows){
       DIR.rows=(rows||[]).filter(function(r){ return r_(r,"First Name")||r_(r,"Last Name"); });
       DIR.loaded=true; buildDirChips(); renderDir();
     }).catch(function(){ $("dirBody").innerHTML='<div class="empty">No Directory tab found yet. Add a <b>Directory</b> tab to your sheet.</div>'; });
@@ -2663,7 +2663,7 @@
     if(!$("profScreen").classList.contains("open")) navOpen(closeProfile);
     $("profScreen").classList.add("open");
     $("profBody").innerHTML='<div class="empty">Loading\u2026</div>';
-    fetchTab("Directory").then(function(rows){
+    fetchTab("Roster").then(function(rows){
       var me=normUnit(STATE.me.unit), mine=null;
       (rows||[]).forEach(function(r){ if(normUnit(r["Unit #"]||r["Unit"])===me) mine=r; });
       renderProfile(mine);
@@ -2676,7 +2676,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2690,7 +2690,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
@@ -4071,7 +4071,7 @@
     boardMap(list.filter(function(p){return p.lat!=null&&p.lng!=null;}));
   }
   function loadBoard(){
-    Promise.all([fetchTab("Schedule"),fetchTab("Directory"),fetchTab("Members")]).then(function(res){
+    Promise.all([fetchTab("Schedule"),fetchTab("Roster"),fetchTab("Roster")]).then(function(res){
       var sched=res[0]||[], dir=res[1]||[], mem=res[2]||[], now=Date.now();
       var dirBy={}, memBy={};
       dir.forEach(function(r){ dirBy[normUnit(r_(r,"Unit"))]=r; });
