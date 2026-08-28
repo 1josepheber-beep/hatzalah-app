@@ -721,7 +721,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 2.6</div>
+  <div class="ver-line">Version 2.7</div>
 </div>
 
 <div class="gate hidden" id="demoLoad">
@@ -811,7 +811,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 2.6</div>
+  <div class="ver-line">Version 2.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1551,8 +1551,13 @@
     var ua=navigator.userAgent||"";
     var isIOS=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
     var isAndroid=/Android/.test(ua);
-    if(isAndroid && a.androidPkg){
-      window.location.href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package="+a.androidPkg+";S.browser_fallback_url="+encodeURIComponent(a.androidStore||"")+";end";
+    if(isAndroid){
+      if(a.scheme){
+        var iu=schemeToIntent(a.scheme, a.androidPkg, a.androidStore);
+        window.location.href = iu || a.androidStore || "";
+      } else {
+        window.location.href = a.androidStore || "";
+      }
     } else if(isIOS){
       if(a.scheme){ openScheme(a.scheme); var fb=a.iosStore||a.androidStore||""; if(fb) setTimeout(function(){ if(!document.hidden) window.location.href=fb; },1200); }
       else window.location.href=a.iosStore||a.androidStore||"";
@@ -2649,7 +2654,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2669,7 +2674,7 @@
         '<button class="ebtn primary" id="pwSave">Update password</button>'+
         '<div class="prof-note" id="pwNote"></div></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 2.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     $("pwSave").addEventListener("click",changePassword);
