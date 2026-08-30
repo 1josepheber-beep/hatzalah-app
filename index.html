@@ -248,6 +248,12 @@
   .search input:focus{outline:none;border-color:var(--navy)}
 
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+  .grid.cols3{grid-template-columns:1fr 1fr 1fr;gap:9px}
+  .grid.cols3 .tile{min-height:98px;padding:13px 7px;gap:5px}
+  .grid.cols3 .tile .ic{width:34px;height:34px}
+  .grid.cols3 .tile .ic svg{width:19px;height:19px}
+  .grid.cols3 .tile .lab{font-size:12.5px;line-height:1.1}
+  .grid.cols3 .tile.imgtile .lab{padding:16px 6px 9px;font-size:12px}
   .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:20px 14px;min-height:124px;text-align:center;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
@@ -700,6 +706,20 @@
   .updbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:300;background:#1f3d6e;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 4px 18px rgba(0,0,0,.28)}
   .updbar button{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:9px 18px;font-weight:800;cursor:pointer;flex:0 0 auto}
   .notset-msg{color:var(--ink);font-size:15px;line-height:1.5;text-align:center;margin:4px 0 18px}
+  /* ---- medication lookup ---- */
+  .med-input{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:var(--card);color:var(--ink);-webkit-appearance:none}
+  .med-note{font-size:12px;color:var(--mut);margin:8px 4px 14px;text-align:center}
+  .med-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+  .med-nm{font-weight:800;font-size:19px;color:var(--ink)}
+  .med-gen{font-size:13.5px;color:var(--mut);margin-top:2px}
+  .med-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
+  .med-chip{background:#eaf0f9;color:var(--navy);border-radius:99px;padding:4px 11px;font-size:12px;font-weight:700}
+  .med-sec{margin-top:14px}
+  .med-sec h4{margin:0 0 5px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy)}
+  .med-sec.warn h4{color:#c8202e}
+  .med-sec p{margin:0;font-size:14px;line-height:1.5;color:var(--ink)}
+  .med-sec.warn p{background:#fdeaea;border:1px solid #f3c2c2;border-radius:10px;padding:10px 12px}
+  .med-dis{font-size:11.5px;color:var(--mut);line-height:1.5;margin-top:4px}
   /* ---- task book ---- */
   .tb-hd{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 14px;box-shadow:var(--shadow)}
   .tb-hd .tb-nm{font-weight:800;font-size:17px;color:var(--ink)}
@@ -744,6 +764,9 @@
   .rebar-btns{display:flex;gap:8px;flex:0 0 auto}
   .rebar button{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:8px 14px;font-weight:800;cursor:pointer}
   .rebar #reReset{background:transparent;color:#cdd8ea;border:1px solid #47597a}
+  .rebar-per{display:flex;align-items:center;gap:6px;font-size:13px}
+  .rebar-per button{background:transparent;color:#cdd8ea;border:1px solid #47597a;border-radius:8px;padding:6px 11px;font-weight:800;cursor:pointer}
+  .rebar-per button.on{background:#fff;color:var(--navy);border-color:#fff}
   #grid.reordering .tile{animation:tjiggle .3s infinite}
   #grid.reordering .tile .lab{pointer-events:none}
   #grid .tile.dragging{animation:none;opacity:.92;z-index:50;position:relative;box-shadow:0 8px 22px rgba(0,0,0,.3);transition:none}
@@ -810,10 +833,10 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.7</div>
+  <div class="ver-line">Version 4.8</div>
 </div>
 
-<div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
+<div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
 
 <div class="sc-remind" id="scRemind">Scene timer still running (45+ min). Close the timer or close the app.<br><button id="scRemindOk">Got it</button></div>
 
@@ -924,7 +947,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.7</div>
+  <div class="ver-line">Version 4.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1194,6 +1217,18 @@
 </div>
 
 <!-- DIRECTORY -->
+<div class="screen" id="medScreen">
+  <div class="scr-head">
+    <button class="back" id="medBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Medication Lookup</h2>
+  </div>
+  <div class="scr-body">
+    <input type="search" id="medInput" class="med-input" placeholder="Search a medication (e.g. metoprolol)" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="med-note">Official FDA drug information &middot; needs internet</div>
+    <div id="medBody"></div>
+  </div>
+</div>
+
 <div class="screen" id="tbScreen">
   <div class="scr-head">
     <button class="back" id="tbBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -1543,6 +1578,7 @@
   }
 
   var ICONS={
+    rx:'<path d="M6 20V5h4a3 3 0 010 6H6m4 0l6 9M14 15l5 5M19 15l-5 5"/>',
     clipboard:'<path d="M9 3h6a1 1 0 011 1v1H8V4a1 1 0 011-1z"/><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 11h6M9 15h4"/>',
     hospital:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8M8 12h8"/>',
     book:'<path d="M5 5a2 2 0 012-2h11v16H7a2 2 0 00-2 2z"/><path d="M5 19a2 2 0 012-2h11"/>',
@@ -1641,7 +1677,10 @@
       return ia-ib;
     }).map(function(x){ return x.t; });
   }
+  function getTileCols(){ try{ return parseInt(localStorage.getItem("hoh_tilecols")||"2",10)===3?3:2; }catch(e){ return 2; } }
+  function applyTileCols(){ var g=$("grid"); if(g) g.classList.toggle("cols3", getTileCols()===3); var b2=$("reCols2"),b3=$("reCols3"); if(b2)b2.classList.toggle("on",getTileCols()===2); if(b3)b3.classList.toggle("on",getTileCols()===3); }
   function paintTiles(){
+    applyTileCols();
     var g=$("grid");g.innerHTML="";
     orderedTiles().forEach(function(t){
       var adminOnly=isX(t["Admin Only"]);
@@ -1735,6 +1774,8 @@
     g.addEventListener("contextmenu",function(e){ e.preventDefault(); });
     if($("reDone")) $("reDone").addEventListener("click",exitReorder);
     if($("reReset")) $("reReset").addEventListener("click",function(){ try{localStorage.removeItem("hoh_tileorder");}catch(e){} exitReorder(); paintTiles(); });
+    if($("reCols2")) $("reCols2").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","2");}catch(e){} applyTileCols(); });
+    if($("reCols3")) $("reCols3").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","3");}catch(e){} applyTileCols(); });
   })();
 
   var APPS={
@@ -1883,6 +1924,7 @@
     if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
     if(type==="certifications"||type==="certs"){ openCerts(); return; }
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
+    if(type==="medication"||type==="meds"||type==="drug"||type==="rx"){ openMeds(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
     if(type==="directory"||type==="members"||type==="contacts"){ openDirectory(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
@@ -2868,6 +2910,46 @@
       }).catch(function(){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
   });
 
+  // ---------- Medication Lookup (openFDA via Apps Script) ----------
+  var MED={t:0, last:"", seq:0};
+  function openMeds(){
+    if(!$("medScreen").classList.contains("open")) navOpen(closeMeds);
+    $("medScreen").classList.add("open");
+    setTimeout(function(){ if($("medInput")) $("medInput").focus(); }, 150);
+  }
+  function closeMeds(){ $("medScreen").classList.remove("open"); }
+  function medSearch(q){
+    q=String(q||"").trim();
+    if(q.length<3){ $("medBody").innerHTML=""; return; }
+    if(q===MED.last) return; MED.last=q;
+    $("medBody").innerHTML='<div class="empty">Searching\u2026</div>';
+    var my=++MED.seq;
+    var url=getSetting("Profile Update URL","");
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"drug",query:q})})
+      .then(function(r){return r.text();}).then(function(t){
+        if(my!==MED.seq) return;   // a newer search superseded this one
+        var j; try{ j=JSON.parse(t); }catch(e){ j=null; }
+        if(!j||j.ok===false){ $("medBody").innerHTML='<div class="empty">Couldn\u2019t search right now. Check your internet.</div>'; return; }
+        if(!j.found){ $("medBody").innerHTML='<div class="empty">No FDA match for \u201c'+esc(q)+'\u201d. Check the spelling, or try the generic name.</div>'; return; }
+        medRender(j);
+      }).catch(function(){ if(my===MED.seq) $("medBody").innerHTML='<div class="empty">Couldn\u2019t search \u2014 you may be offline.</div>'; });
+  }
+  function medRender(j){
+    var nm=j.brand||j.generic||j.query, gen=(j.generic&&j.brand&&j.generic.toLowerCase()!==j.brand.toLowerCase())?j.generic:"";
+    var chips="";
+    if(j.cls) chips+='<span class="med-chip">'+esc(j.cls)+'</span>';
+    if(j.route) chips+='<span class="med-chip">'+esc(j.route)+'</span>';
+    var html='<div class="med-card"><div class="med-nm">'+esc(nm)+'</div>'+
+      (gen?'<div class="med-gen">Generic: '+esc(gen)+'</div>':'')+
+      (chips?'<div class="med-chips">'+chips+'</div>':'');
+    if(j.indications) html+='<div class="med-sec"><h4>What it\u2019s used for</h4><p>'+esc(j.indications)+'</p></div>';
+    if(j.warnings) html+='<div class="med-sec warn"><h4>Warning</h4><p>'+esc(j.warnings)+'</p></div>';
+    html+='<div class="med-dis">Source: U.S. FDA drug label. For clinical reference only \u2014 follow your protocols and medical direction.</div></div>';
+    $("medBody").innerHTML=html;
+  }
+  if($("medInput")) $("medInput").addEventListener("input", function(){ var q=this.value; clearTimeout(MED.t); MED.t=setTimeout(function(){ medSearch(q); }, 550); });
+  if($("medBack")) $("medBack").addEventListener("click", function(){ navBack(); });
+
   // ---------- Task Book ----------
   var TB={loaded:false, list:[], prog:{}, unit:null, view:"list", open:{}};
   function tbKey(u,id){ return normUnit(u)+"|"+String(id).trim(); }
@@ -3094,7 +3176,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3108,7 +3190,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
