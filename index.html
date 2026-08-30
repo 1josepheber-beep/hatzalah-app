@@ -700,6 +700,32 @@
   .updbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:300;background:#1f3d6e;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 4px 18px rgba(0,0,0,.28)}
   .updbar button{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:9px 18px;font-weight:800;cursor:pointer;flex:0 0 auto}
   .notset-msg{color:var(--ink);font-size:15px;line-height:1.5;text-align:center;margin:4px 0 18px}
+  /* ---- task book ---- */
+  .tb-hd{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 14px;box-shadow:var(--shadow)}
+  .tb-hd .tb-nm{font-weight:800;font-size:17px;color:var(--ink)}
+  .tb-hd .tb-meta{font-size:13px;color:var(--mut);margin-top:3px}
+  .tb-prog{height:9px;border-radius:99px;background:#e9eef6;overflow:hidden;margin-top:10px}
+  .tb-prog>i{display:block;height:100%;background:#2f9e44;width:0}
+  .tb-pct{font-size:12.5px;font-weight:700;color:var(--mut);margin-top:6px}
+  .tb-cat{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);margin:16px 4px 8px}
+  .tb-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+  .tb-item .tb-tk{flex:1;min-width:0}
+  .tb-item .tb-tt{font-weight:600;font-size:14.5px;color:var(--ink)}
+  .tb-item .tb-ss{font-size:12px;margin-top:2px}
+  .tb-item.done{border-color:#b7e0c2;background:#f2fbf5}
+  .tb-item.pend{border-color:#f2daa8;background:#fffdf5}
+  .tb-ss.ok{color:#2f7d3b} .tb-ss.pd{color:#b07d14} .tb-ss.no{color:var(--mut)}
+  .tb-act{flex:0 0 auto;border:0;border-radius:9px;padding:9px 13px;font-weight:800;font-size:13px;cursor:pointer;color:#fff}
+  .tb-act.mark{background:var(--navy)} .tb-act.confirm{background:#2f9e44} .tb-act.undo{background:#eef1f6;color:var(--navy);border:1px solid var(--line)}
+  .tb-cnt{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+  .tb-cnt b{font-variant-numeric:tabular-nums;font-size:15px;color:var(--ink)}
+  .tb-cnt .tb-act{padding:8px 11px}
+  .tb-trow{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow)}
+  .tb-trow .tb-tn{flex:1;min-width:0}
+  .tb-trow .tb-tnm{font-weight:800;color:var(--ink)}
+  .tb-trow .tb-tsub{font-size:12.5px;color:var(--mut);margin-top:2px}
+  .tb-trow .tb-tpct{font-weight:800;color:#2f9e44;font-size:15px}
+  .tb-chev{color:var(--mut)}
   .rebar{position:fixed;left:12px;right:12px;bottom:12px;z-index:300;background:#1f3d6e;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.28)}
   .rebar-btns{display:flex;gap:8px;flex:0 0 auto}
   .rebar button{background:#fff;color:var(--navy);border:0;border-radius:8px;padding:8px 14px;font-weight:800;cursor:pointer}
@@ -770,7 +796,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.3</div>
+  <div class="ver-line">Version 4.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -884,7 +910,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.3</div>
+  <div class="ver-line">Version 4.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1154,6 +1180,14 @@
 </div>
 
 <!-- DIRECTORY -->
+<div class="screen" id="tbScreen">
+  <div class="scr-head">
+    <button class="back" id="tbBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2 id="tbTitle">Task Book</h2>
+  </div>
+  <div class="scr-body" id="tbBody"></div>
+</div>
+
 <div class="screen" id="dirScreen">
   <div class="scr-head">
     <button class="back" id="dirBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -1459,6 +1493,7 @@
   function demoNo(){ if(STATE.demo){ toast("Demo mode \u2014 changes aren\u2019t saved."); return true; } return false; }
   function resolveByEmail(){
     return fetchTab("Roster").then(function(rows){
+      STATE.roster=rows;
       var em=String(G.email||"").trim().toLowerCase();
       if(!em) return null;
       for(var i=0;i<rows.length;i++){
@@ -1512,6 +1547,7 @@
       STATE.locOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Location","on")||"").trim());
       if(STATE.demo){ STATE.availOn=true; STATE.locOn=true; }
       document.body.classList.toggle("locoff", STATE.locOn===false);
+      STATE.roster=res[2]||[];
       STATE.tiles=res[1].filter(function(t){
         if(!r_(t,"Label")) return false;
         var a=String(t["Active"]||"").trim().toLowerCase();
@@ -1596,6 +1632,8 @@
     orderedTiles().forEach(function(t){
       var adminOnly=isX(t["Admin Only"]);
       if(adminOnly&&!STATE.me.admin) return;
+      var _ty=(r_(t,"Type")||"").toLowerCase();
+      if((_ty==="taskbook"||_ty==="task")&&!canTaskBook()) return;
       var b=document.createElement("button");b.className="tile";
       b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
       b.setAttribute("data-label",r_(t,"Label")||"");
@@ -1830,6 +1868,7 @@
     if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
     if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
     if(type==="certifications"||type==="certs"){ openCerts(); return; }
+    if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
     if(type==="directory"||type==="members"||type==="contacts"){ openDirectory(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
@@ -1839,6 +1878,21 @@
   var PLACE={loaded:false,cabs:[],cur:null,sel:-1,edit:false,drag:null,editIdx:-1};
   function clampf(v,a,b){ return v<a?a:(v>b?b:v); }
   function isAdmin(){ return !!(STATE.me&&STATE.me.admin); }
+  function tbStatus(){ return String((STATE.me&&STATE.me.status)||"").trim().toLowerCase(); }
+  function isObserver(){ return tbStatus()==="observer"; }
+  function tbTrainees(){
+    var me=normUnit(STATE.me&&STATE.me.unit), out=[];
+    if(!me) return out;
+    (STATE.roster||[]).forEach(function(r){
+      var act=String(r["Active"]||"").trim().toLowerCase();
+      if(!(act===""||act==="x"||act==="yes"||act==="true")) return;
+      if(String(r_(r,"Status")||"").trim().toLowerCase()!=="observer") return;
+      if(normUnit(r_(r,"FTO"))===me) out.push(r);
+    });
+    return out;
+  }
+  function isFTO(){ return tbTrainees().length>0; }
+  function canTaskBook(){ return isObserver()||isAdmin()||isFTO(); }
   function loadPlacement(){
     return new Promise(function(res,rej){
       if(window.HOH_PLACE){ res(window.HOH_PLACE); return; }
@@ -2800,6 +2854,115 @@
       }).catch(function(){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
   });
 
+  // ---------- Task Book ----------
+  var TB={loaded:false, list:[], prog:{}, unit:null, view:"list"};
+  function tbKey(u,id){ return normUnit(u)+"|"+String(id).trim(); }
+  function tbRow(unit){ var u=normUnit(unit); return (STATE.roster||[]).filter(function(x){return normUnit(r_(x,"Unit"))===u;})[0]; }
+  function tbName(unit){ var r=tbRow(unit); return r?((r_(r,"First Name")+" "+r_(r,"Last Name")).trim()||unit):unit; }
+  function tbFTOof(unit){ var r=tbRow(unit); return r?r_(r,"FTO"):""; }
+  function tbCanConfirm(unit){ return isAdmin() || (normUnit(tbFTOof(unit))===normUnit(STATE.me&&STATE.me.unit) && !!normUnit(STATE.me&&STATE.me.unit)); }
+  function tbObservers(){ return (STATE.roster||[]).filter(function(r){ var act=String(r["Active"]||"").trim().toLowerCase(); if(!(act===""||act==="x"||act==="yes"||act==="true")) return false; return String(r_(r,"Status")||"").trim().toLowerCase()==="observer"; }); }
+  function openTaskBook(){
+    if(!$("tbScreen").classList.contains("open")) navOpen(closeTaskBook);
+    $("tbScreen").classList.add("open");
+    if(!TB.loaded){
+      $("tbBody").innerHTML='<div class="empty">Loading\u2026</div>';
+      Promise.all([fetchTab("Task List"), fetchTab("Task Progress")]).then(function(res){
+        TB.list=res[0]||[]; TB.prog={};
+        (res[1]||[]).forEach(function(p){ TB.prog[tbKey(r_(p,"Unit"), r_(p,"Task ID"))]=p; });
+        TB.loaded=true; tbRouteView();
+      }).catch(function(){ $("tbBody").innerHTML='<div class="empty">Couldn\u2019t load. Check your internet and open this again.</div>'; });
+      return;
+    }
+    tbRouteView();
+  }
+  function closeTaskBook(){ $("tbScreen").classList.remove("open"); TB.view="list"; TB.unit=null; TB.loaded=false; }
+  function tbRouteView(){
+    var trainees = isAdmin() ? tbObservers() : tbTrainees();
+    if(TB.view==="book" && TB.unit){ tbRenderBook(TB.unit); return; }
+    if(!trainees.length && isObserver()){ TB.view="book"; TB.unit=STATE.me.unit; tbRenderBook(STATE.me.unit); return; }
+    if(!trainees.length){ $("tbTitle").textContent="Task Book"; $("tbBody").innerHTML='<div class="empty">No task books assigned to you yet.</div>'; return; }
+    tbRenderList(trainees);
+  }
+  function tbPct(unit){
+    var u=normUnit(unit), checks=TB.list.filter(function(t){return String(r_(t,"Type")||"check").toLowerCase()!=="count";});
+    if(!checks.length) return 0;
+    var done=0; checks.forEach(function(t){ var p=TB.prog[tbKey(u,r_(t,"ID"))]; if(p&&isX(p["Confirmed"])) done++; });
+    return Math.round(done/checks.length*100);
+  }
+  function tbTrow(unit){
+    return '<div class="tb-trow" data-tbunit="'+esc(unit)+'"><div class="tb-tn"><div class="tb-tnm">'+esc(tbName(unit))+'</div>'+
+      '<div class="tb-tsub">'+esc(unit)+' \u00b7 FTO '+esc(tbFTOof(unit)||"\u2014")+'</div></div>'+
+      '<div class="tb-tpct">'+tbPct(unit)+'%</div><div class="tb-chev">\u203a</div></div>';
+  }
+  function tbRenderList(trainees){
+    $("tbTitle").textContent="Task Books";
+    var mine = isObserver() ? '<div class="tb-cat">My task book</div>'+tbTrow(STATE.me.unit)+'<div class="tb-cat">'+(isAdmin()?"All observers":"My trainees")+'</div>' : "";
+    $("tbBody").innerHTML=mine+trainees.map(function(r){ return tbTrow(r_(r,"Unit")); }).join("");
+  }
+  function tbRenderBook(unit){
+    TB.unit=unit; TB.view="book";
+    var u=normUnit(unit), canC=tbCanConfirm(unit), own=normUnit(STATE.me&&STATE.me.unit)===u, pct=tbPct(unit);
+    $("tbTitle").textContent=tbName(unit);
+    var html='<div class="tb-hd"><div class="tb-nm">'+esc(tbName(unit))+'</div><div class="tb-meta">'+esc(unit)+' \u00b7 FTO: '+esc(tbFTOof(unit)||"\u2014")+'</div>'+
+      '<div class="tb-prog"><i style="width:'+pct+'%"></i></div><div class="tb-pct">'+pct+'% confirmed</div></div>';
+    var cat="";
+    TB.list.forEach(function(t){
+      var c=r_(t,"Category"); if(c!==cat){ cat=c; html+='<div class="tb-cat">'+esc(cat)+'</div>'; }
+      var type=String(r_(t,"Type")||"check").toLowerCase(), id=r_(t,"ID"), p=TB.prog[tbKey(u,id)]||{};
+      if(type==="count") html+=tbCountHTML(unit,t,p,own||canC);
+      else html+=tbCheckHTML(unit,t,p,own,canC);
+    });
+    $("tbBody").innerHTML=html;
+  }
+  function tbCheckHTML(unit,t,p,own,canC){
+    var id=r_(t,"ID"), nm=r_(t,"Task"), conf=isX(p["Confirmed"]), self=isX(p["Self Marked"]);
+    var cls=conf?"done":(self?"pend":"");
+    var ss = conf ? '<div class="tb-ss ok">\u2713 Confirmed by '+esc(p["Confirmed By"]||"")+(p["Confirmed Date"]?" \u00b7 "+esc(String(p["Confirmed Date"])):"")+'</div>'
+           : self ? '<div class="tb-ss pd">Marked done \u00b7 waiting for FTO</div>'
+           : '<div class="tb-ss no">Not started</div>';
+    var act="";
+    if(canC){ act = conf ? '<button class="tb-act undo" data-tb="unconfirm" data-u="'+esc(unit)+'" data-id="'+esc(id)+'">Un-confirm</button>' : '<button class="tb-act confirm" data-tb="confirm" data-u="'+esc(unit)+'" data-id="'+esc(id)+'">Confirm</button>'; }
+    else if(own){ act = conf ? '' : (self ? '<button class="tb-act undo" data-tb="unself" data-u="'+esc(unit)+'" data-id="'+esc(id)+'">Undo</button>' : '<button class="tb-act mark" data-tb="self" data-u="'+esc(unit)+'" data-id="'+esc(id)+'">Mark done</button>'); }
+    return '<div class="tb-item '+cls+'"><div class="tb-tk"><div class="tb-tt">'+esc(nm)+'</div>'+ss+'</div>'+act+'</div>';
+  }
+  function tbCountHTML(unit,t,p,editable){
+    var id=r_(t,"ID"), nm=r_(t,"Task"), tgt=r_(t,"Target"), cur=String(p["Count"]||"0");
+    return '<div class="tb-item"><div class="tb-tk"><div class="tb-tt">'+esc(nm)+'</div></div><div class="tb-cnt"><b>'+esc(cur)+' / '+esc(tgt||"")+'</b>'+
+      (editable?'<button class="tb-act mark" data-tb="count" data-u="'+esc(unit)+'" data-id="'+esc(id)+'">Set</button>':'')+'</div></div>';
+  }
+  function tbApply(action, unit, id, extra){
+    var by=(STATE.me&&STATE.me.unit)||"";
+    var payload={ kind:"task", action:action, unit:unit, taskId:id, by:by };
+    if(extra) for(var k in extra) payload[k]=extra[k];
+    var kk=tbKey(unit,id), p=TB.prog[kk]||{"Unit":unit,"Task ID":id};
+    var d=new Date(), ds=(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear();
+    if(action==="self"){ p["Self Marked"]="X"; p["Self Date"]=ds; }
+    else if(action==="unself"){ p["Self Marked"]=""; p["Self Date"]=""; }
+    else if(action==="confirm"){ p["Self Marked"]="X"; if(!p["Self Date"]) p["Self Date"]=ds; p["Confirmed"]="X"; p["Confirmed By"]=by; p["Confirmed Date"]=ds; }
+    else if(action==="unconfirm"){ p["Confirmed"]=""; p["Confirmed By"]=""; p["Confirmed Date"]=""; }
+    else if(action==="count"){ p["Count"]=extra.count; }
+    TB.prog[kk]=p;
+    if(TB.view==="book") tbRenderBook(TB.unit); else tbRouteView();
+    var url=getSetting("Profile Update URL","");
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok) toast("Couldn\u2019t save \u2014 it may not have been recorded."); })
+      .catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
+  if($("tbBody")) $("tbBody").addEventListener("click", function(e){
+    var trow=e.target.closest?e.target.closest(".tb-trow"):null;
+    if(trow){ TB.unit=trow.getAttribute("data-tbunit"); TB.view="book"; tbRenderBook(TB.unit); return; }
+    var btn=e.target.closest?e.target.closest("[data-tb]"):null; if(!btn) return;
+    var action=btn.getAttribute("data-tb"), unit=btn.getAttribute("data-u"), id=btn.getAttribute("data-id");
+    if(action==="count"){ var n=prompt("Enter the number completed:"); if(n===null) return; n=parseInt(n,10); if(isNaN(n)||n<0){ toast("Enter a valid number."); return; } tbApply("count",unit,id,{count:n}); return; }
+    tbApply(action, unit, id);
+  });
+  if($("tbBack")) $("tbBack").addEventListener("click", function(){
+    var hasList = isAdmin() || tbTrainees().length>0;
+    if(TB.view==="book" && hasList){ TB.view="list"; TB.unit=null; tbRouteView(); }
+    else { navBack(); }
+  });
+
   // ---------- Directory ----------
   var DIR={loaded:false,rows:[],type:"all",q:""};
   var ICO_PHONE='<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.6A2 2 0 014.1 2h3a2 2 0 012 1.7c.1.9.3 1.8.6 2.6a2 2 0 01-.5 2.1L8.1 9.9a16 16 0 006 6l1.5-1.1a2 2 0 012.1-.5c.8.3 1.7.5 2.6.6a2 2 0 011.7 2z"/></svg>';
@@ -2899,7 +3062,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2913,7 +3076,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
