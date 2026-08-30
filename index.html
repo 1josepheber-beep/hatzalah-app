@@ -252,13 +252,14 @@
     padding:20px 14px;min-height:124px;text-align:center;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
     box-shadow:var(--shadow);transition:transform .08s ease;
-    -webkit-appearance:none;appearance:none;font:inherit;color:inherit;width:100%}
+    -webkit-appearance:none;appearance:none;font:inherit;color:inherit;width:100%;
+    -webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
   .tile:active{transform:scale(.975)}
   .tile .ic{width:42px;height:42px;border-radius:12px;display:flex;
     align-items:center;justify-content:center;background:#eaf0f9;color:var(--navy)}
   .tile .ic svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2}
   .tile.imgtile{padding:0;overflow:hidden;position:relative;justify-content:flex-end}
-  .tile.imgtile img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .tile.imgtile img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none}
   .tile.imgtile .lab{position:relative;z-index:2;width:100%;margin:0;color:#fff;padding:26px 10px 12px;
     background:linear-gradient(to top,rgba(6,16,34,.85),rgba(6,16,34,.15) 68%,rgba(6,16,34,0))}
   .tile.imgtile .adm{position:absolute;top:8px;right:8px;z-index:3;margin:0;
@@ -733,7 +734,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 3.9</div>
+  <div class="ver-line">Version 4.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -821,7 +822,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 3.9</div>
+  <div class="ver-line">Version 4.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1617,6 +1618,7 @@
       else if(RE.lpTimer && (Math.abs(e.clientX-RE.sx)>10||Math.abs(e.clientY-RE.sy)>10)){ clearTimeout(RE.lpTimer); RE.lpTimer=0; }
     });
     window.addEventListener("mouseup",function(){ if(RE.lpTimer){ clearTimeout(RE.lpTimer); RE.lpTimer=0; } if(RE.dragging) endDrag(); });
+    g.addEventListener("contextmenu",function(e){ e.preventDefault(); });
     if($("reDone")) $("reDone").addEventListener("click",exitReorder);
     if($("reReset")) $("reReset").addEventListener("click",function(){ try{localStorage.removeItem("hoh_tileorder");}catch(e){} exitReorder(); paintTiles(); });
   })();
@@ -2760,7 +2762,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2774,7 +2776,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 3.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
