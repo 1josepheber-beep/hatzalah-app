@@ -1,7 +1,14 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v4.0";
+var CACHE="hoh-v4.1";
 var SHELL=["./","./index.html","./proto_index.js","./placement.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
+self.addEventListener("notificationclick",function(e){
+  e.notification.close();
+  e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(function(cs){
+    for(var i=0;i<cs.length;i++){ if("focus" in cs[i]) return cs[i].focus(); }
+    if(clients.openWindow) return clients.openWindow("./");
+  }));
+});
 self.addEventListener("install",function(e){
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(SHELL);}).catch(function(){}));
