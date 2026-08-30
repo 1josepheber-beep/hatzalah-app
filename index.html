@@ -796,7 +796,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.5</div>
+  <div class="ver-line">Version 4.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -910,7 +910,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.5</div>
+  <div class="ver-line">Version 4.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1886,7 +1886,8 @@
     (STATE.roster||[]).forEach(function(r){
       var act=String(r["Active"]||"").trim().toLowerCase();
       if(!(act===""||act==="x"||act==="yes"||act==="true")) return;
-      if(normUnit(r_(r,"FTO"))===me) out.push(r);
+      var set=String(r_(r,"FTO")||"").split(/[\s,;\/]+/).map(function(s){return normUnit(s);});
+      if(set.indexOf(me)>=0) out.push(r);
     });
     return out;
   }
@@ -2859,7 +2860,8 @@
   function tbRow(unit){ var u=normUnit(unit); return (STATE.roster||[]).filter(function(x){return normUnit(r_(x,"Unit"))===u;})[0]; }
   function tbName(unit){ var r=tbRow(unit); return r?((r_(r,"First Name")+" "+r_(r,"Last Name")).trim()||unit):unit; }
   function tbFTOof(unit){ var r=tbRow(unit); return r?r_(r,"FTO"):""; }
-  function tbCanConfirm(unit){ return isAdmin() || (normUnit(tbFTOof(unit))===normUnit(STATE.me&&STATE.me.unit) && !!normUnit(STATE.me&&STATE.me.unit)); }
+  function tbFTOset(unit){ return String(tbFTOof(unit)||"").split(/[\s,;\/]+/).map(function(s){return normUnit(s);}).filter(Boolean); }
+  function tbCanConfirm(unit){ var me=normUnit(STATE.me&&STATE.me.unit); return isAdmin() || (!!me && tbFTOset(unit).indexOf(me)>=0); }
   function tbObservers(){ return (STATE.roster||[]).filter(function(r){ var act=String(r["Active"]||"").trim().toLowerCase(); if(!(act===""||act==="x"||act==="yes"||act==="true")) return false; var st=String(r_(r,"Status")||"").trim().toLowerCase(); return st==="observer" || String(r_(r,"FTO")||"").trim()!==""; }); }
   function openTaskBook(){
     if(!$("tbScreen").classList.contains("open")) navOpen(closeTaskBook);
@@ -3068,7 +3070,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3082,7 +3084,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
