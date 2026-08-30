@@ -716,7 +716,11 @@
   .scene.alarm{animation:scflash .7s steps(1,end) infinite}
   @keyframes scflash{0%{background:#c8202e}50%{background:#7a0f18}100%{background:#c8202e}}
   .sc-top{width:100%;display:flex;align-items:center;justify-content:space-between;color:#b9c7e4;font-size:13px;font-weight:700}
-  .sc-top button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px}
+  .sc-top button{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+  .sc-top button svg{width:14px;height:14px;display:block}
+  .sc-remind{position:fixed;left:14px;right:14px;top:max(14px,env(safe-area-inset-top));z-index:520;background:#e8a33d;color:#231a00;border-radius:12px;padding:12px 14px;font-weight:800;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.3);display:none;text-align:center}
+  .sc-remind.show{display:block}
+  .sc-remind button{margin-top:8px;background:#231a00;color:#fff;border:0;border-radius:8px;padding:7px 14px;font-weight:800}
   .sc-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:380px}
   .sc-kick{font-size:11.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:#9fb0cc}
   .sc-clock{font-variant-numeric:tabular-nums;font-weight:800;font-size:clamp(80px,28vw,140px);line-height:.95;letter-spacing:-2px;margin:4px 0;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
@@ -766,14 +770,16 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.1</div>
+  <div class="ver-line">Version 4.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
 
+<div class="sc-remind" id="scRemind">Scene timer still running (45+ min). Close the timer or close the app.<br><button id="scRemindOk">Got it</button></div>
+
 <div class="scene" id="scene">
   <div class="sc-top">
-    <button id="scMin">&#8964; Minimize</button>
+    <button id="scMin"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Minimize</button>
     <span id="scOnTop"></span>
   </div>
   <div class="sc-mid">
@@ -878,7 +884,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.1</div>
+  <div class="ver-line">Version 4.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1736,9 +1742,12 @@
   window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } });
 
   /* ===================== Scene Timer ===================== */
-  var SC_COUNT=600, SC_ADD=300;   // 10 min, snooze +5 min
-  var SCT={active:false,page:false,startAt:0,alarmAt:SC_COUNT,alarmed:false,id:0};
-  var SCTA=null;
+  var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
+  var SCT={active:false,page:false,startAt:0,alarmAt:SC_COUNT,alarmed:false,reminded:false,id:0};
+  var SCTA=null, SCWL=null;
+  function scWakeOn(){ try{ if("wakeLock" in navigator){ navigator.wakeLock.request("screen").then(function(s){SCWL=s;}).catch(function(){}); } }catch(e){} }
+  function scWakeOff(){ try{ if(SCWL){ SCWL.release(); SCWL=null; } }catch(e){} }
+  function scIsDemo(){ return !!(window.STATE && STATE.demo); }
   function scSave(){ try{ localStorage.setItem("hoh_scene", JSON.stringify({a:SCT.active,s:SCT.startAt,al:SCT.alarmAt,ar:SCT.alarmed})); }catch(e){} }
   function scClearSave(){ try{ localStorage.removeItem("hoh_scene"); }catch(e){} }
   function scFmt(s){ s=Math.max(0,Math.round(s)); var m=Math.floor(s/60),ss=s%60; return m+":"+(ss<10?"0":"")+ss; }
@@ -1767,17 +1776,22 @@
     var w=$("scw"); if(!w.classList.contains("shake")) w.classList.toggle("alarm", SCT.active&&SCT.alarmed);
     $("scwC").textContent=SCT.active?(SCT.alarmed?scFmt(el):scFmt(remain)):scFmt(SC_COUNT);
   }
-  function scTick(){ if(!SCT.active) return; if(!SCT.alarmed && scEl()>=SCT.alarmAt){ SCT.alarmed=true; scSave(); if(!document.hidden) scSixBeeps(); scNotifyNow(); } scRender(); }
+  function scTick(){ if(!SCT.active) return; if(!SCT.alarmed && scEl()>=SCT.alarmAt){ SCT.alarmed=true; scSave(); if(!document.hidden) scSixBeeps(); scNotifyNow(); }
+    if(!scIsDemo() && !SCT.reminded && scEl()>=SC_REMIND){ SCT.reminded=true; scWakeOff(); if(!document.hidden) scSixBeeps(); var m=$("scRemind"); if(m) m.classList.add("show"); }
+    scRender(); }
   function scStartTick(){ if(SCT.id) clearInterval(SCT.id); SCT.id=setInterval(scTick,300); }
-  function scStart(){ scAudio(); if("Notification" in window && Notification.permission==="default"){ try{Notification.requestPermission();}catch(e){} }
-    SCT.active=true; SCT.alarmed=false; SCT.startAt=Date.now(); SCT.alarmAt=SC_COUNT; scSave(); scSchedule(); scStartTick(); scRender(); }
+  function scStart(){ scAudio(); scWakeOn(); if(!scIsDemo() && "Notification" in window && Notification.permission==="default"){ try{Notification.requestPermission();}catch(e){} }
+    SCT.active=true; SCT.alarmed=false; SCT.reminded=false; SCT.startAt=Date.now(); SCT.alarmAt=SC_COUNT; scSave(); if(!scIsDemo()) scSchedule(); scStartTick(); scRender(); }
   function scSnooze(){ SCT.alarmAt=Math.round(scEl())+SC_ADD; SCT.alarmed=false; $("scene").classList.remove("alarm"); $("scw").classList.remove("alarm"); scSave(); scSchedule(); scRender(); }
   function scAddTime(){ SCT.alarmAt+=SC_ADD; scSave(); scSchedule(); scRender(); }
-  function scEnd(){ SCT.active=false; SCT.alarmed=false; clearInterval(SCT.id); SCT.id=0; scClearSave(); scCancelNotifs(); if(navigator.vibrate)navigator.vibrate(0);
+  function scEnd(){ SCT.active=false; SCT.alarmed=false; SCT.reminded=false; clearInterval(SCT.id); SCT.id=0; scClearSave(); scCancelNotifs(); scWakeOff(); if(navigator.vibrate)navigator.vibrate(0);
+    var rm=$("scRemind"); if(rm) rm.classList.remove("show");
     $("scene").classList.remove("alarm"); $("scw").classList.remove("show","alarm","shake"); if(SCT.page){ SCT.page=false; navBack(); } scRender(); }
   function scOpen(){ SCT.page=true; $("scene").classList.add("open"); $("scw").classList.remove("show");
     navOpen(function(){ SCT.page=false; $("scene").classList.remove("open"); if(SCT.active){ $("scw").classList.add("show"); } }); scRender(); }
-  function scRestore(){ if(SCT.active) return; try{ var s=JSON.parse(localStorage.getItem("hoh_scene")||"null"); if(s&&s.a){ SCT.active=true; SCT.startAt=s.s; SCT.alarmAt=s.al; SCT.alarmed=!!s.ar; if(scEl()>=SCT.alarmAt) SCT.alarmed=true; scStartTick(); $("scw").classList.add("show"); scRender(); } }catch(e){} }
+  function scRestore(){ if(SCT.active) return; try{ var s=JSON.parse(localStorage.getItem("hoh_scene")||"null"); if(s&&s.a){ SCT.active=true; SCT.startAt=s.s; SCT.alarmAt=s.al; SCT.alarmed=!!s.ar; if(scEl()>=SCT.alarmAt) SCT.alarmed=true; if(scEl()>=SC_REMIND) SCT.reminded=true; scWakeOn(); scStartTick(); $("scw").classList.add("show"); scRender(); } }catch(e){} }
+  if($("scRemindOk")) $("scRemindOk").addEventListener("click", function(){ var m=$("scRemind"); if(m) m.classList.remove("show"); });
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden && SCT.active) scWakeOn(); });
   if($("hdrLogo")) $("hdrLogo").addEventListener("click", scOpen);
   if($("scMin")) $("scMin").addEventListener("click", function(){ navBack(); });
   if($("scStart")) $("scStart").addEventListener("click", scStart);
@@ -2885,7 +2899,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -2899,7 +2913,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
