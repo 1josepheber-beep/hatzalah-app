@@ -242,10 +242,14 @@
   .searchwrap{padding:12px 12px 4px}
   .search{position:relative}
   .search input{width:100%;border:1px solid var(--line);background:#fff;border-radius:13px;
-    padding:13px 14px 13px 40px;font-size:16px;color:var(--ink);box-shadow:var(--shadow)}
+    padding:13px 50px 13px 40px;font-size:16px;color:var(--ink);box-shadow:var(--shadow)}
   .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);
     width:18px;height:18px;stroke:var(--mut)}
   .search input:focus{outline:none;border-color:var(--navy)}
+  .search-rx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;
+    background:#eaf0f9;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .search-rx svg{position:static;transform:none;width:20px;height:20px;stroke:var(--navy)}
+  .search-rx:active{transform:translateY(-50%) scale(.93)}
 
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
   .grid.cols3{grid-template-columns:1fr 1fr 1fr;gap:9px}
@@ -709,6 +713,11 @@
   /* ---- medication lookup ---- */
   .med-input{width:100%;padding:13px 15px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:var(--card);color:var(--ink);-webkit-appearance:none}
   .med-note{font-size:12px;color:var(--mut);margin:8px 4px 14px;text-align:center}
+  .med-sug{margin:-8px 0 12px}
+  .med-sug-item{padding:12px 14px;background:var(--card);border:1px solid var(--line);border-bottom:0;font-size:15px;color:var(--ink);cursor:pointer}
+  .med-sug-item:first-child{border-radius:10px 10px 0 0}
+  .med-sug-item:last-child{border-bottom:1px solid var(--line);border-radius:0 0 10px 10px}
+  .med-sug-item:active{background:#eaf0f9}
   .med-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
   .med-nm{font-weight:800;font-size:19px;color:var(--ink)}
   .med-gen{font-size:13.5px;color:var(--mut);margin-top:2px}
@@ -833,7 +842,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.8</div>
+  <div class="ver-line">Version 4.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -941,13 +950,14 @@
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="search" type="search" placeholder="Search…" enterkeyhint="search" autocomplete="off">
+      <button class="search-rx" id="searchRx" aria-label="Medication lookup"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V5h4a3 3 0 010 6H6m4 0l6 9M14 15l5 5M19 15l-5 5"/></svg></button>
     </div>
     <div class="sresults" id="sresults"></div>
   </div>
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.8</div>
+  <div class="ver-line">Version 4.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1223,8 +1233,9 @@
     <h2>Medication Lookup</h2>
   </div>
   <div class="scr-body">
-    <input type="search" id="medInput" class="med-input" placeholder="Search a medication (e.g. metoprolol)" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <div class="med-note">Official FDA drug information &middot; needs internet</div>
+    <input type="search" id="medInput" class="med-input" placeholder="Search a medication (e.g. Zofran)" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="med-note">Type a brand or generic name &middot; official FDA info &middot; needs internet</div>
+    <div id="medSug" class="med-sug"></div>
     <div id="medBody"></div>
   </div>
 </div>
@@ -2910,29 +2921,40 @@
       }).catch(function(){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t save \u2014 check your connection."; });
   });
 
-  // ---------- Medication Lookup (openFDA via Apps Script) ----------
-  var MED={t:0, last:"", seq:0};
+  // ---------- Medication Lookup (RxNav + openFDA via Apps Script) ----------
+  var MED={t:0, seq:0, sseq:0, last:""};
   function openMeds(){
     if(!$("medScreen").classList.contains("open")) navOpen(closeMeds);
     $("medScreen").classList.add("open");
     setTimeout(function(){ if($("medInput")) $("medInput").focus(); }, 150);
   }
   function closeMeds(){ $("medScreen").classList.remove("open"); }
-  function medSearch(q){
-    q=String(q||"").trim();
-    if(q.length<3){ $("medBody").innerHTML=""; return; }
-    if(q===MED.last) return; MED.last=q;
-    $("medBody").innerHTML='<div class="empty">Searching\u2026</div>';
-    var my=++MED.seq;
+  function medPost(payload, ok, fail){
     var url=getSetting("Profile Update URL","");
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"drug",query:q})})
-      .then(function(r){return r.text();}).then(function(t){
-        if(my!==MED.seq) return;   // a newer search superseded this one
-        var j; try{ j=JSON.parse(t); }catch(e){ j=null; }
-        if(!j||j.ok===false){ $("medBody").innerHTML='<div class="empty">Couldn\u2019t search right now. Check your internet.</div>'; return; }
-        if(!j.found){ $("medBody").innerHTML='<div class="empty">No FDA match for \u201c'+esc(q)+'\u201d. Check the spelling, or try the generic name.</div>'; return; }
-        medRender(j);
-      }).catch(function(){ if(my===MED.seq) $("medBody").innerHTML='<div class="empty">Couldn\u2019t search \u2014 you may be offline.</div>'; });
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+      .then(function(r){return r.text();}).then(function(t){ var j; try{j=JSON.parse(t);}catch(e){j=null;} ok(j); }).catch(function(){ if(fail)fail(); });
+  }
+  function medSuggest(q){
+    q=String(q||"").trim();
+    if(q.length<2){ $("medSug").innerHTML=""; return; }
+    var my=++MED.sseq;
+    medPost({kind:"drugsuggest",query:q}, function(j){
+      if(my!==MED.sseq) return;
+      var sug=(j&&j.suggestions)||[];
+      if(!sug.length){ $("medSug").innerHTML=""; return; }
+      $("medSug").innerHTML=sug.map(function(s){ return '<div class="med-sug-item" data-sug="'+esc(s)+'">'+esc(s)+'</div>'; }).join("");
+    });
+  }
+  function medLookup(q){
+    q=String(q||"").trim(); if(q.length<2) return;
+    MED.last=q; $("medSug").innerHTML=""; $("medBody").innerHTML='<div class="empty">Searching\u2026</div>';
+    var my=++MED.seq;
+    medPost({kind:"drug",query:q}, function(j){
+      if(my!==MED.seq) return;
+      if(!j||j.ok===false){ $("medBody").innerHTML='<div class="empty">Couldn\u2019t search right now. Check your internet.</div>'; return; }
+      if(!j.found){ $("medBody").innerHTML='<div class="empty">No FDA match for \u201c'+esc(q)+'\u201d.'+(j.resolved?' (Closest name: '+esc(j.resolved)+')':'')+' Try the generic name.</div>'; return; }
+      medRender(j);
+    }, function(){ if(my===MED.seq) $("medBody").innerHTML='<div class="empty">Couldn\u2019t search \u2014 you may be offline.</div>'; });
   }
   function medRender(j){
     var nm=j.brand||j.generic||j.query, gen=(j.generic&&j.brand&&j.generic.toLowerCase()!==j.brand.toLowerCase())?j.generic:"";
@@ -2947,8 +2969,13 @@
     html+='<div class="med-dis">Source: U.S. FDA drug label. For clinical reference only \u2014 follow your protocols and medical direction.</div></div>';
     $("medBody").innerHTML=html;
   }
-  if($("medInput")) $("medInput").addEventListener("input", function(){ var q=this.value; clearTimeout(MED.t); MED.t=setTimeout(function(){ medSearch(q); }, 550); });
+  if($("medInput")){
+    $("medInput").addEventListener("input", function(){ var q=this.value; clearTimeout(MED.t); MED.t=setTimeout(function(){ medSuggest(q); }, 300); });
+    $("medInput").addEventListener("keydown", function(e){ if(e.key==="Enter"){ clearTimeout(MED.t); medLookup(this.value); this.blur(); } });
+  }
+  if($("medSug")) $("medSug").addEventListener("click", function(e){ var it=e.target.closest?e.target.closest("[data-sug]"):null; if(it){ var v=it.getAttribute("data-sug"); $("medInput").value=v; medLookup(v); } });
   if($("medBack")) $("medBack").addEventListener("click", function(){ navBack(); });
+  if($("searchRx")) $("searchRx").addEventListener("click", openMeds);
 
   // ---------- Task Book ----------
   var TB={loaded:false, list:[], prog:{}, unit:null, view:"list", open:{}};
@@ -3176,7 +3203,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3190,7 +3217,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
