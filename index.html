@@ -796,7 +796,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.4</div>
+  <div class="ver-line">Version 4.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -910,7 +910,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.4</div>
+  <div class="ver-line">Version 4.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1879,14 +1879,13 @@
   function clampf(v,a,b){ return v<a?a:(v>b?b:v); }
   function isAdmin(){ return !!(STATE.me&&STATE.me.admin); }
   function tbStatus(){ return String((STATE.me&&STATE.me.status)||"").trim().toLowerCase(); }
-  function isObserver(){ return tbStatus()==="observer"; }
+  function isObserver(){ if(tbStatus()==="observer") return true; var r=tbRow(STATE.me&&STATE.me.unit); return !!(r&&String(r_(r,"FTO")||"").trim()); }
   function tbTrainees(){
     var me=normUnit(STATE.me&&STATE.me.unit), out=[];
     if(!me) return out;
     (STATE.roster||[]).forEach(function(r){
       var act=String(r["Active"]||"").trim().toLowerCase();
       if(!(act===""||act==="x"||act==="yes"||act==="true")) return;
-      if(String(r_(r,"Status")||"").trim().toLowerCase()!=="observer") return;
       if(normUnit(r_(r,"FTO"))===me) out.push(r);
     });
     return out;
@@ -2861,7 +2860,7 @@
   function tbName(unit){ var r=tbRow(unit); return r?((r_(r,"First Name")+" "+r_(r,"Last Name")).trim()||unit):unit; }
   function tbFTOof(unit){ var r=tbRow(unit); return r?r_(r,"FTO"):""; }
   function tbCanConfirm(unit){ return isAdmin() || (normUnit(tbFTOof(unit))===normUnit(STATE.me&&STATE.me.unit) && !!normUnit(STATE.me&&STATE.me.unit)); }
-  function tbObservers(){ return (STATE.roster||[]).filter(function(r){ var act=String(r["Active"]||"").trim().toLowerCase(); if(!(act===""||act==="x"||act==="yes"||act==="true")) return false; return String(r_(r,"Status")||"").trim().toLowerCase()==="observer"; }); }
+  function tbObservers(){ return (STATE.roster||[]).filter(function(r){ var act=String(r["Active"]||"").trim().toLowerCase(); if(!(act===""||act==="x"||act==="yes"||act==="true")) return false; var st=String(r_(r,"Status")||"").trim().toLowerCase(); return st==="observer" || String(r_(r,"FTO")||"").trim()!==""; }); }
   function openTaskBook(){
     if(!$("tbScreen").classList.contains("open")) navOpen(closeTaskBook);
     $("tbScreen").classList.add("open");
@@ -2878,11 +2877,12 @@
   }
   function closeTaskBook(){ $("tbScreen").classList.remove("open"); TB.view="list"; TB.unit=null; TB.loaded=false; }
   function tbRouteView(){
-    var trainees = isAdmin() ? tbObservers() : tbTrainees();
     if(TB.view==="book" && TB.unit){ tbRenderBook(TB.unit); return; }
-    if(!trainees.length && isObserver()){ TB.view="book"; TB.unit=STATE.me.unit; tbRenderBook(STATE.me.unit); return; }
-    if(!trainees.length){ $("tbTitle").textContent="Task Book"; $("tbBody").innerHTML='<div class="empty">No task books assigned to you yet.</div>'; return; }
-    tbRenderList(trainees);
+    var mine=tbTrainees(), all=isAdmin()?tbObservers():[];
+    var total=mine.length+all.length;
+    if(!total && isObserver()){ TB.view="book"; TB.unit=STATE.me.unit; tbRenderBook(STATE.me.unit); return; }
+    if(!total){ $("tbTitle").textContent="Task Book"; $("tbBody").innerHTML='<div class="empty">No task books assigned to you yet.</div>'; return; }
+    tbRenderList(mine, all);
   }
   function tbPct(unit){
     var u=normUnit(unit), checks=TB.list.filter(function(t){return String(r_(t,"Type")||"check").toLowerCase()!=="count";});
@@ -2895,10 +2895,16 @@
       '<div class="tb-tsub">'+esc(unit)+' \u00b7 FTO '+esc(tbFTOof(unit)||"\u2014")+'</div></div>'+
       '<div class="tb-tpct">'+tbPct(unit)+'%</div><div class="tb-chev">\u203a</div></div>';
   }
-  function tbRenderList(trainees){
+  function tbRenderList(mine, all){
     $("tbTitle").textContent="Task Books";
-    var mine = isObserver() ? '<div class="tb-cat">My task book</div>'+tbTrow(STATE.me.unit)+'<div class="tb-cat">'+(isAdmin()?"All observers":"My trainees")+'</div>' : "";
-    $("tbBody").innerHTML=mine+trainees.map(function(r){ return tbTrow(r_(r,"Unit")); }).join("");
+    var seen={}, html="";
+    if(isObserver()){ html+='<div class="tb-cat">My task book</div>'+tbTrow(STATE.me.unit); seen[normUnit(STATE.me.unit)]=1; }
+    if(mine.length){ html+='<div class="tb-cat">My trainees</div>'+mine.map(function(r){ seen[normUnit(r_(r,"Unit"))]=1; return tbTrow(r_(r,"Unit")); }).join(""); }
+    if(all.length){
+      var others=all.filter(function(r){ return !seen[normUnit(r_(r,"Unit"))]; });
+      if(others.length) html+='<div class="tb-cat">All observers</div>'+others.map(function(r){ return tbTrow(r_(r,"Unit")); }).join("");
+    }
+    $("tbBody").innerHTML=html||'<div class="empty">No task books yet.</div>';
   }
   function tbRenderBook(unit){
     TB.unit=unit; TB.view="book";
@@ -3062,7 +3068,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3076,7 +3082,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
