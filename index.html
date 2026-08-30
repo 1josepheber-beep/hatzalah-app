@@ -708,6 +708,20 @@
   .tb-prog>i{display:block;height:100%;background:#2f9e44;width:0}
   .tb-pct{font-size:12.5px;font-weight:700;color:var(--mut);margin-top:6px}
   .tb-cat{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);margin:16px 4px 8px}
+  .tb-sec{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+  .tb-sec.done{border-color:#b7e0c2}
+  .tb-sechd{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;-webkit-user-select:none;user-select:none}
+  .tb-secname{flex:1;min-width:0;font-weight:800;font-size:15px;color:var(--ink)}
+  .tb-sec.done .tb-secname{color:#2f7d3b}
+  .tb-seccount{flex:0 0 auto;font-weight:800;font-size:13px;padding:3px 10px;border-radius:99px}
+  .tb-seccount.no{background:#fdeaea;color:#c8202e}
+  .tb-seccount.ok{background:#e6f6ec;color:#2f7d3b}
+  .tb-secchev{flex:0 0 auto;color:var(--mut);font-size:19px;line-height:1;transition:transform .18s ease}
+  .tb-sec.open .tb-secchev{transform:rotate(90deg)}
+  .tb-secbody{display:none;padding:0 12px 8px}
+  .tb-sec.open .tb-secbody{display:block;border-top:1px solid var(--line);padding-top:10px}
+  .tb-secbody .tb-item{border:0;border-radius:0;background:transparent;box-shadow:none;border-bottom:1px solid var(--line);padding:11px 2px;margin:0}
+  .tb-secbody .tb-item:last-child{border-bottom:0}
   .tb-item{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
   .tb-item .tb-tk{flex:1;min-width:0}
   .tb-item .tb-tt{font-weight:600;font-size:14.5px;color:var(--ink)}
@@ -796,7 +810,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 4.6</div>
+  <div class="ver-line">Version 4.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span>Drag tiles to rearrange</span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -910,7 +924,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 4.6</div>
+  <div class="ver-line">Version 4.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2855,7 +2869,7 @@
   });
 
   // ---------- Task Book ----------
-  var TB={loaded:false, list:[], prog:{}, unit:null, view:"list"};
+  var TB={loaded:false, list:[], prog:{}, unit:null, view:"list", open:{}};
   function tbKey(u,id){ return normUnit(u)+"|"+String(id).trim(); }
   function tbRow(unit){ var u=normUnit(unit); return (STATE.roster||[]).filter(function(x){return normUnit(r_(x,"Unit"))===u;})[0]; }
   function tbName(unit){ var r=tbRow(unit); return r?((r_(r,"First Name")+" "+r_(r,"Last Name")).trim()||unit):unit; }
@@ -2914,12 +2928,20 @@
     $("tbTitle").textContent=tbName(unit);
     var html='<div class="tb-hd"><div class="tb-nm">'+esc(tbName(unit))+'</div><div class="tb-meta">'+esc(unit)+' \u00b7 FTO: '+esc(tbFTOof(unit)||"\u2014")+'</div>'+
       '<div class="tb-prog"><i style="width:'+pct+'%"></i></div><div class="tb-pct">'+pct+'% confirmed</div></div>';
-    var cat="";
-    TB.list.forEach(function(t){
-      var c=r_(t,"Category"); if(c!==cat){ cat=c; html+='<div class="tb-cat">'+esc(cat)+'</div>'; }
-      var type=String(r_(t,"Type")||"check").toLowerCase(), id=r_(t,"ID"), p=TB.prog[tbKey(u,id)]||{};
-      if(type==="count") html+=tbCountHTML(unit,t,p,own||canC);
-      else html+=tbCheckHTML(unit,t,p,own,canC);
+    var cats=[], catMap={};
+    TB.list.forEach(function(t){ var c=r_(t,"Category")||"General"; if(!catMap[c]){ catMap[c]=[]; cats.push(c); } catMap[c].push(t); });
+    cats.forEach(function(c){
+      var items=catMap[c], total=items.length, done=0, body="";
+      items.forEach(function(t){
+        var type=String(r_(t,"Type")||"check").toLowerCase(), id=r_(t,"ID"), p=TB.prog[tbKey(u,id)]||{};
+        if(type==="count"){ if(parseInt(p["Count"]||"0",10)>=parseInt(r_(t,"Target")||"0",10)) done++; body+=tbCountHTML(unit,t,p,own||canC); }
+        else { if(isX(p["Confirmed"])) done++; body+=tbCheckHTML(unit,t,p,own,canC); }
+      });
+      var complete = total>0 && done>=total, isOpen = !!TB.open[c];
+      html+='<div class="tb-sec'+(complete?" done":"")+(isOpen?" open":"")+'">'+
+        '<div class="tb-sechd" data-sectoggle="'+esc(c)+'"><div class="tb-secname">'+esc(c)+'</div>'+
+        '<div class="tb-seccount '+(complete?"ok":"no")+'">'+done+'/'+total+'</div><div class="tb-secchev">\u203a</div></div>'+
+        '<div class="tb-secbody">'+body+'</div></div>';
     });
     $("tbBody").innerHTML=html;
   }
@@ -2958,6 +2980,8 @@
       .catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   if($("tbBody")) $("tbBody").addEventListener("click", function(e){
+    var sh=e.target.closest?e.target.closest(".tb-sechd"):null;
+    if(sh){ var key=sh.getAttribute("data-sectoggle"); TB.open[key]=!TB.open[key]; sh.parentNode.classList.toggle("open"); return; }
     var trow=e.target.closest?e.target.closest(".tb-trow"):null;
     if(trow){ TB.unit=trow.getAttribute("data-tbunit"); TB.view="book"; tbRenderBook(TB.unit); return; }
     var btn=e.target.closest?e.target.closest("[data-tb]"):null; if(!btn) return;
@@ -3070,7 +3094,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3084,7 +3108,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 4.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
