@@ -255,10 +255,12 @@
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
   .grid.cols3{grid-template-columns:1fr 1fr 1fr;gap:9px}
   .grid.cols3 .tile{min-height:98px;padding:13px 7px;gap:5px}
+  .grid.cols3 .tile.imgtile{padding:0}
   .grid.cols3 .tile .ic{width:34px;height:34px}
   .grid.cols3 .tile .ic svg{width:19px;height:19px}
   .grid.cols3 .tile .lab{font-size:12.5px;line-height:1.1}
-  .grid.cols3 .tile.imgtile .lab{padding:8px 6px 8px;font-size:12px;background:none;text-shadow:0 1px 4px rgba(0,0,0,.95),0 0 4px rgba(0,0,0,.75)}
+  .grid.cols3 .tile.imgtile .lab{padding:20px 6px 7px;font-size:12px;
+    background:linear-gradient(to top,rgba(6,16,34,.92) 0%,rgba(6,16,34,.78) 30%,rgba(6,16,34,.4) 62%,rgba(6,16,34,0) 100%)}
   .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:20px 14px;min-height:124px;text-align:center;cursor:pointer;
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
@@ -844,7 +846,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.2</div>
+  <div class="ver-line">Version 5.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -959,7 +961,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.2</div>
+  <div class="ver-line">Version 5.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3205,7 +3207,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3219,7 +3221,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
