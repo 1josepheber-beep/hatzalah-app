@@ -727,11 +727,13 @@
   .med-gen{font-size:13.5px;color:var(--mut);margin-top:2px}
   .med-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 2px}
   .med-chip{background:#eaf0f9;color:var(--navy);border-radius:99px;padding:4px 11px;font-size:12px;font-weight:700}
-  .med-sec{margin-top:14px}
-  .med-sec h4{margin:0 0 5px;font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy)}
-  .med-sec.warn h4{color:#c8202e}
-  .med-sec p{margin:0;font-size:14px;line-height:1.5;color:var(--ink)}
-  .med-sec.warn p{background:#fdeaea;border:1px solid #f3c2c2;border-radius:10px;padding:10px 12px}
+  .med-sec{margin-top:13px;padding-top:13px;border-top:1px solid var(--line);display:flex;gap:11px}
+  .med-bar{flex:0 0 4px;border-radius:4px;background:var(--mut)}
+  .med-sec.ind .med-bar{background:#2f9e44} .med-sec.con .med-bar{background:#c8202e} .med-sec.sfx .med-bar{background:#e8a33d} .med-sec.warn .med-bar{background:#c8202e}
+  .med-sb{flex:1;min-width:0}
+  .med-sb h4{margin:0 0 4px;font-size:11.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy)}
+  .med-sec.ind .med-sb h4{color:#2f7d3b} .med-sec.con .med-sb h4{color:#c8202e} .med-sec.sfx .med-sb h4{color:#b06d00} .med-sec.warn .med-sb h4{color:#c8202e}
+  .med-sb p{margin:0;font-size:14px;line-height:1.5;color:var(--ink)}
   .med-dis{font-size:11.5px;color:var(--mut);line-height:1.5;margin-top:4px}
   /* ---- task book ---- */
   .tb-hd{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 14px;box-shadow:var(--shadow)}
@@ -846,7 +848,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.3</div>
+  <div class="ver-line">Version 5.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -961,7 +963,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.3</div>
+  <div class="ver-line">Version 5.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2968,9 +2970,13 @@
     var html='<div class="med-card"><div class="med-nm">'+esc(nm)+'</div>'+
       (gen?'<div class="med-gen">Generic: '+esc(gen)+'</div>':'')+
       (chips?'<div class="med-chips">'+chips+'</div>':'');
-    if(j.indications) html+='<div class="med-sec"><h4>What it\u2019s used for</h4><p>'+esc(j.indications)+'</p></div>';
-    if(j.warnings) html+='<div class="med-sec warn"><h4>Warning</h4><p>'+esc(j.warnings)+'</p></div>';
-    html+='<div class="med-dis">Source: U.S. FDA drug label. For clinical reference only \u2014 follow your protocols and medical direction.</div></div>';
+    function sec(cls,label,txt){ return txt?'<div class="med-sec '+cls+'"><div class="med-bar"></div><div class="med-sb"><h4>'+label+'</h4><p>'+esc(txt)+'</p></div></div>':''; }
+    html+=sec("ind","Indications",j.indications);
+    html+=sec("con","Contraindications",j.contra);
+    html+=sec("sfx","Side effects",j.sideeffects);
+    html+=sec("warn","Boxed warning",j.warnings);
+    if(!j.indications&&!j.contra&&!j.sideeffects&&!j.warnings) html+='<div class="med-sec"><div class="med-sb"><p>Found this drug, but its FDA label doesn\u2019t list these sections in a readable form.</p></div></div>';
+    html+='<div class="med-dis">Source: U.S. FDA drug label. Reference only \u2014 follow your protocols and medical direction.</div></div>';
     $("medBody").innerHTML=html;
   }
   if($("medInput")){
@@ -3207,7 +3213,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3221,7 +3227,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
