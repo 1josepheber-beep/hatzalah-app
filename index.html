@@ -850,7 +850,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.8</div>
+  <div class="ver-line">Version 5.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -965,7 +965,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.8</div>
+  <div class="ver-line">Version 5.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1703,11 +1703,8 @@
   function pingSeen(){
     try{
       if((STATE&&STATE.demo) || !(STATE.me&&STATE.me.unit)) return;
-      var now=Date.now(), last=0; try{ last=parseInt(localStorage.getItem("hoh_lastseen")||"0",10); }catch(e){}
-      if(now-last < 3600000) return;
       var url=getSetting("Profile Update URL","");
-      fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"seen",unit:STATE.me.unit})})
-        .then(function(){ try{localStorage.setItem("hoh_lastseen",String(now));}catch(e){} }).catch(function(){});
+      fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"seen",unit:STATE.me.unit})}).catch(function(){});
     }catch(e){}
   }
   function paintTiles(){
@@ -3234,7 +3231,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3248,7 +3245,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
