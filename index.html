@@ -850,7 +850,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.5</div>
+  <div class="ver-line">Version 5.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -965,7 +965,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.5</div>
+  <div class="ver-line">Version 5.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2962,7 +2962,7 @@
     medPost({kind:"drug",query:q}, function(j){
       if(my!==MED.seq) return;
       if(!j||j.ok===false){ $("medBody").innerHTML='<div class="empty">Couldn\u2019t search right now. Check your internet.</div>'; return; }
-      if(!j.found){ $("medBody").innerHTML='<div class="empty">No FDA match for \u201c'+esc(q)+'\u201d.'+(j.resolved?' (Closest name: '+esc(j.resolved)+')':'')+' Try the generic name.</div>'; return; }
+      if(!j.found){ if(j.busy){ $("medBody").innerHTML='<div class="empty">The drug service is busy right now \u2014 wait a few seconds and search again.</div>'; return; } $("medBody").innerHTML='<div class="empty">No FDA match for \u201c'+esc(q)+'\u201d.'+(j.resolved?' (Closest name: '+esc(j.resolved)+')':'')+' Try the generic name.</div>'; return; }
       medRender(j);
     }, function(){ if(my===MED.seq) $("medBody").innerHTML='<div class="empty">Couldn\u2019t search \u2014 you may be offline.</div>'; });
   }
@@ -3217,7 +3217,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3231,7 +3231,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
