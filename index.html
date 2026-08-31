@@ -850,7 +850,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.9</div>
+  <div class="ver-line">Version 6.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -965,7 +965,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.9</div>
+  <div class="ver-line">Version 6.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1368,6 +1368,7 @@
   "use strict";
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
   var LS="hoh_member_v1";
+  var DCACHE="hoh_data_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
   var GUEST_URL="https://script.google.com/macros/s/AKfycbz1whkfWWlbj5Q8WelSB57s2cToyiJ35i0xxwr5iw3OGGZlttRBohDsVCkk8oJGyzH6/exec";
@@ -1609,7 +1610,15 @@
   function icon(n){return ICONS[n]||ICONS.link;}
 
   function boot(){
-    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Roster"),(STATE.me&&STATE.me.pw)?sha256hex(normPw(STATE.me.pw)):Promise.resolve("")]).then(function(res){
+    return Promise.all([fetchTab("Settings"),fetchTab("Tiles"),fetchTab("Roster"),(STATE.me&&STATE.me.pw)?sha256hex(normPw(STATE.me.pw)):Promise.resolve("")]).then(function(res){ applyBoot(res,false); });
+  }
+  function bootFromCache(){
+    if(STATE.demo) return false;
+    var c=null; try{ c=JSON.parse(localStorage.getItem(DCACHE)||"null"); }catch(e){}
+    if(!c || !c.t || !c.t.length) return false;
+    try{ applyBoot([c.s||[], c.t||[], c.r||[], ""], true); return true; }catch(e){ return false; }
+  }
+  function applyBoot(res, fromCache){
       STATE.settings={};
       res[0].forEach(function(r){var k=r_(r,"Setting");if(k)STATE.settings[k]=String(r["Value"]==null?"":r["Value"]).trim();});
       STATE.availOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Availability","on")||"").trim());
@@ -1622,8 +1631,6 @@
         var a=String(t["Active"]||"").trim().toLowerCase();
         return a===""||a==="x"||a==="yes"||a==="true";
       }).sort(function(a,b){return (parseFloat(a["Order"])||99)-(parseFloat(b["Order"])||99);});
-      // Refresh the logged-in member from the roster so status/admin/unit changes in the
-      // sheet take effect on next open. Match by email (new) or password (legacy sessions).
       if(STATE.me&&(STATE.me.email||STATE.me.pw)){
         var rows=res[2]||[], found=null;
         var myEmail=String(STATE.me.email||"").trim().toLowerCase();
@@ -1633,23 +1640,27 @@
           var mp=normPw(STATE.me.pw), mpHash=res[3]||"";
           for(var i=0;i<rows.length;i++){ if(pwMatch(rows[i]["Password"], mp, mpHash)){ found=rows[i]; break; } }
         }
-        var act=found?String(found["Active"]||"").trim().toLowerCase():"";
-        var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
-        if(!stillActive){
-          try{localStorage.removeItem(LS);}catch(e){}
-          STATE.me=null;
-          $("app").classList.add("hidden");
-          $("ggate").classList.remove("hidden");
-          return;
+        if(!fromCache){
+          var act=found?String(found["Active"]||"").trim().toLowerCase():"";
+          var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
+          if(!stillActive){
+            try{localStorage.removeItem(LS);}catch(e){}
+            STATE.me=null;
+            $("app").classList.add("hidden");
+            $("ggate").classList.remove("hidden");
+            return;
+          }
         }
-        var h=found;
-        STATE.me.status=r_(h,"Status");
-        STATE.me.admin=isX(h["Admin"]);
-        STATE.me.dispatcher=isX(h["Dispatcher"]);
-        STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
-        STATE.me.first=r_(h,"First Name")||STATE.me.first;
-        STATE.me.last=r_(h,"Last Name")||STATE.me.last;
-        try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
+        if(found){
+          var h=found;
+          STATE.me.status=r_(h,"Status");
+          STATE.me.admin=isX(h["Admin"]);
+          STATE.me.dispatcher=isX(h["Dispatcher"]);
+          STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
+          STATE.me.first=r_(h,"First Name")||STATE.me.first;
+          STATE.me.last=r_(h,"Last Name")||STATE.me.last;
+          if(!fromCache){ try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){} }
+        }
       }
       if(!STATE.availOn){
         STATE.tiles=STATE.tiles.filter(function(t){ var ty=(r_(t,"Type")||"").toLowerCase(); return ty!=="availability"&&ty!=="board"; });
@@ -1660,9 +1671,11 @@
         else STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
-      paintHeader(); paintTiles(); loadCerts(); updateAvailBtn(); pingSeen();
-      try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
-    });
+      paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
+      if(!fromCache){
+        try{ localStorage.setItem(DCACHE, JSON.stringify({s:res[0]||[], t:res[1]||[], r:res[2]||[]})); }catch(e){}
+        try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
+      }
   }
   function paintHeader(){
     var ab=$("availHdr"); if(ab) ab.style.display=(STATE.availOn===false)?"none":"";
@@ -3231,7 +3244,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3245,7 +3258,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
@@ -3640,9 +3653,11 @@
   }
   $("signout").addEventListener("click",doSignout);
 
-  function enter(){$("gate").classList.add("hidden");$("app").classList.remove("hidden");
+  function enter(){$("gate").classList.add("hidden");$("ggate").classList.add("hidden");$("guestgate").classList.add("hidden");$("app").classList.remove("hidden");
     try{scRestore();}catch(e){}
-    boot().catch(function(){toast("Couldn't load the app. Check your internet.");});}
+    var hadCache=bootFromCache();
+    boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
+    pingSeen();}
 
   var BIO_KEY="hoh_bio_v1";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }
@@ -3738,7 +3753,10 @@
         if(res && res.error!=="off"){ var v=$("viewDemo"); if(v) v.classList.remove("hidden"); }
       }).catch(function(){});
   }
-  function googleBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout"); }catch(e){} if(out) return; if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
+  function gRenewQuiet(){
+    try{ gRequest({prompt:""}).then(function(){ return gVerify(); }).then(function(){ boot().catch(function(){}); }).catch(function(){}); }catch(e){}
+  }
+  function googleBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
   (function boot0(){
     var hasDemo=false; try{ hasDemo=!!localStorage.getItem("hoh_demo"); }catch(e){}
     if(hasDemo){
