@@ -246,9 +246,10 @@
   .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);
     width:18px;height:18px;stroke:var(--mut)}
   .search input:focus{outline:none;border-color:var(--navy)}
-  .search-rx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;
-    background:#eaf0f9;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
-  .search-rx svg{position:static;transform:none;width:20px;height:20px;stroke:var(--navy)}
+  .search-rx{position:absolute;right:6px;top:50%;transform:translateY(-50%);height:36px;min-width:40px;border:0;
+    background:var(--navy);border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0 11px}
+  .search-rx .rxsym{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:19px;color:#fff;line-height:1;letter-spacing:-.5px}
+  .search-rx .rxsym sub{font-size:.6em;font-weight:700;bottom:-.12em}
   .search-rx:active{transform:translateY(-50%) scale(.93)}
 
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
@@ -843,7 +844,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 5.0</div>
+  <div class="ver-line">Version 5.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -951,14 +952,14 @@
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input id="search" type="search" placeholder="Search…" enterkeyhint="search" autocomplete="off">
-      <button class="search-rx" id="searchRx" aria-label="Medication lookup"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V5h4a3 3 0 010 6H6m4 0l6 9M14 15l5 5M19 15l-5 5"/></svg></button>
+      <button class="search-rx" id="searchRx" aria-label="Medication lookup"><span class="rxsym">R<sub>x</sub></span></button>
     </div>
     <div class="sresults" id="sresults"></div>
   </div>
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 5.0</div>
+  <div class="ver-line">Version 5.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3204,7 +3205,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3218,7 +3219,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 5.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     renderBioRow();
