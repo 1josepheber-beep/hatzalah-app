@@ -529,6 +529,18 @@
   .prof-l input,.prof-l textarea{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:11px;
     padding:12px 13px;font-size:16px;color:var(--ink);font-weight:400;background:#fff;font-family:inherit;resize:vertical}
   .prof-l input:focus,.prof-l textarea:focus{outline:none;border-color:var(--navy)}
+  .prof-l select{width:100%;margin-top:6px;border:1px solid var(--line);border-radius:11px;padding:12px 13px;font-size:16px;color:var(--ink);font-weight:400;background:#fff;font-family:inherit;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235f7089' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:38px}
+  .prof-l select:focus{outline:none;border-color:var(--navy)}
+  .prof-other{width:100%;margin:-8px 0 14px;border:1px solid var(--line);border-radius:11px;padding:12px 13px;font-size:16px;color:var(--ink);background:#fff;font-family:inherit}
+  .prof-other:focus{outline:none;border-color:var(--navy)}
+  .prof-sec{font-weight:800;color:var(--navy);font-size:14px;margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}
+  .prof-sec svg{width:17px;height:17px;stroke:var(--navy);fill:none;stroke-width:2}
+  .dir-extra{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+  .dir-extra .row{display:flex;gap:7px;font-size:13px;margin-bottom:5px;align-items:flex-start}
+  .dir-extra .lbl{font-weight:800;color:var(--navy);min-width:74px;display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
+  .dir-extra .lbl svg{width:14px;height:14px;stroke:var(--navy);fill:none;stroke-width:2}
+  .dir-extra .val{color:var(--ink)}
+  .dir-extra .val a{color:var(--navy);font-weight:700;text-decoration:none}
   .prof-save{width:100%;font-size:16px;padding:14px;margin-top:4px}
   .prof-note{font-size:13px;font-weight:600;margin-top:12px;text-align:center;min-height:18px}
   .prof-note.ok{color:#2f9e44}
@@ -850,7 +862,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 6.0</div>
+  <div class="ver-line">Version 6.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -965,7 +977,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 6.0</div>
+  <div class="ver-line">Version 6.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3180,7 +3192,8 @@
       if(!dirActive(r)) return;
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
-      if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),types:[]}; order.push(key); }
+      if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),
+        shirt:r_(r,"Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
@@ -3188,6 +3201,12 @@
       if(!m.address) m.address=r_(r,"Address");
       if(!m.dob) m.dob=r_(r,"DOB");
       if(!m.level) m.level=r_(r,"Level");
+      if(!m.shirt) m.shirt=r_(r,"Shirt Size");
+      if(!m.hat) m.hat=r_(r,"Hat Size");
+      if(!m.coat) m.coat=r_(r,"Coat Size");
+      if(!m.ecName) m.ecName=r_(r,"Emergency Contact");
+      if(!m.ecPhone) m.ecPhone=r_(r,"Emergency Phone");
+      if(!m.ecRel) m.ecRel=r_(r,"Emergency Relationship");
     });
     return order.map(function(k){return map[k];});
   }
@@ -3208,12 +3227,28 @@
       var acts="";
       if(tel) acts+='<button class="dir-btn call" data-tel="'+esc(tel)+'">'+ICO_PHONE+esc(p.phone)+'</button>';
       if(p.address) acts+='<button class="dir-btn map" data-addr="'+esc(p.address)+'">'+ICO_PIN+'<span>'+esc(p.address)+'</span></button>';
+      var extra="";
+      if(canDob){ // admin or self: show sizes + emergency contact
+        var sz=[];
+        if(p.shirt) sz.push('Shirt <b>'+esc(p.shirt)+'</b>');
+        if(p.hat) sz.push('Hat <b>'+esc(p.hat)+'</b>');
+        if(p.coat) sz.push('Coat <b>'+esc(p.coat)+'</b>');
+        var ecTel=(p.ecPhone||"").replace(/[^0-9+]/g,""), ecLine="";
+        if(p.ecName||p.ecPhone){
+          ecLine=esc(p.ecName||"")+(p.ecRel?' ('+esc(p.ecRel)+')':'');
+          if(p.ecPhone) ecLine+=((p.ecName||p.ecRel)?' \u2014 ':'')+'<a href="tel:'+esc(ecTel)+'">'+esc(p.ecPhone)+'</a>';
+        }
+        var rws="";
+        if(sz.length) rws+='<div class="row"><span class="lbl"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>Sizes</span><span class="val">'+sz.join(' \u00b7 ')+'</span></div>';
+        if(ecLine) rws+='<div class="row"><span class="lbl"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>Emergency</span><span class="val">'+ecLine+'</span></div>';
+        if(rws) extra='<div class="dir-extra">'+rws+'</div>';
+      }
       return '<div class="dir-card"><div class="dir-top"><span class="dir-nm">'+esc(nm)+'</span>'+
         (p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+
         (typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+
         (p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
-        (acts?'<div class="dir-act">'+acts+'</div>':'')+'</div>';
+        (acts?'<div class="dir-act">'+acts+'</div>':'')+extra+'</div>';
     }).join("");
   }
   $("dirBody").addEventListener("click",function(e){
@@ -3237,6 +3272,20 @@
       renderProfile(mine);
     }).catch(function(){ renderProfile(null); });
   }
+  var SZ_OPTS=["XS","S","M","L","XL","2XL","3XL","4XL","5XL"];
+  function selField(id,label,val,opts,otherPh){
+    val=String(val==null?"":val).trim();
+    var isStd = val && opts.indexOf(val)>=0;
+    var sel = val ? (isStd?val:"Other") : "";
+    var oth = (val && !isStd) ? val : "";
+    var o='<option value="">Select\u2026</option>';
+    opts.forEach(function(s){ o+='<option'+(sel===s?' selected':'')+'>'+s+'</option>'; });
+    o+='<option value="Other"'+(sel==="Other"?' selected':'')+'>Other</option>';
+    return '<label class="prof-l">'+label+'<select id="'+id+'">'+o+'</select></label>'+
+      '<input id="'+id+'Other" class="prof-other'+(sel==="Other"?'':' hidden')+'" placeholder="'+otherPh+'" value="'+esc(oth)+'">';
+  }
+  function szRead(id){ var el=$(id); if(!el) return ""; var s=el.value; if(s==="Other"){ var o=$(id+"Other"); return o?o.value.trim():""; } return s; }
+  function wireOther(id){ var s=$(id); if(s) s.addEventListener("change",function(){ var o=$(id+"Other"); if(o) o.classList.toggle("hidden", s.value!=="Other"); }); }
   function renderProfile(row){
     var b=$("profBody");
     var name=row?((r_(row,"First Name")+" "+r_(row,"Last Name")).trim()):(((STATE.me.first||"")+" "+(STATE.me.last||"")).trim());
@@ -3244,7 +3293,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3254,13 +3303,22 @@
       (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
       '<label class="prof-l">Phone<input id="profPhone" type="tel" value="'+esc(r_(row,"Phone"))+'" placeholder="Your phone number"></label>'+
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
+      '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>Sizing</div>'+
+      selField("profShirt","Shirt size",r_(row,"Shirt Size"),SZ_OPTS,"Enter shirt size")+
+      selField("profHat","Hat size",r_(row,"Hat Size"),SZ_OPTS,"Enter hat size")+
+      selField("profCoat","Coat size",r_(row,"Coat Size"),SZ_OPTS,"Enter coat size")+
+      '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>Emergency contact</div>'+
+      '<label class="prof-l">Name<input id="profEcName" type="text" value="'+esc(r_(row,"Emergency Contact"))+'" placeholder="Full name"></label>'+
+      '<label class="prof-l">Phone<input id="profEcPhone" type="tel" value="'+esc(r_(row,"Emergency Phone"))+'" placeholder="Their phone number"></label>'+
+      selField("profRel","Relationship",r_(row,"Emergency Relationship"),["Spouse","Friend"],"How are they related?")+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
+    wireOther("profShirt"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
     renderBioRow();
   }
   function changePassword(){
@@ -3309,22 +3367,31 @@
     var note=$("profNote");
     if(!url){ note.className="prof-note err"; note.textContent="Self-update isn\u2019t set up yet. Tell your coordinator."; return; }
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
+    var extra={ shirt:szRead("profShirt"), hat:szRead("profHat"), coat:szRead("profCoat"),
+      ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel") };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({unit:STATE.me.unit,phone:phone,address:addr})})
+    var body={unit:STATE.me.unit,phone:phone,address:addr,shirt:extra.shirt,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel};
+    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
       .then(function(r){ return r.text(); })
       .then(function(t){
         var ok=true; try{ var j=JSON.parse(t); ok=(j.ok!==false); }catch(e){}
-        finishProfile(ok, phone, addr);
+        finishProfile(ok, phone, addr, extra);
       })
-      .catch(function(){ finishProfile(true, phone, addr); });
+      .catch(function(){ finishProfile(true, phone, addr, extra); });
   }
-  function finishProfile(ok, phone, addr){
+  function finishProfile(ok, phone, addr, extra){
     var btn=$("profSave"), note=$("profNote");
     btn.disabled=false; btn.textContent="Save changes";
     if(ok){
       note.className="prof-note ok"; note.textContent="Saved. Thank you!";
       // reflect locally if the directory is loaded
-      if(DIR.loaded){ var me=normUnit(STATE.me.unit); DIR.rows.forEach(function(r){ if(normUnit(r["Unit #"]||r["Unit"])===me){ if("Phone" in r)r["Phone"]=phone; if("Address" in r)r["Address"]=addr; } }); }
+      if(DIR.loaded){ var me=normUnit(STATE.me.unit); DIR.rows.forEach(function(r){ if(normUnit(r["Unit #"]||r["Unit"])===me){
+        if("Phone" in r)r["Phone"]=phone; if("Address" in r)r["Address"]=addr;
+        if(extra){
+          if("Shirt Size" in r)r["Shirt Size"]=extra.shirt; if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat;
+          if("Emergency Contact" in r)r["Emergency Contact"]=extra.ecName; if("Emergency Phone" in r)r["Emergency Phone"]=extra.ecPhone; if("Emergency Relationship" in r)r["Emergency Relationship"]=extra.ecRel;
+        }
+      } }); }
     }else{ note.className="prof-note err"; note.textContent="Couldn\u2019t save. Please try again."; }
   }
   $("profBack").addEventListener("click",navBack);
