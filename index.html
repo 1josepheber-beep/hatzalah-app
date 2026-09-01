@@ -862,7 +862,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 6.1</div>
+  <div class="ver-line">Version 6.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -977,7 +977,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 6.1</div>
+  <div class="ver-line">Version 6.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1728,7 +1728,8 @@
   function pingSeen(){
     try{
       if((STATE&&STATE.demo) || !(STATE.me&&STATE.me.unit)) return;
-      var url=getSetting("Profile Update URL","");
+      var url=getSetting("Profile Update URL","")||GUEST_URL;
+      if(!url) return;
       fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"seen",unit:STATE.me.unit})}).catch(function(){});
     }catch(e){}
   }
@@ -3193,7 +3194,7 @@
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
       if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),
-        shirt:r_(r,"Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),types:[]}; order.push(key); }
+        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
@@ -3201,7 +3202,9 @@
       if(!m.address) m.address=r_(r,"Address");
       if(!m.dob) m.dob=r_(r,"DOB");
       if(!m.level) m.level=r_(r,"Level");
-      if(!m.shirt) m.shirt=r_(r,"Shirt Size");
+      if(!m.tshirt) m.tshirt=r_(r,"T-Shirt Size");
+      if(!m.dress) m.dress=r_(r,"Dress Shirt Size");
+      if(!m.polo) m.polo=r_(r,"Polo Shirt Size");
       if(!m.hat) m.hat=r_(r,"Hat Size");
       if(!m.coat) m.coat=r_(r,"Coat Size");
       if(!m.ecName) m.ecName=r_(r,"Emergency Contact");
@@ -3230,7 +3233,9 @@
       var extra="";
       if(canDob){ // admin or self: show sizes + emergency contact
         var sz=[];
-        if(p.shirt) sz.push('Shirt <b>'+esc(p.shirt)+'</b>');
+        if(p.tshirt) sz.push('T-Shirt <b>'+esc(p.tshirt)+'</b>');
+        if(p.dress) sz.push('Dress <b>'+esc(p.dress)+'</b>');
+        if(p.polo) sz.push('Polo <b>'+esc(p.polo)+'</b>');
         if(p.hat) sz.push('Hat <b>'+esc(p.hat)+'</b>');
         if(p.coat) sz.push('Coat <b>'+esc(p.coat)+'</b>');
         var ecTel=(p.ecPhone||"").replace(/[^0-9+]/g,""), ecLine="";
@@ -3293,7 +3298,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3304,7 +3309,9 @@
       '<label class="prof-l">Phone<input id="profPhone" type="tel" value="'+esc(r_(row,"Phone"))+'" placeholder="Your phone number"></label>'+
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>Sizing</div>'+
-      selField("profShirt","Shirt size",r_(row,"Shirt Size"),SZ_OPTS,"Enter shirt size")+
+      selField("profTshirt","T-Shirt size",r_(row,"T-Shirt Size"),SZ_OPTS,"Enter t-shirt size")+
+      selField("profDress","Dress Shirt size",r_(row,"Dress Shirt Size"),SZ_OPTS,"Enter dress shirt size")+
+      selField("profPolo","Polo Shirt size",r_(row,"Polo Shirt Size"),SZ_OPTS,"Enter polo shirt size")+
       selField("profHat","Hat size",r_(row,"Hat Size"),SZ_OPTS,"Enter hat size")+
       selField("profCoat","Coat size",r_(row,"Coat Size"),SZ_OPTS,"Enter coat size")+
       '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>Emergency contact</div>'+
@@ -3315,10 +3322,10 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
-    wireOther("profShirt"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
+    wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
     renderBioRow();
   }
   function changePassword(){
@@ -3367,10 +3374,10 @@
     var note=$("profNote");
     if(!url){ note.className="prof-note err"; note.textContent="Self-update isn\u2019t set up yet. Tell your coordinator."; return; }
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
-    var extra={ shirt:szRead("profShirt"), hat:szRead("profHat"), coat:szRead("profCoat"),
+    var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
       ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel") };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    var body={unit:STATE.me.unit,phone:phone,address:addr,shirt:extra.shirt,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel};
+    var body={unit:STATE.me.unit,phone:phone,address:addr,tshirt:extra.tshirt,dress:extra.dress,polo:extra.polo,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel};
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
       .then(function(r){ return r.text(); })
       .then(function(t){
@@ -3388,7 +3395,8 @@
       if(DIR.loaded){ var me=normUnit(STATE.me.unit); DIR.rows.forEach(function(r){ if(normUnit(r["Unit #"]||r["Unit"])===me){
         if("Phone" in r)r["Phone"]=phone; if("Address" in r)r["Address"]=addr;
         if(extra){
-          if("Shirt Size" in r)r["Shirt Size"]=extra.shirt; if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat;
+          if("T-Shirt Size" in r)r["T-Shirt Size"]=extra.tshirt; if("Dress Shirt Size" in r)r["Dress Shirt Size"]=extra.dress; if("Polo Shirt Size" in r)r["Polo Shirt Size"]=extra.polo;
+          if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat;
           if("Emergency Contact" in r)r["Emergency Contact"]=extra.ecName; if("Emergency Phone" in r)r["Emergency Phone"]=extra.ecPhone; if("Emergency Relationship" in r)r["Emergency Relationship"]=extra.ecRel;
         }
       } }); }
