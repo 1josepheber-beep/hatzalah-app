@@ -494,11 +494,12 @@
   .dir-card.lv-emt{border-left-color:#2a6fb5}
   .dir-card.lv-als{border-left-color:#2f9e44}
   .dir-card.lv-medic{border-left-color:#8a5cc7}
-  .dir-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-  .dir-nm{font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.01em}
+  .dir-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .dir-nm{font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.01em;line-height:1.2;min-width:0}
+  .dir-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
   .dir-badge{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--navy);
     background:#e7f0ff;padding:3px 9px;border-radius:999px}
-  .dir-unit{margin-left:auto;font-size:13px;color:var(--mut);font-weight:800;background:#f1f3f7;padding:3px 10px;border-radius:8px}
+  .dir-unit{flex:0 0 auto;font-size:13px;color:var(--mut);font-weight:800;background:#f1f3f7;padding:3px 10px;border-radius:8px;white-space:nowrap;margin-top:1px}
   .dir-level{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#fff;padding:3px 9px;border-radius:7px;background:#7a8699}
   .dir-level.als{background:#2f9e44}
   .dir-level.emt,.dir-level.bls{background:#2a6fb5}
@@ -540,12 +541,18 @@
   .prof-other:focus{outline:none;border-color:var(--navy)}
   .prof-sec{font-weight:800;color:var(--navy);font-size:14px;margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}
   .prof-sec svg{width:17px;height:17px;stroke:var(--navy);fill:none;stroke-width:2}
-  .dir-extra{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
-  .dir-extra .row{display:flex;gap:7px;font-size:13px;margin-bottom:5px;align-items:flex-start}
-  .dir-extra .lbl{font-weight:800;color:var(--navy);min-width:74px;display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
-  .dir-extra .lbl svg{width:14px;height:14px;stroke:var(--navy);fill:none;stroke-width:2}
-  .dir-extra .val{color:var(--ink)}
-  .dir-extra .val a{color:var(--navy);font-weight:700;text-decoration:none}
+  .dir-extra{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
+  .dir-extra .esec{margin-bottom:13px}
+  .dir-extra .esec:last-child{margin-bottom:0}
+  .dir-extra .elbl{display:inline-flex;align-items:center;gap:6px;font-weight:800;color:var(--navy);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px}
+  .dir-extra .elbl svg{width:14px;height:14px;stroke:var(--navy);fill:none;stroke-width:2}
+  .dir-extra .sz-wrap{display:flex;flex-wrap:wrap;gap:6px}
+  .dir-extra .sz-chip{display:inline-flex;align-items:baseline;gap:4px;background:#eef2f7;border-radius:8px;padding:4px 10px;font-size:12px;color:var(--mut);font-weight:600}
+  .dir-extra .sz-chip b{color:var(--ink);font-weight:800;font-size:12.5px}
+  .dir-extra .ec-line{font-size:14px;color:var(--ink);font-weight:700}
+  .dir-extra .ec-line .rel{color:var(--mut);font-weight:600}
+  .dir-extra .ec-tel{display:inline-flex;align-items:center;gap:6px;margin-top:7px;color:#1e5fae;font-weight:800;font-size:14px;text-decoration:none}
+  .dir-extra .ec-tel svg{width:15px;height:15px;stroke:#1e5fae;fill:none;stroke-width:2}
   .prof-save{width:100%;font-size:16px;padding:14px;margin-top:4px}
   .prof-hint{font-size:12px;color:var(--mut);line-height:1.45;margin:-8px 0 16px}
   .prof-note{font-size:13px;font-weight:600;margin-top:12px;text-align:center;min-height:18px}
@@ -869,7 +876,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 6.6</div>
+  <div class="ver-line">Version 6.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -984,7 +991,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 6.6</div>
+  <div class="ver-line">Version 6.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3239,26 +3246,21 @@
       if(p.address) acts+='<button class="dir-btn map" data-addr="'+esc(p.address)+'">'+ICO_PIN+'<span>'+esc(p.address)+'</span></button>';
       var extra="";
       if(canDob){ // admin or self: show sizes + emergency contact
-        var sz=[];
-        if(p.tshirt) sz.push('T-Shirt <b>'+esc(p.tshirt)+'</b>');
-        if(p.dress) sz.push('Dress <b>'+esc(p.dress)+'</b>');
-        if(p.polo) sz.push('Polo <b>'+esc(p.polo)+'</b>');
-        if(p.hat) sz.push('Hat <b>'+esc(p.hat)+'</b>');
-        if(p.coat) sz.push('Coat <b>'+esc(p.coat)+'</b>');
-        var ecTel=(p.ecPhone||"").replace(/[^0-9+]/g,""), ecLine="";
-        if(p.ecName||p.ecPhone){
-          ecLine=esc(p.ecName||"")+(p.ecRel?' ('+esc(p.ecRel)+')':'');
-          if(p.ecPhone) ecLine+=((p.ecName||p.ecRel)?' \u2014 ':'')+'<a href="tel:'+esc(ecTel)+'">'+esc(p.ecPhone)+'</a>';
-        }
-        var rws="";
-        if(sz.length) rws+='<div class="row"><span class="lbl"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>Sizes</span><span class="val">'+sz.join(' \u00b7 ')+'</span></div>';
-        if(ecLine) rws+='<div class="row"><span class="lbl"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>Emergency</span><span class="val">'+ecLine+'</span></div>';
-        if(rws) extra='<div class="dir-extra">'+rws+'</div>';
+        var SHIRT='<svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>';
+        var PHN='<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>';
+        function chip(lbl,v){ return v?'<span class="sz-chip">'+lbl+' <b>'+esc(v)+'</b></span>':''; }
+        var chips=chip('T-Shirt',p.tshirt)+chip('Dress',p.dress)+chip('Polo',p.polo)+chip('Hat',p.hat)+chip('Coat',p.coat);
+        var ecTel=(p.ecPhone||"").replace(/[^0-9+]/g,""), ecHtml="";
+        if(p.ecName||p.ecRel) ecHtml+='<div class="ec-line">'+esc(p.ecName||"")+(p.ecRel?' <span class="rel">\u00b7 '+esc(p.ecRel)+'</span>':'')+'</div>';
+        if(p.ecPhone) ecHtml+='<a class="ec-tel" href="tel:'+esc(ecTel)+'">'+PHN+esc(p.ecPhone)+'</a>';
+        var secs="";
+        if(chips) secs+='<div class="esec"><div class="elbl">'+SHIRT+'Sizes</div><div class="sz-wrap">'+chips+'</div></div>';
+        if(ecHtml) secs+='<div class="esec"><div class="elbl">'+PHN+'Emergency Contact</div>'+ecHtml+'</div>';
+        if(secs) extra='<div class="dir-extra">'+secs+'</div>';
       }
-      return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'"><div class="dir-top"><span class="dir-nm">'+esc(nm)+'</span>'+
-        (p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+
-        (typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+
-        (p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+      return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'">'+
+        '<div class="dir-head"><span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+        ((p.level||typeStr)?'<div class="dir-tags">'+(p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+(typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+'</div>':'')+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+extra+'</div>';
     }).join("");
@@ -3305,7 +3307,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3331,7 +3333,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
