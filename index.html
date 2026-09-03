@@ -728,6 +728,12 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .sr-item .st span{font-size:11px;color:var(--mut)}
   .sr-empty{padding:16px 14px;color:var(--mut);font-size:13px;text-align:center}
+  .sr-pacts{display:flex;gap:6px;flex:0 0 auto}
+  .sr-pbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+  .sr-pbtn svg{width:18px;height:18px;fill:none;stroke-width:2}
+  .sr-pbtn.call{border-color:#1e5fae} .sr-pbtn.call svg{stroke:#1e5fae}
+  .sr-pbtn.info svg{stroke:var(--navy)}
+  .sr-pbtn:active{background:#eef2f7}
   @media (min-width:680px) and (hover:hover) and (pointer:fine){
     body{background:var(--bg)}
     #app{max-width:600px;margin:0 auto;min-height:100vh;background:#fff;box-shadow:0 0 44px rgba(9,26,52,.14)}
@@ -876,7 +882,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 6.7</div>
+  <div class="ver-line">Version 6.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -991,7 +997,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 6.7</div>
+  <div class="ver-line">Version 6.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3307,7 +3313,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3333,7 +3339,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -4095,12 +4101,47 @@
     });
     tiles=tiles.slice(0,6);
 
+    var ppl=[];
+    if(STATE.me && STATE.roster){
+      var seenP={};
+      (STATE.roster||[]).forEach(function(r){
+        if(ppl.length>=8) return;
+        var act=String(r_(r,"Active")||"").trim().toLowerCase();
+        if(!(act===""||act==="x"||act==="yes"||act==="true")) return;
+        var first=r_(r,"First Name"), last=r_(r,"Last Name");
+        if(!first && !last) return;
+        var unit=r_(r,"Unit"), phone=r_(r,"Phone");
+        if(((first+" "+last+" "+unit+" "+phone).toLowerCase()).indexOf(ql)<0) return;
+        var key=(first+"|"+last+"|"+unit).toLowerCase().replace(/\s+/g,"");
+        if(seenP[key]) return; seenP[key]=1;
+        ppl.push({first:first,last:last,unit:unit,phone:phone,level:r_(r,"Level")});
+      });
+    }
+
     var html="";
     if(tiles.length){
       html+='<div class="sr-group">Shortcuts</div>';
       tiles.forEach(function(x){
         html+='<div class="sr-item" data-t="t" data-ti="'+x.ti+'">'+
           '<div class="sic">'+ICO_TILE+'</div><div class="st"><b>'+esc(x.label)+'</b><span>Open</span></div></div>';
+      });
+    }
+    if(ppl.length){
+      var ICO_PERSON='<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      var ICO_INFO='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>';
+      html+='<div class="sr-group">People</div>';
+      ppl.forEach(function(x){
+        var nm=(x.last?(x.last+(x.first?", "+x.first:"")):x.first).trim();
+        var sub=[x.unit,x.level].filter(function(z){return z;}).join(" \u00b7 ");
+        var tel=(x.phone||"").replace(/[^0-9+]/g,"");
+        var dq=((x.first||"")+" "+(x.last||"")).trim();
+        html+='<div class="sr-item sr-person" data-t="person" data-q="'+esc(dq)+'">'+
+          '<div class="sic">'+ICO_PERSON+'</div>'+
+          '<div class="st"><b>'+esc(nm)+'</b><span>'+esc(sub||"Member")+'</span></div>'+
+          '<div class="sr-pacts">'+
+            (tel?'<button class="sr-pbtn call" data-tel="'+esc(tel)+'" aria-label="Call">'+ICO_PHONE+'</button>':'')+
+            '<button class="sr-pbtn info" aria-label="Details">'+ICO_INFO+'</button>'+
+          '</div></div>';
       });
     }
     var apts=(APT.items||[]).filter(function(a){ return aptMatches(a,ql); }).slice(0,6);
@@ -4183,9 +4224,12 @@
 
   // click a result
   $("sresults").addEventListener("click",function(e){
+    var callBtn=e.target.closest?e.target.closest(".sr-pbtn.call"):null;
+    if(callBtn){ var ct=callBtn.getAttribute("data-tel"); if(ct){ try{location.href="tel:"+ct;}catch(e2){} } return; }
     var it=e.target.closest?e.target.closest(".sr-item"):null; if(!it) return;
     var t=it.getAttribute("data-t");
     hideGlobal();
+    if(t==="person"){ openDirToPerson(it.getAttribute("data-q")||""); $("search").value=""; return; }
     if(t==="aptm"){ openAptByKey(it.getAttribute("data-slug"), it.getAttribute("data-label")); return; }
     if(t==="apt"){ openAptByKey(it.getAttribute("data-slug")); return; }
     if(t==="h"){
@@ -4211,6 +4255,13 @@
   });
 
   function hideGlobal(){ var b=$("sresults"); b.className="sresults"; b.innerHTML=""; }
+  function openDirToPerson(q){
+    DIR.type="all"; DIR.q=q||"";
+    try{ var s=$("dirSearch"); if(s) s.value=q||""; }catch(e){}
+    var wasLoaded=DIR.loaded;
+    openDirectory();
+    if(wasLoaded){ try{ buildDirChips(); }catch(e){} }
+  }
   // tap outside closes the dropdown
   document.addEventListener("click",function(e){
     if(!e.target.closest || !e.target.closest(".searchwrap")) hideGlobal();
