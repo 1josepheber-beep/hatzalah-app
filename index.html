@@ -882,7 +882,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 7.0</div>
+  <div class="ver-line">Version 7.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -997,7 +997,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 7.0</div>
+  <div class="ver-line">Version 7.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1186,6 +1186,7 @@
     <button class="sheet-item" id="qVitals"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>Vitals Reference</button>
     <button class="sheet-item" id="qCpr"><svg viewBox="0 0 24 24"><path d="M12 21C7 17 3 13 3 8.5 3 6 5 4 7.5 4c1.6 0 3 .8 3.8 2 .8-1.2 2.2-2 3.7-2C20.5 4 21 6 21 8.5 21 13 17 17 12 21z"/></svg>CPR Tracker</button>
     <button class="sheet-item" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Call Notes</button>
+    <button class="sheet-item" id="qTextHome"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text Home</button>
     <button class="sheet-cancel" id="qCancel">Cancel</button>
   </div>
 </div>
@@ -1691,6 +1692,8 @@
           STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
           STATE.me.first=r_(h,"First Name")||STATE.me.first;
           STATE.me.last=r_(h,"Last Name")||STATE.me.last;
+          STATE.me.textHome=r_(h,"Text Home");
+          STATE.me.textHomeMethod=r_(h,"Text Home Method");
           if(!fromCache){ try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){} }
         }
       }
@@ -3318,7 +3321,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3340,11 +3343,18 @@
       '<label class="prof-l">Name<input id="profEcName" type="text" value="'+esc(r_(row,"Emergency Contact"))+'" placeholder="Full name"></label>'+
       '<label class="prof-l">Phone<input id="profEcPhone" type="tel" value="'+esc(r_(row,"Emergency Phone"))+'" placeholder="Their phone number"></label>'+
       selField("profRel","Relationship",r_(row,"Emergency Relationship"),["Spouse","Friend"],"How are they related?")+
+      '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text home</div>'+
+      '<label class="prof-l">Home number<input id="profTextHome" type="tel" value="'+esc(r_(row,"Text Home"))+'" placeholder="Spouse or home number"></label>'+
+      '<label class="prof-l">Send via<select id="profTextMethod">'+
+        '<option value="sms"'+(String(r_(row,"Text Home Method")||"").trim().toLowerCase()==="whatsapp"?"":" selected")+'>Text message (SMS)</option>'+
+        '<option value="whatsapp"'+(String(r_(row,"Text Home Method")||"").trim().toLowerCase()==="whatsapp"?" selected":"")+'>WhatsApp</option>'+
+      '</select></label>'+
+      '<div class="prof-hint">Used by the \u201CText Home\u201D button in Quick Actions \u2014 it opens your SMS or WhatsApp so this number knows you\u2019ve been called out. You still tap send.</div>'+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -3397,9 +3407,9 @@
     if(!url){ note.className="prof-note err"; note.textContent="Self-update isn\u2019t set up yet. Tell your coordinator."; return; }
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
     var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
-      ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim() };
+      ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms") };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    var body={unit:STATE.me.unit,phone:phone,address:addr,tshirt:extra.tshirt,dress:extra.dress,polo:extra.polo,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel,altEmail:extra.altEmail};
+    var body={unit:STATE.me.unit,phone:phone,address:addr,tshirt:extra.tshirt,dress:extra.dress,polo:extra.polo,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel,altEmail:extra.altEmail,textHome:extra.textHome,textMethod:extra.textMethod};
     fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
       .then(function(r){ return r.text(); })
       .then(function(t){
@@ -3421,15 +3431,22 @@
           if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat;
           if("Emergency Contact" in r)r["Emergency Contact"]=extra.ecName; if("Emergency Phone" in r)r["Emergency Phone"]=extra.ecPhone; if("Emergency Relationship" in r)r["Emergency Relationship"]=extra.ecRel;
           if("Personal Email" in r)r["Personal Email"]=extra.altEmail;
+          if("Text Home" in r)r["Text Home"]=extra.textHome;
+          if("Text Home Method" in r)r["Text Home Method"]=extra.textMethod;
         }
       } }); }
+      if(extra && STATE.me){ STATE.me.textHome=extra.textHome; STATE.me.textHomeMethod=extra.textMethod; }
     }else{ note.className="prof-note err"; note.textContent="Couldn\u2019t save. Please try again."; }
   }
   $("profBack").addEventListener("click",navBack);
   $("unitWrap").addEventListener("click",openProfile);
 
   // ---------- Quick actions (lightning) ----------
-  function openQMenu(){ $("qMenu").classList.remove("hidden"); }
+  function openQMenu(){
+    var thOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Text Home","on")||"on").trim());
+    var b=$("qTextHome"); if(b) b.style.display = thOn ? "" : "none";
+    $("qMenu").classList.remove("hidden");
+  }
   function closeQMenu(){ $("qMenu").classList.add("hidden"); }
   $("qActions").addEventListener("click",openQMenu);
   $("qCancel").addEventListener("click",closeQMenu);
@@ -3437,6 +3454,26 @@
   $("qVitals").addEventListener("click",function(){ closeQMenu(); openVitals(); });
   $("qCpr").addEventListener("click",function(){ closeQMenu(); openCpr(); });
   $("qNotes").addEventListener("click",function(){ closeQMenu(); openNotes(); });
+  $("qTextHome").addEventListener("click",function(){ closeQMenu(); doTextHome(); });
+  function doTextHome(){
+    if(STATE.demo){ toast("Not available in the demo."); return; }
+    var raw=(STATE.me&&STATE.me.textHome)?String(STATE.me.textHome):"";
+    var num=raw.replace(/[^0-9+]/g,"");
+    if(!num){ toast("Add your home number in your profile first."); openProfile(); return; }
+    var msg=getSetting("Text Home Message","")||"Hi.\n\nI wanted to let you know that I went on a Hatzalah call. Will be back soon.";
+    var method=((STATE.me&&STATE.me.textHomeMethod)?String(STATE.me.textHomeMethod):"").trim().toLowerCase();
+    try{
+      if(method==="whatsapp"){
+        var d=raw.replace(/[^0-9]/g,""); if(d.length===10) d="1"+d;
+        location.href="https://wa.me/"+d+"?text="+encodeURIComponent(msg);
+      } else {
+        var ua=navigator.userAgent||"";
+        var isIOS=/iP(hone|od|ad)/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+        var sep=isIOS?"&":"?";
+        location.href="sms:"+num+sep+"body="+encodeURIComponent(msg);
+      }
+    }catch(e){ toast("Couldn\u2019t open your messaging app."); }
+  }
 
   // ---------- Notes (local, on-device only) ----------
   var NOTES={entries:[]}, NOTES_PREFIX="hoh_notes_";
