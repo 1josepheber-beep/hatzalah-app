@@ -882,7 +882,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 6.9</div>
+  <div class="ver-line">Version 7.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -997,7 +997,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 6.9</div>
+  <div class="ver-line">Version 7.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2609,7 +2609,7 @@
   function certExpVal(row,c){ return (c.expKey?row[c.expKey]:"") || (c.singleKey?row[c.singleKey]:"") || ""; }
   function memberWorst(row){
     var w="ok";
-    CERT.certCols.forEach(function(c){ var k=certStatus(certExpVal(row,c)).k; if(k==="expired") w="expired"; else if(k==="soon"&&w!=="expired") w="soon"; });
+    CERT.certCols.forEach(function(c){ if(certIsNA(row,c)) return; var k=certStatus(certExpVal(row,c)).k; if(k==="expired") w="expired"; else if(k==="soon"&&w!=="expired") w="soon"; });
     return w;
   }
   function loadCerts(){
@@ -2886,10 +2886,14 @@
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
       '<div class="cert-st">'+esc(st.label)+'</div></div><div class="cert-btns">'+cal+edit+up+'</div></div>';
   }
+  function certIsNA(row, c){
+    function isNA(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="na"||v==="n/a"; }
+    return !!((c.singleKey&&isNA(row[c.singleKey])) || (c.numKey&&isNA(row[c.numKey])) || (c.expKey&&isNA(row[c.expKey])));
+  }
   function memberCertsHTML(row){
     var me=STATE.me?normUnit(STATE.me.unit):"";
     var editable = isAdmin() || normUnit(r_(row,"Unit #")||r_(row,"Unit"))===me;
-    return CERT.certCols.map(function(c){ return certRowHTML(row,c,editable); }).join("");
+    return CERT.certCols.filter(function(c){ return !certIsNA(row,c); }).map(function(c){ return certRowHTML(row,c,editable); }).join("");
   }
   function certLegend(){
     return '<div class="cert-legend"><span><i style="background:var(--red)"></i>Expired / missing</span>'+
@@ -2901,7 +2905,8 @@
     if(!isAdmin()){
       var me=normUnit(STATE.me.unit), mine=CERT.rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
       if(!mine.length){ body.innerHTML='<div class="empty">No certifications on file for your unit yet.</div>'; return; }
-      body.innerHTML=certLegend()+'<div class="cert-list">'+memberCertsHTML(mine[0])+'</div>'+
+      var mylist=memberCertsHTML(mine[0]);
+      body.innerHTML=certLegend()+(mylist?'<div class="cert-list">'+mylist+'</div>':'<div class="empty">No certifications are required for you.</div>')+
         '<button class="cert-upload-all" id="certUploadAll">Upload another document</button>';
       return;
     }
@@ -3313,7 +3318,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -3339,7 +3344,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 6.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
