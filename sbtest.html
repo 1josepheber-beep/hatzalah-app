@@ -611,6 +611,16 @@
   .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
   .adm-cert .pill.exp{background:#fdecec;color:#8a1f1f}
   .adm-cert .pill.na{background:#eef2f7;color:var(--mut)}
+  .adm-secbar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
+  .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+  .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-gen{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+  .adm-help{background:#eef4fc;border:1px solid #cfe0f5;color:#1d4a86;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:15px}
+  .adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .adm-f.wide{grid-column:1 / -1}
+  .adm-del{margin-left:auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:800;cursor:pointer;text-transform:none;letter-spacing:0}
+  .adm-addrow{width:100%;border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:4px}
+  @media (max-width:820px){ .adm-grid{grid-template-columns:1fr} }
   .adm-nabtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
   .adm-nabtn:hover{border-color:#c3cede}
   .adm-modal{position:fixed;inset:0;z-index:80;background:rgba(9,26,52,.5);display:flex;align-items:center;justify-content:center;padding:18px}
@@ -1303,8 +1313,9 @@
     <button class="back" id="admBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
     <h2 id="admTitle">Members</h2>
   </div>
+  <div class="adm-secbar" id="admSecs"></div>
   <div class="adm-wrap">
-    <div class="adm-left">
+    <div class="adm-left" id="admMembersPane">
       <div class="adm-srch"><input id="admSearch" type="search" placeholder="Search name, unit, email" enterkeyhint="search"></div>
       <div class="adm-chips" id="admChips"></div>
       <div class="adm-list" id="admList"></div>
@@ -1313,6 +1324,7 @@
     <div class="adm-right" id="admRight">
       <div class="adm-ph">Select a member to view and edit their record.</div>
     </div>
+    <div class="adm-gen" id="admGenPane" style="display:none"></div>
   </div>
 </div>
 
@@ -1630,7 +1642,7 @@
           for(var i=0;i<rows.length;i++){
             var row=rows[i],o={},any=false;
             for(var k in row){ if(k==="id") continue; var v=clean(row[k]); o[colmap[k]||k]=v; if(v) any=true; }
-            if(any) out.push(o);
+            if(any){ try{ Object.defineProperty(o,"__id",{value:row.id,enumerable:false}); }catch(e){ o.__id=row.id; } out.push(o); }
           }
           if(rows.length===1000){ page++; return fetchPage(); }
           return out;
@@ -2182,6 +2194,7 @@
     if(!isAdmin()){ toast("Admins only."); return; }
     if(!$("admScreen").classList.contains("open")) navOpen(closeAdmin);
     $("admScreen").classList.add("open");
+    admPaintSecs();
     if(!ADM.loaded){
       $("admList").innerHTML='<div class="adm-empty">Loading\u2026</div>';
       Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
@@ -2423,6 +2436,153 @@
     if(tb){ ADM.tab=tb.getAttribute("data-tab"); admRenderDetail(); return; }
     if(e.target.id==="admSave"){ admSave(); return; }
     if(e.target.id==="admDeact"){ admDeactivate(); return; }
+  });
+
+  // ---------- Admin Portal: other sections ----------
+  var ADM2={sec:"members",data:{},loaded:{},dirty:false};
+  var ADM_SECS=[
+    {k:"members",label:"Members"},
+    {k:"settings",label:"Settings"},
+    {k:"tiles",label:"Tiles"},
+    {k:"apartments",label:"Apartments"},
+    {k:"cpr",label:"CPR Buttons"},
+    {k:"uploads",label:"Upload Types"},
+    {k:"guests",label:"Guest Codes"}
+  ];
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests"};
+  // column spec per section: [header, label, kind, opts]
+  var ADM_COLS={
+    settings:[["Setting","Setting","ro"],["Value","Value","text"]],
+    tiles:[["Order","Order","num"],["Label","Label","text"],["Type","Type","text"],["Target","Target","text"],
+           ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
+    apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
+    cpr:[["Order","Order","num"],["Label","Label","text"],["Action","Action","text"],["Color","Color","text"],["Active","Active","bool"]],
+    uploads:[["Document Type","Document type","text"]],
+    guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]]
+  };
+  function admSecSwitch(k){
+    ADM2.sec=k; ADM.sel=null; document.body.classList.remove("admdetail");
+    $("admTitle").textContent = (ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label || "Admin";
+    admPaintSecs();
+    if(k==="members"){ $("admMembersPane").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
+    $("admMembersPane").style.display="none"; $("admGenPane").style.display="";
+    admLoadSec(k);
+  }
+  function admPaintSecs(){
+    $("admSecs").innerHTML=ADM_SECS.map(function(s){
+      return '<button class="adm-sbtn'+(ADM2.sec===s.k?" on":"")+'" data-sec="'+s.k+'">'+s.label+'</button>';
+    }).join("");
+  }
+  function admLoadSec(k){
+    var tab=ADM_TABLES[k];
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
+    if(ADM2.loaded[k]){ admRenderSec(k); return; }
+    fetchTab(tab).then(function(rows){ ADM2.data[k]=rows||[]; ADM2.loaded[k]=true; admRenderSec(k); })
+      .catch(function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn\u2019t load.</div>'; });
+  }
+  function admBoolOn(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="x"||v==="yes"||v==="true"; }
+  function admRenderSec(k){
+    var cols=ADM_COLS[k], rows=ADM2.data[k]||[];
+    if(k==="tiles"||k==="cpr") rows=rows.slice().sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
+    var help={
+      settings:"These control how the app behaves for everyone. Change a value and save \u2014 it applies the next time members open the app.",
+      tiles:"The buttons on the home screen. Order controls position; Active shows or hides it; Admin only limits it to admins.",
+      apartments:"Apartment complexes in the map finder. File must match the map image name exactly.",
+      cpr:"The buttons shown during a CPR code.",
+      uploads:"The document types members can pick when uploading a file.",
+      guests:"Passcodes that let someone try the app in demo mode."
+    }[k]||"";
+    var head='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>'+esc((ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label)+'</h3>'+
+      '<div class="u">'+rows.length+' row'+(rows.length===1?"":"s")+'</div></div></div>'+
+      (help?'<div class="adm-help">'+help+'</div>':'');
+    var body=rows.map(function(r,i){
+      var title = k==="settings" ? r_(r,"Setting") : (r_(r,"Label")||r_(r,"Name")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
+      var fields=cols.map(function(c){
+        var header=c[0], label=c[1], kind=c[2], v=r_(r,header);
+        var id="ag_"+k+"_"+i+"_"+header.replace(/[^A-Za-z0-9]/g,"");
+        if(kind==="ro") return '<label class="adm-f">'+label+'<input value="'+esc(v)+'" disabled style="background:#f4f6fa;color:var(--mut)"></label>';
+        if(kind==="bool") return '<div class="adm-tg" style="padding:8px 0"><div class="tl"><div class="tn" style="font-size:13.5px">'+label+'</div></div>'+
+          '<button class="adm-sw'+(admBoolOn(v)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
+        var t = kind==="num" ? "number" : "text";
+        var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image");
+        return '<label class="adm-f'+(wide?" wide":"")+'">'+label+'<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>';
+      }).join("");
+      return '<div class="adm-sec adm-gsec" data-i="'+i+'"><div class="adm-sech">'+esc(title)+
+        '<button class="adm-del" data-del="'+i+'" title="Delete">Delete</button></div>'+
+        '<div class="adm-grid">'+fields+'</div></div>';
+    }).join("");
+    var addable = (k!=="settings");
+    var foot='<div class="adm-save"><button class="pri" id="admGenSave">Save all changes</button></div><div class="adm-msg" id="admGenMsg"></div>'+
+      (addable?'<button class="adm-addrow" id="admGenAdd">+ Add row</button>':'')+'</div>';
+    $("admGenPane").innerHTML=head+(rows.length?body:'<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>')+foot;
+    ADM2.view=rows;
+  }
+  function admGenSave(){
+    var k=ADM2.sec, cols=ADM_COLS[k], rows=ADM2.view||[], tbl=SB_TAB2TBL[ADM_TABLES[k]];
+    var msg=$("admGenMsg"), btn=$("admGenSave");
+    btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
+    var jobs=[];
+    Array.prototype.forEach.call(document.querySelectorAll(".adm-gsec"),function(sec){
+      var i=parseInt(sec.getAttribute("data-i"),10), r=rows[i]; if(!r) return;
+      var upd={}, any=false;
+      Array.prototype.forEach.call(sec.querySelectorAll("[data-h]"),function(el){
+        var header=el.getAttribute("data-h"), db=sbCol(tbl,header); if(!db) return;
+        var v = el.classList.contains("adm-sw") ? (el.classList.contains("on")?"X":"") : String(el.value||"").trim();
+        if(String(r_(r,header))!==v){ upd[db]=v; r[header]=v; any=true; }
+      });
+      if(any){
+        var idv=r.__id;
+        if(idv) jobs.push(sbWrite("PATCH",tbl+"?id=eq."+idv,upd));
+        else {
+          var key=cols[0][0], kv=r_(r,key), kdb=sbCol(tbl,key);
+          jobs.push(sbWrite("PATCH",tbl+"?"+kdb+"=eq."+encodeURIComponent(kv),upd));
+        }
+      }
+    });
+    if(!jobs.length){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg"; msg.textContent="No changes to save."; return; }
+    Promise.all(jobs).then(function(res){
+      btn.disabled=false; btn.textContent="Save all changes";
+      var bad=res.filter(function(x){return !x.ok;}).length;
+      if(bad){ msg.className="adm-msg err"; msg.textContent="Some changes didn\u2019t save. Try again."; }
+      else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded[k]=false; STATE.settingsDirty=true;
+        setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
+    }).catch(function(){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+  }
+  function admGenAdd(){
+    var k=ADM2.sec, tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
+    var blank={};
+    cols.forEach(function(c){ blank[sbCol(tbl,c[0])]= (c[2]==="bool"?"X":""); });
+    if(k==="tiles"||k==="cpr"){ var mx=0; (ADM2.data[k]||[]).forEach(function(r){ mx=Math.max(mx,parseFloat(r_(r,"Order"))||0); }); blank[sbCol(tbl,"Order")]=String(mx+1); }
+    sbWrite("POST",tbl,blank).then(function(res){
+      if(!res.ok){ toast("Couldn\u2019t add row."); return; }
+      ADM2.loaded[k]=false; toast("Row added."); admLoadSec(k);
+    }).catch(function(){ toast("Couldn\u2019t add \u2014 check your connection."); });
+  }
+  function admGenDelete(i){
+    var k=ADM2.sec, rows=ADM2.view||[], r=rows[i]; if(!r) return;
+    var tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
+    var key=cols[0][0], kv=r_(r,key), kdb=sbCol(tbl,key);
+    var label=r_(r,"Label")||r_(r,"Name")||kv||"this row";
+    var btn=document.querySelector('.adm-del[data-del="'+i+'"]');
+    if(btn && btn.getAttribute("data-armed")!=="1"){
+      btn.setAttribute("data-armed","1"); btn.textContent="Tap again";
+      setTimeout(function(){ var b=document.querySelector('.adm-del[data-del="'+i+'"]'); if(b){ b.setAttribute("data-armed","0"); b.textContent="Delete"; } },4000);
+      return;
+    }
+    var q = r.__id ? ("id=eq."+r.__id) : (kdb+"=eq."+encodeURIComponent(kv));
+    sbWrite("DELETE",tbl+"?"+q).then(function(res){
+      if(!res.ok){ toast("Couldn\u2019t delete."); return; }
+      ADM2.loaded[k]=false; toast("Deleted."); admLoadSec(k);
+    }).catch(function(){ toast("Couldn\u2019t delete \u2014 check your connection."); });
+  }
+  $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
+  $("admGenPane").addEventListener("click",function(e){
+    var sw=e.target.closest?e.target.closest("[data-sw]"):null;
+    if(sw){ sw.classList.toggle("on"); return; }
+    var del=e.target.closest?e.target.closest(".adm-del"):null;
+    if(del){ admGenDelete(parseInt(del.getAttribute("data-del"),10)); return; }
+    if(e.target.id==="admGenSave"){ admGenSave(); return; }
+    if(e.target.id==="admGenAdd"){ admGenAdd(); return; }
   });
 
   // ---------- Equipment Finder (cabinet look-up + admin editor) ----------
