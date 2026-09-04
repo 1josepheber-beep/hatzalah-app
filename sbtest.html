@@ -3763,20 +3763,16 @@
   function cprLogText(){ return CPR.log.slice().reverse().map(function(e){ return cprFmt(e.t)+"  "+e.label+"  ("+e.clock+")"; }).join("\n"); }
   function saveCodeLog(){
     if(demoNo()){ cprSaveDone(true); return; }
-    var url=getSetting("Code Log URL","")||getSetting("Profile Update URL","");
-    if(!url){ toast("Saving isn\u2019t set up yet. Tell your coordinator."); return; }
     if(!CPR.log.length){ toast("Nothing to save yet."); return; }
     var mode=$("cprTrain").checked?"Training":"Real";
-    var payload={ kind:"codelog", unit:(STATE.me&&STATE.me.unit)||"",
+    var row={ saved_at:nowStamp(), unit:(STATE.me&&STATE.me.unit)||"",
       name:((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()),
-      email:(G.email||""),
-      mode:mode, duration:cprFmt(CPR.total), shocks:CPR.shocks, epis:CPR.epis, cycles:CPR.cycNum,
+      mode:mode, duration:cprFmt(CPR.total), shocks:String(CPR.shocks), epis:String(CPR.epis), cycles:String(CPR.cycNum),
       started:(CPR.log.length?CPR.log[CPR.log.length-1].clock:""), log:cprLogText() };
     var btn=$("cprSave"); btn.disabled=true; btn.textContent="Saving\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){ return r.text(); })
-      .then(function(t){ var ok=true; try{ ok=JSON.parse(t).ok!==false; }catch(e){} cprSaveDone(ok); })
-      .catch(function(){ cprSaveDone(true); });
+    sbWrite("POST","code_logs",row)
+      .then(function(r){ cprSaveDone(r.ok); })
+      .catch(function(){ cprSaveDone(false); });
   }
   function cprSaveDone(ok){
     var btn=$("cprSave"); btn.disabled=false; btn.textContent="Save code log";
@@ -4684,12 +4680,20 @@
   }
   function schPost(payload,after){
     if(demoNo()){ availBusy(false); if($("availToggle"))$("availToggle").disabled=false; return; }
-    var url=getSetting("Profile Update URL","");
-    if(!url){ toast("Saving isn\u2019t set up yet."); availBusy(false); $("availToggle").disabled=false; return; }
     availBusy(true);
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok)throw"f"; if(after)after(); })
-      .catch(function(){ availBusy(false); $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); });
+    function fail(){ availBusy(false); $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); }
+    var req;
+    if(payload.action==="del"){
+      req=sbWrite("DELETE","schedule?sched_id=eq."+encodeURIComponent(payload.id));
+    } else if(payload.action==="setloc"){
+      req=sbWrite("PATCH","schedule?sched_id=eq."+encodeURIComponent(payload.id),
+        { lat:String(payload.lat==null?"":payload.lat), lng:String(payload.lng==null?"":payload.lng), loc_source:payload.locSource||"" });
+    } else {
+      req=sbWrite("POST","schedule",{ sched_id:payload.id||"", unit:payload.unit||"", start_at:payload.start||"", end_at:payload.end||"",
+        label:payload.label||"", lat:String(payload.lat==null?"":payload.lat), lng:String(payload.lng==null?"":payload.lng),
+        loc_source:payload.locSource||"", created:nowStamp() });
+    }
+    req.then(function(r){ if(!r.ok) throw "f"; if(after) after(); }).catch(fail);
   }
   function addSlot(s,e,src,lat,lng,msg){
     var id="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
