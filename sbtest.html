@@ -1589,6 +1589,54 @@
   var GUEST_URL="https://script.google.com/macros/s/AKfycbz1whkfWWlbj5Q8WelSB57s2cToyiJ35i0xxwr5iw3OGGZlttRBohDsVCkk8oJGyzH6/exec";
   var ORG_DOMAIN="houstonhatzalah.org";
   var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null,verified:false};
+  // ---------- Supabase Auth (per-person identity) ----------
+  var SBA={token:"",refresh:"",exp:0,email:"",sub:""};
+  var SBA_KEY="hoh_sbauth_v1";
+  function sbaSave(){ try{ localStorage.setItem(SBA_KEY,JSON.stringify(SBA)); }catch(e){} }
+  function sbaClear(){ SBA={token:"",refresh:"",exp:0,email:"",sub:""}; try{ localStorage.removeItem(SBA_KEY); }catch(e){} }
+  function sbaLoad(){ try{ var o=JSON.parse(localStorage.getItem(SBA_KEY)||"null"); if(o&&o.token){ SBA=o; return true; } }catch(e){} return false; }
+  function sbaValid(){ return !!(SBA.token && Date.now() < (SBA.exp-60000)); }
+  // Every Supabase call uses the signed-in person's token when we have one.
+  function sbAuthHeaders(extra){
+    var h={ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON) };
+    if(extra) for(var k in extra) h[k]=extra[k];
+    return h;
+  }
+  function sbaRefresh(){
+    if(!SBA.refresh) return Promise.reject("no-refresh");
+    return fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({refresh_token:SBA.refresh})
+    }).then(function(r){ if(!r.ok) throw "refresh-failed"; return r.json(); })
+      .then(function(j){
+        if(!j.access_token) throw "refresh-failed";
+        SBA.token=j.access_token; SBA.refresh=j.refresh_token||SBA.refresh;
+        SBA.exp=Date.now()+((j.expires_in||3600)*1000);
+        if(j.user&&j.user.email) SBA.email=j.user.email;
+        if(j.user&&j.user.id) SBA.sub=j.user.id;
+        sbaSave(); return true;
+      });
+  }
+  function sbaEnsure(){
+    if(sbaValid()) return Promise.resolve(true);
+    return sbaRefresh().catch(function(){ return false; });
+  }
+  // Exchange the Google credential (ID token) for a Supabase session.
+  function sbaSignInWithGoogle(idToken){
+    return fetch(SB_URL+"/auth/v1/token?grant_type=id_token",{
+      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({provider:"google", id_token:idToken})
+    }).then(function(r){ return r.json().then(function(j){ if(!r.ok) throw (j.error_description||j.msg||"auth-failed"); return j; }); })
+      .then(function(j){
+        if(!j.access_token) throw "auth-failed";
+        SBA.token=j.access_token; SBA.refresh=j.refresh_token||"";
+        SBA.exp=Date.now()+((j.expires_in||3600)*1000);
+        SBA.email=(j.user&&j.user.email)||""; SBA.sub=(j.user&&j.user.id)||"";
+        sbaSave();
+        return SBA.email;
+      });
+  }
+
   function gInit(){
     if(G.client||!(window.google&&google.accounts&&google.accounts.oauth2)) return;
     G.client=google.accounts.oauth2.initTokenClient({
@@ -1601,6 +1649,24 @@
         else if(p){ p.reject(resp&&resp.error||"no-token"); }
       },
       error_callback:function(err){ var p=G.pending; G.pending=null; if(p)p.reject((err&&err.type)||"error"); }
+    });
+  }
+  // Google ID token (identity) — separate from the access token. Supabase needs this.
+  function gIdToken(){
+    return new Promise(function(resolve,reject){
+      if(!(window.google&&google.accounts&&google.accounts.id)){ reject("not-ready"); return; }
+      try{
+        google.accounts.id.initialize({
+          client_id:GIS_CLIENT_ID,
+          hosted_domain:ORG_DOMAIN,
+          auto_select:false,
+          cancel_on_tap_outside:true,
+          callback:function(resp){ if(resp&&resp.credential) resolve(resp.credential); else reject("no-credential"); }
+        });
+        google.accounts.id.prompt(function(n){
+          if(n && (n.isNotDisplayed&&n.isNotDisplayed() || n.isSkippedMoment&&n.isSkippedMoment())) reject("prompt-blocked");
+        });
+      }catch(e){ reject(e); }
     });
   }
   var GTOK_KEY="hoh_gtok_v1_sb";
@@ -1655,7 +1721,7 @@
     }
     var out=[],page=0;
     function fetchPage(){
-      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),{headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON},cache:"no-store"})
+      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),{headers:sbAuthHeaders(),cache:"no-store"})
         .then(function(r){ return r.json(); })
         .then(function(rows){
           if(!Array.isArray(rows)) return out;
@@ -1937,7 +2003,7 @@
   function rxLookupOn(){ var s=STATE.settings||{}; for(var k in s){ if(String(k).trim().toLowerCase()==="rx lookup"){ return !/^(off|no|false|0|disabled)$/i.test(String(s[k]).trim()); } } return true; }
   function applyRxSetting(){ document.body.classList.toggle("rxoff", !rxLookupOn()); }
   function sbWrite(method, path, body){
-    var opts={method:method, headers:{apikey:SB_ANON, Authorization:"Bearer "+SB_ANON, "Content-Type":"application/json", Prefer:"return=minimal"}};
+    var opts={method:method, headers:sbAuthHeaders({"Content-Type":"application/json", Prefer:"return=minimal"})};
     if(body!==undefined) opts.body=JSON.stringify(body);
     return fetch(SB_URL+"/rest/v1/"+path, opts);
   }
@@ -3832,7 +3898,7 @@
     if(TB.view==="book") tbRenderBook(TB.unit); else tbRouteView();
     var row={ unit:unit, task_id:id, self_marked:p["Self Marked"]||"", self_date:p["Self Date"]||"",
       confirmed:p["Confirmed"]||"", confirmed_by:p["Confirmed By"]||"", confirmed_date:p["Confirmed Date"]||"", count:String(p["Count"]||"") };
-    fetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON}})
+    fetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:sbAuthHeaders()})
       .then(function(r){ return r.json(); })
       .then(function(existing){
         if(Array.isArray(existing) && existing.length){
@@ -4457,6 +4523,7 @@
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
   function doSignout(){
+    try{ sbaClear(); }catch(e){}
     if(confirm("Sign out on this device? You'll need to sign in with your Google account to get back in.")){
       try{localStorage.setItem("hoh_signedout_sb","1");}catch(e){}
       localStorage.removeItem(LS);localStorage.removeItem("hoh_demo_sb");bioClear();localStorage.removeItem("hoh_unlock_until_sb");clearGTok();location.reload();}
@@ -4515,6 +4582,7 @@
     var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
     if(saved && (saved.email||saved.pw)){
       STATE.me=saved;
+      try{ sbaEnsure(); }catch(e){}
       var b=bioGet();
       if(b&&b.enabled){ if(isUnlocked()){ enter(); } else { showBioGate(); } } else { enter(); }
       return;
@@ -4541,6 +4609,9 @@
     try{localStorage.removeItem("hoh_signedout_sb");}catch(e){}
     $("gErr").textContent=""; $("gLoad").classList.remove("hidden"); $("gBtn").disabled=true;
     gRequest({}).then(function(){ return gVerify(); }).then(function(){
+      // Establish the Supabase session too, so the database knows who this is.
+      return sbaEstablish().catch(function(e){ try{console.warn("Supabase auth:",e);}catch(_){} return null; });
+    }).then(function(){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false; startAfterGoogle();
     }).catch(function(err){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false;
@@ -4555,6 +4626,14 @@
   $("guestBtn").addEventListener("click",function(){ guestLogin($("guestCode").value); });
   $("guestCode").addEventListener("keydown",function(e){ if(e.key==="Enter") guestLogin($("guestCode").value); });
   $("demoExit").addEventListener("click",exitDemo);
+  function sbaEstablish(){
+    if(sbaValid()) return Promise.resolve(SBA.email);
+    if(SBA.refresh){ return sbaRefresh().then(function(){ return SBA.email; }).catch(function(){ return sbaFromGoogle(); }); }
+    return sbaFromGoogle();
+  }
+  function sbaFromGoogle(){
+    return gIdToken().then(function(idt){ return sbaSignInWithGoogle(idt); });
+  }
   function gTrySilent(){
     $("gLoad").classList.remove("hidden");
     gRequest({prompt:""}).then(function(){ return gVerify(); })
@@ -4571,7 +4650,7 @@
   function gRenewQuiet(){
     try{ gRequest({prompt:""}).then(function(){ return gVerify(); }).then(function(){ boot().catch(function(){}); }).catch(function(){}); }catch(e){}
   }
-  function googleBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
+  function googleBoot(){ try{ sbaLoad(); }catch(e){} if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
   (function boot0(){
     var hasDemo=false; try{ hasDemo=!!localStorage.getItem("hoh_demo_sb"); }catch(e){}
     if(hasDemo){
