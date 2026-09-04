@@ -1680,12 +1680,7 @@
       try{ G.client.requestAccessToken(opts||{}); }catch(e){ G.pending=null; reject(e); }
     });
   }
-  function gToken(force){
-    if(!force && G.token && Date.now()<G.exp) return Promise.resolve(G.token);
-    if(G.inflight) return G.inflight;
-    G.inflight=gRequest({prompt:""}).then(function(t){ G.inflight=null; return t; },function(e){ G.inflight=null; throw e; });
-    return G.inflight;
-  }
+  function gToken(force){ /* legacy Sheets token - unused; data comes from Supabase */ return Promise.reject("legacy"); }
   function gVerify(){
     return fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+G.token}})
       .then(function(r){ return r.json(); })
@@ -4677,12 +4672,7 @@
       return true;
     }catch(e){ return false; }
   }
-  function gTrySilent(){
-    $("gLoad").classList.remove("hidden");
-    gRequest({prompt:""}).then(function(){ return gVerify(); })
-      .then(function(){ $("gLoad").classList.add("hidden"); startAfterGoogle(); })
-      .catch(function(){ $("gLoad").classList.add("hidden"); });
-  }
+  function gTrySilent(){ /* legacy Google popup - no longer used; Supabase handles sign-in */ }
   function checkDemoEnabled(){
     fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:"__probe__"})})
       .then(function(r){return r.text();}).then(function(t){
@@ -4691,9 +4681,27 @@
       }).catch(function(){});
   }
   function gRenewQuiet(){
-    try{ gRequest({prompt:""}).then(function(){ return gVerify(); }).then(function(){ boot().catch(function(){}); }).catch(function(){}); }catch(e){}
+    try{ sbaEnsure().then(function(ok){ if(ok) boot().catch(function(){}); }).catch(function(){}); }catch(e){}
   }
-  function googleBoot(){ try{ sbaLoad(); }catch(e){} try{ if(sbaCatchRedirect()){ setTimeout(afterSbaLogin,50); return; } }catch(e){} if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
+  function googleBoot(){
+    try{ sbaLoad(); }catch(e){}
+    try{ if(sbaCatchRedirect()){ setTimeout(afterSbaLogin,50); return; } }catch(e){}
+    var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){}
+    if(out) return;
+    var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
+    if(saved && saved.email){
+      // Known member on this device: go straight in, and quietly refresh the Supabase session.
+      try{ sbaEnsure(); }catch(e){}
+      startAfterGoogle(); return;
+    }
+    if(sbaValid() || SBA.refresh){
+      // We have a Supabase session but don't know who they are yet.
+      sbaEnsure().then(function(){
+        if(SBA.email){ afterSbaLogin(); }
+      }).catch(function(){});
+    }
+    // Otherwise: leave the sign-in screen up. No popups.
+  }
   (function boot0(){
     var hasDemo=false; try{ hasDemo=!!localStorage.getItem("hoh_demo_sb"); }catch(e){}
     if(hasDemo){
