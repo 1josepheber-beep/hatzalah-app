@@ -541,6 +541,87 @@
   .prof-other:focus{outline:none;border-color:var(--navy)}
   .prof-sec{font-weight:800;color:var(--navy);font-size:14px;margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}
   .prof-sec svg{width:17px;height:17px;stroke:var(--navy);fill:none;stroke-width:2}
+  /* ---------- Admin Portal ---------- */
+  #admScreen .adm-wrap{flex:1;min-height:0}
+  .adm-wrap{display:flex;height:100%;min-height:0}
+  .adm-left{width:340px;flex:0 0 auto;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#f7f9fc;min-height:0}
+  .adm-right{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+  .adm-srch{padding:11px 12px;border-bottom:1px solid var(--line);background:#fff}
+  .adm-srch input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit}
+  .adm-srch input:focus{outline:none;border-color:var(--navy)}
+  .adm-chips{display:flex;gap:6px;padding:9px 12px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .adm-chip{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:5px 11px;font-weight:800;font-size:11.5px;cursor:pointer}
+  .adm-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-list{flex:1;overflow:auto;padding:8px;min-height:0}
+  .adm-row{background:#fff;border:1px solid var(--line);border-left:3px solid #7a8699;border-radius:11px;padding:10px 11px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:9px}
+  .adm-row:hover{border-color:#c3cede}
+  .adm-row.sel{border-color:var(--navy);box-shadow:0 0 0 2px rgba(20,61,117,.12)}
+  .adm-row.als{border-left-color:#2f9e44} .adm-row.emt{border-left-color:#2a6fb5} .adm-row.medic{border-left-color:#8a5cc7}
+  .adm-row.inact{opacity:.55;border-left-color:#b9c0cc}
+  .adm-row .ri{flex:1;min-width:0}
+  .adm-nm{font-weight:800;font-size:14.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adm-sub{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .adm-tag{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#eef2f7;color:var(--mut)}
+  .adm-tag.lvl{background:#e7f0ff;color:var(--navy)}
+  .adm-tag.adm{background:#fff3d6;color:#8a6d00}
+  .adm-tag.off{background:#fdecec;color:#8a1f1f}
+  .adm-empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
+  .adm-addbtn{margin:0;padding:11px 12px;border-top:1px solid var(--line);background:#fff}
+  .adm-addbtn button{width:100%;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
+  .adm-body{padding:16px;max-width:760px;margin:0 auto}
+  .adm-ph{display:flex;align-items:center;justify-content:center;height:100%;color:var(--mut);font-size:14px;padding:30px;text-align:center}
+  .adm-mh{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+  .adm-mh .t{flex:1;min-width:0}
+  .adm-mh h3{margin:0;font-size:21px;font-weight:800;letter-spacing:-.01em}
+  .adm-mh .u{font-size:13px;color:var(--mut);font-weight:700;margin-top:3px}
+  .adm-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .adm-tab{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer}
+  .adm-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-sec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:13px;box-shadow:0 4px 14px rgba(16,38,74,.04)}
+  .adm-sech{font-weight:800;color:var(--navy);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:13px;display:flex;align-items:center;gap:8px}
+  .adm-sech .bdg{margin-left:auto;font-size:10px;font-weight:700;background:#eef2f7;color:var(--mut);border-radius:999px;padding:2px 9px;text-transform:none;letter-spacing:0}
+  .adm-f{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:12px}
+  .adm-f input,.adm-f select,.adm-f textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--ink);font-weight:400;background:#fff;font-family:inherit}
+  .adm-f input:focus,.adm-f select:focus,.adm-f textarea:focus{outline:none;border-color:var(--navy)}
+  .adm-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .adm-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+  .adm-tg{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .adm-tg:last-child{border-bottom:0}
+  .adm-tg .tl{flex:1;min-width:0}
+  .adm-tg .tn{font-weight:700;font-size:14.5px}
+  .adm-tg .td{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.35}
+  .adm-sw{width:46px;height:27px;border-radius:999px;background:#d4dae3;position:relative;flex:0 0 auto;cursor:pointer;transition:background .15s;border:0}
+  .adm-sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+  .adm-sw.on{background:#1e9e57} .adm-sw.on::after{left:22px}
+  .adm-sw.gold.on{background:var(--gold)}
+  .adm-save{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(238,241,245,0),var(--bg) 30%);padding:14px 0 4px;display:flex;gap:10px}
+  .adm-save button{flex:1;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
+  .adm-save .pri{background:var(--navy);color:#fff}
+  .adm-save .pri:disabled{opacity:.6}
+  .adm-danger{background:#fff;color:var(--red);border:1px solid #f3b6b6;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:6px}
+  .adm-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
+  .adm-cert{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .adm-cert:last-child{border-bottom:0}
+  .adm-cert .cn{flex:1;min-width:0;font-weight:700;font-size:14px}
+  .adm-cert .cd{font-size:12.5px;color:var(--mut);margin-top:2px;font-weight:400}
+  .adm-cert input{width:150px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px;font-family:inherit;flex:0 0 auto}
+  .adm-cert input:focus{outline:none;border-color:var(--navy)}
+  .adm-cert .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;flex:0 0 auto}
+  .adm-cert .pill.ok{background:#e4f6e9;color:#1e7a3d}
+  .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
+  .adm-cert .pill.exp{background:#fdecec;color:#8a1f1f}
+  .adm-cert .pill.na{background:#eef2f7;color:var(--mut)}
+  .adm-msg{font-size:13px;font-weight:700;text-align:center;padding:9px;min-height:16px}
+  .adm-msg.ok{color:#1e7a3d} .adm-msg.err{color:var(--red)}
+  @media (max-width:820px){
+    .adm-left{width:100%;border-right:0}
+    .adm-right{display:none}
+    body.admdetail .adm-left{display:none}
+    body.admdetail .adm-right{display:block}
+    .adm-2,.adm-3{grid-template-columns:1fr}
+    .adm-body{padding:12px}
+  }
+
   .dir-extra{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
   .dir-extra .esec{margin-bottom:13px}
   .dir-extra .esec:last-child{margin-bottom:0}
@@ -1188,6 +1269,26 @@
     <button class="sheet-item" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Call Notes</button>
     <button class="sheet-item" id="qTextHome"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text Home</button>
     <button class="sheet-cancel" id="qCancel">Cancel</button>
+  </div>
+</div>
+
+
+<!-- ADMIN PORTAL -->
+<div class="screen" id="admScreen">
+  <div class="scr-head">
+    <button class="back" id="admBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2 id="admTitle">Members</h2>
+  </div>
+  <div class="adm-wrap">
+    <div class="adm-left">
+      <div class="adm-srch"><input id="admSearch" type="search" placeholder="Search name, unit, email" enterkeyhint="search"></div>
+      <div class="adm-chips" id="admChips"></div>
+      <div class="adm-list" id="admList"></div>
+      <div class="adm-addbtn"><button id="admAdd">+ Add member</button></div>
+    </div>
+    <div class="adm-right" id="admRight">
+      <div class="adm-ph">Select a member to view and edit their record.</div>
+    </div>
   </div>
 </div>
 
@@ -2022,9 +2123,230 @@
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
     if(type==="medication"||type==="meds"||type==="drug"||type==="rx"){ openMeds(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
+    if(type==="admin"||type==="adminportal"||type==="manage"){ openAdmin(); return; }
     if(type==="directory"||type==="members"||type==="contacts"){ openDirectory(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
+
+  // ---------- Admin Portal ----------
+  var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false};
+  function admLvClass(l){ l=String(l||"").toLowerCase(); return l==="als"?"als":((l==="emt"||l==="bls")?"emt":(l.indexOf("medic")>=0?"medic":"")); }
+  function admIsActive(r){ var a=String(r_(r,"Active")||"").trim().toLowerCase(); return a===""||a==="x"||a==="yes"||a==="true"; }
+  function admName(r){ var l=(r_(r,"Last Name")||"").trim(), f=(r_(r,"First Name")||"").trim(); return (l?(l+(f?", "+f:"")):f)||r_(r,"Unit")||"(no name)"; }
+  function openAdmin(){
+    if(!isAdmin()){ toast("Admins only."); return; }
+    if(!$("admScreen").classList.contains("open")) navOpen(closeAdmin);
+    $("admScreen").classList.add("open");
+    if(!ADM.loaded){
+      $("admList").innerHTML='<div class="adm-empty">Loading\u2026</div>';
+      Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
+        ADM.rows=res[0]||[]; ADM.certs=res[1]||[];
+        try{ if((!CERT.certCols||!CERT.certCols.length) && ADM.certs.length) CERT.certCols=computeCertCols(ADM.certs[0]); }catch(e){}
+        ADM.loaded=true; admRender();
+      }).catch(function(){ $("admList").innerHTML='<div class="adm-empty">Couldn\u2019t load members.</div>'; });
+    } else admRender();
+  }
+  function closeAdmin(){ $("admScreen").classList.remove("open"); document.body.classList.remove("admdetail"); }
+  function admRender(){
+    var q=ADM.q.toLowerCase().trim();
+    var list=ADM.rows.filter(function(r){
+      if(!r_(r,"Unit") && !r_(r,"Last Name")) return false;
+      var act=admIsActive(r);
+      if(ADM.filter==="active" && !act) return false;
+      if(ADM.filter==="inactive" && act) return false;
+      if(ADM.filter==="admins" && !isX(r["Admin"])) return false;
+      if(q){ var hay=((r_(r,"First Name")||"")+" "+(r_(r,"Last Name")||"")+" "+(r_(r,"Unit")||"")+" "+(r_(r,"Email")||"")).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      return true;
+    }).sort(function(a,b){ return admName(a).localeCompare(admName(b)); });
+    var nA=0,nI=0,nAd=0;
+    ADM.rows.forEach(function(r){ if(!r_(r,"Unit")&&!r_(r,"Last Name"))return; if(admIsActive(r))nA++; else nI++; if(isX(r["Admin"]))nAd++; });
+    $("admChips").innerHTML=[["active","Active ("+nA+")"],["inactive","Inactive ("+nI+")"],["admins","Admins ("+nAd+")"],["all","All"]]
+      .map(function(c){ return '<button class="adm-chip'+(ADM.filter===c[0]?" on":"")+'" data-f="'+c[0]+'">'+c[1]+'</button>'; }).join("");
+    $("admList").innerHTML = list.length ? list.map(function(r){
+      var u=r_(r,"Unit"), lv=r_(r,"Level"), ty=r_(r,"Type"), act=admIsActive(r);
+      var selk=ADM.sel && ADM.sel===u;
+      return '<div class="adm-row '+admLvClass(lv)+(act?"":" inact")+(selk?" sel":"")+'" data-u="'+esc(u)+'">'+
+        '<div class="ri"><div class="adm-nm">'+esc(admName(r))+'</div><div class="adm-sub"><span>'+esc(u||"")+'</span>'+
+        (lv?'<span class="adm-tag lvl">'+esc(lv)+'</span>':'')+
+        (ty?'<span class="adm-tag">'+esc(ty)+'</span>':'')+
+        (isX(r["Admin"])?'<span class="adm-tag adm">Admin</span>':'')+
+        (act?'':'<span class="adm-tag off">Inactive</span>')+
+        '</div></div><svg class="chev" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#b9c0cc;fill:none;stroke-width:2.5"><path d="M9 18l6-6-6-6"/></svg></div>';
+    }).join("") : '<div class="adm-empty">No members match.</div>';
+  }
+  function admRow(unit){ var k=normUnit(unit); for(var i=0;i<ADM.rows.length;i++){ if(normUnit(r_(ADM.rows[i],"Unit"))===k) return ADM.rows[i]; } return null; }
+  function admCertRow(unit){ var k=normUnit(unit); for(var i=0;i<ADM.certs.length;i++){ if(normUnit(r_(ADM.certs[i],"Unit #")||r_(ADM.certs[i],"Unit"))===k) return ADM.certs[i]; } return null; }
+  function admSelect(unit){
+    ADM.sel=unit; ADM.tab="info"; document.body.classList.add("admdetail");
+    admRender(); admRenderDetail();
+    try{ $("admRight").scrollTop=0; }catch(e){}
+  }
+  function admFld(id,label,val,ph,type){ return '<label class="adm-f">'+label+'<input id="'+id+'" type="'+(type||"text")+'" value="'+esc(val||"")+'" placeholder="'+esc(ph||"")+'"></label>'; }
+  function admSel(id,label,val,opts,allowOther){
+    val=String(val==null?"":val).trim();
+    var o='<option value="">\u2014</option>', found=false;
+    opts.forEach(function(s){ var m=(val.toLowerCase()===s.toLowerCase()); if(m)found=true; o+='<option'+(m?' selected':'')+'>'+esc(s)+'</option>'; });
+    if(val && !found) o+='<option selected>'+esc(val)+'</option>';
+    return '<label class="adm-f">'+label+'<select id="'+id+'">'+o+'</select></label>';
+  }
+  function admSw(id,name,desc,on,gold){
+    return '<div class="adm-tg"><div class="tl"><div class="tn">'+name+'</div><div class="td">'+desc+'</div></div>'+
+      '<button class="adm-sw'+(gold?" gold":"")+(on?" on":"")+'" id="'+id+'" data-sw="1"></button></div>';
+  }
+  function admRenderDetail(){
+    var r=admRow(ADM.sel); if(!r){ $("admRight").innerHTML='<div class="adm-ph">Select a member.</div>'; return; }
+    var t=ADM.tab;
+    var tabs='<div class="adm-tabs">'+[["info","Identity & role"],["contact","Contact & personal"],["certs","Certifications"]]
+      .map(function(x){ return '<button class="adm-tab'+(t===x[0]?" on":"")+'" data-tab="'+x[0]+'">'+x[1]+'</button>'; }).join("")+'</div>';
+    var head='<div class="adm-mh"><div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
+      (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div></div></div>';
+    var body="";
+    if(t==="info"){
+      body='<div class="adm-sec"><div class="adm-sech">Identity</div>'+
+        '<div class="adm-2">'+admFld("adF","First name",r_(r,"First Name"))+admFld("adL","Last name",r_(r,"Last Name"))+'</div>'+
+        '<div class="adm-2">'+admFld("adU","Unit",r_(r,"Unit"))+admFld("adDob","Date of birth",r_(r,"DOB"),"M/D/YYYY")+'</div>'+
+        admFld("adEm","Org email (used to sign in)",r_(r,"Email"),"name@houstonhatzalah.org","email")+
+        '<div class="adm-note">Must match their Google account exactly, or they won\u2019t be able to sign in.</div></div>'+
+        '<div class="adm-sec"><div class="adm-sech">Role &amp; access</div>'+
+        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),["Responder","Non Responder","Dispatcher"])+
+        admSel("adLv","Level",r_(r,"Level"),["EMT","ALS","Doctor","PR"])+'</div>'+
+        '<div class="adm-2">'+admSel("adSt","Status",r_(r,"Status"),["Primary","Backup","Observer","Dispatcher"])+
+        admFld("adFto","FTO for units",r_(r,"FTO"),"e.g. H-44, H-51")+'</div>'+
+        admSw("adAdmin","Administrator","Full access \u2014 sees everyone\u2019s private info and can edit members",isX(r["Admin"]),true)+
+        admSw("adDisp","Dispatcher","Sees the responder status board instead of the normal tiles",isX(r["Dispatcher"]))+
+        admSw("adAct","Active","Off = cannot sign in and hidden from the directory",admIsActive(r))+
+        '</div>';
+    } else if(t==="contact"){
+      body='<div class="adm-sec"><div class="adm-sech">Contact</div>'+
+        admFld("adPh","Phone",r_(r,"Phone"),"","tel")+
+        '<label class="adm-f">Address<textarea id="adAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(r,"Address"))+'</textarea></label>'+
+        admFld("adPe","Personal email (cert reminders)",r_(r,"Personal Email"),"","email")+'</div>'+
+        '<div class="adm-sec"><div class="adm-sech">Sizing<span class="bdg">member usually sets this</span></div>'+
+        '<div class="adm-3">'+admSel("adTs","T-Shirt",r_(r,"T-Shirt Size"),SZ_OPTS)+admSel("adDs","Dress shirt",r_(r,"Dress Shirt Size"),SZ_OPTS)+admSel("adPo","Polo",r_(r,"Polo Shirt Size"),SZ_OPTS)+'</div>'+
+        '<div class="adm-2">'+admSel("adHt","Hat",r_(r,"Hat Size"),SZ_OPTS)+admSel("adCt","Coat",r_(r,"Coat Size"),SZ_OPTS)+'</div></div>'+
+        '<div class="adm-sec"><div class="adm-sech">Emergency &amp; home<span class="bdg">member usually sets this</span></div>'+
+        admFld("adEc","Emergency contact",r_(r,"Emergency Contact"))+
+        '<div class="adm-2">'+admFld("adEcp","Their phone",r_(r,"Emergency Phone"),"","tel")+admSel("adEcr","Relationship",r_(r,"Emergency Relationship"),["Spouse","Friend","Parent","Sibling","Other"])+'</div>'+
+        '<div class="adm-2">'+admFld("adTh","Text home number",r_(r,"Text Home"),"","tel")+admSel("adThm","Send via",r_(r,"Text Home Method"),["sms","whatsapp"])+'</div></div>';
+    } else {
+      var cr=admCertRow(ADM.sel);
+      if(!cr){ body='<div class="adm-sec"><div class="adm-empty">No certification record for this unit yet.</div></div>'; }
+      else {
+        var rows="";
+        CERT.certCols.forEach(function(c){
+          var isna=(function(){ function na(v){v=String(v==null?"":v).trim().toLowerCase();return v==="na"||v==="n/a";}
+            return (c.singleKey&&na(cr[c.singleKey]))||(c.numKey&&na(cr[c.numKey]))||(c.expKey&&na(cr[c.expKey])); })();
+          var v=certExpVal(cr,c), st=certStatus(v);
+          var pill = isna ? '<span class="pill na">N/A</span>'
+            : (!v ? '' : '<span class="pill '+(st.k==="expired"?"exp":(st.k==="soon"?"soon":"ok"))+'">'+(st.k==="expired"?"Expired":(st.k==="soon"?"Soon":"OK"))+'</span>');
+          rows+='<div class="adm-cert"><div class="cn">'+esc(c.name)+(isna?'<div class="cd">Not required for this member</div>':'')+'</div>'+pill+
+            (c.expKey&&!isna?'<input class="adm-cdate" data-col="'+esc(c.expKey)+'" value="'+esc(v||"")+'" placeholder="M/D/YYYY">':'')+'</div>';
+        });
+        body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">type N/A to mark not required</span></div>'+rows+'</div>';
+      }
+    }
+    var save='<div class="adm-save"><button class="pri" id="admSave">Save changes</button></div><div class="adm-msg" id="admMsg"></div>';
+    var danger = (t==="info") ? ('<button class="adm-danger" id="admDeact">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
+      '<div class="adm-note">Deactivating keeps all their records and certifications on file \u2014 it only blocks sign-in and hides them from the directory. You can turn them back on anytime.</div>') : "";
+    $("admRight").innerHTML='<div class="adm-body">'+head+tabs+body+save+danger+'</div>';
+  }
+  function admVal(id){ var e=$(id); return e?String(e.value||"").trim():null; }
+  function admSwOn(id){ var e=$(id); return e?e.classList.contains("on"):null; }
+  function admSave(){
+    var r=admRow(ADM.sel); if(!r) return;
+    var msg=$("admMsg"), btn=$("admSave");
+    btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
+    var upd={}, local={};
+    function put(dbcol,header,v){ if(v===null||v===undefined) return; upd[dbcol]=v; local[header]=v; }
+    if(ADM.tab==="info"){
+      put("first_name","First Name",admVal("adF")); put("last_name","Last Name",admVal("adL"));
+      put("unit","Unit",admVal("adU")); put("dob","DOB",admVal("adDob")); put("email","Email",admVal("adEm"));
+      put("type","Type",admVal("adTy")); put("level","Level",admVal("adLv"));
+      put("status","Status",admVal("adSt")); put("fto","FTO",admVal("adFto"));
+      var a=admSwOn("adAdmin"), d=admSwOn("adDisp"), ac=admSwOn("adAct");
+      if(a!==null) put("admin","Admin",a?"X":"");
+      if(d!==null) put("dispatcher","Dispatcher",d?"X":"");
+      if(ac!==null) put("active","Active",ac?"X":"No");
+    } else if(ADM.tab==="contact"){
+      put("phone","Phone",admVal("adPh")); put("address","Address",admVal("adAddr")); put("personal_email","Personal Email",admVal("adPe"));
+      put("t_shirt_size","T-Shirt Size",admVal("adTs")); put("dress_shirt_size","Dress Shirt Size",admVal("adDs"));
+      put("polo_shirt_size","Polo Shirt Size",admVal("adPo")); put("hat_size","Hat Size",admVal("adHt")); put("coat_size","Coat Size",admVal("adCt"));
+      put("emergency_contact","Emergency Contact",admVal("adEc")); put("emergency_phone","Emergency Phone",admVal("adEcp"));
+      put("emergency_relationship","Emergency Relationship",admVal("adEcr"));
+      put("text_home","Text Home",admVal("adTh")); put("text_home_method","Text Home Method",admVal("adThm"));
+    } else {
+      var cr=admCertRow(ADM.sel);
+      if(!cr){ btn.disabled=false; btn.textContent="Save changes"; return; }
+      var cupd={}, any=false;
+      Array.prototype.forEach.call(document.querySelectorAll(".adm-cdate"),function(inp){
+        var header=inp.getAttribute("data-col"), db=sbCol("certifications",header);
+        if(db){ cupd[db]=String(inp.value||"").trim(); cr[header]=cupd[db]; any=true; }
+      });
+      if(!any){ btn.disabled=false; btn.textContent="Save changes"; return; }
+      sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(ADM.sel),cupd)
+        .then(function(res){ btn.disabled=false; btn.textContent="Save changes";
+          if(res.ok){ msg.className="adm-msg ok"; msg.textContent="Saved."; CERT.loaded=false; }
+          else { msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; } })
+        .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+      return;
+    }
+    var oldUnit=ADM.sel;
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(oldUnit),upd)
+      .then(function(res){
+        btn.disabled=false; btn.textContent="Save changes";
+        if(!res.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; return; }
+        for(var k in local) r[k]=local[k];
+        if(local["Unit"] && normUnit(local["Unit"])!==normUnit(oldUnit)) ADM.sel=local["Unit"];
+        msg.className="adm-msg ok"; msg.textContent="Saved.";
+        DIR.loaded=false;
+        admRender(); admRenderDetail();
+        var m2=$("admMsg"); if(m2){ m2.className="adm-msg ok"; m2.textContent="Saved."; setTimeout(function(){ var m3=$("admMsg"); if(m3){m3.textContent="";m3.className="adm-msg";} },2500); }
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+  }
+  function admDeactivate(){
+    var r=admRow(ADM.sel); if(!r) return;
+    var making = admIsActive(r) ? "No" : "X";
+    var word = making==="No" ? "Deactivate" : "Reactivate";
+    if(!confirm(word+" "+admName(r)+"?")) return;
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{active:making})
+      .then(function(res){
+        if(!res.ok){ toast("Couldn\u2019t save."); return; }
+        r["Active"]=making; DIR.loaded=false; toast(word+"d.");
+        admRender(); admRenderDetail();
+      }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
+  function admAddMember(){
+    var f=prompt("First name:"); if(f===null) return; f=f.trim();
+    var l=prompt("Last name:"); if(l===null) return; l=l.trim();
+    var u=prompt("Unit (e.g. H-52):"); if(u===null) return; u=u.trim();
+    var em=prompt("Org email (they sign in with this):"); if(em===null) return; em=em.trim();
+    if(!u){ toast("Unit is required."); return; }
+    if(admRow(u)){ toast("That unit already exists."); return; }
+    var row={ unit:u, first_name:f, last_name:l, email:em, type:"Responder", active:"X" };
+    sbWrite("POST","roster",row).then(function(res){
+      if(!res.ok){ toast("Couldn\u2019t add member."); return; }
+      ADM.rows.push({"Unit":u,"First Name":f,"Last Name":l,"Email":em,"Type":"Responder","Active":"X"});
+      DIR.loaded=false; toast("Member added.");
+      admSelect(u);
+    }).catch(function(){ toast("Couldn\u2019t add \u2014 check your connection."); });
+  }
+  $("admBack").addEventListener("click",function(){
+    if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
+    navBack();
+  });
+  $("admSearch").addEventListener("input",function(){ ADM.q=this.value; admRender(); });
+  $("admChips").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-chip"):null; if(!b) return; ADM.filter=b.getAttribute("data-f"); admRender(); });
+  $("admList").addEventListener("click",function(e){ var row=e.target.closest?e.target.closest(".adm-row"):null; if(!row) return; admSelect(row.getAttribute("data-u")); });
+  $("admAdd").addEventListener("click",admAddMember);
+  $("admRight").addEventListener("click",function(e){
+    var sw=e.target.closest?e.target.closest("[data-sw]"):null;
+    if(sw){ sw.classList.toggle("on"); return; }
+    var tb=e.target.closest?e.target.closest(".adm-tab"):null;
+    if(tb){ ADM.tab=tb.getAttribute("data-tab"); admRenderDetail(); return; }
+    if(e.target.id==="admSave"){ admSave(); return; }
+    if(e.target.id==="admDeact"){ admDeactivate(); return; }
+  });
 
   // ---------- Equipment Finder (cabinet look-up + admin editor) ----------
   var PLACE={loaded:false,cabs:[],cur:null,sel:-1,edit:false,drag:null,editIdx:-1};
