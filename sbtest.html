@@ -2495,7 +2495,9 @@
     fetchTab(tab).then(function(rows){ ADM2.data[k]=rows||[]; ADM2.loaded[k]=true; admRenderSec(k); })
       .catch(function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn\u2019t load.</div>'; });
   }
-  function admBoolOn(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="x"||v==="yes"||v==="true"; }
+  function admBoolOn(v){ v=String(v==null?"":v).trim().toLowerCase();
+    if(v==="no"||v==="off"||v==="false"||v==="0") return false;
+    return v==="x"||v==="yes"||v==="true"; }
   function admRenderSec(k){
     var cols=ADM_COLS[k], rows=ADM2.data[k]||[];
     if(k==="tiles"||k==="cpr") rows=rows.slice().sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
@@ -2552,7 +2554,9 @@
       var upd={}, any=false;
       Array.prototype.forEach.call(sec.querySelectorAll("[data-h]"),function(el){
         var header=el.getAttribute("data-h"), db=sbCol(tbl,header); if(!db) return;
-        var v = (el.classList.contains("adm-sw")||el.classList.contains("adm-spec")) ? (el.classList.contains("on")?"X":"") : String(el.value||"").trim();
+        var isTog = el.classList.contains("adm-sw")||el.classList.contains("adm-spec");
+        var offVal = (header==="Active") ? "No" : "";
+        var v = isTog ? (el.classList.contains("on")?"X":offVal) : String(el.value||"").trim();
         if(String(r_(r,header))!==v){ upd[db]=v; r[header]=v; any=true; }
       });
       if(any){
