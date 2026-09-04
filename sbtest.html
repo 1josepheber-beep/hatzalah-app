@@ -1618,8 +1618,11 @@
       });
   }
   function sbaEnsure(){
-    if(sbaValid()) return Promise.resolve(true);
-    return sbaRefresh().catch(function(){ return false; });
+    if(sbaValid()){
+      if(!SBA.email){ return sbaFetchUser().then(function(){ return true; }).catch(function(){ return true; }); }
+      return Promise.resolve(true);
+    }
+    return sbaRefresh().then(function(){ return true; }).catch(function(){ return false; });
   }
   // Exchange the Google credential (ID token) for a Supabase session.
   function sbaSignInWithGoogle(idToken){
@@ -4598,19 +4601,26 @@
   }
   function afterSbaLogin(){
     $("gLoad").classList.remove("hidden");
-    function go(){
-      if(!SBA.email){ setTimeout(go,150); return; }
-      G.email=SBA.email; G.verified=true;
-      var dom=String(SBA.email).toLowerCase();
-      if(dom.slice(-(ORG_DOMAIN.length+1))!=="@"+ORG_DOMAIN){
+    $("gErr").textContent="";
+    var p = SBA.email ? Promise.resolve(SBA.email) : sbaFetchUser();
+    p.then(function(email){
+      G.email=String(email||"").toLowerCase(); G.verified=true;
+      if(G.email.slice(-(ORG_DOMAIN.length+1))!=="@"+ORG_DOMAIN){
         $("gLoad").classList.add("hidden");
+        $("gBtn").disabled=false;
         $("gErr").textContent="Use your @"+ORG_DOMAIN+" account.";
         sbaClear(); return;
       }
       startAfterGoogle();
-    }
-    go();
+    }).catch(function(err){
+      $("gLoad").classList.add("hidden");
+      $("gBtn").disabled=false;
+      $("gErr").textContent="Couldn\u2019t complete sign-in. Please try again.";
+      try{ console.error("Supabase sign-in:", err); }catch(e){}
+      sbaClear();
+    });
   }
+
   function showNotSet(){
     try{ var el=$("notsetEmail"); if(el) el.textContent=G.email||"\u2014"; }catch(e){}
     $("gate").classList.remove("hidden");
@@ -4662,16 +4672,22 @@
       SBA.token=p.access_token; SBA.refresh=p.refresh_token||"";
       SBA.exp=Date.now()+((parseInt(p.expires_in,10)||3600)*1000);
       sbaSave();
-      // clear the tokens out of the address bar
       try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
-      // fill in the email from the session
-      fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SBA.token}})
-        .then(function(r){ return r.json(); })
-        .then(function(u){ if(u&&u.email){ SBA.email=u.email; SBA.sub=u.id||""; sbaSave(); } })
-        .catch(function(){});
       return true;
     }catch(e){ return false; }
   }
+  // Look up who this session belongs to. Resolves with the email.
+  function sbaFetchUser(){
+    if(!SBA.token) return Promise.reject("no-token");
+    return fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SBA.token}})
+      .then(function(r){ if(!r.ok) throw "user-failed"; return r.json(); })
+      .then(function(u){
+        if(!u||!u.email) throw "no-email";
+        SBA.email=u.email; SBA.sub=u.id||""; sbaSave();
+        return u.email;
+      });
+  }
+
   function gTrySilent(){ /* legacy Google popup - no longer used; Supabase handles sign-in */ }
   function checkDemoEnabled(){
     fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:"__probe__"})})
@@ -4685,7 +4701,7 @@
   }
   function googleBoot(){
     try{ sbaLoad(); }catch(e){}
-    try{ if(sbaCatchRedirect()){ setTimeout(afterSbaLogin,50); return; } }catch(e){}
+    try{ if(sbaCatchRedirect()){ afterSbaLogin(); return; } }catch(e){}
     var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){}
     if(out) return;
     var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
