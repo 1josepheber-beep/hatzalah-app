@@ -615,6 +615,7 @@
   .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
   .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .adm-gen{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+  .adm-gen .adm-body{max-width:840px;margin:0 auto}
   .adm-help{background:#eef4fc;border:1px solid #cfe0f5;color:#1d4a86;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:15px}
   .adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
   .adm-f.wide{grid-column:1 / -1}
@@ -2464,8 +2465,8 @@
     ADM2.sec=k; ADM.sel=null; document.body.classList.remove("admdetail");
     $("admTitle").textContent = (ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label || "Admin";
     admPaintSecs();
-    if(k==="members"){ $("admMembersPane").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
-    $("admMembersPane").style.display="none"; $("admGenPane").style.display="";
+    if(k==="members"){ $("admMembersPane").style.display=""; $("admRight").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
+    $("admMembersPane").style.display="none"; $("admRight").style.display="none"; $("admGenPane").style.display="";
     admLoadSec(k);
   }
   function admPaintSecs(){
@@ -2508,7 +2509,7 @@
         return '<label class="adm-f'+(wide?" wide":"")+'">'+label+'<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>';
       }).join("");
       return '<div class="adm-sec adm-gsec" data-i="'+i+'"><div class="adm-sech">'+esc(title)+
-        '<button class="adm-del" data-del="'+i+'" title="Delete">Delete</button></div>'+
+        (k==="settings"?"":'<button class="adm-del" data-del="'+i+'" title="Delete">Delete</button>')+'</div>'+
         '<div class="adm-grid">'+fields+'</div></div>';
     }).join("");
     var addable = (k!=="settings");
@@ -2560,6 +2561,7 @@
   }
   function admGenDelete(i){
     var k=ADM2.sec, rows=ADM2.view||[], r=rows[i]; if(!r) return;
+    if(k==="settings"){ toast("Settings can\u2019t be deleted \u2014 clear the value instead."); return; }
     var tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
     var key=cols[0][0], kv=r_(r,key), kdb=sbCol(tbl,key);
     var label=r_(r,"Label")||r_(r,"Name")||kv||"this row";
