@@ -2191,6 +2191,8 @@
     try{
       var open=null;
       for(var id in SCR_OPENERS){ var el=$(id); if(el && el.classList.contains("open")){ open=id; break; } }
+      // the protocol/ERG reader overlays its list screen
+      try{ var pr=$("protoReader"); if(pr && pr.classList.contains("open")) open=open||"protoScreen"; }catch(e){}
       if(open){
         var extra="";
         if(open==="admScreen" && typeof ADM2!=="undefined") extra=ADM2.sec||"";
@@ -2198,6 +2200,12 @@
       } else localStorage.removeItem(SCR_KEY);
     }catch(e){}
   }
+  // Capture the current screen right before a refresh/close, and keep it fresh
+  // while the person sits on a screen (navRemember alone only fires on navigation).
+  window.addEventListener("beforeunload", function(){ try{ navRemember(); }catch(e){} });
+  window.addEventListener("pagehide", function(){ try{ navRemember(); }catch(e){} });
+  document.addEventListener("visibilitychange", function(){ if(document.hidden){ try{ navRemember(); }catch(e){} } });
+  setInterval(function(){ try{ navRemember(); }catch(e){} }, 5000);
   function navRestore(){
     try{
       var raw=localStorage.getItem(SCR_KEY); if(!raw) return;
