@@ -1763,6 +1763,11 @@
     if(body!==undefined) opts.body=JSON.stringify(body);
     return fetch(SB_URL+"/rest/v1/"+path, opts);
   }
+  var SB_COLREV={};
+  function sbCol(table, header){
+    if(!SB_COLREV[table]){ var m=SB_COLMAP[table]||{}, rev={}; for(var k in m) rev[m[k]]=k; SB_COLREV[table]=rev; }
+    return SB_COLREV[table][header]||null;
+  }
   function nowStamp(){ var d=new Date(),h=d.getHours(),ap=h>=12?"PM":"AM",h12=(h%12)||12,mm=("0"+d.getMinutes()).slice(-2); return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+mm+" "+ap; }
   function pingSeen(){
     try{
@@ -2995,12 +3000,14 @@
     if(!v){ $("certModalErr").textContent="Pick the new expiration date."; return; }
     if(!CERTUP.col){ $("certModalErr").textContent="This item has no date field to update."; return; }
     var p=v.split("-"), mdy=(+p[1])+"/"+(+p[2])+"/"+p[0];
-    var url=getSetting("Profile Update URL","");
+    var dbcol=sbCol("certifications", CERTUP.col);
     var btn=$("certModalSave"); btn.disabled=true; btn.textContent="Saving\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"cert",unit:CERTUP.unit,col:CERTUP.col,value:mdy,cert:CERTUP.cert})})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){}
+    if(!dbcol){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t find that field."; return; }
+    var upd={}; upd[dbcol]=mdy;
+    sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(CERTUP.unit),upd)
+      .then(function(r){
         btn.disabled=false; btn.textContent="Save date";
-        if(!ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
+        if(!r.ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
         $("certModal").classList.add("hidden"); CERTUP=null;
         CERT.loaded=false; toast("Expiration date updated.");
         openCerts();
@@ -3169,8 +3176,6 @@
   }
   function tbApply(action, unit, id, extra){
     var by=(STATE.me&&STATE.me.unit)||"";
-    var payload={ kind:"task", action:action, unit:unit, taskId:id, by:by };
-    if(extra) for(var k in extra) payload[k]=extra[k];
     var kk=tbKey(unit,id), p=TB.prog[kk]||{"Unit":unit,"Task ID":id};
     var d=new Date(), ds=(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear();
     if(action==="self"){ p["Self Marked"]="X"; p["Self Date"]=ds; }
@@ -3180,9 +3185,17 @@
     else if(action==="count"){ p["Count"]=extra.count; }
     TB.prog[kk]=p;
     if(TB.view==="book") tbRenderBook(TB.unit); else tbRouteView();
-    var url=getSetting("Profile Update URL","");
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok) toast("Couldn\u2019t save \u2014 it may not have been recorded."); })
+    var row={ unit:unit, task_id:id, self_marked:p["Self Marked"]||"", self_date:p["Self Date"]||"",
+      confirmed:p["Confirmed"]||"", confirmed_by:p["Confirmed By"]||"", confirmed_date:p["Confirmed Date"]||"", count:String(p["Count"]||"") };
+    fetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON}})
+      .then(function(r){ return r.json(); })
+      .then(function(existing){
+        if(Array.isArray(existing) && existing.length){
+          return sbWrite("PATCH","task_progress?id=eq."+existing[0].id,row);
+        }
+        return sbWrite("POST","task_progress",row);
+      })
+      .then(function(r){ if(r && !r.ok) toast("Couldn\u2019t save \u2014 it may not have been recorded."); })
       .catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   if($("tbBody")) $("tbBody").addEventListener("click", function(e){
