@@ -611,6 +611,19 @@
   .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
   .adm-cert .pill.exp{background:#fdecec;color:#8a1f1f}
   .adm-cert .pill.na{background:#eef2f7;color:var(--mut)}
+  .adm-nabtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
+  .adm-nabtn:hover{border-color:#c3cede}
+  .adm-modal{position:fixed;inset:0;z-index:80;background:rgba(9,26,52,.5);display:flex;align-items:center;justify-content:center;padding:18px}
+  .adm-modal.hidden{display:none}
+  .adm-mbox{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:520px;box-shadow:0 24px 60px rgba(9,26,52,.3);max-height:90vh;overflow:auto}
+  .adm-mbox h3{margin:0 0 4px;font-size:20px;font-weight:800}
+  .adm-msub{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.45}
+  .adm-merr{font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px}
+  .adm-mbtns{display:flex;gap:10px}
+  .adm-mbtns button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
+  .adm-mbtns .pri{background:var(--navy);color:#fff}
+  .adm-mbtns .pri:disabled{opacity:.6}
+  .adm-mbtns .ghost{background:#fff;color:var(--mut);border:1px solid var(--line)}
   .adm-msg{font-size:13px;font-weight:700;text-align:center;padding:9px;min-height:16px}
   .adm-msg.ok{color:#1e7a3d} .adm-msg.err{color:var(--red)}
   @media (max-width:820px){
@@ -1299,6 +1312,27 @@
     </div>
     <div class="adm-right" id="admRight">
       <div class="adm-ph">Select a member to view and edit their record.</div>
+    </div>
+  </div>
+</div>
+
+<div class="adm-modal hidden" id="admAddModal">
+  <div class="adm-mbox">
+    <h3>Add member</h3>
+    <p class="adm-msub">Just the basics to get them signed in — you can fill in the rest on their record.</p>
+    <div class="adm-2">
+      <label class="adm-f">First name<input id="amF" type="text" placeholder="Yitzchak"></label>
+      <label class="adm-f">Last name<input id="amL" type="text" placeholder="Abramovitz"></label>
+    </div>
+    <div class="adm-2">
+      <label class="adm-f">Unit<input id="amU" type="text" placeholder="H-52"></label>
+      <label class="adm-f">Type<select id="amT"><option>Responder</option><option>Non Responder</option><option>Dispatcher</option></select></label>
+    </div>
+    <label class="adm-f">Org email (used to sign in)<input id="amE" type="email" placeholder="name@houstonhatzalah.org"></label>
+    <div class="adm-merr" id="amErr"></div>
+    <div class="adm-mbtns">
+      <button class="ghost" id="amCancel">Cancel</button>
+      <button class="pri" id="amSave">Add member</button>
     </div>
   </div>
 </div>
@@ -2250,14 +2284,18 @@
           var v=certExpVal(cr,c), st=certStatus(v);
           var pill = isna ? '<span class="pill na">N/A</span>'
             : (!v ? '' : '<span class="pill '+(st.k==="expired"?"exp":(st.k==="soon"?"soon":"ok"))+'">'+(st.k==="expired"?"Expired":(st.k==="soon"?"Soon":"OK"))+'</span>');
-          rows+='<div class="adm-cert"><div class="cn">'+esc(c.name)+(isna?'<div class="cd">Not required for this member</div>':'')+'</div>'+pill+
-            (c.expKey&&!isna?'<input class="adm-cdate" data-col="'+esc(c.expKey)+'" value="'+esc(v||"")+'" placeholder="M/D/YYYY">':'')+'</div>';
+          var key=c.expKey||c.singleKey||c.numKey;
+          rows+='<div class="adm-cert"><div class="cn">'+esc(c.name)+
+            (isna?'<div class="cd">Not required \u2014 hidden from this member</div>':'')+'</div>'+pill+
+            (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
+            (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
+            '</div>';
         });
-        body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">type N/A to mark not required</span></div>'+rows+'</div>';
+        body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">N/A = hidden from that member</span></div>'+rows+'</div>';
       }
     }
     var save='<div class="adm-save"><button class="pri" id="admSave">Save changes</button></div><div class="adm-msg" id="admMsg"></div>';
-    var danger = (t==="info") ? ('<button class="adm-danger" id="admDeact">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
+    var danger = (t==="info") ? ('<button class="adm-danger" id="admDeact" data-armed="0">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
       '<div class="adm-note">Deactivating keeps all their records and certifications on file \u2014 it only blocks sign-in and hides them from the directory. You can turn them back on anytime.</div>') : "";
     $("admRight").innerHTML='<div class="adm-body">'+head+tabs+body+save+danger+'</div>';
   }
@@ -2319,7 +2357,13 @@
     var r=admRow(ADM.sel); if(!r) return;
     var making = admIsActive(r) ? "No" : "X";
     var word = making==="No" ? "Deactivate" : "Reactivate";
-    if(!confirm(word+" "+admName(r)+"?")) return;
+    var btn=$("admDeact");
+    if(btn && btn.getAttribute("data-armed")!=="1"){
+      btn.setAttribute("data-armed","1");
+      btn.textContent="Tap again to confirm \u2014 "+word.toLowerCase()+" "+admName(r);
+      setTimeout(function(){ var b=$("admDeact"); if(b&&b.getAttribute("data-armed")==="1"){ b.setAttribute("data-armed","0"); b.textContent=(admIsActive(r)?"Deactivate this member":"Reactivate this member"); } },4000);
+      return;
+    }
     sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{active:making})
       .then(function(res){
         if(!res.ok){ toast("Couldn\u2019t save."); return; }
@@ -2328,19 +2372,29 @@
       }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   function admAddMember(){
-    var f=prompt("First name:"); if(f===null) return; f=f.trim();
-    var l=prompt("Last name:"); if(l===null) return; l=l.trim();
-    var u=prompt("Unit (e.g. H-52):"); if(u===null) return; u=u.trim();
-    var em=prompt("Org email (they sign in with this):"); if(em===null) return; em=em.trim();
-    if(!u){ toast("Unit is required."); return; }
-    if(admRow(u)){ toast("That unit already exists."); return; }
-    var row={ unit:u, first_name:f, last_name:l, email:em, type:"Responder", active:"X" };
-    sbWrite("POST","roster",row).then(function(res){
-      if(!res.ok){ toast("Couldn\u2019t add member."); return; }
-      ADM.rows.push({"Unit":u,"First Name":f,"Last Name":l,"Email":em,"Type":"Responder","Active":"X"});
-      DIR.loaded=false; toast("Member added.");
-      admSelect(u);
-    }).catch(function(){ toast("Couldn\u2019t add \u2014 check your connection."); });
+    $("admAddModal").classList.remove("hidden");
+    ["amF","amL","amU","amE"].forEach(function(id){ var e=$(id); if(e) e.value=""; });
+    var ty=$("amT"); if(ty) ty.value="Responder";
+    $("amErr").textContent="";
+    setTimeout(function(){ var e=$("amF"); if(e) e.focus(); },80);
+  }
+  function admAddClose(){ $("admAddModal").classList.add("hidden"); }
+  function admAddSave(){
+    var f=$("amF").value.trim(), l=$("amL").value.trim(), u=$("amU").value.trim(), em=$("amE").value.trim(), ty=$("amT").value;
+    var err=$("amErr");
+    if(!u){ err.textContent="Unit is required."; return; }
+    if(!f && !l){ err.textContent="Enter at least a first or last name."; return; }
+    if(admRow(u)){ err.textContent="Unit "+u+" already exists."; return; }
+    if(em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ err.textContent="That email doesn\u2019t look right."; return; }
+    var btn=$("amSave"); btn.disabled=true; btn.textContent="Adding\u2026"; err.textContent="";
+    sbWrite("POST","roster",{ unit:u, first_name:f, last_name:l, email:em, type:ty, active:"X" })
+      .then(function(res){
+        btn.disabled=false; btn.textContent="Add member";
+        if(!res.ok){ err.textContent="Couldn\u2019t add. Try again."; return; }
+        ADM.rows.push({"Unit":u,"First Name":f,"Last Name":l,"Email":em,"Type":ty,"Active":"X"});
+        DIR.loaded=false; admAddClose(); toast("Member added."); admSelect(u);
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent="Add member"; err.textContent="Couldn\u2019t add \u2014 check your connection."; });
   }
   $("admBack").addEventListener("click",function(){
     if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
@@ -2350,7 +2404,19 @@
   $("admChips").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-chip"):null; if(!b) return; ADM.filter=b.getAttribute("data-f"); admRender(); });
   $("admList").addEventListener("click",function(e){ var row=e.target.closest?e.target.closest(".adm-row"):null; if(!row) return; admSelect(row.getAttribute("data-u")); });
   $("admAdd").addEventListener("click",admAddMember);
+  $("amCancel").addEventListener("click",admAddClose);
+  $("amSave").addEventListener("click",admAddSave);
+  $("admAddModal").addEventListener("click",function(e){ if(e.target===this) admAddClose(); });
   $("admRight").addEventListener("click",function(e){
+    var na=e.target.closest?e.target.closest(".adm-nabtn"):null;
+    if(na){
+      var key=na.getAttribute("data-na"), on=na.getAttribute("data-on")==="1";
+      var inp=$("admRight").querySelector('.adm-cdate[data-col="'+key+'"]');
+      if(inp){ inp.value = on ? "" : "N/A"; }
+      na.setAttribute("data-on", on?"0":"1");
+      na.textContent = on ? "Not required" : "Require";
+      return;
+    }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
     var tb=e.target.closest?e.target.closest(".adm-tab"):null;
