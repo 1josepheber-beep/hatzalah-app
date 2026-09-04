@@ -4701,6 +4701,19 @@
   }
   function googleBoot(){
     try{ sbaLoad(); }catch(e){}
+    try{
+      var _q=(location.hash||"")+"&"+(location.search||"");
+      if(_q.indexOf("error")>=0 && _q.indexOf("access_token=")<0){
+        var _p={}; _q.replace(/[#?&]/g," ").trim().split(/[&\s]+/).forEach(function(kv){
+          var i=kv.indexOf("="); if(i>0) _p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g," "));
+        });
+        var msg=_p.error_description||_p.error_code||_p.error||"Sign-in was rejected.";
+        try{ history.replaceState(null,"",location.pathname); }catch(e){}
+        var ge=$("gErr"); if(ge) ge.textContent=msg;
+        try{ console.error("Supabase OAuth returned:", _p); }catch(e){}
+        return;
+      }
+    }catch(e){}
     try{ if(sbaCatchRedirect()){ afterSbaLogin(); return; } }catch(e){}
     var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){}
     if(out) return;
