@@ -620,6 +620,10 @@
   .adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
   .adm-f.wide{grid-column:1 / -1}
   .adm-del{margin-left:auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:800;cursor:pointer;text-transform:none;letter-spacing:0}
+  .ins-steps ol{margin:0 0 4px;padding-left:22px}
+  .ins-steps li{font-size:14.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
+  .ins-steps b{font-weight:800}
+  .ins-warn{background:#fff3d6;border:1px solid #f0d58f;color:#8a6d00;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin:0 0 14px;font-weight:600}
   .adm-specs{margin-top:6px;padding-top:14px;border-top:1px solid var(--line)}
   .adm-specl{font-weight:800;color:var(--navy);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
   .adm-specg{display:flex;flex-wrap:wrap;gap:7px}
@@ -1307,6 +1311,7 @@
     <button class="sheet-item" id="qVitals"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>Vitals Reference</button>
     <button class="sheet-item" id="qCpr"><svg viewBox="0 0 24 24"><path d="M12 21C7 17 3 13 3 8.5 3 6 5 4 7.5 4c1.6 0 3 .8 3.8 2 .8-1.2 2.2-2 3.7-2C20.5 4 21 6 21 8.5 21 13 17 17 12 21z"/></svg>CPR Tracker</button>
     <button class="sheet-item" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Call Notes</button>
+    <button class="sheet-item" id="qInstall"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 19h16"/></svg>Install app</button>
     <button class="sheet-item" id="qTextHome"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text Home</button>
     <button class="sheet-cancel" id="qCancel">Cancel</button>
   </div>
@@ -1331,6 +1336,15 @@
       <div class="adm-ph">Select a member to view and edit their record.</div>
     </div>
     <div class="adm-gen" id="admGenPane" style="display:none"></div>
+  </div>
+</div>
+
+<div class="adm-modal hidden" id="insModal">
+  <div class="adm-mbox">
+    <h3>Install the app</h3>
+    <p class="adm-msub">Adding it to your home screen makes it open like a real app and keeps you signed in.</p>
+    <div id="insBody" class="ins-steps"></div>
+    <div class="adm-mbtns"><button class="pri" id="insClose">Got it</button></div>
   </div>
 </div>
 
@@ -2090,9 +2104,50 @@
   }
   // ---- Hardware/Back-button navigation: Back closes the top screen, exits only at home ----
   var navStack=[];
-  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} }
-  function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } }
-  window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } });
+  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} navRemember(); }
+  function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } setTimeout(navRemember,60); }
+  window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } setTimeout(navRemember,60); });
+
+  // ---- remember which screen you were on, so a refresh returns you there ----
+  var SCR_KEY="hoh_screen_sb";
+  var SCR_OPENERS={
+    admScreen:function(){ openAdmin(); },
+    dirScreen:function(){ openDirectory(); },
+    certScreen:function(){ openCerts(); },
+    hospScreen:function(){ openHospitals(); },
+    aptScreen:function(){ openApartments(); },
+    vitalsScreen:function(){ openVitals(); },
+    tbScreen:function(){ openTaskBook(); },
+    medScreen:function(){ openMeds(); },
+    availScreen:function(){ openAvail(); },
+    protoScreen:function(){ openProtocols(); },
+    ergScreen:function(){ openErg(); }
+  };
+  function navRemember(){
+    try{
+      var open=null;
+      for(var id in SCR_OPENERS){ var el=$(id); if(el && el.classList.contains("open")){ open=id; break; } }
+      if(open){
+        var extra="";
+        if(open==="admScreen" && typeof ADM2!=="undefined") extra=ADM2.sec||"";
+        localStorage.setItem(SCR_KEY, JSON.stringify({s:open, x:extra, t:Date.now()}));
+      } else localStorage.removeItem(SCR_KEY);
+    }catch(e){}
+  }
+  function navRestore(){
+    try{
+      var raw=localStorage.getItem(SCR_KEY); if(!raw) return;
+      var v=JSON.parse(raw); if(!v||!v.s) return;
+      if(Date.now()-(v.t||0) > 30*60000){ localStorage.removeItem(SCR_KEY); return; }
+      var fn=SCR_OPENERS[v.s]; if(!fn) return;
+      setTimeout(function(){
+        try{
+          fn();
+          if(v.s==="admScreen" && v.x && typeof admSecSwitch==="function" && v.x!=="members"){ setTimeout(function(){ admSecSwitch(v.x); },250); }
+        }catch(e){}
+      }, 350);
+    }catch(e){}
+  }
 
   /* ===================== Scene Timer ===================== */
   var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
@@ -3374,10 +3429,11 @@
   }
   function closeAptMap(){ $("aptMapScreen").classList.remove("open"); }
   function saveAptMarkers(slug){
-    var url=getSetting("Profile Update URL",""); if(!url) return;
-    var markers=(APTM.by[slug]||[]).map(function(m){ return {label:m.label, x:m.fx, y:m.fy}; });
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"aptmarkers",file:slug,markers:markers})})
-      .then(function(r){return r.text();}).then(function(){ toast("Pins saved."); }).catch(function(){ toast("Couldn\u2019t save pins."); });
+    var markers=(APTM.by[slug]||[]).map(function(m){ return {file:slug, label:m.label, x:String(m.fx), y:String(m.fy)}; });
+    sbWrite("DELETE","apartment_markers?file=eq."+encodeURIComponent(slug))
+      .then(function(){ return markers.length ? sbWrite("POST","apartment_markers",markers) : {ok:true}; })
+      .then(function(r){ if(r && r.ok===false) toast("Couldn\u2019t save pins."); else toast("Pins saved."); })
+      .catch(function(){ toast("Couldn\u2019t save pins."); });
   }
   $("aptBack").addEventListener("click",navBack);
   $("aptMapBack").addEventListener("click",navBack);
@@ -3977,30 +4033,7 @@
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
     renderBioRow();
   }
-  function changePassword(){
-    if(demoNo()) return;
-    var cur=$("pwCur").value.trim(), np=$("pwNew").value.trim(), np2=$("pwNew2").value.trim(), note=$("pwNote");
-    note.style.color=""; note.textContent="";
-    if(!cur){ note.textContent="Enter your current password."; return; }
-    if(np.length<4){ note.textContent="New password must be at least 4 characters."; return; }
-    if(np!==np2){ note.textContent="The new passwords don\u2019t match."; return; }
-    var url=getSetting("Profile Update URL","");
-    if(!url){ note.textContent="Saving isn\u2019t set up yet."; return; }
-    var btn=$("pwSave"); btn.disabled=true; btn.textContent="Updating\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"pw",unit:(STATE.me&&STATE.me.unit)||"",cur:cur,newpw:np})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
-        btn.disabled=false; btn.textContent="Update password";
-        if(res.ok===false){
-          note.textContent = (res.error==="bad current") ? "Your current password isn\u2019t right." : "Couldn\u2019t update. Try again.";
-          return;
-        }
-        STATE.me.pw=np; try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
-        $("pwCur").value=""; $("pwNew").value=""; $("pwNew2").value="";
-        note.style.color="#2f9e44"; note.textContent="Password updated.";
-        toast("Password updated.");
-      }).catch(function(){ btn.disabled=false; btn.textContent="Update password"; note.textContent="Couldn\u2019t reach the server \u2014 check your connection."; });
-  }
+  // (legacy password change removed — sign-in is Google-only)
   function renderBioRow(){
     var w=$("profBioWrap"); if(!w) return;
     bioAvail().then(function(ok){
@@ -4066,6 +4099,41 @@
   $("qCpr").addEventListener("click",function(){ closeQMenu(); openCpr(); });
   $("qNotes").addEventListener("click",function(){ closeQMenu(); openNotes(); });
   $("qTextHome").addEventListener("click",function(){ closeQMenu(); doTextHome(); });
+  $("qInstall").addEventListener("click",function(){ closeQMenu(); doInstall(); });
+  function pwaStandalone(){ return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }
+  function doInstall(){
+    if(pwaStandalone()){ toast("The app is already installed on this device."); return; }
+    if(window.__pwaPrompt){
+      try{ window.__pwaPrompt.prompt(); window.__pwaPrompt.userChoice.then(function(){ window.__pwaPrompt=null; }); }catch(e){ showInstallHelp(); }
+      return;
+    }
+    showInstallHelp();
+  }
+  function showInstallHelp(){
+    var ua=navigator.userAgent||"";
+    var ios=/iphone|ipad|ipod/i.test(ua)||((navigator.platform==="MacIntel"||/Macintosh/.test(ua))&&navigator.maxTouchPoints>1);
+    var inApp=/FBAN|FBAV|Instagram|Line|WhatsApp|Snapchat|Twitter/i.test(ua);
+    var steps;
+    if(inApp){
+      steps='<p class="ins-warn">This page opened inside another app, so it can\u2019t be installed from here.</p>'+
+        '<ol><li>Tap the <b>\u22ef</b> or <b>Share</b> button on this screen.</li>'+
+        '<li>Choose <b>Open in '+(ios?"Safari":"Chrome")+'</b>.</li>'+
+        '<li>Then open this menu again and tap <b>Install app</b>.</li></ol>';
+    } else if(ios){
+      steps='<ol><li>Make sure you\u2019re in <b>Safari</b> (not Chrome).</li>'+
+        '<li>Tap the <b>Share</b> button \u2014 the square with an arrow pointing up, at the bottom of the screen.</li>'+
+        '<li>Scroll down and tap <b>Add to Home Screen</b>.</li>'+
+        '<li>Tap <b>Add</b> in the top right.</li></ol>';
+    } else {
+      steps='<ol><li>Tap the <b>\u22ee</b> menu in the top right of Chrome.</li>'+
+        '<li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li>'+
+        '<li>Confirm.</li></ol>';
+    }
+    $("insBody").innerHTML=steps;
+    $("insModal").classList.remove("hidden");
+  }
+  $("insClose").addEventListener("click",function(){ $("insModal").classList.add("hidden"); });
+  $("insModal").addEventListener("click",function(e){ if(e.target===this) this.classList.add("hidden"); });
   function doTextHome(){
     if(STATE.demo){ toast("Not available in the demo."); return; }
     var raw=(STATE.me&&STATE.me.textHome)?String(STATE.me.textHome):"";
@@ -4399,7 +4467,8 @@
     try{scRestore();}catch(e){}
     var hadCache=bootFromCache();
     boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
-    pingSeen();}
+    pingSeen();
+    try{ navRestore(); }catch(e){}}
 
   var BIO_KEY="hoh_bio_v1_sb";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until_sb",String(Date.now()+60*60000));}catch(e){} }
@@ -5583,7 +5652,7 @@
 
     // Android / Chromium: capture the real install prompt
     window.addEventListener("beforeinstallprompt",function(e){
-      e.preventDefault(); deferred=e; go.style.display=""; go.textContent="Install"; showBar();
+      e.preventDefault(); deferred=e; window.__pwaPrompt=e; go.style.display=""; go.textContent="Install"; showBar();
     });
     go.addEventListener("click",function(){
       if(deferred){
@@ -5596,7 +5665,7 @@
     });
 
     // Once installed, hide immediately and it won't come back (standalone check)
-    window.addEventListener("appinstalled", hideBar);
+    window.addEventListener("appinstalled", function(){ window.__pwaPrompt=null; hideBar(); });
 
     // iOS never fires beforeinstallprompt: show a How-to-install button until installed
     if(isIOS() && !standalone()){
