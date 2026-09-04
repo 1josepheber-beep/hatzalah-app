@@ -1758,12 +1758,16 @@
   function applyTileCols(){ var g=$("grid"); if(g) g.classList.toggle("cols3", getTileCols()===3); var b2=$("reCols2"),b3=$("reCols3"); if(b2)b2.classList.toggle("on",getTileCols()===2); if(b3)b3.classList.toggle("on",getTileCols()===3); }
   function rxLookupOn(){ var s=STATE.settings||{}; for(var k in s){ if(String(k).trim().toLowerCase()==="rx lookup"){ return !/^(off|no|false|0|disabled)$/i.test(String(s[k]).trim()); } } return true; }
   function applyRxSetting(){ document.body.classList.toggle("rxoff", !rxLookupOn()); }
+  function sbWrite(method, path, body){
+    var opts={method:method, headers:{apikey:SB_ANON, Authorization:"Bearer "+SB_ANON, "Content-Type":"application/json", Prefer:"return=minimal"}};
+    if(body!==undefined) opts.body=JSON.stringify(body);
+    return fetch(SB_URL+"/rest/v1/"+path, opts);
+  }
+  function nowStamp(){ var d=new Date(),h=d.getHours(),ap=h>=12?"PM":"AM",h12=(h%12)||12,mm=("0"+d.getMinutes()).slice(-2); return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+mm+" "+ap; }
   function pingSeen(){
     try{
       if((STATE&&STATE.demo) || !(STATE.me&&STATE.me.unit)) return;
-      var url=getSetting("Profile Update URL","")||GUEST_URL;
-      if(!url) return;
-      fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"seen",unit:STATE.me.unit})}).catch(function(){});
+      sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),{last_active:nowStamp()}).catch(function(){});
     }catch(e){}
   }
   function paintTiles(){
@@ -3413,21 +3417,15 @@
   }
   function saveProfile(){
     if(demoNo()) return;
-    var url=getSetting("Profile Update URL","");
     var note=$("profNote");
-    if(!url){ note.className="prof-note err"; note.textContent="Self-update isn\u2019t set up yet. Tell your coordinator."; return; }
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
     var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
       ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms") };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    var body={unit:STATE.me.unit,phone:phone,address:addr,tshirt:extra.tshirt,dress:extra.dress,polo:extra.polo,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel,altEmail:extra.altEmail,textHome:extra.textHome,textMethod:extra.textMethod};
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
-      .then(function(r){ return r.text(); })
-      .then(function(t){
-        var ok=true; try{ var j=JSON.parse(t); ok=(j.ok!==false); }catch(e){}
-        finishProfile(ok, phone, addr, extra);
-      })
-      .catch(function(){ finishProfile(true, phone, addr, extra); });
+    var upd={ phone:phone, address:addr, t_shirt_size:extra.tshirt, dress_shirt_size:extra.dress, polo_shirt_size:extra.polo, hat_size:extra.hat, coat_size:extra.coat, emergency_contact:extra.ecName, emergency_phone:extra.ecPhone, emergency_relationship:extra.ecRel, personal_email:extra.altEmail, text_home:extra.textHome, text_home_method:extra.textMethod };
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),upd)
+      .then(function(r){ finishProfile(r.ok, phone, addr, extra); })
+      .catch(function(){ finishProfile(false, phone, addr, extra); });
   }
   function finishProfile(ok, phone, addr, extra){
     var btn=$("profSave"), note=$("profNote");
