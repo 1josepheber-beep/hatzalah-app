@@ -1850,7 +1850,7 @@
   function resolveByEmail(){
     return fetchTab("Roster").then(function(rows){
       STATE.roster=rows;
-      var em=String(G.email||"").trim().toLowerCase();
+      var em=String(G.email||SBA.email||"").trim().toLowerCase();
       if(!em) return null;
       for(var i=0;i<rows.length;i++){
         var r=rows[i];
@@ -4601,6 +4601,21 @@
       showNotSet();
     });
   }
+  function afterSbaLogin(){
+    $("gLoad").classList.remove("hidden");
+    function go(){
+      if(!SBA.email){ setTimeout(go,150); return; }
+      G.email=SBA.email; G.verified=true;
+      var dom=String(SBA.email).toLowerCase();
+      if(dom.slice(-(ORG_DOMAIN.length+1))!=="@"+ORG_DOMAIN){
+        $("gLoad").classList.add("hidden");
+        $("gErr").textContent="Use your @"+ORG_DOMAIN+" account.";
+        sbaClear(); return;
+      }
+      startAfterGoogle();
+    }
+    go();
+  }
   function showNotSet(){
     try{ var el=$("notsetEmail"); if(el) el.textContent=G.email||"\u2014"; }catch(e){}
     $("gate").classList.remove("hidden");
@@ -4608,10 +4623,11 @@
   function gSignIn(){
     try{localStorage.removeItem("hoh_signedout_sb");}catch(e){}
     $("gErr").textContent=""; $("gLoad").classList.remove("hidden"); $("gBtn").disabled=true;
+    // Supabase runs the Google sign-in and redirects back here with a session.
+    sbaStartOAuth();
+  }
+  function gSignInLegacy(){
     gRequest({}).then(function(){ return gVerify(); }).then(function(){
-      // Establish the Supabase session too, so the database knows who this is.
-      return sbaEstablish().catch(function(e){ try{console.warn("Supabase auth:",e);}catch(_){} return null; });
-    }).then(function(){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false; startAfterGoogle();
     }).catch(function(err){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false;
@@ -4628,11 +4644,38 @@
   $("demoExit").addEventListener("click",exitDemo);
   function sbaEstablish(){
     if(sbaValid()) return Promise.resolve(SBA.email);
-    if(SBA.refresh){ return sbaRefresh().then(function(){ return SBA.email; }).catch(function(){ return sbaFromGoogle(); }); }
-    return sbaFromGoogle();
+    if(SBA.refresh){ return sbaRefresh().then(function(){ return SBA.email; }).catch(function(){ return null; }); }
+    return Promise.resolve(null);
   }
-  function sbaFromGoogle(){
-    return gIdToken().then(function(idt){ return sbaSignInWithGoogle(idt); });
+  // Supabase handles the whole Google sign-in itself (redirect flow — reliable everywhere).
+  function sbaStartOAuth(){
+    try{ localStorage.setItem("hoh_sbauth_return", location.pathname+location.search); }catch(e){}
+    var back = location.origin + location.pathname;
+    location.href = SB_URL + "/auth/v1/authorize?provider=google"
+      + "&redirect_to=" + encodeURIComponent(back)
+      + "&scopes=" + encodeURIComponent("email profile");
+  }
+  // When Supabase redirects back, the session arrives in the URL fragment.
+  function sbaCatchRedirect(){
+    try{
+      var h=location.hash||"";
+      if(h.indexOf("access_token=")<0) return false;
+      var p={}; h.replace(/^#/,"").split("&").forEach(function(kv){
+        var i=kv.indexOf("="); if(i>0) p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));
+      });
+      if(!p.access_token) return false;
+      SBA.token=p.access_token; SBA.refresh=p.refresh_token||"";
+      SBA.exp=Date.now()+((parseInt(p.expires_in,10)||3600)*1000);
+      sbaSave();
+      // clear the tokens out of the address bar
+      try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+      // fill in the email from the session
+      fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SBA.token}})
+        .then(function(r){ return r.json(); })
+        .then(function(u){ if(u&&u.email){ SBA.email=u.email; SBA.sub=u.id||""; sbaSave(); } })
+        .catch(function(){});
+      return true;
+    }catch(e){ return false; }
   }
   function gTrySilent(){
     $("gLoad").classList.remove("hidden");
@@ -4650,7 +4693,7 @@
   function gRenewQuiet(){
     try{ gRequest({prompt:""}).then(function(){ return gVerify(); }).then(function(){ boot().catch(function(){}); }).catch(function(){}); }catch(e){}
   }
-  function googleBoot(){ try{ sbaLoad(); }catch(e){} if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
+  function googleBoot(){ try{ sbaLoad(); }catch(e){} try{ if(sbaCatchRedirect()){ setTimeout(afterSbaLogin,50); return; } }catch(e){} if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout_sb"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
   (function boot0(){
     var hasDemo=false; try{ hasDemo=!!localStorage.getItem("hoh_demo_sb"); }catch(e){}
     if(hasDemo){
