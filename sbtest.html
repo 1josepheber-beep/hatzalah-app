@@ -629,6 +629,10 @@
   .adm-photo svg{width:30px;height:30px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .adm-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:9.5px;font-weight:800;padding:3px 0}
   .dir-photo{width:44px;height:44px;border-radius:11px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:2px}
+  .eq-imgrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+  .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  .eq-imgpv.hidden{display:none}
+  .eq-thumb{width:42px;height:42px;object-fit:cover;border-radius:9px;border:1px solid var(--line);flex:0 0 auto;cursor:zoom-in}
   .adm-uprow{display:flex;align-items:center;gap:10px;margin:-6px 0 14px}
   .adm-up{border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
   .adm-up:disabled{opacity:.6}
@@ -1236,7 +1240,7 @@
   </div>
   <div class="edit-bar hidden" id="equipEditBar">
     <button class="ebtn primary" id="equipAdd">+ Add item</button>
-    <button class="ebtn" id="equipSave">Save &amp; download</button>
+    <button class="ebtn" id="equipSave">Export backup</button>
   </div>
   <div class="eq-tools">
     <input id="equipSearch" type="search" placeholder="Search equipment" enterkeyhint="search">
@@ -1264,6 +1268,11 @@
     <label>Source<select id="eqSrc"><option value="s">State (S)</option><option value="c">City (C)</option><option value="sc">Both (SC)</option></select></label>
     <label>Our note<input id="eqOurs" type="text" placeholder="Optional"></label>
     <label>Notes<input id="eqNotes" type="text" placeholder="Optional"></label>
+    <div class="eq-imgrow">
+      <button class="ebtn" id="eqImgBtn" type="button">Upload photo</button>
+      <img id="eqImgPv" class="eq-imgpv hidden" alt="">
+      <button class="ebtn" id="eqImgClear" type="button" style="display:none">Remove</button>
+    </div>
     <div class="modal-btns">
       <button class="ebtn danger" id="eqDelete">Delete</button>
       <span style="flex:1"></span>
@@ -1975,9 +1984,10 @@
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
+      // Analytics identity must be set on every open, cached or not.
+      try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
       if(!fromCache){
         try{ localStorage.setItem(DCACHE, JSON.stringify({s:res[0]||[], t:res[1]||[], r:res[2]||[]})); }catch(e){}
-        try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
       }
   }
   function paintHeader(){
@@ -3181,12 +3191,27 @@
   // ---------- Required Equipment (compliance checklist) ----------
   var EQ={loaded:false,d:null,tier:"all",q:"",edit:false,collapsed:{},editId:null};
   function loadEquip(){
-    return new Promise(function(res,rej){
-      if(window.HOH_EQUIP){ res(window.HOH_EQUIP); return; }
-      var s=document.createElement("script"); s.src="equipment.js";
-      s.onload=function(){ window.HOH_EQUIP?res(window.HOH_EQUIP):rej(); };
-      s.onerror=rej; document.head.appendChild(s);
+    return Promise.all([
+      fetch(SB_URL+"/rest/v1/equipment_items?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      fetch(SB_URL+"/rest/v1/equipment_meta?select=*",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+    ]).then(function(res){
+      var rows=Array.isArray(res[0])?res[0]:[], meta=Array.isArray(res[1])?res[1]:[];
+      var M={}; meta.forEach(function(m){ M[m.mkey]=m.mvalue||""; });
+      var cats=(M.cats||"").split("|").filter(function(c){return c;});
+      var items=rows.map(function(r){
+        var subs=[]; try{ subs=JSON.parse(r.subs||"[]")||[]; }catch(e){ subs=[]; }
+        return { id:parseInt(r.item_id,10)||r.id, rowId:r.id, tier:r.tier||"bls", cat:r.cat||"Miscellaneous",
+                 name:r.name||"", qty:r.qty||"", src:r.src||"", ours:r.ours||"", notes:r.notes||"",
+                 image:r.image||"", have:false, subs:subs };
+      });
+      if(!cats.length){ var seen={}; items.forEach(function(i){ if(!seen[i.cat]){seen[i.cat]=1;cats.push(i.cat);} }); }
+      return { legend:{s:M.legend_s||"",c:M.legend_c||"",sc:M.legend_sc||""}, note:M.note||"", cats:cats, items:items };
     });
+  }
+  function eqRowPayload(it){
+    return { item_id:String(it.id), tier:it.tier||"", cat:it.cat||"", name:it.name||"", qty:it.qty||"",
+             src:it.src||"", ours:it.ours||"", notes:it.notes||"", image:it.image||"",
+             subs:JSON.stringify(it.subs||[]) };
   }
   function closeEquip(){ $("equipScreen").classList.remove("open"); }
   function openEquip(){
@@ -3244,6 +3269,7 @@
     }
     row.innerHTML=
       '<span class="eq-cb'+(it.have?' on':'')+'" data-have="1"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+      (it.image?('<img class="eq-thumb" src="'+esc(sbImgUrl(it.image))+'" alt="" data-zoom="'+esc(sbImgUrl(it.image))+'">'):'')+
       '<div class="eq-main"><div class="eq-nm">'+esc(it.name)+'</div>'+
         '<div class="eq-meta"><span class="eq-badge '+tier+'">'+tier.toUpperCase()+'</span>'+
         (it.qty?'<span class="eq-qty">Qty '+esc(it.qty)+'</span>':'')+
@@ -3281,6 +3307,10 @@
     $("eqName").value=it.name||""; $("eqCat").value=it.cat||""; $("eqTier").value=it.tier||"bls";
     $("eqQty").value=it.qty||""; $("eqSrc").value=it.src||"c"; $("eqOurs").value=it.ours||""; $("eqNotes").value=it.notes||"";
     var dl=$("eqCatList"); dl.innerHTML=EQ.d.cats.map(function(c){return '<option value="'+esc(c)+'">';}).join("");
+    EQ.pendingImage=undefined;
+    var pv=$("eqImgPv"), cb=$("eqImgClear"), ib=$("eqImgBtn");
+    if(it.image){ pv.src=sbImgUrl(it.image); pv.classList.remove("hidden"); cb.style.display=""; ib.textContent="Change photo"; }
+    else { pv.classList.add("hidden"); pv.src=""; cb.style.display="none"; ib.textContent="Upload photo"; }
     if($("eqEdit").classList.contains("hidden")) navOpen(closeEqEdit);
     $("eqEdit").classList.remove("hidden");
   }
@@ -3288,18 +3318,39 @@
   function saveEqItem(){
     var nm=$("eqName").value.trim(); if(!nm){ $("eqName").focus(); return; }
     var cat=$("eqCat").value.trim()||"Miscellaneous";
-    if(EQ.d.cats.indexOf(cat)<0) EQ.d.cats.push(cat);
+    if(EQ.d.cats.indexOf(cat)<0){ EQ.d.cats.push(cat); eqSaveCats(); }
     var vals={name:nm,cat:cat,tier:$("eqTier").value,qty:$("eqQty").value.trim(),src:$("eqSrc").value,
       ours:$("eqOurs").value.trim(),notes:$("eqNotes").value.trim()};
+    if(EQ.pendingImage!==undefined) vals.image=EQ.pendingImage;
+    var target;
     if(EQ.editId==null){
       var maxId=0; EQ.d.items.forEach(function(x){ if(x.id>maxId) maxId=x.id; });
-      EQ.d.items.push({id:maxId+1,tier:vals.tier,cat:vals.cat,name:vals.name,qty:vals.qty,src:vals.src,
-        ours:vals.ours,have:false,notes:vals.notes,subs:[]});
-    }else{ var it=eqById(EQ.editId); for(var k in vals) it[k]=vals[k]; }
+      target={id:maxId+1,tier:vals.tier,cat:vals.cat,name:vals.name,qty:vals.qty,src:vals.src,
+        ours:vals.ours,have:false,notes:vals.notes,image:vals.image||"",subs:[]};
+      EQ.d.items.push(target);
+      sbWrite("POST","equipment_items",eqRowPayload(target))
+        .then(function(r){ if(!r.ok) throw "x"; EQ.loaded=false; toast("Item added."); })
+        .catch(function(){ toast("Couldn\u2019t save the new item."); });
+    }else{
+      target=eqById(EQ.editId); for(var k in vals) target[k]=vals[k];
+      var q = target.rowId ? ("id=eq."+target.rowId) : ("item_id=eq."+encodeURIComponent(String(target.id)));
+      sbWrite("PATCH","equipment_items?"+q, eqRowPayload(target))
+        .then(function(r){ if(!r.ok) throw "x"; toast("Saved."); })
+        .catch(function(){ toast("Couldn\u2019t save."); });
+    }
+    EQ.pendingImage=undefined;
     navBack(); renderEquip();
+  }
+  function eqSaveCats(){
+    try{ sbWrite("PATCH","equipment_meta?mkey=eq.cats",{mvalue:(EQ.d.cats||[]).join("|")}).catch(function(){}); }catch(e){}
   }
   function deleteEqItem(){
     if(EQ.editId==null){ navBack(); return; }
+    var it=eqById(EQ.editId);
+    var q = (it&&it.rowId) ? ("id=eq."+it.rowId) : ("item_id=eq."+encodeURIComponent(String(EQ.editId)));
+    sbWrite("DELETE","equipment_items?"+q)
+      .then(function(r){ if(!r.ok) throw "x"; toast("Deleted."); })
+      .catch(function(){ toast("Couldn\u2019t delete."); });
     EQ.d.items=EQ.d.items.filter(function(x){return x.id!==EQ.editId;});
     navBack(); renderEquip();
   }
@@ -3340,6 +3391,23 @@
   $("equipCsv").addEventListener("click",eqCSV);
   $("equipPrint").addEventListener("click",eqPrint);
   $("eqSaveItem").addEventListener("click",saveEqItem);
+  $("eqImgBtn").addEventListener("click",function(){
+    sbPickImage(function(file){
+      var b=$("eqImgBtn"); b.disabled=true; b.textContent="Uploading\u2026";
+      sbUpload("equipment",file,{maxDim:900,quality:0.85}).then(function(ref){
+        EQ.pendingImage=ref;
+        var pv=$("eqImgPv"); pv.src=sbImgUrl(ref); pv.classList.remove("hidden");
+        $("eqImgClear").style.display="";
+        b.disabled=false; b.textContent="Change photo";
+        toast("Photo added \u2014 press Save.");
+      }).catch(function(err){ b.disabled=false; b.textContent="Upload photo"; toast("Upload failed."); try{console.error("eq img:",err);}catch(e){} });
+    });
+  });
+  $("eqImgClear").addEventListener("click",function(){
+    EQ.pendingImage="";
+    $("eqImgPv").classList.add("hidden"); $("eqImgPv").src="";
+    this.style.display="none"; $("eqImgBtn").textContent="Upload photo";
+  });
   $("eqCancel").addEventListener("click",navBack);
   $("eqDelete").addEventListener("click",deleteEqItem);
   $("equipSearch").addEventListener("input",function(){ EQ.q=this.value; renderEquip(); });
