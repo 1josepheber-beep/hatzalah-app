@@ -2032,7 +2032,7 @@
     return fetch(SB_URL+"/rest/v1/"+path, opts);
   }
   // ---------- Supabase Storage: image uploads ----------
-  var SB_BUCKET="images";
+  var SB_BUCKET="image";
   function sbImgUrl(path){
     if(!path) return "";
     if(/^https?:\/\//i.test(path)) return path;           // full URL as-is
