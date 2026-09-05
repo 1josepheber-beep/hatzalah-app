@@ -624,6 +624,16 @@
   .ins-steps li{font-size:14.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
   .ins-steps b{font-weight:800}
   .ins-warn{background:#fff3d6;border:1px solid #f0d58f;color:#8a6d00;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin:0 0 14px;font-weight:600}
+  .adm-photo{position:relative;width:72px;height:72px;flex:0 0 auto;border-radius:14px;border:1px solid var(--line);background:#eef2f7;padding:0;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .adm-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .adm-photo svg{width:30px;height:30px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
+  .adm-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:9.5px;font-weight:800;padding:3px 0}
+  .dir-photo{width:44px;height:44px;border-radius:11px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:2px}
+  .adm-uprow{display:flex;align-items:center;gap:10px;margin:-6px 0 14px}
+  .adm-up{border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
+  .adm-up:disabled{opacity:.6}
+  .adm-imgpv{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#f4f6fa}
+  .adm-imgpv.hidden{display:none}
   .adm-specs{margin-top:6px;padding-top:14px;border-top:1px solid var(--line)}
   .adm-specl{font-weight:800;color:var(--navy);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
   .adm-specg{display:flex;flex-wrap:wrap;gap:7px}
@@ -668,6 +678,12 @@
   .dir-extra .ec-tel{display:inline-flex;align-items:center;gap:6px;margin-top:7px;color:#1e5fae;font-weight:800;font-size:14px;text-decoration:none}
   .dir-extra .ec-tel svg{width:15px;height:15px;stroke:#1e5fae;fill:none;stroke-width:2}
   .prof-save{width:100%;font-size:16px;padding:14px;margin-top:4px}
+  .prof-hdr{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+  .prof-hdrt{flex:1;min-width:0}
+  .prof-photo{position:relative;width:82px;height:82px;flex:0 0 auto;border-radius:16px;border:1px solid var(--line);background:#eef2f7;padding:0;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .prof-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .prof-photo svg{width:34px;height:34px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
+  .prof-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:10px;font-weight:800;padding:3px 0;letter-spacing:.03em}
   .prof-hint{font-size:12px;color:var(--mut);line-height:1.45;margin:-8px 0 16px}
   .prof-note{font-size:13px;font-weight:600;margin-top:12px;text-align:center;min-height:18px}
   .prof-note.ok{color:#2f9e44}
@@ -1581,7 +1597,7 @@
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
   var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads"};
-  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","coh_e_permit_num":"COH E-Permit #","coh_e_permit_exp":"COH E-Permit Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","code":"Code","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"}};
+  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","coh_e_permit_num":"COH E-Permit #","coh_e_permit_exp":"COH E-Permit Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","code":"Code","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"}};
   var LS="hoh_member_v1_sb";
   var DCACHE="hoh_data_v1_sb";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
@@ -2005,6 +2021,59 @@
     if(body!==undefined) opts.body=JSON.stringify(body);
     return fetch(SB_URL+"/rest/v1/"+path, opts);
   }
+  // ---------- Supabase Storage: image uploads ----------
+  var SB_BUCKET="images";
+  function sbImgUrl(path){
+    if(!path) return "";
+    if(/^https?:\/\//i.test(path)) return path;           // full URL as-is
+    if(path.indexOf("storage/")===0 || path.indexOf("/storage/")===0)
+      return SB_URL+"/"+path.replace(/^\//,"");
+    if(path.indexOf("sb:")===0)                            // sb:folder/file.png
+      return SB_URL+"/storage/v1/object/public/"+SB_BUCKET+"/"+path.slice(3);
+    return path;                                           // legacy repo path
+  }
+  // Shrink a photo before upload so we stay small and fast.
+  function sbResize(file, maxDim, quality){
+    return new Promise(function(resolve,reject){
+      try{
+        var img=new Image(), url=URL.createObjectURL(file);
+        img.onload=function(){
+          try{
+            var w=img.width, h=img.height, m=maxDim||1200;
+            if(w>m || h>m){ if(w>h){ h=Math.round(h*m/w); w=m; } else { w=Math.round(w*m/h); h=m; } }
+            var c=document.createElement("canvas"); c.width=w; c.height=h;
+            c.getContext("2d").drawImage(img,0,0,w,h);
+            c.toBlob(function(b){ URL.revokeObjectURL(url); b?resolve(b):reject("resize-failed"); }, "image/jpeg", quality||0.82);
+          }catch(e){ URL.revokeObjectURL(url); reject(e); }
+        };
+        img.onerror=function(){ URL.revokeObjectURL(url); reject("bad-image"); };
+        img.src=url;
+      }catch(e){ reject(e); }
+    });
+  }
+  function sbUpload(folder, file, opts){
+    opts=opts||{};
+    var ext="jpg";
+    var name=(folder||"misc")+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)+"."+ext;
+    return sbResize(file, opts.maxDim||1200, opts.quality||0.82).then(function(blob){
+      return fetch(SB_URL+"/storage/v1/object/"+SB_BUCKET+"/"+name,{
+        method:"POST",
+        headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON), "Content-Type":"image/jpeg", "x-upsert":"true" },
+        body:blob
+      });
+    }).then(function(r){
+      if(!r.ok) return r.text().then(function(t){ throw t||("upload-"+r.status); });
+      return "sb:"+name;   // store this short reference in the table
+    });
+  }
+  // Generic "pick a file" helper
+  function sbPickImage(cb){
+    var inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*"; inp.style.display="none";
+    inp.addEventListener("change",function(){ var f=inp.files&&inp.files[0]; document.body.removeChild(inp); if(f) cb(f); });
+    document.body.appendChild(inp); inp.click();
+  }
+
   var SB_COLREV={};
   function sbCol(table, header){
     if(!SB_COLREV[table]){ var m=SB_COLMAP[table]||{}, rev={}; for(var k in m) rev[m[k]]=k; SB_COLREV[table]=rev; }
@@ -2028,7 +2097,7 @@
       var b=document.createElement("button");b.className="tile";
       b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
       b.setAttribute("data-label",r_(t,"Label")||"");
-      var img=r_(t,"Image URL")||r_(t,"Image")||"";
+      var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
       var iconTile=function(){
         b.className="tile";
         b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg></div>'+
@@ -2389,7 +2458,12 @@
     var t=ADM.tab;
     var tabs='<div class="adm-tabs">'+[["info","Identity & role"],["contact","Contact & personal"],["certs","Certifications"]]
       .map(function(x){ return '<button class="adm-tab'+(t===x[0]?" on":"")+'" data-tab="'+x[0]+'">'+x[1]+'</button>'; }).join("")+'</div>';
-    var head='<div class="adm-mh"><div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
+    var _ap=sbImgUrl(r_(r,"Photo"));
+    var head='<div class="adm-mh">'+
+      '<button class="adm-photo" id="admPhotoBtn" title="Change photo">'+
+        (_ap?('<img src="'+esc(_ap)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
+        '<span class="adm-photo-edit">Change</span></button>'+
+      '<div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
       (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div></div></div>';
     var body="";
     if(t==="info"){
@@ -2565,6 +2639,20 @@
     }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
+    var ph=e.target.closest?e.target.closest(".adm-photo"):null;
+    if(ph){
+      var r0=admRow(ADM.sel); if(!r0) return;
+      sbPickImage(function(file){
+        toast("Uploading photo\u2026");
+        sbUpload("photos",file,{maxDim:600,quality:0.85}).then(function(ref){
+          return sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{photo:ref}).then(function(res){
+            if(!res.ok) throw "save-failed";
+            r0["Photo"]=ref; DIR.loaded=false; toast("Photo updated."); admRenderDetail();
+          });
+        }).catch(function(err){ toast("Couldn\u2019t upload."); try{console.error("photo:",err);}catch(e){} });
+      });
+      return;
+    }
     var tb=e.target.closest?e.target.closest(".adm-tab"):null;
     if(tb){ ADM.tab=tb.getAttribute("data-tab"); admRenderDetail(); return; }
     if(e.target.id==="admSave"){ admSave(); return; }
@@ -2622,8 +2710,10 @@
     fetchTab(tab).then(function(rows){ ADM2.data[k]=rows||[]; ADM2.loaded[k]=true; admRenderSec(k); })
       .catch(function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn\u2019t load.</div>'; });
   }
-  function admBoolOn(v){ v=String(v==null?"":v).trim().toLowerCase();
+  function admBoolOn(v, header){ v=String(v==null?"":v).trim().toLowerCase();
     if(v==="no"||v==="off"||v==="false"||v==="0") return false;
+    // The app treats a blank "Active" as active, so the toggle must agree.
+    if(v==="") return (header==="Active");
     return v==="x"||v==="yes"||v==="true"; }
   function admRenderSec(k){
     var cols=ADM_COLS[k], rows=ADM2.data[k]||[];
@@ -2648,17 +2738,22 @@
         var id="ag_"+k+"_"+i+"_"+header.replace(/[^A-Za-z0-9]/g,"");
         if(kind==="ro") return '<label class="adm-f">'+label+'<input value="'+esc(v)+'" disabled style="background:#f4f6fa;color:var(--mut)"></label>';
         if(kind==="bool") return '<div class="adm-tg" style="padding:8px 0"><div class="tl"><div class="tn" style="font-size:13.5px">'+label+'</div></div>'+
-          '<button class="adm-sw'+(admBoolOn(v)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
+          '<button class="adm-sw'+(admBoolOn(v,header)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
         var t = kind==="num" ? "number" : "text";
         var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image");
-        return '<label class="adm-f'+(wide?" wide":"")+'">'+label+'<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>';
+        var isImg = (header==="Image"||header==="File");
+        var upBtn = isImg ? ('<button class="adm-up" data-up="'+id+'" data-folder="'+(k==="tiles"?"tiles":"apartments")+'">Upload image</button>') : "";
+        var preview = isImg ? ('<img class="adm-imgpv'+(v?"":" hidden")+'" id="'+id+'_pv" src="'+esc(sbImgUrl(v))+'" alt="">') : "";
+        return '<label class="adm-f'+(wide?" wide":"")+'">'+label+
+          '<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>'+
+          (isImg?('<div class="adm-uprow">'+upBtn+preview+'</div>'):"");
       }).join("");
       var specs="";
       if(k==="hospitals"){
         specs='<div class="adm-specs"><div class="adm-specl">Specialties</div><div class="adm-specg">'+
           HOSP_SPECS.map(function(s){
             var sid="ag_h_"+i+"_"+s.replace(/[^A-Za-z0-9]/g,"");
-            return '<button class="adm-spec'+(admBoolOn(r_(r,s))?" on":"")+'" data-sw="1" id="'+sid+'" data-h="'+esc(s)+'">'+esc(s)+'</button>';
+            return '<button class="adm-spec'+(admBoolOn(r_(r,s),s)?" on":"")+'" data-sw="1" id="'+sid+'" data-h="'+esc(s)+'">'+esc(s)+'</button>';
           }).join("")+'</div></div>';
       }
       return '<div class="adm-sec adm-gsec" data-i="'+i+'"><div class="adm-sech">'+esc(title)+
@@ -2734,6 +2829,23 @@
   }
   $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
   $("admGenPane").addEventListener("click",function(e){
+    var up=e.target.closest?e.target.closest(".adm-up"):null;
+    if(up){
+      var targetId=up.getAttribute("data-up"), folder=up.getAttribute("data-folder")||"misc";
+      sbPickImage(function(file){
+        up.disabled=true; up.textContent="Uploading\u2026";
+        sbUpload(folder,file,{maxDim:900,quality:0.85}).then(function(ref){
+          var inp=$(targetId); if(inp) inp.value=ref;
+          var pv=$(targetId+"_pv"); if(pv){ pv.src=sbImgUrl(ref); pv.classList.remove("hidden"); }
+          up.disabled=false; up.textContent="Upload image";
+          toast("Image uploaded \u2014 press Save to keep it.");
+        }).catch(function(err){
+          up.disabled=false; up.textContent="Upload image";
+          toast("Upload failed."); try{ console.error("upload:",err); }catch(e){}
+        });
+      });
+      return;
+    }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
     var del=e.target.closest?e.target.closest(".adm-del"):null;
@@ -3968,7 +4080,7 @@
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
       if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),
-        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),types:[]}; order.push(key); }
+        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),photo:r_(r,"Photo"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
@@ -3976,6 +4088,7 @@
       if(!m.address) m.address=r_(r,"Address");
       if(!m.dob) m.dob=r_(r,"DOB");
       if(!m.level) m.level=r_(r,"Level");
+      if(!m.photo) m.photo=r_(r,"Photo");
       if(!m.tshirt) m.tshirt=r_(r,"T-Shirt Size");
       if(!m.dress) m.dress=r_(r,"Dress Shirt Size");
       if(!m.polo) m.polo=r_(r,"Polo Shirt Size");
@@ -4019,7 +4132,7 @@
         if(secs) extra='<div class="dir-extra">'+secs+'</div>';
       }
       return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'">'+
-        '<div class="dir-head"><span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+        '<div class="dir-head">'+(p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">'):'')+'<span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         ((p.level||typeStr)?'<div class="dir-tags">'+(p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+(typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+'</div>':'')+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+extra+'</div>';
@@ -4071,10 +4184,17 @@
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
+    var _pp=sbImgUrl(r_(row,"Photo"));
     b.innerHTML='<div class="prof-card">'+
-      '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
-      '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
-      (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
+      '<div class="prof-hdr"><div class="prof-hdrt">'+
+        '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
+        '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
+        (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
+      '</div>'+
+      '<button class="prof-photo" id="profPhoto" title="Change photo">'+
+        (_pp?('<img src="'+esc(_pp)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
+        '<span class="prof-photo-edit">Change</span>'+
+      '</button></div>'+
       '<label class="prof-l">Phone<input id="profPhone" type="tel" value="'+esc(r_(row,"Phone"))+'" placeholder="Your phone number"></label>'+
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<label class="prof-l">Personal email (for reminders)<input id="profAltEmail" type="email" value="'+esc(r_(row,"Personal Email"))+'" placeholder="you@example.com"></label>'+
@@ -4104,6 +4224,24 @@
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
+    var _pb=$("profPhoto");
+    if(_pb) _pb.addEventListener("click",function(){
+      if(demoNo()) return;
+      sbPickImage(function(file){
+        toast("Uploading photo\u2026");
+        sbUpload("photos",file,{maxDim:600,quality:0.85}).then(function(ref){
+          return sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),{photo:ref}).then(function(r){
+            if(!r.ok) throw "save-failed";
+            if(row) row["Photo"]=ref;
+            DIR.loaded=false;
+            var im=_pb.querySelector("img");
+            if(im){ im.src=sbImgUrl(ref); }
+            else { _pb.innerHTML='<img src="'+esc(sbImgUrl(ref))+'" alt=""><span class="prof-photo-edit">Change</span>'; }
+            toast("Photo updated.");
+          });
+        }).catch(function(err){ toast("Couldn\u2019t upload the photo."); try{console.error("photo:",err);}catch(e){} });
+      });
+    });
     renderBioRow();
   }
   // (legacy password change removed — sign-in is Google-only)
