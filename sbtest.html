@@ -3739,9 +3739,10 @@
     setTimeout(function(){ if($("medInput")) $("medInput").focus(); }, 150);
   }
   function closeMeds(){ $("medScreen").classList.remove("open"); }
+  var DRUG_URL="https://hoh-drug.1josepheber.workers.dev/";
   function medPost(payload, ok, fail){
-    var url=getSetting("Profile Update URL","");
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+    var url=getSetting("Drug Lookup URL","")||DRUG_URL;
+    fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
       .then(function(r){return r.text();}).then(function(t){ var j; try{j=JSON.parse(t);}catch(e){j=null;} ok(j); }).catch(function(){ if(fail)fail(); });
   }
   function medSuggest(q){
