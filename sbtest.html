@@ -2072,7 +2072,12 @@
         body:blob
       });
     }).then(function(r){
-      if(!r.ok) return r.text().then(function(t){ throw t||("upload-"+r.status); });
+      if(!r.ok) return r.text().then(function(t){
+        var msg=t||("upload-"+r.status);
+        try{ var j=JSON.parse(t); msg=(j.message||j.error||msg)+" ("+r.status+")"; }catch(e){ msg=msg+" ("+r.status+")"; }
+        try{ console.error("Storage upload failed:", r.status, t); }catch(e){}
+        throw msg;
+      });
       return "sb:"+name;   // store this short reference in the table
     });
   }
@@ -4307,7 +4312,7 @@
             else { _pb.innerHTML='<img src="'+esc(sbImgUrl(ref))+'" alt=""><span class="prof-photo-edit">Change</span>'; }
             toast("Photo updated.");
           });
-        }).catch(function(err){ toast("Couldn\u2019t upload the photo."); try{console.error("photo:",err);}catch(e){} });
+        }).catch(function(err){ toast("Photo upload failed: "+String(err).slice(0,90)); try{console.error("photo:",err);}catch(e){} });
       });
     });
     renderBioRow();
