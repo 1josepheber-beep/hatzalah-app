@@ -1042,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1642,11 +1642,18 @@
     if(extra) for(var k in extra) h[k]=extra[k];
     return h;
   }
+  // Supabase ROTATES refresh tokens: each refresh invalidates the previous one.
+  // Several parts of the app can ask for a refresh at once on open, so we must
+  // only ever have ONE refresh in flight - otherwise the second call uses a dead
+  // token, fails, and the person gets kicked out to the sign-in screen.
+  var SBA_INFLIGHT=null;
   function sbaRefresh(){
+    if(SBA_INFLIGHT) return SBA_INFLIGHT;
     if(!SBA.refresh) return Promise.reject("no-refresh");
-    return fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+    var tok=SBA.refresh;
+    SBA_INFLIGHT = fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
       method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
-      body:JSON.stringify({refresh_token:SBA.refresh})
+      body:JSON.stringify({refresh_token:tok})
     }).then(function(r){ if(!r.ok) throw "refresh-failed"; return r.json(); })
       .then(function(j){
         if(!j.access_token) throw "refresh-failed";
@@ -1654,8 +1661,29 @@
         SBA.exp=Date.now()+((j.expires_in||3600)*1000);
         if(j.user&&j.user.email) SBA.email=j.user.email;
         if(j.user&&j.user.id) SBA.sub=j.user.id;
-        sbaSave(); return true;
+        sbaSave(); SBA_INFLIGHT=null; return true;
+      })
+      .catch(function(e){
+        SBA_INFLIGHT=null;
+        // One retry: a transient network blip shouldn't sign anyone out.
+        return new Promise(function(res,rej){
+          setTimeout(function(){
+            if(!SBA.refresh){ rej(e); return; }
+            fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+              method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+              body:JSON.stringify({refresh_token:SBA.refresh})
+            }).then(function(r){ if(!r.ok) throw e; return r.json(); })
+              .then(function(j2){
+                if(!j2.access_token) throw e;
+                SBA.token=j2.access_token; SBA.refresh=j2.refresh_token||SBA.refresh;
+                SBA.exp=Date.now()+((j2.expires_in||3600)*1000);
+                if(j2.user&&j2.user.email) SBA.email=j2.user.email;
+                sbaSave(); res(true);
+              }).catch(function(){ rej(e); });
+          }, 1200);
+        });
       });
+    return SBA_INFLIGHT;
   }
   function sbaEnsure(){
     if(sbaValid()){
@@ -4355,7 +4383,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4395,7 +4423,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -6178,6 +6206,6 @@
   }
 })();
 </script>
-<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:30 AM</div>
+<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:32 AM</div>
 </body>
 </html>
