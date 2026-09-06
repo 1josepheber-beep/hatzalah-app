@@ -1042,6 +1042,22 @@
   .rebar-per{display:flex;align-items:center;gap:6px;font-size:13px}
   .rebar-per button{background:transparent;color:#cdd8ea;border:1px solid #47597a;border-radius:8px;padding:6px 11px;font-weight:800;cursor:pointer}
   .rebar-per button.on{background:#fff;color:var(--navy);border-color:#fff}
+  /* ---- Tile folders (per device) ---- */
+  .tile.foldertile{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .tile.foldertile .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:52px;height:52px}
+  .tile.foldertile .fm{border-radius:6px;background:rgba(255,255,255,.28);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .tile.foldertile .fm.empty{background:rgba(255,255,255,.10)}
+  .tile.foldertile .fm svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;opacity:.9}
+  .tile.mergehover{outline:3px solid #fff;outline-offset:-3px;transform:scale(1.08);transition:transform .12s}
+  .fsheet{position:fixed;inset:0;z-index:90;background:rgba(9,26,52,.62);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
+  .fbox{background:linear-gradient(180deg,var(--navy),var(--navy-d));border-radius:20px;padding:16px;width:100%;max-width:520px;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.4)}
+  .fhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .fname{flex:1;min-width:0;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:10px;padding:10px 12px;font-size:16px;font-weight:800;font-family:inherit}
+  .fname:focus{outline:none;border-color:#fff}
+  .fclose{background:#fff;color:var(--navy);border:0;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px;cursor:pointer;flex:0 0 auto}
+  .fbox .tile{position:relative}
+  .fpull{position:absolute;top:-6px;left:-6px;width:22px;height:22px;border-radius:50%;background:#fff;color:var(--red);font-size:15px;font-weight:800;line-height:20px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.3);cursor:pointer}
+  .fungroup{width:100%;margin-top:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit}
   #grid.reordering .tile{animation:tjiggle .3s infinite}
   #grid.reordering .tile .lab{pointer-events:none}
   #grid .tile.dragging{animation:none;opacity:.92;z-index:50;position:relative;box-shadow:0 8px 22px rgba(0,0,0,.3);transition:none}
@@ -1108,7 +1124,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.9</div>
+  <div class="ver-line">Version 9.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1223,7 +1239,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.9</div>
+  <div class="ver-line">Version 9.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2241,38 +2257,136 @@
       sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),{last_active:nowStamp()}).catch(function(){});
     }catch(e){}
   }
+  // ---------- Tile folders (saved on this device only) ----------
+  function getFolders(){ try{ var f=JSON.parse(localStorage.getItem("hoh_tilefolders")||"[]"); return Array.isArray(f)?f:[]; }catch(e){ return []; } }
+  function saveFolders(f){ try{ localStorage.setItem("hoh_tilefolders", JSON.stringify(f||[])); }catch(e){} }
+  function folderOf(label){
+    var fs=getFolders();
+    for(var i=0;i<fs.length;i++){ if((fs[i].labels||[]).indexOf(label)>=0) return fs[i]; }
+    return null;
+  }
+  function newFolderId(){ return "f"+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+  function tileByLabel(label){
+    for(var i=0;i<STATE.tiles.length;i++){ if(r_(STATE.tiles[i],"Label")===label) return STATE.tiles[i]; }
+    return null;
+  }
+  function tileVisible(t){
+    if(!t) return false;
+    if(isX(t["Admin Only"]) && !STATE.me.admin) return false;
+    var ty=(r_(t,"Type")||"").toLowerCase();
+    if((ty==="taskbook"||ty==="task") && !canTaskBook()) return false;
+    return true;
+  }
+  function buildTileEl(t){
+    var adminOnly=isX(t["Admin Only"]);
+    var b=document.createElement("button");
+    b.className="tile";
+    b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
+    b.setAttribute("data-label",r_(t,"Label")||"");
+    var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
+    function iconTile(){
+      b.className="tile";
+      b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg></div>'+
+                  '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
+                  (adminOnly?'<div class="adm">Admin</div>':'');
+    }
+    if(img){
+      b.className="tile imgtile";
+      b.innerHTML='<img class="bg" src="'+esc(img)+'" alt="">'+
+                  '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
+                  (adminOnly?'<div class="adm">Admin</div>':'');
+      var im=b.querySelector("img.bg"); if(im) im.onerror=iconTile;
+    } else iconTile();
+    return b;
+  }
+  function buildFolderEl(f){
+    var b=document.createElement("button");
+    b.className="tile foldertile";
+    b.setAttribute("data-folder",f.id);
+    b.setAttribute("data-label","\u0192:"+f.id);
+    var inner=(f.labels||[]).map(tileByLabel).filter(tileVisible).slice(0,4);
+    var mini=inner.map(function(t){
+      var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
+      return img ? '<span class="fm" style="background-image:url('+JSON.stringify(img)+')"></span>'
+                 : '<span class="fm ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||"")+'</svg></span>';
+    }).join("");
+    while(mini.split("<span").length-1 < 4) mini+='<span class="fm empty"></span>';
+    b.innerHTML='<div class="fgrid">'+mini+'</div><div class="lab">'+esc(f.name||"Folder")+'</div>';
+    return b;
+  }
+  function openFolder(f){
+    var wrap=document.createElement("div");
+    wrap.className="fsheet";
+    wrap.innerHTML='<div class="fbox">'+
+      '<div class="fhead"><input class="fname" id="fName" value="'+esc(f.name||"Folder")+'" maxlength="24">'+
+        '<button class="fclose" id="fClose">Done</button></div>'+
+      '<div class="grid'+(getTileCols()===3?" cols3":"")+'" id="fGrid"></div>'+
+      '<button class="fungroup" id="fUngroup">Ungroup \u2014 put these back on the home screen</button>'+
+      '</div>';
+    document.body.appendChild(wrap);
+    var g=wrap.querySelector("#fGrid");
+    (f.labels||[]).forEach(function(lb){
+      var t=tileByLabel(lb); if(!tileVisible(t)) return;
+      var el=buildTileEl(t);
+      el.addEventListener("click",function(){ closeF(); openTile(t); });
+      var x=document.createElement("span");
+      x.className="fpull"; x.title="Take out of this folder"; x.textContent="\u00D7";
+      x.addEventListener("click",function(ev){
+        ev.stopPropagation();
+        var fs=getFolders();
+        for(var i=0;i<fs.length;i++){ if(fs[i].id===f.id){ fs[i].labels=(fs[i].labels||[]).filter(function(z){return z!==lb;}); } }
+        fs=fs.filter(function(x2){ return (x2.labels||[]).length>0; });
+        saveFolders(fs); closeF(); paintTiles();
+      });
+      el.appendChild(x);
+      g.appendChild(el);
+    });
+    function closeF(){
+      var nm=wrap.querySelector("#fName").value.trim()||"Folder";
+      var fs=getFolders();
+      for(var i=0;i<fs.length;i++){ if(fs[i].id===f.id) fs[i].name=nm; }
+      saveFolders(fs);
+      try{ wrap.remove(); }catch(e){}
+      paintTiles();
+    }
+    wrap.querySelector("#fClose").addEventListener("click",closeF);
+    wrap.addEventListener("click",function(e){ if(e.target===wrap) closeF(); });
+    wrap.querySelector("#fUngroup").addEventListener("click",function(){
+      var fs=getFolders().filter(function(x2){ return x2.id!==f.id; });
+      saveFolders(fs);
+      try{ wrap.remove(); }catch(e){}
+      paintTiles();
+    });
+  }
+
   function paintTiles(){
     applyTileCols(); applyRxSetting();
-    var g=$("grid");g.innerHTML="";
+    var g=$("grid"); g.innerHTML="";
+    var folders=getFolders();
+    // drop folders that no longer contain any visible tile
+    folders=folders.filter(function(f){ return (f.labels||[]).map(tileByLabel).filter(tileVisible).length>0; });
+    saveFolders(folders);
+    var placed={}, foldersDone={};
     orderedTiles().forEach(function(t){
-      var adminOnly=isX(t["Admin Only"]);
-      if(adminOnly&&!STATE.me.admin) return;
-      var _ty=(r_(t,"Type")||"").toLowerCase();
-      if((_ty==="taskbook"||_ty==="task")&&!canTaskBook()) return;
-      var b=document.createElement("button");b.className="tile";
-      b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
-      b.setAttribute("data-label",r_(t,"Label")||"");
-      var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
-      var iconTile=function(){
-        b.className="tile";
-        b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg></div>'+
-                    '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
-                    (adminOnly?'<div class="adm">Admin</div>':'');
-      };
-      if(img){
-        b.className="tile imgtile";
-        b.innerHTML='<img class="bg" src="'+esc(img)+'" alt="">'+
-                    '<div class="lab">'+esc(r_(t,"Label"))+'</div>'+
-                    (adminOnly?'<div class="adm">Admin</div>':'');
-        var im=b.querySelector("img.bg");
-        if(im) im.onerror=iconTile;   // broken image -> fall back to the built-in icon
-      }else{ iconTile(); }
-      b.addEventListener("click",function(){ if(RE.on||RE.justDragged) return; openTile(t);});
+      if(!tileVisible(t)) return;
+      var label=r_(t,"Label")||"";
+      var f=folderOf(label);
+      if(f){
+        if(foldersDone[f.id]) return;      // the folder takes the position of its first tile
+        foldersDone[f.id]=1;
+        var fe=buildFolderEl(f);
+        fe.addEventListener("click",function(){ if(RE.on||RE.justDragged) return; openFolder(f); });
+        g.appendChild(fe);
+        return;
+      }
+      if(placed[label]) return; placed[label]=1;
+      var b=buildTileEl(t);
+      b.addEventListener("click",function(){ if(RE.on||RE.justDragged) return; openTile(t); });
       g.appendChild(b);
     });
   }
   // ---- Long-press to rearrange tiles (saved per device) ----
-  var RE={on:false, el:null, dragging:false, justDragged:false, offX:0, offY:0, lpTimer:0, sx:0, sy:0};
+  var RE={on:false, el:null, dragging:false, justDragged:false, offX:0, offY:0, lpTimer:0, sx:0, sy:0, hoverEl:null, mergeT:0, mergeReady:null};
   function saveTileOrderFromDOM(){
     var labels=[]; Array.prototype.forEach.call($("grid").children,function(el){ var l=el.getAttribute("data-label"); if(l) labels.push(l); });
     try{ localStorage.setItem("hoh_tileorder", JSON.stringify(labels)); }catch(e){}
@@ -2285,6 +2399,10 @@
     dragTo(cx,cy);
     if(navigator.vibrate){ try{navigator.vibrate(25);}catch(e){} }
   }
+  function clearHover(){
+    if(RE.hoverEl){ RE.hoverEl.classList.remove("mergehover"); RE.hoverEl=null; }
+    clearTimeout(RE.mergeT); RE.mergeT=0; RE.mergeReady=null;
+  }
   function dragTo(cx,cy){
     if(!RE.el) return;
     RE.el.style.transform=""; var r=RE.el.getBoundingClientRect();
@@ -2294,16 +2412,49 @@
     var under=document.elementFromPoint(cx,cy);
     RE.el.style.pointerEvents="";
     var tgt=under&&under.closest?under.closest(".tile"):null;
-    if(tgt&&tgt!==RE.el&&tgt.parentNode===g){
-      var nodes=Array.prototype.slice.call(g.children);
-      var di=nodes.indexOf(RE.el), ti=nodes.indexOf(tgt);
-      if(di<ti) g.insertBefore(RE.el, tgt.nextSibling); else g.insertBefore(RE.el, tgt);
-      dragTo(cx,cy);
+    if(!tgt||tgt===RE.el||tgt.parentNode!==g){ clearHover(); return; }
+    // Hold still over another tile for a moment to combine them into a folder.
+    var tb=tgt.getBoundingClientRect();
+    var centred = Math.abs(cx-(tb.left+tb.width/2)) < tb.width*0.30 &&
+                  Math.abs(cy-(tb.top+tb.height/2)) < tb.height*0.30;
+    if(centred){
+      if(RE.hoverEl!==tgt){
+        clearHover();
+        RE.hoverEl=tgt;
+        RE.mergeT=setTimeout(function(){
+          if(RE.hoverEl===tgt){ tgt.classList.add("mergehover"); RE.mergeReady=tgt;
+            if(navigator.vibrate){ try{navigator.vibrate(20);}catch(e){} } }
+        },520);
+      }
+      return;                       // don't shuffle while hovering to merge
     }
+    clearHover();
+    var nodes=Array.prototype.slice.call(g.children);
+    var di=nodes.indexOf(RE.el), ti=nodes.indexOf(tgt);
+    if(di<ti) g.insertBefore(RE.el, tgt.nextSibling); else g.insertBefore(RE.el, tgt);
+    dragTo(cx,cy);
+  }
+  function mergeIntoFolder(dragEl, targetEl){
+    var dragLabel=dragEl.getAttribute("data-label");
+    var fs=getFolders();
+    var tgtFolderId=targetEl.getAttribute("data-folder");
+    if(tgtFolderId){
+      for(var i=0;i<fs.length;i++){ if(fs[i].id===tgtFolderId && (fs[i].labels||[]).indexOf(dragLabel)<0) fs[i].labels.push(dragLabel); }
+    } else {
+      var tgtLabel=targetEl.getAttribute("data-label");
+      if(!tgtLabel||tgtLabel===dragLabel) return;
+      fs.push({ id:newFolderId(), name:"Folder", labels:[tgtLabel, dragLabel] });
+    }
+    saveFolders(fs);
+    paintTiles();
   }
   function endDrag(){
+    var merged=false;
+    if(RE.el && RE.mergeReady){ mergeIntoFolder(RE.el, RE.mergeReady); merged=true; }
+    clearHover();
     if(RE.el){ RE.el.classList.remove("dragging"); RE.el.style.transform=""; }
-    RE.dragging=false; RE.el=null; saveTileOrderFromDOM();
+    RE.dragging=false; RE.el=null;
+    if(!merged) saveTileOrderFromDOM();
     RE.justDragged=true; setTimeout(function(){ RE.justDragged=false; },350);
   }
   (function reInit(){
@@ -2335,7 +2486,7 @@
     window.addEventListener("mouseup",function(){ if(RE.lpTimer){ clearTimeout(RE.lpTimer); RE.lpTimer=0; } if(RE.dragging) endDrag(); });
     g.addEventListener("contextmenu",function(e){ e.preventDefault(); });
     if($("reDone")) $("reDone").addEventListener("click",exitReorder);
-    if($("reReset")) $("reReset").addEventListener("click",function(){ try{localStorage.removeItem("hoh_tileorder");}catch(e){} exitReorder(); paintTiles(); });
+    if($("reReset")) $("reReset").addEventListener("click",function(){ try{localStorage.removeItem("hoh_tileorder"); localStorage.removeItem("hoh_tilefolders");}catch(e){} exitReorder(); paintTiles(); });
     if($("reCols2")) $("reCols2").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","2");}catch(e){} applyTileCols(); });
     if($("reCols3")) $("reCols3").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","3");}catch(e){} applyTileCols(); });
   })();
@@ -4879,7 +5030,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4921,7 +5072,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
