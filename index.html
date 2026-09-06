@@ -695,6 +695,21 @@
   .adm-item .adm-del{margin:6px 0 0;width:100%}
   .adm-save .pri.hot{background:#C8202E}
   .adm-usage{background:#fff;border-bottom:1px solid var(--line);flex:0 0 auto}
+  .adm-usagebtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:999px;
+    padding:6px 12px;font-weight:800;font-size:12.5px;cursor:pointer;color:#fff;font-family:inherit}
+  .adm-usagebtn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+  .adm-usagebtn.ok{background:rgba(38,166,91,.30)} .adm-usagebtn.ok svg{color:#8ff0bb}
+  .adm-usagebtn.warn{background:rgba(201,147,58,.42)}
+  .adm-usagebtn.bad{background:rgba(200,32,46,.55)}
+  .adm-usagebtn.hidden{display:none}
+  @media (max-width:820px){
+    .adm-usage{display:none}
+  }
+  @media (min-width:821px){
+    .adm-usagebtn{display:none!important}
+  }
+  #uModal .au-wrap{padding:0;gap:14px}
+  #uModal .au-item{min-width:100%}
   .au-wrap{display:flex;gap:18px;padding:11px 14px;flex-wrap:wrap;align-items:flex-start}
   .au-item{flex:1;min-width:200px}
   .au-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;font-weight:800;color:var(--ink);margin-bottom:5px;gap:8px}
@@ -1161,7 +1176,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.7</div>
+  <div class="ver-line">Version 10.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1276,7 +1291,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.7</div>
+  <div class="ver-line">Version 10.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1482,6 +1497,10 @@
   <div class="scr-head">
     <button class="back" id="admBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
     <h2 id="admTitle">Members</h2>
+    <button class="adm-usagebtn hidden" id="admUsageBtn" title="Storage">
+      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+      <span id="admUsagePct">--</span>
+    </button>
   </div>
   <div class="adm-usage" id="admUsage"></div>
   <div class="adm-secbar" id="admSecs"></div>
@@ -3397,6 +3416,7 @@
     $("admMembersPane").style.display="none"; $("admRight").style.display="none"; $("admGenPane").style.display="";
     admLoadSec(k);
   }
+  var ADM_USAGE={html:"",pct:0};
   function admHost(){
     var h=document.getElementById("admModalHost");
     if(!h){ h=document.createElement("div"); h.id="admModalHost"; document.body.appendChild(h); }
@@ -3430,10 +3450,20 @@
         var dbPct=dbCap>0?(j.db_bytes/dbCap*100):0, fPct=fileCap>0?(j.file_bytes/fileCap*100):0;
         if(dbPct>=90||fPct>=90) warn='<div class="au-warn">You\u2019re close to the limit \u2014 time to clear old logs or upgrade.</div>';
         else if(dbPct>=75||fPct>=75) warn='<div class="au-warn soft">Getting full. Worth keeping an eye on.</div>';
-        box.innerHTML='<div class="au-wrap">'+
+        var inner='<div class="au-wrap">'+
           bar("Database",j.db_bytes,dbCap,"")+
           bar("Photos &amp; images",j.file_bytes,fileCap,(j.file_count||0)+" file"+((j.file_count==1)?"":"s"))+
           warn+'</div>';
+        box.innerHTML=inner;
+        // small coloured button for phones
+        ADM_USAGE={html:inner, pct:Math.round(Math.max(dbPct,fPct))};
+        var ub=$("admUsageBtn");
+        if(ub){
+          var p=ADM_USAGE.pct;
+          ub.classList.remove("hidden","ok","warn","bad");
+          ub.classList.add(p>=90?"bad":(p>=75?"warn":"ok"));
+          $("admUsagePct").textContent=p+"%";
+        }
       })
       .catch(function(){ box.innerHTML=""; });
   }
@@ -3883,6 +3913,16 @@
       ADM2.loaded[k]=false; toast("Deleted."); admLoadSec(k);
     }).catch(function(){ toast("Couldn\u2019t delete \u2014 check your connection."); });
   }
+  $("admUsageBtn").addEventListener("click",function(){
+    if(!ADM_USAGE.html) return;
+    admHost().innerHTML='<div class="adm-modal" id="uModal"><div class="adm-mbox">'+
+      '<h3>Storage</h3>'+
+      '<p class="adm-msub">How much of your Supabase allowance is in use.</p>'+
+      ADM_USAGE.html+
+      '<div class="adm-mbtns" style="margin-top:14px"><button class="pri" id="u_ok">Done</button></div></div></div>';
+    $("u_ok").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("uModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
+  });
   $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
   $("admGenPane").addEventListener("input",function(){ admMarkDirty(); });
   $("admGenPane").addEventListener("change",function(){ admMarkDirty(); });
@@ -5379,7 +5419,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5421,7 +5461,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
