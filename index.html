@@ -1176,7 +1176,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.8</div>
+  <div class="ver-line">Version 10.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1291,7 +1291,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.8</div>
+  <div class="ver-line">Version 10.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2320,9 +2320,17 @@
     return out.trim();
   }
   var SB_COLREV={};
+  // Turn a display name back into a database column, e.g. "Test Exp" -> test_exp
+  function colFromHeader(h){
+    var s=String(h||"").trim();
+    if(!s) return null;
+    s=s.replace(/\s*#$/,"_num");
+    s=s.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,"").replace(/_+/g,"_");
+    return s||null;
+  }
   function sbCol(table, header){
     if(!SB_COLREV[table]){ var m=SB_COLMAP[table]||{}, rev={}; for(var k in m) rev[m[k]]=k; SB_COLREV[table]=rev; }
-    return SB_COLREV[table][header]||null;
+    return SB_COLREV[table][header] || colFromHeader(header);
   }
   function nowStamp(){ var d=new Date(),h=d.getHours(),ap=h>=12?"PM":"AM",h12=(h%12)||12,mm=("0"+d.getMinutes()).slice(-2); return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+mm+" "+ap; }
   function pingSeen(){
@@ -5419,7 +5427,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5461,7 +5469,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
