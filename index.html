@@ -665,6 +665,11 @@
   .cprx-b.lifted{opacity:.25}
   .cprx-ghost{position:fixed;z-index:9999;pointer-events:none;box-shadow:0 16px 40px rgba(16,38,74,.35);transform:scale(1.05)}
   .cprx-off{position:absolute;top:5px;right:7px;font-size:9px;font-weight:800;background:rgba(0,0,0,.35);border-radius:5px;padding:1px 5px;letter-spacing:.04em}
+  .cx-sw{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .cx-chip{width:38px;height:38px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0}
+  .cx-chip.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+  .cx-custom{display:flex;align-items:center;gap:10px;margin-top:11px;font-size:12.5px;color:var(--mut);font-weight:600}
+  .cx-custom input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:2px;cursor:pointer}
   .cprx-hint{font-size:12.5px;color:var(--mut);background:#f4f7fb;border-radius:9px;padding:9px 11px;margin:-6px 0 13px;line-height:1.45}
   .adm-itemh{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
   .adm-itemh:hover{background:#f7f9fc}
@@ -1102,7 +1107,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.7</div>
+  <div class="ver-line">Version 8.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1217,7 +1222,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.7</div>
+  <div class="ver-line">Version 8.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2921,7 +2926,7 @@
     tiles:[["Label","Label","text"],["Type","Type","text"],["Target","Target","text"],
            ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
     apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
-    cpr:[["Label","Label","text"],["Action","What it does","sel:log|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
+    cpr:[["Label","Label","text"],["Action","What it does","sel:log|drug|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Code","Code","text"],["Phone (Call)","Phone","text"],
@@ -3043,7 +3048,7 @@
   }
   function admCprOpen(i){
     var r=(ADM2.view||[])[i]; if(!r) return;
-    var acts=["log","start","shock","epi","rhythm","rosc"];
+    var acts=["log","drug","start","shock","epi","rhythm","rosc"];
     var cur=String(r_(r,"Action")||"log").toLowerCase();
     var opts=acts.map(function(a){ return '<option'+(cur===a?' selected':'')+'>'+a+'</option>'; }).join("");
     $("cprxEdit").innerHTML='<div class="adm-modal" id="cprxModal"><div class="adm-mbox">'+
@@ -3052,7 +3057,10 @@
       '<label class="adm-f">Label<input id="cx_label" value="'+esc(r_(r,"Label"))+'"></label>'+
       '<label class="adm-f">What it does<select id="cx_action">'+opts+'</select></label>'+
       '<div class="cprx-hint" id="cx_hint"></div>'+
-      '<label class="adm-f">Color<input id="cx_color" value="'+esc(r_(r,"Color"))+'" placeholder="green, shock, epi\u2026"></label>'+
+      '<div class="adm-f">Color<div class="cx-sw" id="cx_swatches"></div>'+
+        '<div class="cx-custom"><input type="color" id="cx_pick" value="'+esc(cprColor(r_(r,"Color")))+'">'+
+        '<span>Or pick any color</span>'+
+        '<input type="hidden" id="cx_color" value="'+esc(r_(r,"Color"))+'"></div></div>'+
       '<div class="adm-tg"><div class="tl"><div class="tn">Active</div><div class="td">Off hides it during a code</div></div>'+
         '<button class="adm-sw'+(admBoolOn(r_(r,"Active"),"Active")?" on":"")+'" id="cx_active" data-sw="1"></button></div>'+
       '<div class="adm-mbtns"><button class="ghost" id="cx_cancel">Cancel</button><button class="pri" id="cx_ok">Done</button></div>'+
@@ -3062,6 +3070,7 @@
       var a=$("cx_action").value;
       $("cx_hint").textContent={
         log:"Just writes a line in the code log.",
+        drug:"Any medication \u2014 counts each dose and logs \u201C(label) #2\u201D. Use the label for the drug name.",
         start:"Starts the code timer, then becomes Pause.",
         shock:"Counts a shock and logs \u201CShock #2\u201D.",
         epi:"Counts a dose and restarts the epi countdown.",
@@ -3071,6 +3080,32 @@
     }
     hint();
     $("cx_action").addEventListener("change",hint);
+    // colour swatches
+    var NAMED=[["shock","Shock"],["epi","Epi / drug"],["comp","Compressions"],["o2","Airway"],
+               ["igel","iGel"],["pads","Pads"],["rhythm","Rhythm"],["rosc","ROSC"],
+               ["green","Green"],["red","Red"],["nav","Navy"]];
+    function paintSw(){
+      var cur=String($("cx_color").value||"").trim().toLowerCase();
+      $("cx_swatches").innerHTML=NAMED.map(function(n){
+        return '<button type="button" class="cx-chip'+(cur===n[0]?" on":"")+'" data-c="'+n[0]+'" '+
+          'style="background:'+CPR_COLORS[n[0]]+'" title="'+esc(n[1])+'"></button>';
+      }).join("");
+    }
+    paintSw();
+    $("cx_swatches").addEventListener("click",function(e){
+      var b=e.target.closest?e.target.closest(".cx-chip"):null; if(!b) return;
+      $("cx_color").value=b.getAttribute("data-c");
+      $("cx_pick").value=CPR_COLORS[b.getAttribute("data-c")];
+      paintSw(); livePreview();
+    });
+    $("cx_pick").addEventListener("input",function(){
+      $("cx_color").value=this.value;   // store the exact hex
+      paintSw(); livePreview();
+    });
+    function livePreview(){
+      var b=$("cprxGrid").querySelector('.cprx-b[data-i="'+i+'"]');
+      if(b) b.style.background=cprColor($("cx_color").value);
+    }
     $("cx_active").addEventListener("click",function(){ this.classList.toggle("on"); });
     $("cx_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
     $("cx_del").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; admGenDelete(i); });
@@ -4843,7 +4878,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4885,7 +4920,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -5209,7 +5244,7 @@
 
   // ---------- CPR Tracker ----------
   var CPR={running:false,last:0,total:0,cycle:0,epi:0,cycNum:1,epis:0,shocks:0,tickId:0,
-           metro:false,metroId:0,actx:null,log:[],hadEpi:false,btnsLoaded:false};
+           metro:false,metroId:0,actx:null,log:[],hadEpi:false,drugs:{},btnsLoaded:false};
   var CYCLE_MS=120000;
   function cycleMs(){ var m=parseFloat(getSetting("CPR Cycle Minutes","2")); if(!isFinite(m)||m<=0) m=2; return Math.round(m*60000); }
   function cprFmt(ms){ if(ms<0)ms=0; var s=Math.floor(ms/1000); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
@@ -5302,6 +5337,8 @@
     var b=e.target.closest?e.target.closest(".cpr-b"):null; if(!b) return;
     var act=b.getAttribute("data-act"), label=b.getAttribute("data-label");
     if(act==="epi"){ CPR.epis++; CPR.epi=0; CPR.hadEpi=true; cprLogAdd(label+" #"+CPR.epis); cprTick(); }
+    else if(act==="drug"){ CPR.drugs=CPR.drugs||{}; var dk=String(label).toLowerCase();
+      CPR.drugs[dk]=(CPR.drugs[dk]||0)+1; cprLogAdd(label+" #"+CPR.drugs[dk]); }
     else if(act==="start"){ cprAudio(); if(!CPR.running){ CPR.running=true; CPR.last=Date.now(); ensureTick(); var sb=$("cprStart"); sb.classList.add("on"); sb.textContent="Pause"; } cprLogAdd(label); }
     else if(act==="shock"){ CPR.shocks++; if(navigator.vibrate)navigator.vibrate(80); cprLogAdd(label+" #"+CPR.shocks); }
     else if(act==="rhythm"){ CPR.cycle=0; cprLogAdd(label); cprTick(); }
