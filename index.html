@@ -524,6 +524,9 @@
   .prof-unit{font-size:13px;color:var(--mut);font-weight:700;margin:2px 0 14px}
   .prof-dob{font-size:13.5px;color:var(--ink);margin:-8px 0 14px}
   .prof-dob b{font-weight:700}
+  .prof-dob.hidden{display:none}
+  .prof-dobedit{margin-left:9px;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:7px;padding:3px 10px;font-size:11.5px;font-weight:800;cursor:pointer;vertical-align:1px}
+  .prof-dobedit:active{background:#eef2f7}
   .prof-bio{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .prof-pw{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .prof-pw-h{font-weight:800;color:var(--navy);font-size:15px;margin-bottom:6px}
@@ -1042,7 +1045,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.2</div>
+  <div class="ver-line">Version 8.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1160,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.2</div>
+  <div class="ver-line">Version 8.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4395,6 +4398,18 @@
   }
   function szRead(id){ var el=$(id); if(!el) return ""; var s=el.value; if(s==="Other"){ var o=$(id+"Other"); return o?o.value.trim():""; } return s; }
   function wireOther(id){ var s=$(id); if(s) s.addEventListener("change",function(){ var o=$(id+"Other"); if(o) o.classList.toggle("hidden", s.value!=="Other"); }); }
+  function dobIso(v){
+    v=String(v==null?"":v).trim(); if(!v) return "";
+    var m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(m) return m[3]+"-"+("0"+m[1]).slice(-2)+"-"+("0"+m[2]).slice(-2);
+    m=v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m?(m[1]+"-"+m[2]+"-"+m[3]):"";
+  }
+  function dobMdy(v){
+    v=String(v==null?"":v).trim(); if(!v) return "";
+    var m=v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m?(parseInt(m[2],10)+"/"+parseInt(m[3],10)+"/"+m[1]):v;
+  }
   function renderProfile(row){
     var b=$("profBody");
     var name=row?((r_(row,"First Name")+" "+r_(row,"Last Name")).trim()):(((STATE.me.first||"")+" "+(STATE.me.last||"")).trim());
@@ -4402,7 +4417,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4411,7 +4426,9 @@
       '<div class="prof-hdr"><div class="prof-hdrt">'+
         '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
-        (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
+        '<div class="prof-dob" id="profDobRow">Date of birth: <b id="profDobTxt">'+esc(r_(row,"DOB")||"\u2014")+'</b>'+
+          '<button type="button" class="prof-dobedit" id="profDobEdit">'+(r_(row,"DOB")?"Edit":"Add")+'</button></div>'+
+        '<label class="prof-l hidden" id="profDobWrap">Date of birth<input id="profDob" type="date" value="'+esc(dobIso(r_(row,"DOB")))+'"></label>'+
       '</div>'+
       '<button class="prof-photo" id="profPhoto" title="Change photo">'+
         (_pp?('<img src="'+esc(_pp)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
@@ -4442,10 +4459,16 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
+    var _de=$("profDobEdit");
+    if(_de) _de.addEventListener("click",function(){
+      $("profDobRow").classList.add("hidden");
+      $("profDobWrap").classList.remove("hidden");
+      try{ $("profDob").focus(); }catch(e){}
+    });
     var _pb=$("profPhoto");
     if(_pb) _pb.addEventListener("click",function(){
       if(demoNo()) return;
@@ -4488,9 +4511,11 @@
     var note=$("profNote");
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
     var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
-      ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms") };
+      ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms"),
+      dob:($("profDob")?dobMdy($("profDob").value):undefined) };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
     var upd={ phone:phone, address:addr, t_shirt_size:extra.tshirt, dress_shirt_size:extra.dress, polo_shirt_size:extra.polo, hat_size:extra.hat, coat_size:extra.coat, emergency_contact:extra.ecName, emergency_phone:extra.ecPhone, emergency_relationship:extra.ecRel, personal_email:extra.altEmail, text_home:extra.textHome, text_home_method:extra.textMethod };
+    if(extra.dob!==undefined && extra.dob!=="") upd.dob=extra.dob;
     sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),upd)
       .then(function(r){ finishProfile(r.ok, phone, addr, extra); })
       .catch(function(){ finishProfile(false, phone, addr, extra); });
@@ -4509,6 +4534,7 @@
           if("Emergency Contact" in r)r["Emergency Contact"]=extra.ecName; if("Emergency Phone" in r)r["Emergency Phone"]=extra.ecPhone; if("Emergency Relationship" in r)r["Emergency Relationship"]=extra.ecRel;
           if("Personal Email" in r)r["Personal Email"]=extra.altEmail;
           if("Text Home" in r)r["Text Home"]=extra.textHome;
+          if(extra.dob) r["DOB"]=extra.dob;
           if("Text Home Method" in r)r["Text Home Method"]=extra.textMethod;
         }
       } }); }
