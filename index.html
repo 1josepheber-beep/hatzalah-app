@@ -613,18 +613,24 @@
   .adm-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
   .adm-cert{padding:14px 0;border-bottom:1px solid var(--line)}
   .adm-cert:last-child{border-bottom:0}
-  .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .adm-cert .cn{font-weight:700;font-size:14.5px;min-width:0;flex:1}
   .adm-cert .cd{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400}
-  .adm-cert .cbot{display:flex;align-items:center;gap:9px}
-  .adm-cert input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;font-family:inherit}
-  .adm-cert input:focus{outline:none;border-color:var(--navy)}
+  /* phone: the date gets its own full-width row, the buttons wrap underneath */
+  .adm-cert .cbot{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+  .adm-cert input{flex:1 1 100%;width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;
+    padding:12px 13px;font-size:16px;font-family:inherit;background:#fff}
+  .adm-cert input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(20,61,117,.10)}
+  .adm-cert input::placeholder{color:#9aa7b8}
   .adm-cert .pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;flex:0 0 auto;letter-spacing:.03em}
-  .adm-cert .adm-nabtn{flex:0 0 auto}
+  .adm-cert .cbot > button{flex:1 1 auto;min-width:0;white-space:nowrap}
+  .adm-cert .adm-nabtn,.adm-cert .adm-pausebtn,.adm-cert .adm-certdel{padding:10px 10px;font-size:12px}
   @media (min-width:820px){
     .adm-cert{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
     .adm-cert .ctop{margin-bottom:0}
-    .adm-cert input{width:160px;flex:0 0 auto}
+    .adm-cert .cbot{flex-wrap:nowrap}
+    .adm-cert input{width:150px;flex:0 0 auto}
+    .adm-cert .cbot > button{flex:0 0 auto}
   }
   .adm-cert .pill.ok{background:#e4f6e9;color:#1e7a3d}
   .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
@@ -1194,7 +1200,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.5</div>
+  <div class="ver-line">Version 11.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1309,7 +1315,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.5</div>
+  <div class="ver-line">Version 11.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3135,8 +3141,8 @@
               (paused?'<span class="pill pause">Paused</span>':'')+'</div>'+
             '<div class="cbot">'+
               (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
-              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
-              (pk&&!isna?'<button class="adm-pausebtn'+(paused?" on":"")+'" data-pause="'+esc(pk)+'">'+(paused?"Resume emails":"Pause emails")+'</button>':'')+
+              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not req.")+'</button>':'')+
+              (pk&&!isna?'<button class="adm-pausebtn'+(paused?" on":"")+'" data-pause="'+esc(pk)+'">'+(paused?"Resume":"Pause")+'</button>':'')+
               (pk?'<button class="adm-certdel" data-delcert="'+esc(pk)+'" data-name="'+esc(c.name)+'" data-armed="0">Remove</button>':'')+
             '</div></div>';
         });
@@ -5538,7 +5544,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5580,7 +5586,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
