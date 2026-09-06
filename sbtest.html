@@ -1042,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1204,7 +1204,7 @@
   </div>
   <div class="edit-bar hidden" id="cabHomeBar">
     <button class="ebtn primary" id="cabAdd">+ Add cabinet</button>
-    <button class="ebtn" id="cabSaveHome">Save &amp; download</button>
+    <button class="ebtn primary" id="cabSaveHome">Save</button>
   </div>
   <div class="cab-grid" id="cabGrid"></div>
 </div>
@@ -1218,7 +1218,7 @@
   <div class="edit-bar hidden" id="cabEditBar">
     <button class="ebtn" id="cabPhotoBtn">Replace photo</button>
     <button class="ebtn primary" id="cabAddItem">+ Add item</button>
-    <button class="ebtn" id="cabSave">Save &amp; download</button>
+    <button class="ebtn primary" id="cabSave">Save</button>
   </div>
   <div class="cab-photo-wrap" id="cabPhotoWrap">
     <div class="cab-photo" id="cabPhoto"><img id="cabImg" alt="Cabinet photo"></div>
@@ -2934,11 +2934,54 @@
   function isFTO(){ return tbTrainees().length>0; }
   function canTaskBook(){ return isObserver()||isAdmin()||isFTO(); }
   function loadPlacement(){
-    return new Promise(function(res,rej){
-      if(window.HOH_PLACE){ res(window.HOH_PLACE); return; }
-      var s=document.createElement("script"); s.src="placement.js";
-      s.onload=function(){ window.HOH_PLACE?res(window.HOH_PLACE):rej(); };
-      s.onerror=rej; document.head.appendChild(s);
+    return Promise.all([
+      fetch(SB_URL+"/rest/v1/cabinets?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      fetch(SB_URL+"/rest/v1/cabinet_bins?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+    ]).then(function(res){
+      var cabs=Array.isArray(res[0])?res[0]:[], bins=Array.isArray(res[1])?res[1]:[];
+      var byCab={};
+      bins.forEach(function(b){
+        (byCab[b.cab_id]=byCab[b.cab_id]||[]).push({
+          n:b.n||"", q:b.q||"",
+          x:parseFloat(b.x)||0, y:parseFloat(b.y)||0,
+          w:parseFloat(b.w)||0, h:parseFloat(b.h)||0,
+          _rowId:b.id
+        });
+      });
+      return cabs.map(function(c){
+        return { id:c.cab_id, name:c.name||"", img:c.img||"", _rowId:c.id, bins:byCab[c.cab_id]||[] };
+      });
+    });
+  }
+  // Save one cabinet (its photo + all its item markers) to Supabase.
+  function cabSaveToDb(cab){
+    if(!cab) return Promise.reject("no-cabinet");
+    var imgVal = cab._img || cab.img || "";
+    var cq = cab._rowId ? ("id=eq."+cab._rowId) : ("cab_id=eq."+encodeURIComponent(cab.id));
+    return sbWrite("PATCH","cabinets?"+cq,{ name:cab.name||"", img:imgVal })
+      .then(function(r){ if(!r.ok) throw "cab-failed"; })
+      .then(function(){ return sbWrite("DELETE","cabinet_bins?cab_id=eq."+encodeURIComponent(cab.id)); })
+      .then(function(){
+        var rows=(cab.bins||[]).map(function(b,i){
+          return { cab_id:cab.id, n:b.n||"", q:b.q||"",
+                   x:String(b.x), y:String(b.y), w:String(b.w), h:String(b.h), sort_order:String(i+1) };
+        });
+        return rows.length ? sbWrite("POST","cabinet_bins",rows) : {ok:true};
+      })
+      .then(function(r){ if(r && r.ok===false) throw "bins-failed"; cab.img=imgVal; cab._dirty=false; return true; });
+  }
+  function cabSaveNow(){
+    var cab=PLACE.cur;
+    if(!cab){ toast("Open a cabinet first."); return; }
+    var btns=[$("cabSave"),$("cabSaveHome")];
+    btns.forEach(function(b){ if(b){ b.disabled=true; b.textContent="Saving\u2026"; } });
+    cabSaveToDb(cab).then(function(){
+      btns.forEach(function(b){ if(b){ b.disabled=false; b.textContent="Save"; } });
+      PLACE.loaded=false; toast("Saved.");
+    }).catch(function(err){
+      btns.forEach(function(b){ if(b){ b.disabled=false; b.textContent="Save"; } });
+      toast("Couldn\u2019t save \u2014 check your connection.");
+      try{ console.error("cabinet save:",err); }catch(e){}
     });
   }
   function closePlaceScreen(){ $("placeScreen").classList.remove("open"); }
@@ -3020,7 +3063,7 @@
   function closeCab(){ $("placeDetail").classList.remove("open"); setHomeEdit(false); }
   function drawCab(){
     var c=PLACE.cur; if(!c) return;
-    var src=c._img||c.img||"";
+    var src=sbImgUrl(c._img||c.img||"");
     var boxes="";
     c.bins.forEach(function(b,k){
       boxes+='<div class="cbin" data-i="'+k+'" style="left:'+(b.x*100)+'%;top:'+(b.y*100)+
@@ -3096,26 +3139,22 @@
     PLACE.cur.bins.splice(PLACE.editIdx,1); PLACE.sel=-1; drawCab(); navBack();
   }
   // ----- photo upload -----
-  function pickPhoto(){ $("cabFile").value=""; $("cabFile").click(); }
-  $("cabFile").addEventListener("change",function(){
-    var f=this.files&&this.files[0]; if(!f||!PLACE.cur) return;
-    var fr=new FileReader();
-    fr.onload=function(){
-      var im=new Image();
-      im.onload=function(){
-        var mw=1100, s=Math.min(1,mw/im.naturalWidth);
-        var cv=document.createElement("canvas");
-        cv.width=Math.round(im.naturalWidth*s); cv.height=Math.round(im.naturalHeight*s);
-        cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
-        var url; try{ url=cv.toDataURL("image/webp",0.8); if(url.indexOf("image/webp")<0) throw 0; }
-        catch(e){ url=cv.toDataURL("image/jpeg",0.82); }
-        PLACE.cur._img=url; PLACE.cur._dirty=true;
-        drawCab(); toast("Photo set. Remember to Save & download.");
-      };
-      im.src=fr.result;
-    };
-    fr.readAsDataURL(f);
-  });
+  function pickPhoto(){
+    if(!PLACE.cur){ toast("Open a cabinet first."); return; }
+    sbPickImage(function(file){
+      var b=$("cabPhotoBtn"); b.disabled=true; b.textContent="Uploading\u2026";
+      sbUpload("cabinets",file,{maxDim:1400,quality:0.85}).then(function(ref){
+        PLACE.cur._img=ref; PLACE.cur._dirty=true;
+        b.disabled=false; b.textContent="Replace photo";
+        drawCab();
+        toast("Photo set \u2014 press Save to keep it.");
+      }).catch(function(err){
+        b.disabled=false; b.textContent="Replace photo";
+        toast("Upload failed: "+String(err).slice(0,80));
+        try{ console.error("cabinet photo:",err); }catch(e){}
+      });
+    });
+  }
   // ----- drag / resize on photo -----
   (function(){
     var ph=$("cabPhoto");
@@ -3220,11 +3259,11 @@
   $("cabBack").addEventListener("click",navBack);
   $("placeEdit").addEventListener("click",function(){ setHomeEdit(!PLACE.edit); });
   $("cabAdd").addEventListener("click",addCabinet);
-  $("cabSaveHome").addEventListener("click",saveDownload);
+  $("cabSaveHome").addEventListener("click",cabSaveNow);
   $("cabEdit").addEventListener("click",function(){ setCabEdit(!PLACE.edit); });
   $("cabPhotoBtn").addEventListener("click",pickPhoto);
   $("cabAddItem").addEventListener("click",function(){ openItemEdit(-1); });
-  $("cabSave").addEventListener("click",saveDownload);
+  $("cabSave").addEventListener("click",cabSaveNow);
   $("itemSave").addEventListener("click",saveItemEdit);
   $("itemCancel").addEventListener("click",navBack);
   $("itemDelete").addEventListener("click",deleteItem);
@@ -4316,7 +4355,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4356,7 +4395,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:30 AM</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -6139,6 +6178,6 @@
   }
 })();
 </script>
-<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:26 AM</div>
+<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:30 AM</div>
 </body>
 </html>
