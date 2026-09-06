@@ -1042,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:42 AM</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:42 AM</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4398,7 +4398,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:42 AM</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4438,7 +4438,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:42 AM</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -4518,6 +4518,13 @@
   function openQMenu(){
     var thOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Text Home","on")||"on").trim());
     var b=$("qTextHome"); if(b) b.style.display = thOn ? "" : "none";
+    // Only offer "Install app" when it isn't installed yet.
+    var ib=$("qInstall");
+    if(ib){
+      var installed=false;
+      try{ installed = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }catch(e){}
+      ib.style.display = installed ? "none" : "";
+    }
     $("qMenu").classList.remove("hidden");
   }
   function closeQMenu(){ $("qMenu").classList.add("hidden"); }
@@ -6220,6 +6227,6 @@
   }
 })();
 </script>
-<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:41 AM</div>
+<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:42 AM</div>
 </body>
 </html>
