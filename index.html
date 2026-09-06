@@ -651,6 +651,23 @@
   .stand-tier .n{font-weight:800}
   .stand-tier .r{margin-left:auto;color:var(--mut);font-weight:700}
   .stand-foot{font-size:11.5px;color:var(--mut);text-align:center;margin-top:14px;line-height:1.5}
+  .adm-items{display:block}
+  .adm-item{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 2px 8px rgba(16,38,74,.04)}
+  .adm-item.off{opacity:.6}
+  .adm-item.dragging{opacity:.85;box-shadow:0 10px 26px rgba(16,38,74,.22);transform:scale(1.01)}
+  .adm-itemh{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
+  .adm-itemh:hover{background:#f7f9fc}
+  .adm-grip{flex:0 0 auto;cursor:grab;touch-action:none;padding:2px}
+  .adm-grip svg{width:18px;height:18px;stroke:#b9c0cc;fill:none;stroke-width:2.5;stroke-linecap:round}
+  .adm-itemt{font-weight:800;font-size:14.5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
+  .adm-itemsub{margin-left:auto;font-size:12px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+  .adm-offtag{font-size:9.5px;font-weight:800;color:#8a1f1f;background:#fdecec;border-radius:5px;padding:1px 6px;margin-left:6px;text-transform:uppercase}
+  .adm-car{width:17px;height:17px;stroke:#b9c0cc;fill:none;stroke-width:2.5;flex:0 0 auto;transition:transform .18s;margin-left:6px}
+  .adm-item.open .adm-car{transform:rotate(180deg)}
+  .adm-itemb{display:none;padding:4px 14px 16px;border-top:1px solid var(--line)}
+  .adm-item.open .adm-itemb{display:block}
+  .adm-item .adm-del{margin:6px 0 0;width:100%}
+  .adm-save .pri.hot{background:#C8202E}
   .adm-secbar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
   .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
   .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -1074,7 +1091,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.5</div>
+  <div class="ver-line">Version 8.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1189,7 +1206,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.5</div>
+  <div class="ver-line">Version 8.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2827,6 +2844,7 @@
       .catch(function(){ btn.disabled=false; btn.textContent="Add member"; err.textContent="Couldn\u2019t add \u2014 check your connection."; });
   }
   $("admBack").addEventListener("click",function(){
+    if(!admConfirmLeave()) return;
     if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
     navBack();
   });
@@ -2883,15 +2901,16 @@
     {k:"guests",label:"Guest Codes"}
   ];
   var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List"};
+  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
     "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
   // column spec per section: [header, label, kind, opts]
   var ADM_COLS={
     settings:[["Setting","Setting","ro"],["Value","Value","text"]],
-    tiles:[["Order","Order","num"],["Label","Label","text"],["Type","Type","text"],["Target","Target","text"],
+    tiles:[["Label","Label","text"],["Type","Type","text"],["Target","Target","text"],
            ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
     apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
-    cpr:[["Order","Order","num"],["Label","Label","text"],["Action","Action","text"],["Color","Color","text"],["Active","Active","bool"]],
+    cpr:[["Label","Label","text"],["Action","What it does","sel:log|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Code","Code","text"],["Phone (Call)","Phone","text"],
@@ -2901,7 +2920,8 @@
     tasklist:[["ID","ID","text"],["Category","Category","text"],["Task","Task","text"],["Type","Type (check or count)","text"],["Target","Target (for count)","text"]]
   };
   function admSecSwitch(k){
-    ADM2.sec=k; ADM.sel=null; document.body.classList.remove("admdetail");
+    if(!admConfirmLeave()) return;
+    ADM2.sec=k; ADM2.dirty=false; ADM.sel=null; document.body.classList.remove("admdetail");
     $("admTitle").textContent = (ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label || "Admin";
     admPaintSecs();
     if(k==="members"){ $("admMembersPane").style.display=""; $("admRight").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
@@ -2926,31 +2946,49 @@
     if(v==="") return (header==="Active");
     return v==="x"||v==="yes"||v==="true"; }
   function admRenderSec(k){
-    var cols=ADM_COLS[k], rows=ADM2.data[k]||[];
-    if(k==="tiles"||k==="cpr") rows=rows.slice().sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
+    var cols=ADM_COLS[k], rows=(ADM2.data[k]||[]).slice();
+    if(k==="tiles"||k==="cpr") rows.sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
     var help={
-      settings:"These control how the app behaves for everyone. Change a value and save \u2014 it applies the next time members open the app.",
-      tiles:"The buttons on the home screen. Order controls position; Active shows or hides it; Admin only limits it to admins.",
-      apartments:"Apartment complexes in the map finder. File must match the map image name exactly.",
-      cpr:"The buttons shown during a CPR code.",
-      uploads:"The document types members can pick when uploading a file.",
+      settings:"Tap a setting to open it. These control how the app behaves for everyone \u2014 changes apply the next time members open the app.",
+      tiles:"The buttons on the home screen. Drag to reorder; tap one to edit it.",
+      apartments:"Apartment complexes in the map finder. Drag to reorder; tap one to edit it.",
+      cpr:"The buttons shown during a CPR code, in the order they appear. Drag to reorder.",
+      uploads:"The document types members can pick when uploading a file. Drag to reorder.",
       guests:"Passcodes that let someone try the app in demo mode.",
-      hospitals:"Receiving facilities. Tick the specialties a hospital has \u2014 the summary line is what members see on the hospital card.",
-      tasklist:"The EMT Task Book items. Type \u201Ccheck\u201D is a one-time sign-off; \u201Ccount\u201D tracks a number toward a target."
+      hospitals:"Receiving facilities. Drag to reorder; tap one to open it.",
+      tasklist:"The EMT Task Book items. Drag to reorder; tap one to edit it."
     }[k]||"";
+    var orderable=!!ADM_ORDERABLE[k];
     var head='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>'+esc((ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label)+'</h3>'+
       '<div class="u">'+rows.length+' row'+(rows.length===1?"":"s")+'</div></div></div>'+
       (help?'<div class="adm-help">'+help+'</div>':'');
+
     var body=rows.map(function(r,i){
-      var title = k==="settings" ? r_(r,"Setting") : (r_(r,"Label")||r_(r,"Name")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
+      var title = k==="settings" ? r_(r,"Setting")
+                : (r_(r,"Label")||r_(r,"Name")||r_(r,"Hospital Name")||r_(r,"Task")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
+      var sub="";
+      if(k==="settings") sub=r_(r,"Value");
+      else if(k==="tiles") sub=r_(r,"Type");
+      else if(k==="cpr") sub=r_(r,"Action");
+      else if(k==="hospitals") sub=r_(r,"Code");
+      else if(k==="apartments") sub=r_(r,"Address");
+      else if(k==="tasklist") sub=r_(r,"Category");
+      var off = (k!=="settings" && !admBoolOn(r_(r,"Active"),"Active"));
+
       var fields=cols.map(function(c){
         var header=c[0], label=c[1], kind=c[2], v=r_(r,header);
         var id="ag_"+k+"_"+i+"_"+header.replace(/[^A-Za-z0-9]/g,"");
         if(kind==="ro") return '<label class="adm-f">'+label+'<input value="'+esc(v)+'" disabled style="background:#f4f6fa;color:var(--mut)"></label>';
         if(kind==="bool") return '<div class="adm-tg" style="padding:8px 0"><div class="tl"><div class="tn" style="font-size:13.5px">'+label+'</div></div>'+
           '<button class="adm-sw'+(admBoolOn(v,header)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
+        if(kind.indexOf("sel:")===0){
+          var opts=kind.slice(4).split("|");
+          var o=opts.map(function(x){ return '<option'+(String(v).trim().toLowerCase()===x.toLowerCase()?' selected':'')+'>'+esc(x)+'</option>'; }).join("");
+          if(v && opts.map(function(x){return x.toLowerCase();}).indexOf(String(v).trim().toLowerCase())<0) o+='<option selected>'+esc(v)+'</option>';
+          return '<label class="adm-f">'+label+'<select id="'+id+'" data-h="'+esc(header)+'">'+o+'</select></label>';
+        }
         var t = kind==="num" ? "number" : "text";
-        var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image");
+        var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image"||header==="Task"||header==="Address (Navigate)"||header==="Specialties (summary)");
         var isImg = (header==="Image"||header==="File");
         var upBtn = isImg ? ('<button class="adm-up" data-up="'+id+'" data-folder="'+(k==="tiles"?"tiles":"apartments")+'">Upload image</button>') : "";
         var preview = isImg ? ('<img class="adm-imgpv'+(v?"":" hidden")+'" id="'+id+'_pv" src="'+esc(sbImgUrl(v))+'" alt="">') : "";
@@ -2958,6 +2996,7 @@
           '<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>'+
           (isImg?('<div class="adm-uprow">'+upBtn+preview+'</div>'):"");
       }).join("");
+
       var specs="";
       if(k==="hospitals"){
         specs='<div class="adm-specs"><div class="adm-specl">Specialties</div><div class="adm-specg">'+
@@ -2966,24 +3005,91 @@
             return '<button class="adm-spec'+(admBoolOn(r_(r,s),s)?" on":"")+'" data-sw="1" id="'+sid+'" data-h="'+esc(s)+'">'+esc(s)+'</button>';
           }).join("")+'</div></div>';
       }
-      return '<div class="adm-sec adm-gsec" data-i="'+i+'"><div class="adm-sech">'+esc(title)+
-        (k==="settings"?"":'<button class="adm-del" data-del="'+i+'" title="Delete">Delete</button>')+'</div>'+
-        '<div class="adm-grid">'+fields+'</div>'+specs+'</div>';
+
+      return '<div class="adm-item adm-gsec'+(off?" off":"")+'" data-i="'+i+'" draggable="false">'+
+        '<div class="adm-itemh" data-toggle="1">'+
+          (orderable?'<span class="adm-grip" data-grip="1" title="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"/></svg></span>':'')+
+          '<span class="adm-itemt">'+esc(title)+(off?' <span class="adm-offtag">off</span>':'')+'</span>'+
+          (sub?'<span class="adm-itemsub">'+esc(String(sub).slice(0,40))+'</span>':'')+
+          '<svg class="adm-car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+
+        '</div>'+
+        '<div class="adm-itemb">'+
+          '<div class="adm-grid">'+fields+'</div>'+specs+
+          (k==="settings"?"":'<button class="adm-del" data-del="'+i+'">Delete this row</button>')+
+        '</div></div>';
     }).join("");
+
     var addable = (k!=="settings");
-    var foot='<div class="adm-save"><button class="pri" id="admGenSave">Save all changes</button></div><div class="adm-msg" id="admGenMsg"></div>'+
+    var foot='<div class="adm-save"><button class="pri" id="admGenSave">Save changes</button></div><div class="adm-msg" id="admGenMsg"></div>'+
       (addable?'<button class="adm-addrow" id="admGenAdd">+ Add row</button>':'')+'</div>';
-    $("admGenPane").innerHTML=head+(rows.length?body:'<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>')+foot;
+    $("admGenPane").innerHTML=head+(rows.length?('<div class="adm-items" id="admItems">'+body+'</div>'):'<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>')+foot;
     ADM2.view=rows;
+    ADM2.dirty=false;
+    if(orderable) admWireDrag();
+  }
+  // --- drag to reorder (works with touch and mouse) ---
+  function admWireDrag(){
+    var wrap=$("admItems"); if(!wrap) return;
+    var dragEl=null, startY=0, placeholder=null;
+    function onDown(e){
+      var grip=e.target.closest?e.target.closest("[data-grip]"):null; if(!grip) return;
+      e.preventDefault();
+      dragEl=grip.closest(".adm-item"); if(!dragEl) return;
+      dragEl.classList.add("dragging");
+      startY=(e.touches?e.touches[0].clientY:e.clientY);
+      document.addEventListener("touchmove",onMove,{passive:false});
+      document.addEventListener("mousemove",onMove);
+      document.addEventListener("touchend",onUp);
+      document.addEventListener("mouseup",onUp);
+    }
+    function onMove(e){
+      if(!dragEl) return;
+      e.preventDefault();
+      var y=(e.touches?e.touches[0].clientY:e.clientY);
+      var items=Array.prototype.slice.call(wrap.querySelectorAll(".adm-item"));
+      for(var i=0;i<items.length;i++){
+        var it=items[i]; if(it===dragEl) continue;
+        var b=it.getBoundingClientRect();
+        if(y>b.top && y<b.bottom){
+          if(y < b.top+b.height/2) wrap.insertBefore(dragEl,it);
+          else wrap.insertBefore(dragEl,it.nextSibling);
+          break;
+        }
+      }
+    }
+    function onUp(){
+      if(dragEl){ dragEl.classList.remove("dragging"); admMarkDirty(); }
+      dragEl=null;
+      document.removeEventListener("touchmove",onMove);
+      document.removeEventListener("mousemove",onMove);
+      document.removeEventListener("touchend",onUp);
+      document.removeEventListener("mouseup",onUp);
+    }
+    wrap.addEventListener("touchstart",onDown,{passive:false});
+    wrap.addEventListener("mousedown",onDown);
+  }
+  function admMarkDirty(){
+    ADM2.dirty=true;
+    var b=$("admGenSave"); if(b){ b.classList.add("hot"); b.textContent="Save changes \u2022"; }
+  }
+  function admConfirmLeave(){
+    if(!ADM2.dirty) return true;
+    return confirm("You have unsaved changes. Leave without saving?");
   }
   function admGenSave(){
     var k=ADM2.sec, cols=ADM_COLS[k], rows=ADM2.view||[], tbl=SB_TAB2TBL[ADM_TABLES[k]];
     var msg=$("admGenMsg"), btn=$("admGenSave");
     btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
     var jobs=[];
+    var orderable=!!ADM_ORDERABLE[k], pos=0;
     Array.prototype.forEach.call(document.querySelectorAll(".adm-gsec"),function(sec){
       var i=parseInt(sec.getAttribute("data-i"),10), r=rows[i]; if(!r) return;
       var upd={}, any=false;
+      pos++;
+      if(orderable){
+        var odb=sbCol(tbl,"Order")||sbCol(tbl,"Sort Order");
+        if(odb && String(r_(r,"Order"))!==String(pos)){ upd[odb]=String(pos); r["Order"]=String(pos); any=true; }
+      }
       Array.prototype.forEach.call(sec.querySelectorAll("[data-h]"),function(el){
         var header=el.getAttribute("data-h"), db=sbCol(tbl,header); if(!db) return;
         var isTog = el.classList.contains("adm-sw")||el.classList.contains("adm-spec");
@@ -3006,6 +3112,7 @@
       var bad=res.filter(function(x){return !x.ok;}).length;
       if(bad){ msg.className="adm-msg err"; msg.textContent="Some changes didn\u2019t save. Try again."; }
       else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded[k]=false; STATE.settingsDirty=true;
+        ADM2.dirty=false; var sb=$("admGenSave"); if(sb){ sb.classList.remove("hot"); sb.textContent="Save changes"; }
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
     }).catch(function(){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
   }
@@ -3038,7 +3145,15 @@
     }).catch(function(){ toast("Couldn\u2019t delete \u2014 check your connection."); });
   }
   $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
+  $("admGenPane").addEventListener("input",function(){ admMarkDirty(); });
+  $("admGenPane").addEventListener("change",function(){ admMarkDirty(); });
   $("admGenPane").addEventListener("click",function(e){
+    var th=e.target.closest?e.target.closest("[data-toggle]"):null;
+    if(th && !(e.target.closest && e.target.closest("[data-grip]"))){
+      var item=th.closest(".adm-item");
+      if(item){ item.classList.toggle("open"); }
+      return;
+    }
     var up=e.target.closest?e.target.closest(".adm-up"):null;
     if(up){
       var targetId=up.getAttribute("data-up"), folder=up.getAttribute("data-folder")||"misc";
@@ -4517,7 +4632,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4559,7 +4674,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
