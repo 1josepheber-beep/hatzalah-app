@@ -1045,7 +1045,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.3</div>
+  <div class="ver-line">Version 8.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1160,7 +1160,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.3</div>
+  <div class="ver-line">Version 8.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2048,6 +2048,7 @@
         else STATE.tiles=[{"Label":"Responder Status","Type":"board","Active":"X","Icon":"board"}];
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
+      try{ scApplySettings(); }catch(e){}
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
       // Analytics identity must be set on every open, cached or not.
       try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
@@ -2371,7 +2372,30 @@
   }
 
   /* ===================== Scene Timer ===================== */
+  // Defaults; overridden by the Settings tab in the admin portal.
   var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
+  function scNum(key, def){
+    var v=parseFloat(String(getSetting(key,"")||"").trim());
+    return (isFinite(v) && v>0) ? Math.round(v*60) : def;   // settings are in MINUTES
+  }
+  function scApplySettings(){
+    SC_COUNT = scNum("Scene Timer Minutes", 600);
+    SC_ADD   = scNum("Scene Timer Snooze Minutes", 300);
+    SC_REMIND= scNum("Scene Reminder Minutes", 2700);
+    var rm=$("scRemind");
+    if(rm){
+      var msg=(getSetting("Scene Reminder Message","")||"").trim() ||
+        ("Scene timer still running ("+Math.round(SC_REMIND/60)+"+ min). Close the timer or close the app.");
+      var btn=rm.querySelector("button");
+      rm.innerHTML=esc(msg)+'<br><button id="scRemindOk">Got it</button>';
+      var nb=rm.querySelector("button");
+      if(nb) nb.addEventListener("click",function(){ rm.classList.remove("show"); });
+    }
+    try{ if(!SCT.active){ $("scClock").textContent=scFmt(SC_COUNT); } }catch(e){}
+  }
+  function scAlarmMsg(){
+    return (getSetting("Scene Timer Message","")||"").trim() || "Time to reassess the scene.";
+  }
   var SCT={active:false,page:false,startAt:0,alarmAt:SC_COUNT,alarmed:false,reminded:false,id:0};
   var SCTA=null, SCWL=null;
   function scWakeOn(){ try{ if("wakeLock" in navigator){ navigator.wakeLock.request("screen").then(function(s){SCWL=s;}).catch(function(){}); } }catch(e){} }
@@ -2386,10 +2410,10 @@
     g.gain.setValueAtTime(0.0001,at);g.gain.exponentialRampToValueAtTime(0.55,at+0.012);g.gain.setValueAtTime(0.55,at+d-0.03);g.gain.exponentialRampToValueAtTime(0.0001,at+d);o.start(at);o.stop(at+d+0.02); }
   function scSixBeeps(){ scAudio(); if(!SCTA) return; var t=SCTA.currentTime; var w=[0,0.30,0.72,1.02,1.44,1.74],f=[1046,1046,1046,1046,1319,1319]; for(var i=0;i<6;i++) scBeep(f[i],0.2,t+w[i]); if(navigator.vibrate){ try{navigator.vibrate([230,110,230,110,230,110,230,110,230,110,230]);}catch(e){} } }
   function scNotifyNow(){ if(!("Notification" in window)||Notification.permission!=="granted"||!("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.ready.then(function(reg){ try{ reg.showNotification("Scene Timer",{body:"Time to reassess the scene.",tag:"scene-timer",renotify:true,requireInteraction:true,vibrate:[300,150,300,150,300]}); }catch(e){} }); }
+    navigator.serviceWorker.ready.then(function(reg){ try{ reg.showNotification("Scene Timer",{body:scAlarmMsg(),tag:"scene-timer",renotify:true,requireInteraction:true,vibrate:[300,150,300,150,300]}); }catch(e){} }); }
   function scCancelNotifs(){ if(!("serviceWorker" in navigator)) return; try{ navigator.serviceWorker.ready.then(function(r){ if(r.getNotifications) r.getNotifications({includeTriggered:true}).then(function(ns){ ns.forEach(function(n){ if(n.tag==="scene-timer") n.close(); }); }); }); }catch(e){} }
   function scSchedule(){ if(!("Notification" in window)||Notification.permission!=="granted"||!("serviceWorker" in navigator)||!("TimestampTrigger" in window)) return;
-    navigator.serviceWorker.ready.then(function(reg){ scCancelNotifs(); try{ reg.showNotification("Scene Timer",{body:"Time to reassess the scene.",tag:"scene-timer",requireInteraction:true,showTrigger:new TimestampTrigger(SCT.startAt+SCT.alarmAt*1000)}); }catch(e){} }); }
+    navigator.serviceWorker.ready.then(function(reg){ scCancelNotifs(); try{ reg.showNotification("Scene Timer",{body:scAlarmMsg(),tag:"scene-timer",requireInteraction:true,showTrigger:new TimestampTrigger(SCT.startAt+SCT.alarmAt*1000)}); }catch(e){} }); }
   function scRender(){
     var el=scEl(), remain=SCT.alarmAt-el;
     $("scene").classList.toggle("alarm", SCT.active&&SCT.alarmed);
@@ -2399,7 +2423,7 @@
     $("scOn").classList.toggle("hidden", !SCT.active);
     if(!SCT.active){ $("scClock").textContent=scFmt(SC_COUNT); $("scSub").textContent="Ready"; $("scKick").textContent="Scene Timer"; }
     else if(!SCT.alarmed){ $("scClock").textContent=scFmt(remain); $("scSub").textContent="Reassess when this reaches 0:00"; $("scKick").textContent="Time remaining"; }
-    else { $("scClock").textContent=scFmt(el); $("scSub").textContent="Reassess the scene now"; $("scKick").textContent="On scene"; }
+    else { $("scClock").textContent=scFmt(el); $("scSub").textContent=scAlarmMsg(); $("scKick").textContent="On scene"; }
     $("scOn").textContent="On scene: "+scFmt(el);
     $("scOnTop").textContent=SCT.active?("On scene "+scFmt(el)):"";
     var w=$("scw"); if(!w.classList.contains("shake")) w.classList.toggle("alarm", SCT.active&&SCT.alarmed);
@@ -4417,7 +4441,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4459,7 +4483,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
