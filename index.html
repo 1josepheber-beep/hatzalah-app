@@ -660,7 +660,8 @@
   body.adm-dragging .adm-itemh{cursor:grabbing}
   /* CPR buttons laid out exactly as they appear in a code */
   .cprx-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
-  .cprx-b{position:relative;border:0;border-radius:13px;padding:18px 10px;font-size:16px;font-weight:800;color:#fff;cursor:pointer;text-align:center;touch-action:none;font-family:inherit}
+  .cprx-b{position:relative;border:0;border-radius:13px;padding:18px 10px;font-size:16px;font-weight:800;color:#fff;cursor:pointer;text-align:center;touch-action:pan-y;font-family:inherit}
+  body.adm-dragging .cprx-b,body.adm-dragging .adm-item{touch-action:none}
   .cprx-b.off{opacity:.42}
   .cprx-b.lifted{opacity:.25}
   .cprx-ghost{position:fixed;z-index:9999;pointer-events:none;box-shadow:0 16px 40px rgba(16,38,74,.35);transform:scale(1.05)}
@@ -673,7 +674,7 @@
   .cprx-hint{font-size:12.5px;color:var(--mut);background:#f4f7fb;border-radius:9px;padding:9px 11px;margin:-6px 0 13px;line-height:1.45}
   .adm-itemh{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
   .adm-itemh:hover{background:#f7f9fc}
-  .adm-grip{flex:0 0 auto;cursor:grab;touch-action:none;padding:2px}
+  .adm-grip{flex:0 0 auto;cursor:grab;touch-action:none;padding:2px;margin:-6px 0 -6px -4px;padding:8px 6px}
   .adm-grip svg{width:18px;height:18px;stroke:#b9c0cc;fill:none;stroke-width:2.5;stroke-linecap:round}
   .adm-itemt{font-weight:800;font-size:14.5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
   .adm-itemsub{margin-left:auto;font-size:12px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
@@ -1107,7 +1108,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.8</div>
+  <div class="ver-line">Version 8.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1222,7 +1223,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.8</div>
+  <div class="ver-line">Version 8.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4878,7 +4879,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4920,7 +4921,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
