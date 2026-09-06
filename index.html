@@ -1161,7 +1161,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.6</div>
+  <div class="ver-line">Version 10.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1276,7 +1276,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.6</div>
+  <div class="ver-line">Version 10.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3128,7 +3128,7 @@
       }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   function admRemoveCertConfirm(expCol, niceName){
-    $("cprxEdit").innerHTML='<div class="adm-modal" id="rcModal"><div class="adm-mbox">'+
+    admHost().innerHTML='<div class="adm-modal" id="rcModal"><div class="adm-mbox">'+
       '<h3>Remove \u201C'+esc(niceName)+'\u201D?</h3>'+
       '<p class="adm-msub">This deletes the certification and every member\u2019s dates for it, '+
       'across the whole organization. It cannot be undone.</p>'+
@@ -3138,8 +3138,8 @@
       '<div class="adm-mbtns"><button class="ghost" id="rc_cancel">Keep it</button>'+
       '<button class="pri" id="rc_ok" style="background:var(--red)">Yes, remove it</button></div>'+
       '</div></div>';
-    $("rc_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
-    $("rcModal").addEventListener("click",function(e){ if(e.target===this) $("cprxEdit").innerHTML=""; });
+    $("rc_cancel").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("rcModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
     $("rc_ok").addEventListener("click",function(){
       var btn=this, err=$("rc_err");
       btn.disabled=true; btn.textContent="Removing\u2026"; err.textContent="";
@@ -3150,7 +3150,7 @@
         .then(function(j){
           btn.disabled=false; btn.textContent="Yes, remove it";
           if(!j||!j.ok){ err.textContent=(j&&j.error)||"Couldn\u2019t remove it."; return; }
-          $("cprxEdit").innerHTML="";
+          admHost().innerHTML="";
           toast("\u201C"+niceName+"\u201D removed.");
           ADM.loaded=false; CERT.loaded=false;
           Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
@@ -3163,7 +3163,7 @@
     });
   }
   function admAddCertOpen(){
-    $("cprxEdit").innerHTML='<div class="adm-modal" id="acModal"><div class="adm-mbox">'+
+    admHost().innerHTML='<div class="adm-modal" id="acModal"><div class="adm-mbox">'+
       '<h3>Add a certification</h3>'+
       '<p class="adm-msub">This adds the certification for every member. You can then mark it '+
       '\u201CNot required\u201D for anyone who doesn\u2019t need it.</p>'+
@@ -3187,8 +3187,8 @@
     inp.addEventListener("input",prev);
     $("ac_who").addEventListener("change",prev);
     setTimeout(function(){ try{ inp.focus(); }catch(e){} },80);
-    $("ac_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
-    $("acModal").addEventListener("click",function(e){ if(e.target===this) $("cprxEdit").innerHTML=""; });
+    $("ac_cancel").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("acModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
     $("ac_ok").addEventListener("click",function(){
       var name=inp.value.trim(), err=$("ac_err"), btn=this;
       if(!name){ err.textContent="Enter a name."; return; }
@@ -3200,7 +3200,7 @@
         .then(function(j){
           btn.disabled=false; btn.textContent="Add certification";
           if(!j||!j.ok){ err.textContent=(j&&j.error)||"Couldn\u2019t add it."; return; }
-          $("cprxEdit").innerHTML="";
+          admHost().innerHTML="";
           toast("\u201C"+name+"\u201D added.");
           ADM.loaded=false; CERT.loaded=false;
           Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
@@ -3397,6 +3397,11 @@
     $("admMembersPane").style.display="none"; $("admRight").style.display="none"; $("admGenPane").style.display="";
     admLoadSec(k);
   }
+  function admHost(){
+    var h=document.getElementById("admModalHost");
+    if(!h){ h=document.createElement("div"); h.id="admModalHost"; document.body.appendChild(h); }
+    return h;
+  }
   function admBytes(n){
     n=Number(n)||0;
     if(n<1024) return n+" B";
@@ -3539,7 +3544,7 @@
     var acts=["log","drug","start","shock","epi","rhythm","rosc"];
     var cur=String(r_(r,"Action")||"log").toLowerCase();
     var opts=acts.map(function(a){ return '<option'+(cur===a?' selected':'')+'>'+a+'</option>'; }).join("");
-    $("cprxEdit").innerHTML='<div class="adm-modal" id="cprxModal"><div class="adm-mbox">'+
+    admHost().innerHTML='<div class="adm-modal" id="cprxModal"><div class="adm-mbox">'+
       '<h3>Edit button</h3>'+
       '<p class="adm-msub">Changes are kept when you press Save changes.</p>'+
       '<label class="adm-f">Label<input id="cx_label" value="'+esc(r_(r,"Label"))+'"></label>'+
@@ -3595,14 +3600,14 @@
       if(b) b.style.background=cprColor($("cx_color").value);
     }
     $("cx_active").addEventListener("click",function(){ this.classList.toggle("on"); });
-    $("cx_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
-    $("cx_del").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; admGenDelete(i); });
+    $("cx_cancel").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("cx_del").addEventListener("click",function(){ admHost().innerHTML=""; admGenDelete(i); });
     $("cx_ok").addEventListener("click",function(){
       r["Label"]=$("cx_label").value.trim();
       r["Action"]=$("cx_action").value;
       r["Color"]=$("cx_color").value.trim();
       r["Active"]=$("cx_active").classList.contains("on")?"X":"No";
-      $("cprxEdit").innerHTML="";
+      admHost().innerHTML="";
       admMarkDirty();
       var btn=$("cprxGrid").querySelector('.cprx-b[data-i="'+i+'"]');
       if(btn){ btn.firstChild&&(btn.innerHTML=esc(r["Label"])+(r["Active"]==="No"?'<span class="cprx-off">off</span>':'')); btn.style.background=cprColor(r["Color"]); btn.classList.toggle("off",r["Active"]==="No"); }
@@ -5374,7 +5379,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5416,7 +5421,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
