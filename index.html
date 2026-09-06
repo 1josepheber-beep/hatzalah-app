@@ -1048,7 +1048,8 @@
   .tile.foldertile .fm{border-radius:6px;background:rgba(255,255,255,.28);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;overflow:hidden}
   .tile.foldertile .fm.empty{background:rgba(255,255,255,.10)}
   .tile.foldertile .fm svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;opacity:.9}
-  .tile.mergehover{outline:3px solid #fff;outline-offset:-3px;transform:scale(1.08);transition:transform .12s}
+  .tile.mergehover{outline:4px solid #fff;outline-offset:-4px;transform:scale(1.14);transition:transform .15s;box-shadow:0 0 0 6px rgba(255,255,255,.28),0 12px 30px rgba(0,0,0,.35);z-index:5}
+  .tile.mergehover::after{content:"Drop to group";position:absolute;left:0;right:0;bottom:-2px;font-size:9.5px;font-weight:800;color:#fff;background:rgba(9,26,52,.75);padding:3px 0;letter-spacing:.03em}
   .fsheet{position:fixed;inset:0;z-index:90;background:rgba(9,26,52,.62);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
   .fbox{background:linear-gradient(180deg,var(--navy),var(--navy-d));border-radius:20px;padding:16px;width:100%;max-width:520px;max-height:86vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.4)}
   .fhead{display:flex;align-items:center;gap:10px;margin-bottom:14px}
@@ -1124,7 +1125,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 9.0</div>
+  <div class="ver-line">Version 9.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1239,7 +1240,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 9.0</div>
+  <div class="ver-line">Version 9.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2386,7 +2387,7 @@
     });
   }
   // ---- Long-press to rearrange tiles (saved per device) ----
-  var RE={on:false, el:null, dragging:false, justDragged:false, offX:0, offY:0, lpTimer:0, sx:0, sy:0, hoverEl:null, mergeT:0, mergeReady:null};
+  var RE={on:false, el:null, dragging:false, justDragged:false, offX:0, offY:0, lpTimer:0, sx:0, sy:0, hoverEl:null, mergeT:0, mergeReady:null, hoverX:0, hoverY:0};
   function saveTileOrderFromDOM(){
     var labels=[]; Array.prototype.forEach.call($("grid").children,function(el){ var l=el.getAttribute("data-label"); if(l) labels.push(l); });
     try{ localStorage.setItem("hoh_tileorder", JSON.stringify(labels)); }catch(e){}
@@ -2412,27 +2413,34 @@
     var under=document.elementFromPoint(cx,cy);
     RE.el.style.pointerEvents="";
     var tgt=under&&under.closest?under.closest(".tile"):null;
+
     if(!tgt||tgt===RE.el||tgt.parentNode!==g){ clearHover(); return; }
-    // Hold still over another tile for a moment to combine them into a folder.
-    var tb=tgt.getBoundingClientRect();
-    var centred = Math.abs(cx-(tb.left+tb.width/2)) < tb.width*0.30 &&
-                  Math.abs(cy-(tb.top+tb.height/2)) < tb.height*0.30;
-    if(centred){
-      if(RE.hoverEl!==tgt){
-        clearHover();
-        RE.hoverEl=tgt;
-        RE.mergeT=setTimeout(function(){
-          if(RE.hoverEl===tgt){ tgt.classList.add("mergehover"); RE.mergeReady=tgt;
-            if(navigator.vibrate){ try{navigator.vibrate(20);}catch(e){} } }
-        },520);
-      }
-      return;                       // don't shuffle while hovering to merge
+
+    // First time over this tile: wait a moment before deciding.
+    // Keep still -> make a folder.  Keep moving -> swap places.
+    if(RE.hoverEl!==tgt){
+      clearHover();
+      RE.hoverEl=tgt; RE.hoverX=cx; RE.hoverY=cy;
+      RE.mergeT=setTimeout(function(){
+        if(RE.hoverEl===tgt && RE.el){
+          tgt.classList.add("mergehover");
+          RE.mergeReady=tgt;
+          if(navigator.vibrate){ try{navigator.vibrate(25);}catch(e){} }
+        }
+      }, 420);
+      return;                       // don't move anything yet
     }
-    clearHover();
-    var nodes=Array.prototype.slice.call(g.children);
-    var di=nodes.indexOf(RE.el), ti=nodes.indexOf(tgt);
-    if(di<ti) g.insertBefore(RE.el, tgt.nextSibling); else g.insertBefore(RE.el, tgt);
-    dragTo(cx,cy);
+
+    if(RE.mergeReady===tgt) return; // already locked on to merge - hold steady
+
+    // Moved a good distance while over this tile -> they meant to reorder.
+    if(Math.abs(cx-RE.hoverX)>26 || Math.abs(cy-RE.hoverY)>26){
+      clearHover();
+      var nodes=Array.prototype.slice.call(g.children);
+      var di=nodes.indexOf(RE.el), ti=nodes.indexOf(tgt);
+      if(di<0||ti<0) return;
+      if(di<ti) g.insertBefore(RE.el, tgt.nextSibling); else g.insertBefore(RE.el, tgt);
+    }
   }
   function mergeIntoFolder(dragEl, targetEl){
     var dragLabel=dragEl.getAttribute("data-label");
@@ -5030,7 +5038,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5072,7 +5080,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
