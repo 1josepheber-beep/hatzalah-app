@@ -1240,7 +1240,7 @@
   </div>
   <div class="edit-bar hidden" id="equipEditBar">
     <button class="ebtn primary" id="equipAdd">+ Add item</button>
-    <button class="ebtn" id="equipSave">Export backup</button>
+    <button class="ebtn primary" id="equipSave">Save</button>
   </div>
   <div class="eq-tools">
     <input id="equipSearch" type="search" placeholder="Search equipment" enterkeyhint="search">
@@ -3320,6 +3320,21 @@
     $("eqEdit").classList.remove("hidden");
   }
   function closeEqEdit(){ $("eqEdit").classList.add("hidden"); EQ.editId=null; }
+  function eqSaveAll(){
+    if(!EQ.d || !EQ.d.items){ toast("Nothing to save yet."); return; }
+    var btn=$("equipSave"); btn.disabled=true; btn.textContent="Saving\u2026";
+    var jobs=EQ.d.items.map(function(it){
+      var q = it.rowId ? ("id=eq."+it.rowId) : ("item_id=eq."+encodeURIComponent(String(it.id)));
+      return sbWrite("PATCH","equipment_items?"+q, eqRowPayload(it));
+    });
+    jobs.push(sbWrite("PATCH","equipment_meta?mkey=eq.cats",{mvalue:(EQ.d.cats||[]).join("|")}));
+    Promise.all(jobs).then(function(res){
+      btn.disabled=false; btn.textContent="Save";
+      var bad=res.filter(function(r){ return r && r.ok===false; }).length;
+      if(bad) toast("Some items didn\u2019t save.");
+      else { toast("Saved."); EQ.loaded=false; }
+    }).catch(function(){ btn.disabled=false; btn.textContent="Save"; toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
   function saveEqItem(){
     var nm=$("eqName").value.trim(); if(!nm){ $("eqName").focus(); return; }
     var cat=$("eqCat").value.trim()||"Miscellaneous";
@@ -3392,7 +3407,7 @@
   $("equipBack").addEventListener("click",navBack);
   $("equipEdit").addEventListener("click",function(){ setEqEdit(!EQ.edit); });
   $("equipAdd").addEventListener("click",function(){ openEqEdit(null); });
-  $("equipSave").addEventListener("click",eqSaveDownload);
+  $("equipSave").addEventListener("click",eqSaveAll);
   $("equipCsv").addEventListener("click",eqCSV);
   $("equipPrint").addEventListener("click",eqPrint);
   $("eqSaveItem").addEventListener("click",saveEqItem);
