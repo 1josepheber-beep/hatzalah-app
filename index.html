@@ -1143,7 +1143,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 9.8</div>
+  <div class="ver-line">Version 9.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1258,7 +1258,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 9.8</div>
+  <div class="ver-line">Version 9.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2327,32 +2327,48 @@
     b.setAttribute("data-folder",f.id);
     b.setAttribute("data-label","\u0192:"+f.id);
     var all=(f.labels||[]).map(tileByLabel).filter(tileVisible);
+
+    // Fixed 2x2 built with inline sizes - nothing here depends on the stylesheet,
+    // so empty slots always hold their space.
+    var CELL=26, GAP=6;
     var grid=document.createElement("div");
-    grid.className="fgrid";
+    grid.style.cssText="display:flex;flex-wrap:wrap;gap:"+GAP+"px;width:"+(CELL*2+GAP)+"px;height:"+(CELL*2+GAP)+"px;align-content:flex-start;justify-content:flex-start";
+
     var show=(all.length>4)?all.slice(0,3):all.slice(0,4);
     var extra=all.length-show.length;
 
+    function newCell(bg){
+      var c=document.createElement("span");
+      c.style.cssText="width:"+CELL+"px;height:"+CELL+"px;border-radius:7px;overflow:hidden;flex:0 0 auto;"+
+        "display:flex;align-items:center;justify-content:center;background:"+bg+";box-shadow:0 1px 2px rgba(16,38,74,.18)";
+      return c;
+    }
+
     show.forEach(function(t){
-      var cell=document.createElement("span");
-      cell.className="fm";
-      // Re-use the real tile markup, shrunk down. Whatever renders on the home
-      // screen renders here, so there is nothing separate to keep in step.
+      var c=newCell("#fff");
       var mini=buildTileEl(t);
       mini.className=mini.className.replace("tile","minitile");
       mini.removeAttribute("data-label");
-      cell.appendChild(mini);
-      grid.appendChild(cell);
+      mini.style.cssText="width:100%;height:100%;border:0;padding:0;margin:0;border-radius:0;box-shadow:none;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden";
+      var bg=mini.querySelector("img.bg");
+      if(bg) bg.style.cssText="width:100%;height:100%;object-fit:cover;display:block";
+      var ic=mini.querySelector(".ic");
+      if(ic) ic.style.cssText="width:100%;height:100%;border-radius:0;background:#eaf0f9;display:flex;align-items:center;justify-content:center";
+      var sv=mini.querySelector(".ic svg");
+      if(sv) sv.style.cssText="width:14px;height:14px";
+      var lb=mini.querySelector(".lab"); if(lb) lb.style.display="none";
+      var ad=mini.querySelector(".adm"); if(ad) ad.style.display="none";
+      c.appendChild(mini);
+      grid.appendChild(c);
     });
 
     if(extra>0){
-      var more=document.createElement("span");
-      more.className="fm more";
-      more.innerHTML='<span class="fmore">+'+extra+'</span>';
-      grid.appendChild(more);
+      var m=newCell("#143D75");
+      m.innerHTML='<span style="color:#fff;font-size:11px;font-weight:800">+'+extra+'</span>';
+      grid.appendChild(m);
     }
-    while(grid.children.length<4){
-      var e2=document.createElement("span"); e2.className="fm empty"; grid.appendChild(e2);
-    }
+    // grey ghost slots so the square always keeps its shape
+    while(grid.children.length<4) grid.appendChild(newCell("#c3cddc"));
 
     b.appendChild(grid);
     var lab=document.createElement("div");
@@ -5166,7 +5182,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5208,7 +5224,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
