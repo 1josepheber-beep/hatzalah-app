@@ -1042,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.1</div>
+  <div class="ver-line">Version 8.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.1</div>
+  <div class="ver-line">Version 8.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1779,6 +1779,10 @@
     function clean(v){
       if(v==null) return "";
       if(typeof v!=="string") return String(v);
+      // Leave real ISO timestamps (with Z or a UTC offset) alone - converting them
+      // to a local-looking string throws the time out by the timezone difference,
+      // which broke the "available now" indicator.
+      if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})$/.test(v)) return v;
       var m=v.match(/^(\d{4})-(\d{2})-(\d{2})[ T]00:00:00/);
       if(m) return parseInt(m[2],10)+"/"+parseInt(m[3],10)+"/"+m[1];
       var m2=v.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
@@ -4398,7 +4402,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4438,7 +4442,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -5822,6 +5826,8 @@
         .filter(function(x){ return !x.e || x.e>Date.now(); })
         .sort(function(a,b){ return a.s-b.s; });
       AVL.on=AVL.slots.some(function(x){ return slotActive(x.s,x.e); });
+      // keep the header indicator in step immediately
+      try{ var hb=$("availHdr"); if(hb) hb.classList.toggle("on",AVL.on); }catch(e){}
       availBusy(false); availUI(); renderSlots();
     }).catch(function(){ availBusy(false); AVL.slots=[]; AVL.on=false; availUI(); $("schList").innerHTML='<div class="empty">Couldn\u2019t load your schedule.</div>'; });
   }
