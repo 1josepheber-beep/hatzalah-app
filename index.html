@@ -654,7 +654,18 @@
   .adm-items{display:block}
   .adm-item{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;overflow:hidden;box-shadow:0 2px 8px rgba(16,38,74,.04)}
   .adm-item.off{opacity:.6}
-  .adm-item.dragging{opacity:.85;box-shadow:0 10px 26px rgba(16,38,74,.22);transform:scale(1.01)}
+  .adm-item.lifted{opacity:.28;background:#eef2f7}
+  .adm-ghost{position:fixed;z-index:9999;pointer-events:none;box-shadow:0 16px 40px rgba(16,38,74,.32);transform:scale(1.03);opacity:.97;border-color:var(--navy)!important}
+  body.adm-dragging{user-select:none;-webkit-user-select:none}
+  body.adm-dragging .adm-itemh{cursor:grabbing}
+  /* CPR buttons laid out exactly as they appear in a code */
+  .cprx-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:16px}
+  .cprx-b{position:relative;border:0;border-radius:13px;padding:18px 10px;font-size:16px;font-weight:800;color:#fff;cursor:pointer;text-align:center;touch-action:none;font-family:inherit}
+  .cprx-b.off{opacity:.42}
+  .cprx-b.lifted{opacity:.25}
+  .cprx-ghost{position:fixed;z-index:9999;pointer-events:none;box-shadow:0 16px 40px rgba(16,38,74,.35);transform:scale(1.05)}
+  .cprx-off{position:absolute;top:5px;right:7px;font-size:9px;font-weight:800;background:rgba(0,0,0,.35);border-radius:5px;padding:1px 5px;letter-spacing:.04em}
+  .cprx-hint{font-size:12.5px;color:var(--mut);background:#f4f7fb;border-radius:9px;padding:9px 11px;margin:-6px 0 13px;line-height:1.45}
   .adm-itemh{display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;user-select:none}
   .adm-itemh:hover{background:#f7f9fc}
   .adm-grip{flex:0 0 auto;cursor:grab;touch-action:none;padding:2px}
@@ -1091,7 +1102,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 8.6</div>
+  <div class="ver-line">Version 8.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1206,7 +1217,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 8.6</div>
+  <div class="ver-line">Version 8.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2945,7 +2956,137 @@
     // The app treats a blank "Active" as active, so the toggle must agree.
     if(v==="") return (header==="Active");
     return v==="x"||v==="yes"||v==="true"; }
+  function admRenderCpr(){
+    var rows=(ADM2.data.cpr||[]).slice().sort(function(a,b){
+      return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
+    var body=rows.map(function(r,i){
+      var off=!admBoolOn(r_(r,"Active"),"Active");
+      return '<button type="button" class="cprx-b'+(off?" off":"")+'" data-i="'+i+'" '+
+        'style="background:'+cprColor(r_(r,"Color"))+'">'+esc(r_(r,"Label")||"(no label)")+
+        (off?'<span class="cprx-off">off</span>':'')+'</button>';
+    }).join("");
+    $("admGenPane").innerHTML='<div class="adm-body">'+
+      '<div class="adm-mh"><div class="t"><h3>CPR Buttons</h3><div class="u">'+rows.length+' buttons</div></div></div>'+
+      '<div class="adm-help">This is exactly how the buttons appear during a code. '+
+        'Press and hold one to drag it to a new position. Tap one to change it.</div>'+
+      '<div class="cprx-grid" id="cprxGrid">'+body+'</div>'+
+      '<div class="adm-save"><button class="pri" id="admGenSave">Save changes</button></div>'+
+      '<div class="adm-msg" id="admGenMsg"></div>'+
+      '<button class="adm-addrow" id="admGenAdd">+ Add button</button>'+
+      '<div id="cprxEdit"></div></div>';
+    ADM2.view=rows; ADM2.dirty=false;
+    admWireCprDrag();
+  }
+  function admWireCprDrag(){
+    var grid=$("cprxGrid"); if(!grid) return;
+    var el=null, holdT=null, dragging=false, ghost=null, offX=0, offY=0, moved=false, startX=0, startY=0;
+    function pt(e){ return e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY}; }
+    function cleanup(){
+      clearTimeout(holdT); holdT=null;
+      if(ghost){ try{ ghost.remove(); }catch(e){} ghost=null; }
+      if(el) el.classList.remove("lifted");
+      document.body.classList.remove("adm-dragging");
+      el=null; dragging=false;
+      document.removeEventListener("touchmove",onMove);
+      document.removeEventListener("mousemove",onMove);
+      document.removeEventListener("touchend",onUp);
+      document.removeEventListener("mouseup",onUp);
+    }
+    function onDown(e){
+      var b=e.target.closest?e.target.closest(".cprx-b"):null; if(!b) return;
+      el=b; moved=false;
+      var p=pt(e); startX=p.x; startY=p.y;
+      document.addEventListener("touchmove",onMove,{passive:false});
+      document.addEventListener("mousemove",onMove);
+      document.addEventListener("touchend",onUp);
+      document.addEventListener("mouseup",onUp);
+      holdT=setTimeout(function(){
+        if(!el) return;
+        dragging=true; moved=true;
+        document.body.classList.add("adm-dragging");
+        var r=el.getBoundingClientRect(); offX=startX-r.left; offY=startY-r.top;
+        el.classList.add("lifted");
+        ghost=el.cloneNode(true); ghost.className="cprx-b cprx-ghost";
+        ghost.style.width=r.width+"px"; ghost.style.height=r.height+"px";
+        ghost.style.left=r.left+"px"; ghost.style.top=r.top+"px";
+        ghost.style.background=el.style.background;
+        document.body.appendChild(ghost);
+        if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
+      },280);
+    }
+    function onMove(e){
+      var p=pt(e);
+      if(!dragging){
+        if(Math.abs(p.x-startX)>8||Math.abs(p.y-startY)>8){ clearTimeout(holdT); cleanup(); }
+        return;
+      }
+      e.preventDefault();
+      if(ghost){ ghost.style.left=(p.x-offX)+"px"; ghost.style.top=(p.y-offY)+"px"; }
+      var items=Array.prototype.slice.call(grid.querySelectorAll(".cprx-b:not(.cprx-ghost)"));
+      for(var i=0;i<items.length;i++){
+        var it=items[i]; if(it===el) continue;
+        var b=it.getBoundingClientRect();
+        if(p.x>b.left && p.x<b.right && p.y>b.top && p.y<b.bottom){
+          var before=(p.x < b.left+b.width/2);
+          grid.insertBefore(el, before?it:it.nextSibling);
+          break;
+        }
+      }
+    }
+    function onUp(){
+      if(dragging){ admMarkDirty(); cleanup(); return; }
+      var tapped=el; cleanup();
+      if(tapped && !moved) admCprOpen(parseInt(tapped.getAttribute("data-i"),10));
+    }
+    grid.addEventListener("touchstart",onDown,{passive:false});
+    grid.addEventListener("mousedown",onDown);
+  }
+  function admCprOpen(i){
+    var r=(ADM2.view||[])[i]; if(!r) return;
+    var acts=["log","start","shock","epi","rhythm","rosc"];
+    var cur=String(r_(r,"Action")||"log").toLowerCase();
+    var opts=acts.map(function(a){ return '<option'+(cur===a?' selected':'')+'>'+a+'</option>'; }).join("");
+    $("cprxEdit").innerHTML='<div class="adm-modal" id="cprxModal"><div class="adm-mbox">'+
+      '<h3>Edit button</h3>'+
+      '<p class="adm-msub">Changes are kept when you press Save changes.</p>'+
+      '<label class="adm-f">Label<input id="cx_label" value="'+esc(r_(r,"Label"))+'"></label>'+
+      '<label class="adm-f">What it does<select id="cx_action">'+opts+'</select></label>'+
+      '<div class="cprx-hint" id="cx_hint"></div>'+
+      '<label class="adm-f">Color<input id="cx_color" value="'+esc(r_(r,"Color"))+'" placeholder="green, shock, epi\u2026"></label>'+
+      '<div class="adm-tg"><div class="tl"><div class="tn">Active</div><div class="td">Off hides it during a code</div></div>'+
+        '<button class="adm-sw'+(admBoolOn(r_(r,"Active"),"Active")?" on":"")+'" id="cx_active" data-sw="1"></button></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="cx_cancel">Cancel</button><button class="pri" id="cx_ok">Done</button></div>'+
+      '<button class="adm-danger" id="cx_del" style="margin-top:10px">Delete this button</button>'+
+      '</div></div>';
+    function hint(){
+      var a=$("cx_action").value;
+      $("cx_hint").textContent={
+        log:"Just writes a line in the code log.",
+        start:"Starts the code timer, then becomes Pause.",
+        shock:"Counts a shock and logs \u201CShock #2\u201D.",
+        epi:"Counts a dose and restarts the epi countdown.",
+        rhythm:"Restarts the 2-minute compression cycle.",
+        rosc:"Logs it and stops the timer and metronome."
+      }[a]||"";
+    }
+    hint();
+    $("cx_action").addEventListener("change",hint);
+    $("cx_active").addEventListener("click",function(){ this.classList.toggle("on"); });
+    $("cx_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
+    $("cx_del").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; admGenDelete(i); });
+    $("cx_ok").addEventListener("click",function(){
+      r["Label"]=$("cx_label").value.trim();
+      r["Action"]=$("cx_action").value;
+      r["Color"]=$("cx_color").value.trim();
+      r["Active"]=$("cx_active").classList.contains("on")?"X":"No";
+      $("cprxEdit").innerHTML="";
+      admMarkDirty();
+      var btn=$("cprxGrid").querySelector('.cprx-b[data-i="'+i+'"]');
+      if(btn){ btn.firstChild&&(btn.innerHTML=esc(r["Label"])+(r["Active"]==="No"?'<span class="cprx-off">off</span>':'')); btn.style.background=cprColor(r["Color"]); btn.classList.toggle("off",r["Active"]==="No"); }
+    });
+  }
   function admRenderSec(k){
+    if(k==="cpr"){ admRenderCpr(); return; }
     var cols=ADM_COLS[k], rows=(ADM2.data[k]||[]).slice();
     if(k==="tiles"||k==="cpr") rows.sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
     var help={
@@ -3027,43 +3168,93 @@
     ADM2.dirty=false;
     if(orderable) admWireDrag();
   }
-  // --- drag to reorder (works with touch and mouse) ---
+  // --- drag to reorder: press and hold anywhere on a row, it lifts, and the
+  //     list auto-scrolls when you drag near the top or bottom edge ---
   function admWireDrag(){
     var wrap=$("admItems"); if(!wrap) return;
-    var dragEl=null, startY=0, placeholder=null;
-    function onDown(e){
-      var grip=e.target.closest?e.target.closest("[data-grip]"):null; if(!grip) return;
-      e.preventDefault();
-      dragEl=grip.closest(".adm-item"); if(!dragEl) return;
-      dragEl.classList.add("dragging");
-      startY=(e.touches?e.touches[0].clientY:e.clientY);
-      document.addEventListener("touchmove",onMove,{passive:false});
-      document.addEventListener("mousemove",onMove);
-      document.addEventListener("touchend",onUp);
-      document.addEventListener("mouseup",onUp);
-    }
-    function onMove(e){
-      if(!dragEl) return;
-      e.preventDefault();
-      var y=(e.touches?e.touches[0].clientY:e.clientY);
-      var items=Array.prototype.slice.call(wrap.querySelectorAll(".adm-item"));
-      for(var i=0;i<items.length;i++){
-        var it=items[i]; if(it===dragEl) continue;
-        var b=it.getBoundingClientRect();
-        if(y>b.top && y<b.bottom){
-          if(y < b.top+b.height/2) wrap.insertBefore(dragEl,it);
-          else wrap.insertBefore(dragEl,it.nextSibling);
-          break;
-        }
-      }
-    }
-    function onUp(){
-      if(dragEl){ dragEl.classList.remove("dragging"); admMarkDirty(); }
-      dragEl=null;
+    var pane=$("admGenPane");
+    var el=null, holdT=null, dragging=false, offY=0, ghost=null, scrollT=null, lastY=0;
+
+    function pointY(e){ return e.touches?e.touches[0].clientY:e.clientY; }
+    function cleanup(){
+      clearTimeout(holdT); holdT=null;
+      if(scrollT){ cancelAnimationFrame(scrollT); scrollT=null; }
+      if(ghost){ try{ ghost.remove(); }catch(e){} ghost=null; }
+      if(el) el.classList.remove("lifted");
+      document.body.classList.remove("adm-dragging");
+      el=null; dragging=false;
       document.removeEventListener("touchmove",onMove);
       document.removeEventListener("mousemove",onMove);
       document.removeEventListener("touchend",onUp);
       document.removeEventListener("mouseup",onUp);
+    }
+    function startDrag(y){
+      dragging=true;
+      document.body.classList.add("adm-dragging");
+      el.classList.add("lifted");
+      var b=el.getBoundingClientRect();
+      offY=y-b.top;
+      ghost=el.cloneNode(true);
+      ghost.className="adm-item adm-ghost";
+      ghost.style.width=b.width+"px";
+      ghost.style.top=b.top+"px";
+      ghost.style.left=b.left+"px";
+      document.body.appendChild(ghost);
+      if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
+      autoScroll();
+    }
+    function autoScroll(){
+      scrollT=requestAnimationFrame(function(){
+        if(!dragging){ scrollT=null; return; }
+        var r=pane.getBoundingClientRect(), edge=70, step=0;
+        if(lastY < r.top+edge) step=-Math.max(4,(r.top+edge-lastY)/4);
+        else if(lastY > r.bottom-edge) step=Math.max(4,(lastY-(r.bottom-edge))/4);
+        if(step){ pane.scrollTop+=step; reposition(lastY); }
+        autoScroll();
+      });
+    }
+    function reposition(y){
+      if(ghost) ghost.style.top=(y-offY)+"px";
+      var items=Array.prototype.slice.call(wrap.querySelectorAll(".adm-item:not(.adm-ghost)"));
+      for(var i=0;i<items.length;i++){
+        var it=items[i]; if(it===el) continue;
+        var b=it.getBoundingClientRect();
+        if(y>b.top && y<b.bottom){
+          if(y < b.top+b.height/2) wrap.insertBefore(el,it);
+          else wrap.insertBefore(el,it.nextSibling);
+          break;
+        }
+      }
+    }
+    function onDown(e){
+      var row=e.target.closest?e.target.closest(".adm-item"):null;
+      if(!row) return;
+      // don't start a drag from a field, button or an opened row
+      if(e.target.closest("input,select,textarea,button")) return;
+      if(row.classList.contains("open")) return;
+      el=row; lastY=pointY(e);
+      var grip=e.target.closest("[data-grip]");
+      document.addEventListener("touchmove",onMove,{passive:false});
+      document.addEventListener("mousemove",onMove);
+      document.addEventListener("touchend",onUp);
+      document.addEventListener("mouseup",onUp);
+      if(grip){ e.preventDefault(); startDrag(lastY); }
+      else { holdT=setTimeout(function(){ if(el) startDrag(lastY); }, 280); }
+    }
+    function onMove(e){
+      var y=pointY(e);
+      if(!dragging){
+        if(Math.abs(y-lastY)>8){ clearTimeout(holdT); holdT=null; cleanup(); }
+        return;
+      }
+      e.preventDefault();
+      lastY=y;
+      reposition(y);
+    }
+    function onUp(){
+      var moved=dragging;
+      if(moved) admMarkDirty();
+      cleanup();
     }
     wrap.addEventListener("touchstart",onDown,{passive:false});
     wrap.addEventListener("mousedown",onDown);
@@ -3081,6 +3272,26 @@
     var msg=$("admGenMsg"), btn=$("admGenSave");
     btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
     var jobs=[];
+    if(k==="cpr"){
+      var jobs2=[], p2=0;
+      Array.prototype.forEach.call(document.querySelectorAll("#cprxGrid .cprx-b"),function(b){
+        var idx=parseInt(b.getAttribute("data-i"),10), r=rows[idx]; if(!r) return;
+        p2++;
+        var u={ label:r_(r,"Label"), action:r_(r,"Action"), color:r_(r,"Color"),
+                active:(admBoolOn(r_(r,"Active"),"Active")?"X":"No"), order_col:String(p2) };
+        r["Order"]=String(p2);
+        var qq = r.__id ? ("id=eq."+r.__id) : ("label=eq."+encodeURIComponent(r_(r,"Label")));
+        jobs2.push(sbWrite("PATCH","cpr_buttons?"+qq,u));
+      });
+      Promise.all(jobs2).then(function(res){
+        btn.disabled=false; btn.textContent="Save changes";
+        var bad=res.filter(function(x){return x&&x.ok===false;}).length;
+        if(bad){ msg.className="adm-msg err"; msg.textContent="Some buttons didn\u2019t save."; }
+        else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded.cpr=false; ADM2.dirty=false;
+               btn.classList.remove("hot"); setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
+      }).catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; });
+      return;
+    }
     var orderable=!!ADM_ORDERABLE[k], pos=0;
     Array.prototype.forEach.call(document.querySelectorAll(".adm-gsec"),function(sec){
       var i=parseInt(sec.getAttribute("data-i"),10), r=rows[i]; if(!r) return;
@@ -4632,7 +4843,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4674,7 +4885,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
