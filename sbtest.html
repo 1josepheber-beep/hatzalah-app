@@ -600,13 +600,21 @@
   .adm-save .pri:disabled{opacity:.6}
   .adm-danger{background:#fff;color:var(--red);border:1px solid #f3b6b6;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:6px}
   .adm-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
-  .adm-cert{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .adm-cert{padding:14px 0;border-bottom:1px solid var(--line)}
   .adm-cert:last-child{border-bottom:0}
-  .adm-cert .cn{flex:1;min-width:0;font-weight:700;font-size:14px}
-  .adm-cert .cd{font-size:12.5px;color:var(--mut);margin-top:2px;font-weight:400}
-  .adm-cert input{width:150px;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px;font-family:inherit;flex:0 0 auto}
+  .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .adm-cert .cn{font-weight:700;font-size:14.5px;min-width:0;flex:1}
+  .adm-cert .cd{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400}
+  .adm-cert .cbot{display:flex;align-items:center;gap:9px}
+  .adm-cert input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;font-family:inherit}
   .adm-cert input:focus{outline:none;border-color:var(--navy)}
-  .adm-cert .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;flex:0 0 auto}
+  .adm-cert .pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;flex:0 0 auto;letter-spacing:.03em}
+  .adm-cert .adm-nabtn{flex:0 0 auto}
+  @media (min-width:820px){
+    .adm-cert{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
+    .adm-cert .ctop{margin-bottom:0}
+    .adm-cert input{width:160px;flex:0 0 auto}
+  }
   .adm-cert .pill.ok{background:#e4f6e9;color:#1e7a3d}
   .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
   .adm-cert .pill.exp{background:#fdecec;color:#8a1f1f}
@@ -624,11 +632,18 @@
   .ins-steps li{font-size:14.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
   .ins-steps b{font-weight:800}
   .ins-warn{background:#fff3d6;border:1px solid #f0d58f;color:#8a6d00;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin:0 0 14px;font-weight:600}
+  .adm-seen{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);margin-top:7px;font-weight:600}
+  .adm-seen svg{width:14px;height:14px;stroke:var(--mut);fill:none;stroke-width:2;flex:0 0 auto}
+  .adm-seen b{color:var(--ink);font-weight:800}
+  .adm-seen.dim{opacity:.75;font-style:italic}
+  .adm-tag.seen{background:#eef4fc;color:#1d4a86}
   .adm-photo{position:relative;width:72px;height:72px;flex:0 0 auto;border-radius:14px;border:1px solid var(--line);background:#eef2f7;padding:0;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
   .adm-photo img{width:100%;height:100%;object-fit:cover;display:block}
   .adm-photo svg{width:30px;height:30px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .adm-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:9.5px;font-weight:800;padding:3px 0}
-  .dir-photo{width:44px;height:44px;border-radius:11px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:2px}
+  .dir-photo{width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:4px;background:#eef2f7}
+  .dir-photo.ph{display:inline-flex;align-items:center;justify-content:center}
+  .dir-photo.ph svg{width:24px;height:24px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .eq-imgrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
   .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
   .eq-imgpv.hidden{display:none}
@@ -1027,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 7.3</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1142,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 7.3</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2406,6 +2421,29 @@
   var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false};
   function admLvClass(l){ l=String(l||"").toLowerCase(); return l==="als"?"als":((l==="emt"||l==="bls")?"emt":(l.indexOf("medic")>=0?"medic":"")); }
   function admIsActive(r){ var a=String(r_(r,"Active")||"").trim().toLowerCase(); return a===""||a==="x"||a==="yes"||a==="true"; }
+  function admAgo(v){
+    if(!v) return "";
+    var s=String(v).trim(); if(!s) return "";
+    var d=null;
+    var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[, ]+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?)?/);
+    if(m){
+      var hh=m[4]?parseInt(m[4],10):0, ap=(m[6]||"").toLowerCase();
+      if(ap==="pm"&&hh<12) hh+=12; if(ap==="am"&&hh===12) hh=0;
+      d=new Date(+m[3],+m[1]-1,+m[2],hh,m[5]?+m[5]:0);
+    } else { var t=new Date(s); if(!isNaN(t.getTime())) d=t; }
+    if(!d||isNaN(d.getTime())) return s;
+    var mins=Math.round((Date.now()-d.getTime())/60000);
+    if(mins<2) return "just now";
+    if(mins<60) return mins+" min ago";
+    var hrs=Math.round(mins/60);
+    if(hrs<24) return hrs+(hrs===1?" hour ago":" hours ago");
+    var days=Math.round(hrs/24);
+    if(days===1) return "yesterday";
+    if(days<30) return days+" days ago";
+    var mo=Math.round(days/30);
+    if(mo<12) return mo+(mo===1?" month ago":" months ago");
+    return Math.round(mo/12)+"+ years ago";
+  }
   function admName(r){ var l=(r_(r,"Last Name")||"").trim(), f=(r_(r,"First Name")||"").trim(); return (l?(l+(f?", "+f:"")):f)||r_(r,"Unit")||"(no name)"; }
   function openAdmin(){
     if(!isAdmin()){ toast("Admins only."); return; }
@@ -2446,6 +2484,7 @@
         (ty?'<span class="adm-tag">'+esc(ty)+'</span>':'')+
         (isX(r["Admin"])?'<span class="adm-tag adm">Admin</span>':'')+
         (act?'':'<span class="adm-tag off">Inactive</span>')+
+        (function(){ var la=admAgo(r_(r,"Last Active")); return la?('<span class="adm-tag seen">'+esc(la)+'</span>'):''; })()+
         '</div></div><svg class="chev" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#b9c0cc;fill:none;stroke-width:2.5"><path d="M9 18l6-6-6-6"/></svg></div>';
     }).join("") : '<div class="adm-empty">No members match.</div>';
   }
@@ -2479,7 +2518,11 @@
         (_ap?('<img src="'+esc(_ap)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
         '<span class="adm-photo-edit">Change</span></button>'+
       '<div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
-      (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div></div></div>';
+      (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div>'+
+      (function(){ var la=admAgo(r_(r,"Last Active"));
+        return la ? '<div class="adm-seen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Last opened the app <b>'+esc(la)+'</b></div>'
+                  : '<div class="adm-seen dim"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Has not opened the app yet</div>'; })()+
+      '</div></div>';
     var body="";
     if(t==="info"){
       body='<div class="adm-sec"><div class="adm-sech">Identity</div>'+
@@ -2520,11 +2563,13 @@
           var pill = isna ? '<span class="pill na">N/A</span>'
             : (!v ? '' : '<span class="pill '+(st.k==="expired"?"exp":(st.k==="soon"?"soon":"ok"))+'">'+(st.k==="expired"?"Expired":(st.k==="soon"?"Soon":"OK"))+'</span>');
           var key=c.expKey||c.singleKey||c.numKey;
-          rows+='<div class="adm-cert"><div class="cn">'+esc(c.name)+
-            (isna?'<div class="cd">Not required \u2014 hidden from this member</div>':'')+'</div>'+pill+
-            (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
-            (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
-            '</div>';
+          rows+='<div class="adm-cert">'+
+            '<div class="ctop"><span class="cn">'+esc(c.name)+
+              (isna?'<div class="cd">Not required \u2014 hidden from this member</div>':'')+'</span>'+pill+'</div>'+
+            '<div class="cbot">'+
+              (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
+              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
+            '</div></div>';
         });
         body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">N/A = hidden from that member</span></div>'+rows+'</div>';
       }
@@ -4220,7 +4265,10 @@
         if(secs) extra='<div class="dir-extra">'+secs+'</div>';
       }
       return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'">'+
-        '<div class="dir-head">'+(p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">'):'')+'<span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+        '<div class="dir-head">'+
+          (p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">')
+                  :('<span class="dir-photo ph"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>'))+
+          '<span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         ((p.level||typeStr)?'<div class="dir-tags">'+(p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+(typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+'</div>':'')+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+extra+'</div>';
@@ -4268,7 +4316,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4308,7 +4356,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:26 AM</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -6091,5 +6139,6 @@
   }
 })();
 </script>
+<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:26 AM</div>
 </body>
 </html>
