@@ -541,6 +541,149 @@
   .prof-other:focus{outline:none;border-color:var(--navy)}
   .prof-sec{font-weight:800;color:var(--navy);font-size:14px;margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:7px}
   .prof-sec svg{width:17px;height:17px;stroke:var(--navy);fill:none;stroke-width:2}
+  /* ---------- Admin Portal ---------- */
+  #admScreen .adm-wrap{flex:1;min-height:0}
+  .adm-wrap{display:flex;height:100%;min-height:0}
+  .adm-left{width:340px;flex:0 0 auto;border-right:1px solid var(--line);display:flex;flex-direction:column;background:#f7f9fc;min-height:0}
+  .adm-right{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+  .adm-srch{padding:11px 12px;border-bottom:1px solid var(--line);background:#fff}
+  .adm-srch input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit}
+  .adm-srch input:focus{outline:none;border-color:var(--navy)}
+  .adm-chips{display:flex;gap:6px;padding:9px 12px;background:#fff;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .adm-chip{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:5px 11px;font-weight:800;font-size:11.5px;cursor:pointer}
+  .adm-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-list{flex:1;overflow:auto;padding:8px;min-height:0}
+  .adm-row{background:#fff;border:1px solid var(--line);border-left:3px solid #7a8699;border-radius:11px;padding:10px 11px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:9px}
+  .adm-row:hover{border-color:#c3cede}
+  .adm-row.sel{border-color:var(--navy);box-shadow:0 0 0 2px rgba(20,61,117,.12)}
+  .adm-row.als{border-left-color:#2f9e44} .adm-row.emt{border-left-color:#2a6fb5} .adm-row.medic{border-left-color:#8a5cc7}
+  .adm-row.inact{opacity:.55;border-left-color:#b9c0cc}
+  .adm-row .ri{flex:1;min-width:0}
+  .adm-nm{font-weight:800;font-size:14.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .adm-sub{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .adm-tag{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#eef2f7;color:var(--mut)}
+  .adm-tag.lvl{background:#e7f0ff;color:var(--navy)}
+  .adm-tag.adm{background:#fff3d6;color:#8a6d00}
+  .adm-tag.off{background:#fdecec;color:#8a1f1f}
+  .adm-empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
+  .adm-addbtn{margin:0;padding:11px 12px;border-top:1px solid var(--line);background:#fff}
+  .adm-addbtn button{width:100%;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
+  .adm-body{padding:16px;max-width:760px;margin:0 auto}
+  .adm-ph{display:flex;align-items:center;justify-content:center;height:100%;color:var(--mut);font-size:14px;padding:30px;text-align:center}
+  .adm-mh{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .adm-mh .t{flex:1;min-width:0}
+  .adm-mh h3{margin:0;font-size:24px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+  .adm-mh .u{font-size:13.5px;color:var(--mut);font-weight:700;margin-top:5px}
+  .adm-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .adm-tab{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer}
+  .adm-tab.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-sec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:15px;box-shadow:0 4px 14px rgba(16,38,74,.04)}
+  .adm-sech{font-weight:800;color:var(--navy);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+  .adm-sech .bdg{margin-left:auto;font-size:10px;font-weight:700;background:#eef2f7;color:var(--mut);border-radius:999px;padding:2px 9px;text-transform:none;letter-spacing:0}
+  .adm-f{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:12px}
+  .adm-f input,.adm-f select,.adm-f textarea{width:100%;margin-top:5px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;color:var(--ink);font-weight:400;background:#fff;font-family:inherit}
+  .adm-f input:focus,.adm-f select:focus,.adm-f textarea:focus{outline:none;border-color:var(--navy)}
+  .adm-2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .adm-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+  .adm-tg{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .adm-tg:last-child{border-bottom:0}
+  .adm-tg .tl{flex:1;min-width:0}
+  .adm-tg .tn{font-weight:700;font-size:14.5px}
+  .adm-tg .td{font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.35}
+  .adm-sw{width:46px;height:27px;border-radius:999px;background:#d4dae3;position:relative;flex:0 0 auto;cursor:pointer;transition:background .15s;border:0}
+  .adm-sw::after{content:"";position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+  .adm-sw.on{background:#1e9e57} .adm-sw.on::after{left:22px}
+  .adm-sw.gold.on{background:var(--gold)}
+  .adm-save{position:sticky;bottom:0;background:linear-gradient(180deg,rgba(238,241,245,0),var(--bg) 30%);padding:14px 0 4px;display:flex;gap:10px}
+  .adm-save button{flex:1;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer}
+  .adm-save .pri{background:var(--navy);color:#fff}
+  .adm-save .pri:disabled{opacity:.6}
+  .adm-danger{background:#fff;color:var(--red);border:1px solid #f3b6b6;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:6px}
+  .adm-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
+  .adm-cert{padding:14px 0;border-bottom:1px solid var(--line)}
+  .adm-cert:last-child{border-bottom:0}
+  .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
+  .adm-cert .cn{font-weight:700;font-size:14.5px;min-width:0;flex:1}
+  .adm-cert .cd{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400}
+  .adm-cert .cbot{display:flex;align-items:center;gap:9px}
+  .adm-cert input{flex:1;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px 12px;font-size:15px;font-family:inherit}
+  .adm-cert input:focus{outline:none;border-color:var(--navy)}
+  .adm-cert .pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;flex:0 0 auto;letter-spacing:.03em}
+  .adm-cert .adm-nabtn{flex:0 0 auto}
+  @media (min-width:820px){
+    .adm-cert{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
+    .adm-cert .ctop{margin-bottom:0}
+    .adm-cert input{width:160px;flex:0 0 auto}
+  }
+  .adm-cert .pill.ok{background:#e4f6e9;color:#1e7a3d}
+  .adm-cert .pill.soon{background:#fff3d6;color:#8a6d00}
+  .adm-cert .pill.exp{background:#fdecec;color:#8a1f1f}
+  .adm-cert .pill.na{background:#eef2f7;color:var(--mut)}
+  .adm-secbar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
+  .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+  .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .adm-gen{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+  .adm-gen .adm-body{max-width:840px;margin:0 auto}
+  .adm-help{background:#eef4fc;border:1px solid #cfe0f5;color:#1d4a86;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:15px}
+  .adm-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+  .adm-f.wide{grid-column:1 / -1}
+  .adm-del{margin-left:auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:8px;padding:5px 11px;font-size:11.5px;font-weight:800;cursor:pointer;text-transform:none;letter-spacing:0}
+  .ins-steps ol{margin:0 0 4px;padding-left:22px}
+  .ins-steps li{font-size:14.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
+  .ins-steps b{font-weight:800}
+  .ins-warn{background:#fff3d6;border:1px solid #f0d58f;color:#8a6d00;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin:0 0 14px;font-weight:600}
+  .adm-seen{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);margin-top:7px;font-weight:600}
+  .adm-seen svg{width:14px;height:14px;stroke:var(--mut);fill:none;stroke-width:2;flex:0 0 auto}
+  .adm-seen b{color:var(--ink);font-weight:800}
+  .adm-seen.dim{opacity:.75;font-style:italic}
+  .adm-tag.seen{background:#eef4fc;color:#1d4a86}
+  .adm-photo{position:relative;width:72px;height:72px;flex:0 0 auto;border-radius:14px;border:1px solid var(--line);background:#eef2f7;padding:0;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .adm-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .adm-photo svg{width:30px;height:30px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
+  .adm-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:9.5px;font-weight:800;padding:3px 0}
+  .dir-photo{width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:4px;background:#eef2f7}
+  .dir-photo.ph{display:inline-flex;align-items:center;justify-content:center}
+  .dir-photo.ph svg{width:24px;height:24px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
+  .eq-imgrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+  .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  .eq-imgpv.hidden{display:none}
+  .eq-thumb{width:42px;height:42px;object-fit:cover;border-radius:9px;border:1px solid var(--line);flex:0 0 auto;cursor:zoom-in}
+  .adm-uprow{display:flex;align-items:center;gap:10px;margin:-6px 0 14px}
+  .adm-up{border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
+  .adm-up:disabled{opacity:.6}
+  .adm-imgpv{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#f4f6fa}
+  .adm-imgpv.hidden{display:none}
+  .adm-specs{margin-top:6px;padding-top:14px;border-top:1px solid var(--line)}
+  .adm-specl{font-weight:800;color:var(--navy);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  .adm-specg{display:flex;flex-wrap:wrap;gap:7px}
+  .adm-spec{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:7px 13px;font-size:12.5px;font-weight:700;cursor:pointer}
+  .adm-spec.on{background:#e4f6e9;border-color:#8ed3a6;color:#1e7a3d}
+  .adm-addrow{width:100%;border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;margin-top:4px}
+  @media (max-width:820px){ .adm-grid{grid-template-columns:1fr} }
+  .adm-nabtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
+  .adm-nabtn:hover{border-color:#c3cede}
+  .adm-modal{position:fixed;inset:0;z-index:80;background:rgba(9,26,52,.5);display:flex;align-items:center;justify-content:center;padding:18px}
+  .adm-modal.hidden{display:none}
+  .adm-mbox{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:520px;box-shadow:0 24px 60px rgba(9,26,52,.3);max-height:90vh;overflow:auto}
+  .adm-mbox h3{margin:0 0 4px;font-size:20px;font-weight:800}
+  .adm-msub{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.45}
+  .adm-merr{font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px}
+  .adm-mbtns{display:flex;gap:10px}
+  .adm-mbtns button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
+  .adm-mbtns .pri{background:var(--navy);color:#fff}
+  .adm-mbtns .pri:disabled{opacity:.6}
+  .adm-mbtns .ghost{background:#fff;color:var(--mut);border:1px solid var(--line)}
+  .adm-msg{font-size:13px;font-weight:700;text-align:center;padding:9px;min-height:16px}
+  .adm-msg.ok{color:#1e7a3d} .adm-msg.err{color:var(--red)}
+  @media (max-width:820px){
+    .adm-left{width:100%;border-right:0}
+    .adm-right{display:none}
+    body.admdetail .adm-left{display:none}
+    body.admdetail .adm-right{display:block}
+    .adm-2,.adm-3{grid-template-columns:1fr}
+    .adm-body{padding:12px}
+  }
+
   .dir-extra{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
   .dir-extra .esec{margin-bottom:13px}
   .dir-extra .esec:last-child{margin-bottom:0}
@@ -554,6 +697,12 @@
   .dir-extra .ec-tel{display:inline-flex;align-items:center;gap:6px;margin-top:7px;color:#1e5fae;font-weight:800;font-size:14px;text-decoration:none}
   .dir-extra .ec-tel svg{width:15px;height:15px;stroke:#1e5fae;fill:none;stroke-width:2}
   .prof-save{width:100%;font-size:16px;padding:14px;margin-top:4px}
+  .prof-hdr{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px}
+  .prof-hdrt{flex:1;min-width:0}
+  .prof-photo{position:relative;width:82px;height:82px;flex:0 0 auto;border-radius:16px;border:1px solid var(--line);background:#eef2f7;padding:0;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .prof-photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .prof-photo svg{width:34px;height:34px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
+  .prof-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:10px;font-weight:800;padding:3px 0;letter-spacing:.03em}
   .prof-hint{font-size:12px;color:var(--mut);line-height:1.45;margin:-8px 0 16px}
   .prof-note{font-size:13px;font-weight:600;margin-top:12px;text-align:center;min-height:18px}
   .prof-note.ok{color:#2f9e44}
@@ -693,9 +842,9 @@
     transform:translateX(100%);transition:transform .22s ease;visibility:hidden}
   .preader.open{transform:translateX(0);visibility:visible}
   .pr-head-txt{min-width:0;flex:1;text-align:left}
-  .pr-head-txt b{display:block;font-size:15px;font-weight:700;color:#fff;line-height:1.2;
+  .pr-head-txt b{display:block;font-size:15px;font-weight:700;color:var(--navy);line-height:1.2;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pr-head-txt small{font-size:12px;color:rgba(255,255,255,.75)}
+  .pr-head-txt small{font-size:12px;color:var(--mut)}
   .pr-body{flex:1;overflow:hidden;background:#5b6472;position:relative;touch-action:none}
   .pr-page{position:absolute;top:0;left:0;width:100%;transform-origin:0 0;will-change:transform}
   .pr-page img{width:100%;height:auto;display:block;background:#fff;
@@ -738,8 +887,19 @@
     body{background:var(--bg)}
     #app{max-width:600px;margin:0 auto;min-height:100vh;background:#fff;box-shadow:0 0 44px rgba(9,26,52,.14)}
     .screen,.preader{left:50%;transform:translateX(-50%);width:100%;max-width:600px;box-shadow:0 0 44px rgba(9,26,52,.2)}
+    /* Admin portal is a real desktop app view: full width, no phone column */
+    #admScreen{left:0;transform:translateX(100%);width:100%;max-width:none;box-shadow:none}
+    #admScreen.open{transform:translateX(0)}
+    #admScreen .scr-head{padding-left:20px;padding-right:20px}
+    .adm-left{width:380px}
+    .adm-body{max-width:900px;padding:22px 26px}
     .sheet-wrap{justify-content:center}
     .sheet{max-width:600px}
+  }
+  @media (min-width:1280px) and (hover:hover) and (pointer:fine){
+    .adm-left{width:420px}
+    .adm-body{max-width:1040px}
+    .adm-3{grid-template-columns:1fr 1fr 1fr}
   }
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   .demolink{background:none;border:0;color:#5b6b85;font-weight:700;font-size:13.5px;text-decoration:underline;cursor:pointer;margin-top:12px;padding:6px}
@@ -882,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 7.4</div>
+  <div class="ver-line">Version 8.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -997,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 7.4</div>
+  <div class="ver-line">Version 8.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1044,7 +1204,7 @@
   </div>
   <div class="edit-bar hidden" id="cabHomeBar">
     <button class="ebtn primary" id="cabAdd">+ Add cabinet</button>
-    <button class="ebtn" id="cabSaveHome">Save &amp; download</button>
+    <button class="ebtn primary" id="cabSaveHome">Save</button>
   </div>
   <div class="cab-grid" id="cabGrid"></div>
 </div>
@@ -1058,7 +1218,7 @@
   <div class="edit-bar hidden" id="cabEditBar">
     <button class="ebtn" id="cabPhotoBtn">Replace photo</button>
     <button class="ebtn primary" id="cabAddItem">+ Add item</button>
-    <button class="ebtn" id="cabSave">Save &amp; download</button>
+    <button class="ebtn primary" id="cabSave">Save</button>
   </div>
   <div class="cab-photo-wrap" id="cabPhotoWrap">
     <div class="cab-photo" id="cabPhoto"><img id="cabImg" alt="Cabinet photo"></div>
@@ -1095,7 +1255,7 @@
   </div>
   <div class="edit-bar hidden" id="equipEditBar">
     <button class="ebtn primary" id="equipAdd">+ Add item</button>
-    <button class="ebtn" id="equipSave">Save &amp; download</button>
+    <button class="ebtn primary" id="equipSave">Save</button>
   </div>
   <div class="eq-tools">
     <input id="equipSearch" type="search" placeholder="Search equipment" enterkeyhint="search">
@@ -1123,6 +1283,11 @@
     <label>Source<select id="eqSrc"><option value="s">State (S)</option><option value="c">City (C)</option><option value="sc">Both (SC)</option></select></label>
     <label>Our note<input id="eqOurs" type="text" placeholder="Optional"></label>
     <label>Notes<input id="eqNotes" type="text" placeholder="Optional"></label>
+    <div class="eq-imgrow">
+      <button class="ebtn" id="eqImgBtn" type="button">Upload photo</button>
+      <img id="eqImgPv" class="eq-imgpv hidden" alt="">
+      <button class="ebtn" id="eqImgClear" type="button" style="display:none">Remove</button>
+    </div>
     <div class="modal-btns">
       <button class="ebtn danger" id="eqDelete">Delete</button>
       <span style="flex:1"></span>
@@ -1186,8 +1351,61 @@
     <button class="sheet-item" id="qVitals"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>Vitals Reference</button>
     <button class="sheet-item" id="qCpr"><svg viewBox="0 0 24 24"><path d="M12 21C7 17 3 13 3 8.5 3 6 5 4 7.5 4c1.6 0 3 .8 3.8 2 .8-1.2 2.2-2 3.7-2C20.5 4 21 6 21 8.5 21 13 17 17 12 21z"/></svg>CPR Tracker</button>
     <button class="sheet-item" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Call Notes</button>
+    <button class="sheet-item" id="qInstall"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 19h16"/></svg>Install app</button>
     <button class="sheet-item" id="qTextHome"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text Home</button>
     <button class="sheet-cancel" id="qCancel">Cancel</button>
+  </div>
+</div>
+
+
+<!-- ADMIN PORTAL -->
+<div class="screen" id="admScreen">
+  <div class="scr-head">
+    <button class="back" id="admBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2 id="admTitle">Members</h2>
+  </div>
+  <div class="adm-secbar" id="admSecs"></div>
+  <div class="adm-wrap">
+    <div class="adm-left" id="admMembersPane">
+      <div class="adm-srch"><input id="admSearch" type="search" placeholder="Search name, unit, email" enterkeyhint="search"></div>
+      <div class="adm-chips" id="admChips"></div>
+      <div class="adm-list" id="admList"></div>
+      <div class="adm-addbtn"><button id="admAdd">+ Add member</button></div>
+    </div>
+    <div class="adm-right" id="admRight">
+      <div class="adm-ph">Select a member to view and edit their record.</div>
+    </div>
+    <div class="adm-gen" id="admGenPane" style="display:none"></div>
+  </div>
+</div>
+
+<div class="adm-modal hidden" id="insModal">
+  <div class="adm-mbox">
+    <h3>Install the app</h3>
+    <p class="adm-msub">Adding it to your home screen makes it open like a real app and keeps you signed in.</p>
+    <div id="insBody" class="ins-steps"></div>
+    <div class="adm-mbtns"><button class="pri" id="insClose">Got it</button></div>
+  </div>
+</div>
+
+<div class="adm-modal hidden" id="admAddModal">
+  <div class="adm-mbox">
+    <h3>Add member</h3>
+    <p class="adm-msub">Just the basics to get them signed in — you can fill in the rest on their record.</p>
+    <div class="adm-2">
+      <label class="adm-f">First name<input id="amF" type="text" placeholder="Yitzchak"></label>
+      <label class="adm-f">Last name<input id="amL" type="text" placeholder="Abramovitz"></label>
+    </div>
+    <div class="adm-2">
+      <label class="adm-f">Unit<input id="amU" type="text" placeholder="H-52"></label>
+      <label class="adm-f">Type<select id="amT"><option>Responder</option><option>Non Responder</option><option>Dispatcher</option></select></label>
+    </div>
+    <label class="adm-f">Org email (used to sign in)<input id="amE" type="email" placeholder="name@houstonhatzalah.org"></label>
+    <div class="adm-merr" id="amErr"></div>
+    <div class="adm-mbtns">
+      <button class="ghost" id="amCancel">Cancel</button>
+      <button class="pri" id="amSave">Add member</button>
+    </div>
   </div>
 </div>
 
@@ -1400,13 +1618,96 @@
 (function(){
   "use strict";
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
+  var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
+  var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
+  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads"};
+  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","coh_e_permit_num":"COH E-Permit #","coh_e_permit_exp":"COH E-Permit Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","code":"Code","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
-  var GUEST_URL="https://script.google.com/macros/s/AKfycbz1whkfWWlbj5Q8WelSB57s2cToyiJ35i0xxwr5iw3OGGZlttRBohDsVCkk8oJGyzH6/exec";
+  // (Apps Script URL removed - the app talks to Supabase directly now)
   var ORG_DOMAIN="houstonhatzalah.org";
   var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null,verified:false};
+  // ---------- Supabase Auth (per-person identity) ----------
+  var SBA={token:"",refresh:"",exp:0,email:"",sub:""};
+  var SBA_KEY="hoh_sbauth_v1";
+  function sbaSave(){ try{ localStorage.setItem(SBA_KEY,JSON.stringify(SBA)); }catch(e){} }
+  function sbaClear(){ SBA={token:"",refresh:"",exp:0,email:"",sub:""}; try{ localStorage.removeItem(SBA_KEY); }catch(e){} }
+  function sbaLoad(){ try{ var o=JSON.parse(localStorage.getItem(SBA_KEY)||"null"); if(o&&o.token){ SBA=o; return true; } }catch(e){} return false; }
+  function sbaValid(){ return !!(SBA.token && Date.now() < (SBA.exp-60000)); }
+  // Every Supabase call uses the signed-in person's token when we have one.
+  function sbAuthHeaders(extra){
+    var h={ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON) };
+    if(extra) for(var k in extra) h[k]=extra[k];
+    return h;
+  }
+  // Supabase ROTATES refresh tokens: each refresh invalidates the previous one.
+  // Several parts of the app can ask for a refresh at once on open, so we must
+  // only ever have ONE refresh in flight - otherwise the second call uses a dead
+  // token, fails, and the person gets kicked out to the sign-in screen.
+  var SBA_INFLIGHT=null;
+  function sbaRefresh(){
+    if(SBA_INFLIGHT) return SBA_INFLIGHT;
+    if(!SBA.refresh) return Promise.reject("no-refresh");
+    var tok=SBA.refresh;
+    SBA_INFLIGHT = fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({refresh_token:tok})
+    }).then(function(r){ if(!r.ok) throw "refresh-failed"; return r.json(); })
+      .then(function(j){
+        if(!j.access_token) throw "refresh-failed";
+        SBA.token=j.access_token; SBA.refresh=j.refresh_token||SBA.refresh;
+        SBA.exp=Date.now()+((j.expires_in||3600)*1000);
+        if(j.user&&j.user.email) SBA.email=j.user.email;
+        if(j.user&&j.user.id) SBA.sub=j.user.id;
+        sbaSave(); SBA_INFLIGHT=null; return true;
+      })
+      .catch(function(e){
+        SBA_INFLIGHT=null;
+        // One retry: a transient network blip shouldn't sign anyone out.
+        return new Promise(function(res,rej){
+          setTimeout(function(){
+            if(!SBA.refresh){ rej(e); return; }
+            fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+              method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+              body:JSON.stringify({refresh_token:SBA.refresh})
+            }).then(function(r){ if(!r.ok) throw e; return r.json(); })
+              .then(function(j2){
+                if(!j2.access_token) throw e;
+                SBA.token=j2.access_token; SBA.refresh=j2.refresh_token||SBA.refresh;
+                SBA.exp=Date.now()+((j2.expires_in||3600)*1000);
+                if(j2.user&&j2.user.email) SBA.email=j2.user.email;
+                sbaSave(); res(true);
+              }).catch(function(){ rej(e); });
+          }, 1200);
+        });
+      });
+    return SBA_INFLIGHT;
+  }
+  function sbaEnsure(){
+    if(sbaValid()){
+      if(!SBA.email){ return sbaFetchUser().then(function(){ return true; }).catch(function(){ return true; }); }
+      return Promise.resolve(true);
+    }
+    return sbaRefresh().then(function(){ return true; }).catch(function(){ return false; });
+  }
+  // Exchange the Google credential (ID token) for a Supabase session.
+  function sbaSignInWithGoogle(idToken){
+    return fetch(SB_URL+"/auth/v1/token?grant_type=id_token",{
+      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({provider:"google", id_token:idToken})
+    }).then(function(r){ return r.json().then(function(j){ if(!r.ok) throw (j.error_description||j.msg||"auth-failed"); return j; }); })
+      .then(function(j){
+        if(!j.access_token) throw "auth-failed";
+        SBA.token=j.access_token; SBA.refresh=j.refresh_token||"";
+        SBA.exp=Date.now()+((j.expires_in||3600)*1000);
+        SBA.email=(j.user&&j.user.email)||""; SBA.sub=(j.user&&j.user.id)||"";
+        sbaSave();
+        return SBA.email;
+      });
+  }
+
   function gInit(){
     if(G.client||!(window.google&&google.accounts&&google.accounts.oauth2)) return;
     G.client=google.accounts.oauth2.initTokenClient({
@@ -1421,6 +1722,24 @@
       error_callback:function(err){ var p=G.pending; G.pending=null; if(p)p.reject((err&&err.type)||"error"); }
     });
   }
+  // Google ID token (identity) — separate from the access token. Supabase needs this.
+  function gIdToken(){
+    return new Promise(function(resolve,reject){
+      if(!(window.google&&google.accounts&&google.accounts.id)){ reject("not-ready"); return; }
+      try{
+        google.accounts.id.initialize({
+          client_id:GIS_CLIENT_ID,
+          hosted_domain:ORG_DOMAIN,
+          auto_select:false,
+          cancel_on_tap_outside:true,
+          callback:function(resp){ if(resp&&resp.credential) resolve(resp.credential); else reject("no-credential"); }
+        });
+        google.accounts.id.prompt(function(n){
+          if(n && (n.isNotDisplayed&&n.isNotDisplayed() || n.isSkippedMoment&&n.isSkippedMoment())) reject("prompt-blocked");
+        });
+      }catch(e){ reject(e); }
+    });
+  }
   var GTOK_KEY="hoh_gtok_v1";
   function saveGTok(){ try{ localStorage.setItem(GTOK_KEY,JSON.stringify({t:G.token,e:G.exp,m:G.email})); }catch(e){} }
   function clearGTok(){ try{ localStorage.removeItem(GTOK_KEY); }catch(e){} }
@@ -1432,12 +1751,7 @@
       try{ G.client.requestAccessToken(opts||{}); }catch(e){ G.pending=null; reject(e); }
     });
   }
-  function gToken(force){
-    if(!force && G.token && Date.now()<G.exp) return Promise.resolve(G.token);
-    if(G.inflight) return G.inflight;
-    G.inflight=gRequest({prompt:""}).then(function(t){ G.inflight=null; return t; },function(e){ G.inflight=null; throw e; });
-    return G.inflight;
-  }
+  function gToken(force){ /* legacy Sheets token - unused; data comes from Supabase */ return Promise.reject("legacy"); }
   function gVerify(){
     return fetch("https://www.googleapis.com/oauth2/v3/userinfo",{headers:{Authorization:"Bearer "+G.token}})
       .then(function(r){ return r.json(); })
@@ -1460,27 +1774,33 @@
   function tabRange(name){ return /^[A-Za-z0-9_]+$/.test(name) ? name : "'"+String(name).replace(/'/g,"''")+"'"; }
   function fetchTab(name){
     if(STATE.demo){ return Promise.resolve((DEMO.tabs && DEMO.tabs[name]) ? DEMO.tabs[name] : []); }
-    var url="https://sheets.googleapis.com/v4/spreadsheets/"+SHEET_ID+"/values/"+encodeURIComponent(tabRange(name))+"?majorDimension=ROWS";
-    function go(tok){ return fetch(url,{headers:{Authorization:"Bearer "+tok},cache:"no-store"}); }
-    return gToken().then(go).then(function(r){
-      if(r.status===401) return gToken(true).then(go);
-      return r;
-    }).then(function(r){ return r.json(); }).then(function(j){
-      var rows=(j&&j.values)||[];
-      if(!rows.length) return [];
-      var keys=rows[0].map(function(k){return String(k==null?"":k).trim();});
-      var out=[];
-      for(var i=1;i<rows.length;i++){
-        var c=rows[i],o={},any=false;
-        for(var j2=0;j2<keys.length;j2++){
-          if(!keys[j2]) continue;
-          var v=c[j2]!=null?String(c[j2]).trim():"";
-          o[keys[j2]]=v; if(v) any=true;
-        }
-        if(any) out.push(o);
-      }
-      return out;
-    });
+    var tbl=SB_TAB2TBL[name]; if(!tbl) return Promise.resolve([]);
+    var colmap=SB_COLMAP[tbl]||{};
+    function clean(v){
+      if(v==null) return "";
+      if(typeof v!=="string") return String(v);
+      var m=v.match(/^(\d{4})-(\d{2})-(\d{2})[ T]00:00:00/);
+      if(m) return parseInt(m[2],10)+"/"+parseInt(m[3],10)+"/"+m[1];
+      var m2=v.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+      if(m2){ var h=parseInt(m2[4],10),ap=h>=12?"PM":"AM",h12=(h%12)||12; return parseInt(m2[2],10)+"/"+parseInt(m2[3],10)+"/"+m2[1]+" "+h12+":"+m2[5]+" "+ap; }
+      return v;
+    }
+    var out=[],page=0;
+    function fetchPage(){
+      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),{headers:sbAuthHeaders(),cache:"no-store"})
+        .then(function(r){ return r.json(); })
+        .then(function(rows){
+          if(!Array.isArray(rows)) return out;
+          for(var i=0;i<rows.length;i++){
+            var row=rows[i],o={},any=false;
+            for(var k in row){ if(k==="id") continue; var v=clean(row[k]); o[colmap[k]||k]=v; if(v) any=true; }
+            if(any){ try{ Object.defineProperty(o,"__id",{value:row.id,enumerable:false}); }catch(e){ o.__id=row.id; } out.push(o); }
+          }
+          if(rows.length===1000){ page++; return fetchPage(); }
+          return out;
+        });
+    }
+    return fetchPage();
   }
 
   var STATE={settings:{},tiles:[],me:null};
@@ -1567,14 +1887,30 @@
     $("app").classList.remove("hidden");
     boot().catch(function(){ toast("Couldn't load the demo."); });
   }
+  function guestCheck(code){
+    return fetch(SB_URL+"/rest/v1/rpc/guest_demo",{
+      method:"POST",
+      headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({code:String(code||"")})
+    }).then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j || !j.ok) return j||{ok:false};
+        // normalise tiles/settings into the shape the demo expects
+        var tiles=(j.tiles||[]).map(function(row){
+          var o={}, m=SB_COLMAP["tiles"]||{};
+          for(var k in row){ if(k==="id") continue; o[m[k]||k]=row[k]==null?"":String(row[k]); }
+          return o;
+        });
+        return { ok:true, name:j.name||"Guest", tiles:tiles, settings:j.settings||{} };
+      });
+  }
   function guestLogin(code){
     var err=$("guestErr"); if(err) err.textContent="";
     code=String(code||"").trim();
     if(!code){ if(err) err.textContent="Enter the demo passcode."; return; }
     var btn=$("guestBtn"); if(btn){ btn.disabled=true; btn.textContent="Checking\u2026"; }
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:code})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck(code)
+      .then(function(res){
         if(btn){ btn.disabled=false; btn.textContent="Enter demo"; }
         if(res.ok){ try{localStorage.setItem("hoh_demo",code);}catch(e){} startGuest(res); }
         else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn\u2019t valid or is inactive."; }
@@ -1584,9 +1920,8 @@
   function resumeDemo(){
     var code=null; try{ code=localStorage.getItem("hoh_demo"); }catch(e){}
     if(!code) return false;
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:code})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck(code)
+      .then(function(res){
         if(res.ok){ startGuest(res); }
         else { try{localStorage.removeItem("hoh_demo");}catch(e){} if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); }
       }).catch(function(){ if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); });
@@ -1596,7 +1931,7 @@
   function resolveByEmail(){
     return fetchTab("Roster").then(function(rows){
       STATE.roster=rows;
-      var em=String(G.email||"").trim().toLowerCase();
+      var em=String(G.email||SBA.email||"").trim().toLowerCase();
       if(!em) return null;
       for(var i=0;i<rows.length;i++){
         var r=rows[i];
@@ -1707,9 +2042,10 @@
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
+      // Analytics identity must be set on every open, cached or not.
+      try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
       if(!fromCache){
         try{ localStorage.setItem(DCACHE, JSON.stringify({s:res[0]||[], t:res[1]||[], r:res[2]||[]})); }catch(e){}
-        try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
       }
   }
   function paintHeader(){
@@ -1748,12 +2084,79 @@
   function applyTileCols(){ var g=$("grid"); if(g) g.classList.toggle("cols3", getTileCols()===3); var b2=$("reCols2"),b3=$("reCols3"); if(b2)b2.classList.toggle("on",getTileCols()===2); if(b3)b3.classList.toggle("on",getTileCols()===3); }
   function rxLookupOn(){ var s=STATE.settings||{}; for(var k in s){ if(String(k).trim().toLowerCase()==="rx lookup"){ return !/^(off|no|false|0|disabled)$/i.test(String(s[k]).trim()); } } return true; }
   function applyRxSetting(){ document.body.classList.toggle("rxoff", !rxLookupOn()); }
+  function sbWrite(method, path, body){
+    var opts={method:method, headers:sbAuthHeaders({"Content-Type":"application/json", Prefer:"return=minimal"})};
+    if(body!==undefined) opts.body=JSON.stringify(body);
+    return fetch(SB_URL+"/rest/v1/"+path, opts);
+  }
+  // ---------- Supabase Storage: image uploads ----------
+  var SB_BUCKET="image";
+  function sbImgUrl(path){
+    if(!path) return "";
+    if(/^https?:\/\//i.test(path)) return path;           // full URL as-is
+    if(path.indexOf("storage/")===0 || path.indexOf("/storage/")===0)
+      return SB_URL+"/"+path.replace(/^\//,"");
+    if(path.indexOf("sb:")===0)                            // sb:folder/file.png
+      return SB_URL+"/storage/v1/object/public/"+SB_BUCKET+"/"+path.slice(3);
+    return path;                                           // legacy repo path
+  }
+  // Shrink a photo before upload so we stay small and fast.
+  function sbResize(file, maxDim, quality){
+    return new Promise(function(resolve,reject){
+      try{
+        var img=new Image(), url=URL.createObjectURL(file);
+        img.onload=function(){
+          try{
+            var w=img.width, h=img.height, m=maxDim||1200;
+            if(w>m || h>m){ if(w>h){ h=Math.round(h*m/w); w=m; } else { w=Math.round(w*m/h); h=m; } }
+            var c=document.createElement("canvas"); c.width=w; c.height=h;
+            c.getContext("2d").drawImage(img,0,0,w,h);
+            c.toBlob(function(b){ URL.revokeObjectURL(url); b?resolve(b):reject("resize-failed"); }, "image/jpeg", quality||0.82);
+          }catch(e){ URL.revokeObjectURL(url); reject(e); }
+        };
+        img.onerror=function(){ URL.revokeObjectURL(url); reject("bad-image"); };
+        img.src=url;
+      }catch(e){ reject(e); }
+    });
+  }
+  function sbUpload(folder, file, opts){
+    opts=opts||{};
+    var ext="jpg";
+    var name=(folder||"misc")+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)+"."+ext;
+    return sbResize(file, opts.maxDim||1200, opts.quality||0.82).then(function(blob){
+      return fetch(SB_URL+"/storage/v1/object/"+SB_BUCKET+"/"+name,{
+        method:"POST",
+        headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON), "Content-Type":"image/jpeg", "x-upsert":"true" },
+        body:blob
+      });
+    }).then(function(r){
+      if(!r.ok) return r.text().then(function(t){
+        var msg=t||("upload-"+r.status);
+        try{ var j=JSON.parse(t); msg=(j.message||j.error||msg)+" ("+r.status+")"; }catch(e){ msg=msg+" ("+r.status+")"; }
+        try{ console.error("Storage upload failed:", r.status, t); }catch(e){}
+        throw msg;
+      });
+      return "sb:"+name;   // store this short reference in the table
+    });
+  }
+  // Generic "pick a file" helper
+  function sbPickImage(cb){
+    var inp=document.createElement("input");
+    inp.type="file"; inp.accept="image/*"; inp.style.display="none";
+    inp.addEventListener("change",function(){ var f=inp.files&&inp.files[0]; document.body.removeChild(inp); if(f) cb(f); });
+    document.body.appendChild(inp); inp.click();
+  }
+
+  var SB_COLREV={};
+  function sbCol(table, header){
+    if(!SB_COLREV[table]){ var m=SB_COLMAP[table]||{}, rev={}; for(var k in m) rev[m[k]]=k; SB_COLREV[table]=rev; }
+    return SB_COLREV[table][header]||null;
+  }
+  function nowStamp(){ var d=new Date(),h=d.getHours(),ap=h>=12?"PM":"AM",h12=(h%12)||12,mm=("0"+d.getMinutes()).slice(-2); return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear()+" "+h12+":"+mm+" "+ap; }
   function pingSeen(){
     try{
       if((STATE&&STATE.demo) || !(STATE.me&&STATE.me.unit)) return;
-      var url=getSetting("Profile Update URL","")||GUEST_URL;
-      if(!url) return;
-      fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"seen",unit:STATE.me.unit})}).catch(function(){});
+      sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),{last_active:nowStamp()}).catch(function(){});
     }catch(e){}
   }
   function paintTiles(){
@@ -1767,7 +2170,7 @@
       var b=document.createElement("button");b.className="tile";
       b.setAttribute("data-type",(r_(t,"Type")||"").toLowerCase());
       b.setAttribute("data-label",r_(t,"Label")||"");
-      var img=r_(t,"Image URL")||r_(t,"Image")||"";
+      var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
       var iconTile=function(){
         b.className="tile";
         b.innerHTML='<div class="ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg></div>'+
@@ -1907,9 +2310,58 @@
   }
   // ---- Hardware/Back-button navigation: Back closes the top screen, exits only at home ----
   var navStack=[];
-  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} }
-  function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } }
-  window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } });
+  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} navRemember(); }
+  function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } setTimeout(navRemember,60); }
+  window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } setTimeout(navRemember,60); });
+
+  // ---- remember which screen you were on, so a refresh returns you there ----
+  var SCR_KEY="hoh_screen";
+  var SCR_OPENERS={
+    admScreen:function(){ openAdmin(); },
+    dirScreen:function(){ openDirectory(); },
+    certScreen:function(){ openCerts(); },
+    hospScreen:function(){ openHospitals(); },
+    aptScreen:function(){ openApartments(); },
+    vitalsScreen:function(){ openVitals(); },
+    tbScreen:function(){ openTaskBook(); },
+    medScreen:function(){ openMeds(); },
+    availScreen:function(){ openAvail(); },
+    protoScreen:function(){ openProtocols(); },
+    ergScreen:function(){ openErg(); }
+  };
+  function navRemember(){
+    try{
+      var open=null;
+      for(var id in SCR_OPENERS){ var el=$(id); if(el && el.classList.contains("open")){ open=id; break; } }
+      // the protocol/ERG reader overlays its list screen
+      try{ var pr=$("protoReader"); if(pr && pr.classList.contains("open")) open=open||"protoScreen"; }catch(e){}
+      if(open){
+        var extra="";
+        if(open==="admScreen" && typeof ADM2!=="undefined") extra=ADM2.sec||"";
+        localStorage.setItem(SCR_KEY, JSON.stringify({s:open, x:extra, t:Date.now()}));
+      } else localStorage.removeItem(SCR_KEY);
+    }catch(e){}
+  }
+  // Capture the current screen right before a refresh/close, and keep it fresh
+  // while the person sits on a screen (navRemember alone only fires on navigation).
+  window.addEventListener("beforeunload", function(){ try{ navRemember(); }catch(e){} });
+  window.addEventListener("pagehide", function(){ try{ navRemember(); }catch(e){} });
+  document.addEventListener("visibilitychange", function(){ if(document.hidden){ try{ navRemember(); }catch(e){} } });
+  setInterval(function(){ try{ navRemember(); }catch(e){} }, 5000);
+  function navRestore(){
+    try{
+      var raw=localStorage.getItem(SCR_KEY); if(!raw) return;
+      var v=JSON.parse(raw); if(!v||!v.s) return;
+      if(Date.now()-(v.t||0) > 30*60000){ localStorage.removeItem(SCR_KEY); return; }
+      var fn=SCR_OPENERS[v.s]; if(!fn) return;
+      setTimeout(function(){
+        try{
+          fn();
+          if(v.s==="admScreen" && v.x && typeof admSecSwitch==="function" && v.x!=="members"){ setTimeout(function(){ admSecSwitch(v.x); },250); }
+        }catch(e){}
+      }, 350);
+    }catch(e){}
+  }
 
   /* ===================== Scene Timer ===================== */
   var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
@@ -2003,9 +2455,507 @@
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
     if(type==="medication"||type==="meds"||type==="drug"||type==="rx"){ openMeds(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
+    if(type==="admin"||type==="adminportal"||type==="manage"){ openAdmin(); return; }
     if(type==="directory"||type==="members"||type==="contacts"){ openDirectory(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
+
+  // ---------- Admin Portal ----------
+  var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false};
+  function admLvClass(l){ l=String(l||"").toLowerCase(); return l==="als"?"als":((l==="emt"||l==="bls")?"emt":(l.indexOf("medic")>=0?"medic":"")); }
+  function admIsActive(r){ var a=String(r_(r,"Active")||"").trim().toLowerCase(); return a===""||a==="x"||a==="yes"||a==="true"; }
+  function admAgo(v){
+    if(!v) return "";
+    var s=String(v).trim(); if(!s) return "";
+    var d=null;
+    var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[, ]+(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?)?/);
+    if(m){
+      var hh=m[4]?parseInt(m[4],10):0, ap=(m[6]||"").toLowerCase();
+      if(ap==="pm"&&hh<12) hh+=12; if(ap==="am"&&hh===12) hh=0;
+      d=new Date(+m[3],+m[1]-1,+m[2],hh,m[5]?+m[5]:0);
+    } else { var t=new Date(s); if(!isNaN(t.getTime())) d=t; }
+    if(!d||isNaN(d.getTime())) return s;
+    var mins=Math.round((Date.now()-d.getTime())/60000);
+    if(mins<2) return "just now";
+    if(mins<60) return mins+" min ago";
+    var hrs=Math.round(mins/60);
+    if(hrs<24) return hrs+(hrs===1?" hour ago":" hours ago");
+    var days=Math.round(hrs/24);
+    if(days===1) return "yesterday";
+    if(days<30) return days+" days ago";
+    var mo=Math.round(days/30);
+    if(mo<12) return mo+(mo===1?" month ago":" months ago");
+    return Math.round(mo/12)+"+ years ago";
+  }
+  function admName(r){ var l=(r_(r,"Last Name")||"").trim(), f=(r_(r,"First Name")||"").trim(); return (l?(l+(f?", "+f:"")):f)||r_(r,"Unit")||"(no name)"; }
+  function openAdmin(){
+    if(!isAdmin()){ toast("Admins only."); return; }
+    if(!$("admScreen").classList.contains("open")) navOpen(closeAdmin);
+    $("admScreen").classList.add("open");
+    admPaintSecs();
+    if(!ADM.loaded){
+      $("admList").innerHTML='<div class="adm-empty">Loading\u2026</div>';
+      Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
+        ADM.rows=res[0]||[]; ADM.certs=res[1]||[];
+        try{ if((!CERT.certCols||!CERT.certCols.length) && ADM.certs.length) CERT.certCols=computeCertCols(ADM.certs[0]); }catch(e){}
+        ADM.loaded=true; admRender();
+      }).catch(function(){ $("admList").innerHTML='<div class="adm-empty">Couldn\u2019t load members.</div>'; });
+    } else admRender();
+  }
+  function closeAdmin(){ $("admScreen").classList.remove("open"); document.body.classList.remove("admdetail"); }
+  function admRender(){
+    var q=ADM.q.toLowerCase().trim();
+    var list=ADM.rows.filter(function(r){
+      if(!r_(r,"Unit") && !r_(r,"Last Name")) return false;
+      var act=admIsActive(r);
+      if(ADM.filter==="active" && !act) return false;
+      if(ADM.filter==="inactive" && act) return false;
+      if(ADM.filter==="admins" && !isX(r["Admin"])) return false;
+      if(q){ var hay=((r_(r,"First Name")||"")+" "+(r_(r,"Last Name")||"")+" "+(r_(r,"Unit")||"")+" "+(r_(r,"Email")||"")).toLowerCase(); if(hay.indexOf(q)<0) return false; }
+      return true;
+    }).sort(function(a,b){ return admName(a).localeCompare(admName(b)); });
+    var nA=0,nI=0,nAd=0;
+    ADM.rows.forEach(function(r){ if(!r_(r,"Unit")&&!r_(r,"Last Name"))return; if(admIsActive(r))nA++; else nI++; if(isX(r["Admin"]))nAd++; });
+    $("admChips").innerHTML=[["active","Active ("+nA+")"],["inactive","Inactive ("+nI+")"],["admins","Admins ("+nAd+")"],["all","All"]]
+      .map(function(c){ return '<button class="adm-chip'+(ADM.filter===c[0]?" on":"")+'" data-f="'+c[0]+'">'+c[1]+'</button>'; }).join("");
+    $("admList").innerHTML = list.length ? list.map(function(r){
+      var u=r_(r,"Unit"), lv=r_(r,"Level"), ty=r_(r,"Type"), act=admIsActive(r);
+      var selk=ADM.sel && ADM.sel===u;
+      return '<div class="adm-row '+admLvClass(lv)+(act?"":" inact")+(selk?" sel":"")+'" data-u="'+esc(u)+'">'+
+        '<div class="ri"><div class="adm-nm">'+esc(admName(r))+'</div><div class="adm-sub"><span>'+esc(u||"")+'</span>'+
+        (lv?'<span class="adm-tag lvl">'+esc(lv)+'</span>':'')+
+        (ty?'<span class="adm-tag">'+esc(ty)+'</span>':'')+
+        (isX(r["Admin"])?'<span class="adm-tag adm">Admin</span>':'')+
+        (act?'':'<span class="adm-tag off">Inactive</span>')+
+        (function(){ var la=admAgo(r_(r,"Last Active")); return la?('<span class="adm-tag seen">'+esc(la)+'</span>'):''; })()+
+        '</div></div><svg class="chev" viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#b9c0cc;fill:none;stroke-width:2.5"><path d="M9 18l6-6-6-6"/></svg></div>';
+    }).join("") : '<div class="adm-empty">No members match.</div>';
+  }
+  function admRow(unit){ var k=normUnit(unit); for(var i=0;i<ADM.rows.length;i++){ if(normUnit(r_(ADM.rows[i],"Unit"))===k) return ADM.rows[i]; } return null; }
+  function admCertRow(unit){ var k=normUnit(unit); for(var i=0;i<ADM.certs.length;i++){ if(normUnit(r_(ADM.certs[i],"Unit #")||r_(ADM.certs[i],"Unit"))===k) return ADM.certs[i]; } return null; }
+  function admSelect(unit){
+    ADM.sel=unit; ADM.tab="info"; document.body.classList.add("admdetail");
+    admRender(); admRenderDetail();
+    try{ $("admRight").scrollTop=0; }catch(e){}
+  }
+  function admFld(id,label,val,ph,type){ return '<label class="adm-f">'+label+'<input id="'+id+'" type="'+(type||"text")+'" value="'+esc(val||"")+'" placeholder="'+esc(ph||"")+'"></label>'; }
+  function admSel(id,label,val,opts,allowOther){
+    val=String(val==null?"":val).trim();
+    var o='<option value="">\u2014</option>', found=false;
+    opts.forEach(function(s){ var m=(val.toLowerCase()===s.toLowerCase()); if(m)found=true; o+='<option'+(m?' selected':'')+'>'+esc(s)+'</option>'; });
+    if(val && !found) o+='<option selected>'+esc(val)+'</option>';
+    return '<label class="adm-f">'+label+'<select id="'+id+'">'+o+'</select></label>';
+  }
+  function admSw(id,name,desc,on,gold){
+    return '<div class="adm-tg"><div class="tl"><div class="tn">'+name+'</div><div class="td">'+desc+'</div></div>'+
+      '<button class="adm-sw'+(gold?" gold":"")+(on?" on":"")+'" id="'+id+'" data-sw="1"></button></div>';
+  }
+  function admRenderDetail(){
+    var r=admRow(ADM.sel); if(!r){ $("admRight").innerHTML='<div class="adm-ph">Select a member.</div>'; return; }
+    var t=ADM.tab;
+    var tabs='<div class="adm-tabs">'+[["info","Identity & role"],["contact","Contact & personal"],["certs","Certifications"]]
+      .map(function(x){ return '<button class="adm-tab'+(t===x[0]?" on":"")+'" data-tab="'+x[0]+'">'+x[1]+'</button>'; }).join("")+'</div>';
+    var _ap=sbImgUrl(r_(r,"Photo"));
+    var head='<div class="adm-mh">'+
+      '<button class="adm-photo" id="admPhotoBtn" title="Change photo">'+
+        (_ap?('<img src="'+esc(_ap)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
+        '<span class="adm-photo-edit">Change</span></button>'+
+      '<div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
+      (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div>'+
+      (function(){ var la=admAgo(r_(r,"Last Active"));
+        return la ? '<div class="adm-seen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Last opened the app <b>'+esc(la)+'</b></div>'
+                  : '<div class="adm-seen dim"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Has not opened the app yet</div>'; })()+
+      '</div></div>';
+    var body="";
+    if(t==="info"){
+      body='<div class="adm-sec"><div class="adm-sech">Identity</div>'+
+        '<div class="adm-2">'+admFld("adF","First name",r_(r,"First Name"))+admFld("adL","Last name",r_(r,"Last Name"))+'</div>'+
+        '<div class="adm-2">'+admFld("adU","Unit",r_(r,"Unit"))+admFld("adDob","Date of birth",r_(r,"DOB"),"M/D/YYYY")+'</div>'+
+        admFld("adEm","Org email (used to sign in)",r_(r,"Email"),"name@houstonhatzalah.org","email")+
+        '<div class="adm-note">Must match their Google account exactly, or they won\u2019t be able to sign in.</div></div>'+
+        '<div class="adm-sec"><div class="adm-sech">Role &amp; access</div>'+
+        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),["Responder","Non Responder","Dispatcher"])+
+        admSel("adLv","Level",r_(r,"Level"),["EMT","ALS","Doctor","PR"])+'</div>'+
+        '<div class="adm-2">'+admSel("adSt","Status",r_(r,"Status"),["Primary","Backup","Observer","Dispatcher"])+
+        admFld("adFto","FTO for units",r_(r,"FTO"),"e.g. H-44, H-51")+'</div>'+
+        admSw("adAdmin","Administrator","Full access \u2014 sees everyone\u2019s private info and can edit members",isX(r["Admin"]),true)+
+        admSw("adDisp","Dispatcher","Sees the responder status board instead of the normal tiles",isX(r["Dispatcher"]))+
+        admSw("adAct","Active","Off = cannot sign in and hidden from the directory",admIsActive(r))+
+        '</div>';
+    } else if(t==="contact"){
+      body='<div class="adm-sec"><div class="adm-sech">Contact</div>'+
+        admFld("adPh","Phone",r_(r,"Phone"),"","tel")+
+        '<label class="adm-f">Address<textarea id="adAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(r,"Address"))+'</textarea></label>'+
+        admFld("adPe","Personal email (cert reminders)",r_(r,"Personal Email"),"","email")+'</div>'+
+        '<div class="adm-sec"><div class="adm-sech">Sizing<span class="bdg">member usually sets this</span></div>'+
+        '<div class="adm-3">'+admSel("adTs","T-Shirt",r_(r,"T-Shirt Size"),SZ_OPTS)+admSel("adDs","Dress shirt",r_(r,"Dress Shirt Size"),SZ_OPTS)+admSel("adPo","Polo",r_(r,"Polo Shirt Size"),SZ_OPTS)+'</div>'+
+        '<div class="adm-2">'+admSel("adHt","Hat",r_(r,"Hat Size"),SZ_OPTS)+admSel("adCt","Coat",r_(r,"Coat Size"),SZ_OPTS)+'</div></div>'+
+        '<div class="adm-sec"><div class="adm-sech">Emergency &amp; home<span class="bdg">member usually sets this</span></div>'+
+        admFld("adEc","Emergency contact",r_(r,"Emergency Contact"))+
+        '<div class="adm-2">'+admFld("adEcp","Their phone",r_(r,"Emergency Phone"),"","tel")+admSel("adEcr","Relationship",r_(r,"Emergency Relationship"),["Spouse","Friend","Parent","Sibling","Other"])+'</div>'+
+        '<div class="adm-2">'+admFld("adTh","Text home number",r_(r,"Text Home"),"","tel")+admSel("adThm","Send via",r_(r,"Text Home Method"),["sms","whatsapp"])+'</div></div>';
+    } else {
+      var cr=admCertRow(ADM.sel);
+      if(!cr){ body='<div class="adm-sec"><div class="adm-empty">No certification record for this unit yet.</div></div>'; }
+      else {
+        var rows="";
+        CERT.certCols.forEach(function(c){
+          var isna=(function(){ function na(v){v=String(v==null?"":v).trim().toLowerCase();return v==="na"||v==="n/a";}
+            return (c.singleKey&&na(cr[c.singleKey]))||(c.numKey&&na(cr[c.numKey]))||(c.expKey&&na(cr[c.expKey])); })();
+          var v=certExpVal(cr,c), st=certStatus(v);
+          var pill = isna ? '<span class="pill na">N/A</span>'
+            : (!v ? '' : '<span class="pill '+(st.k==="expired"?"exp":(st.k==="soon"?"soon":"ok"))+'">'+(st.k==="expired"?"Expired":(st.k==="soon"?"Soon":"OK"))+'</span>');
+          var key=c.expKey||c.singleKey||c.numKey;
+          rows+='<div class="adm-cert">'+
+            '<div class="ctop"><span class="cn">'+esc(c.name)+
+              (isna?'<div class="cd">Not required \u2014 hidden from this member</div>':'')+'</span>'+pill+'</div>'+
+            '<div class="cbot">'+
+              (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
+              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
+            '</div></div>';
+        });
+        body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">N/A = hidden from that member</span></div>'+rows+'</div>';
+      }
+    }
+    var save='<div class="adm-save"><button class="pri" id="admSave">Save changes</button></div><div class="adm-msg" id="admMsg"></div>';
+    var danger = (t==="info") ? ('<button class="adm-danger" id="admDeact" data-armed="0">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
+      '<div class="adm-note">Deactivating keeps all their records and certifications on file \u2014 it only blocks sign-in and hides them from the directory. You can turn them back on anytime.</div>') : "";
+    $("admRight").innerHTML='<div class="adm-body">'+head+tabs+body+save+danger+'</div>';
+  }
+  function admVal(id){ var e=$(id); return e?String(e.value||"").trim():null; }
+  function admSwOn(id){ var e=$(id); return e?e.classList.contains("on"):null; }
+  function admSave(){
+    var r=admRow(ADM.sel); if(!r) return;
+    var msg=$("admMsg"), btn=$("admSave");
+    btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
+    var upd={}, local={};
+    function put(dbcol,header,v){ if(v===null||v===undefined) return; upd[dbcol]=v; local[header]=v; }
+    if(ADM.tab==="info"){
+      put("first_name","First Name",admVal("adF")); put("last_name","Last Name",admVal("adL"));
+      put("unit","Unit",admVal("adU")); put("dob","DOB",admVal("adDob")); put("email","Email",admVal("adEm"));
+      put("type","Type",admVal("adTy")); put("level","Level",admVal("adLv"));
+      put("status","Status",admVal("adSt")); put("fto","FTO",admVal("adFto"));
+      var a=admSwOn("adAdmin"), d=admSwOn("adDisp"), ac=admSwOn("adAct");
+      if(a!==null) put("admin","Admin",a?"X":"");
+      if(d!==null) put("dispatcher","Dispatcher",d?"X":"");
+      if(ac!==null) put("active","Active",ac?"X":"No");
+    } else if(ADM.tab==="contact"){
+      put("phone","Phone",admVal("adPh")); put("address","Address",admVal("adAddr")); put("personal_email","Personal Email",admVal("adPe"));
+      put("t_shirt_size","T-Shirt Size",admVal("adTs")); put("dress_shirt_size","Dress Shirt Size",admVal("adDs"));
+      put("polo_shirt_size","Polo Shirt Size",admVal("adPo")); put("hat_size","Hat Size",admVal("adHt")); put("coat_size","Coat Size",admVal("adCt"));
+      put("emergency_contact","Emergency Contact",admVal("adEc")); put("emergency_phone","Emergency Phone",admVal("adEcp"));
+      put("emergency_relationship","Emergency Relationship",admVal("adEcr"));
+      put("text_home","Text Home",admVal("adTh")); put("text_home_method","Text Home Method",admVal("adThm"));
+    } else {
+      var cr=admCertRow(ADM.sel);
+      if(!cr){ btn.disabled=false; btn.textContent="Save changes"; return; }
+      var cupd={}, any=false;
+      Array.prototype.forEach.call(document.querySelectorAll(".adm-cdate"),function(inp){
+        var header=inp.getAttribute("data-col"), db=sbCol("certifications",header);
+        if(db){ cupd[db]=String(inp.value||"").trim(); cr[header]=cupd[db]; any=true; }
+      });
+      if(!any){ btn.disabled=false; btn.textContent="Save changes"; return; }
+      sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(ADM.sel),cupd)
+        .then(function(res){ btn.disabled=false; btn.textContent="Save changes";
+          if(res.ok){ msg.className="adm-msg ok"; msg.textContent="Saved."; CERT.loaded=false; }
+          else { msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; } })
+        .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+      return;
+    }
+    var oldUnit=ADM.sel;
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(oldUnit),upd)
+      .then(function(res){
+        btn.disabled=false; btn.textContent="Save changes";
+        if(!res.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; return; }
+        for(var k in local) r[k]=local[k];
+        if(local["Unit"] && normUnit(local["Unit"])!==normUnit(oldUnit)) ADM.sel=local["Unit"];
+        msg.className="adm-msg ok"; msg.textContent="Saved.";
+        DIR.loaded=false;
+        admRender(); admRenderDetail();
+        var m2=$("admMsg"); if(m2){ m2.className="adm-msg ok"; m2.textContent="Saved."; setTimeout(function(){ var m3=$("admMsg"); if(m3){m3.textContent="";m3.className="adm-msg";} },2500); }
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+  }
+  function admDeactivate(){
+    var r=admRow(ADM.sel); if(!r) return;
+    var making = admIsActive(r) ? "No" : "X";
+    var word = making==="No" ? "Deactivate" : "Reactivate";
+    var btn=$("admDeact");
+    if(btn && btn.getAttribute("data-armed")!=="1"){
+      btn.setAttribute("data-armed","1");
+      btn.textContent="Tap again to confirm \u2014 "+word.toLowerCase()+" "+admName(r);
+      setTimeout(function(){ var b=$("admDeact"); if(b&&b.getAttribute("data-armed")==="1"){ b.setAttribute("data-armed","0"); b.textContent=(admIsActive(r)?"Deactivate this member":"Reactivate this member"); } },4000);
+      return;
+    }
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{active:making})
+      .then(function(res){
+        if(!res.ok){ toast("Couldn\u2019t save."); return; }
+        r["Active"]=making; DIR.loaded=false; toast(word+"d.");
+        admRender(); admRenderDetail();
+      }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
+  function admAddMember(){
+    $("admAddModal").classList.remove("hidden");
+    ["amF","amL","amU","amE"].forEach(function(id){ var e=$(id); if(e) e.value=""; });
+    var ty=$("amT"); if(ty) ty.value="Responder";
+    $("amErr").textContent="";
+    setTimeout(function(){ var e=$("amF"); if(e) e.focus(); },80);
+  }
+  function admAddClose(){ $("admAddModal").classList.add("hidden"); }
+  function admAddSave(){
+    var f=$("amF").value.trim(), l=$("amL").value.trim(), u=$("amU").value.trim(), em=$("amE").value.trim(), ty=$("amT").value;
+    var err=$("amErr");
+    if(!u){ err.textContent="Unit is required."; return; }
+    if(!f && !l){ err.textContent="Enter at least a first or last name."; return; }
+    if(admRow(u)){ err.textContent="Unit "+u+" already exists."; return; }
+    if(em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ err.textContent="That email doesn\u2019t look right."; return; }
+    var btn=$("amSave"); btn.disabled=true; btn.textContent="Adding\u2026"; err.textContent="";
+    sbWrite("POST","roster",{ unit:u, first_name:f, last_name:l, email:em, type:ty, active:"X" })
+      .then(function(res){
+        btn.disabled=false; btn.textContent="Add member";
+        if(!res.ok){ err.textContent="Couldn\u2019t add. Try again."; return; }
+        ADM.rows.push({"Unit":u,"First Name":f,"Last Name":l,"Email":em,"Type":ty,"Active":"X"});
+        DIR.loaded=false; admAddClose(); toast("Member added."); admSelect(u);
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent="Add member"; err.textContent="Couldn\u2019t add \u2014 check your connection."; });
+  }
+  $("admBack").addEventListener("click",function(){
+    if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
+    navBack();
+  });
+  $("admSearch").addEventListener("input",function(){ ADM.q=this.value; admRender(); });
+  $("admChips").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-chip"):null; if(!b) return; ADM.filter=b.getAttribute("data-f"); admRender(); });
+  $("admList").addEventListener("click",function(e){ var row=e.target.closest?e.target.closest(".adm-row"):null; if(!row) return; admSelect(row.getAttribute("data-u")); });
+  $("admAdd").addEventListener("click",admAddMember);
+  $("amCancel").addEventListener("click",admAddClose);
+  $("amSave").addEventListener("click",admAddSave);
+  $("admAddModal").addEventListener("click",function(e){ if(e.target===this) admAddClose(); });
+  $("admRight").addEventListener("click",function(e){
+    var na=e.target.closest?e.target.closest(".adm-nabtn"):null;
+    if(na){
+      var key=na.getAttribute("data-na"), on=na.getAttribute("data-on")==="1";
+      var inp=$("admRight").querySelector('.adm-cdate[data-col="'+key+'"]');
+      if(inp){ inp.value = on ? "" : "N/A"; }
+      na.setAttribute("data-on", on?"0":"1");
+      na.textContent = on ? "Not required" : "Require";
+      return;
+    }
+    var sw=e.target.closest?e.target.closest("[data-sw]"):null;
+    if(sw){ sw.classList.toggle("on"); return; }
+    var ph=e.target.closest?e.target.closest(".adm-photo"):null;
+    if(ph){
+      var r0=admRow(ADM.sel); if(!r0) return;
+      sbPickImage(function(file){
+        toast("Uploading photo\u2026");
+        sbUpload("photos",file,{maxDim:600,quality:0.85}).then(function(ref){
+          return sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{photo:ref}).then(function(res){
+            if(!res.ok) throw "save-failed";
+            r0["Photo"]=ref; DIR.loaded=false; toast("Photo updated."); admRenderDetail();
+          });
+        }).catch(function(err){ toast("Couldn\u2019t upload."); try{console.error("photo:",err);}catch(e){} });
+      });
+      return;
+    }
+    var tb=e.target.closest?e.target.closest(".adm-tab"):null;
+    if(tb){ ADM.tab=tb.getAttribute("data-tab"); admRenderDetail(); return; }
+    if(e.target.id==="admSave"){ admSave(); return; }
+    if(e.target.id==="admDeact"){ admDeactivate(); return; }
+  });
+
+  // ---------- Admin Portal: other sections ----------
+  var ADM2={sec:"members",data:{},loaded:{},dirty:false};
+  var ADM_SECS=[
+    {k:"members",label:"Members"},
+    {k:"settings",label:"Settings"},
+    {k:"tiles",label:"Tiles"},
+    {k:"hospitals",label:"Hospitals"},
+    {k:"apartments",label:"Apartments"},
+    {k:"tasklist",label:"Task List"},
+    {k:"cpr",label:"CPR Buttons"},
+    {k:"uploads",label:"Upload Types"},
+    {k:"guests",label:"Guest Codes"}
+  ];
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List"};
+  var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
+    "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
+  // column spec per section: [header, label, kind, opts]
+  var ADM_COLS={
+    settings:[["Setting","Setting","ro"],["Value","Value","text"]],
+    tiles:[["Order","Order","num"],["Label","Label","text"],["Type","Type","text"],["Target","Target","text"],
+           ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
+    apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
+    cpr:[["Order","Order","num"],["Label","Label","text"],["Action","Action","text"],["Color","Color","text"],["Active","Active","bool"]],
+    uploads:[["Document Type","Document type","text"]],
+    guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
+    hospitals:[["Hospital Name","Hospital name","text"],["Code","Code","text"],["Phone (Call)","Phone","text"],
+               ["Red Phone","Red phone","text"],["Address (Navigate)","Address","text"],["Door Code","Door code","text"],
+               ["Latitude","Latitude","text"],["Longitude","Longitude","text"],
+               ["Specialties (summary)","Specialties summary (shown in the app)","text"],["Hide","Hide from members","bool"]],
+    tasklist:[["ID","ID","text"],["Category","Category","text"],["Task","Task","text"],["Type","Type (check or count)","text"],["Target","Target (for count)","text"]]
+  };
+  function admSecSwitch(k){
+    ADM2.sec=k; ADM.sel=null; document.body.classList.remove("admdetail");
+    $("admTitle").textContent = (ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label || "Admin";
+    admPaintSecs();
+    if(k==="members"){ $("admMembersPane").style.display=""; $("admRight").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
+    $("admMembersPane").style.display="none"; $("admRight").style.display="none"; $("admGenPane").style.display="";
+    admLoadSec(k);
+  }
+  function admPaintSecs(){
+    $("admSecs").innerHTML=ADM_SECS.map(function(s){
+      return '<button class="adm-sbtn'+(ADM2.sec===s.k?" on":"")+'" data-sec="'+s.k+'">'+s.label+'</button>';
+    }).join("");
+  }
+  function admLoadSec(k){
+    var tab=ADM_TABLES[k];
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
+    if(ADM2.loaded[k]){ admRenderSec(k); return; }
+    fetchTab(tab).then(function(rows){ ADM2.data[k]=rows||[]; ADM2.loaded[k]=true; admRenderSec(k); })
+      .catch(function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn\u2019t load.</div>'; });
+  }
+  function admBoolOn(v, header){ v=String(v==null?"":v).trim().toLowerCase();
+    if(v==="no"||v==="off"||v==="false"||v==="0") return false;
+    // The app treats a blank "Active" as active, so the toggle must agree.
+    if(v==="") return (header==="Active");
+    return v==="x"||v==="yes"||v==="true"; }
+  function admRenderSec(k){
+    var cols=ADM_COLS[k], rows=ADM2.data[k]||[];
+    if(k==="tiles"||k==="cpr") rows=rows.slice().sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
+    var help={
+      settings:"These control how the app behaves for everyone. Change a value and save \u2014 it applies the next time members open the app.",
+      tiles:"The buttons on the home screen. Order controls position; Active shows or hides it; Admin only limits it to admins.",
+      apartments:"Apartment complexes in the map finder. File must match the map image name exactly.",
+      cpr:"The buttons shown during a CPR code.",
+      uploads:"The document types members can pick when uploading a file.",
+      guests:"Passcodes that let someone try the app in demo mode.",
+      hospitals:"Receiving facilities. Tick the specialties a hospital has \u2014 the summary line is what members see on the hospital card.",
+      tasklist:"The EMT Task Book items. Type \u201Ccheck\u201D is a one-time sign-off; \u201Ccount\u201D tracks a number toward a target."
+    }[k]||"";
+    var head='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>'+esc((ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label)+'</h3>'+
+      '<div class="u">'+rows.length+' row'+(rows.length===1?"":"s")+'</div></div></div>'+
+      (help?'<div class="adm-help">'+help+'</div>':'');
+    var body=rows.map(function(r,i){
+      var title = k==="settings" ? r_(r,"Setting") : (r_(r,"Label")||r_(r,"Name")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
+      var fields=cols.map(function(c){
+        var header=c[0], label=c[1], kind=c[2], v=r_(r,header);
+        var id="ag_"+k+"_"+i+"_"+header.replace(/[^A-Za-z0-9]/g,"");
+        if(kind==="ro") return '<label class="adm-f">'+label+'<input value="'+esc(v)+'" disabled style="background:#f4f6fa;color:var(--mut)"></label>';
+        if(kind==="bool") return '<div class="adm-tg" style="padding:8px 0"><div class="tl"><div class="tn" style="font-size:13.5px">'+label+'</div></div>'+
+          '<button class="adm-sw'+(admBoolOn(v,header)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
+        var t = kind==="num" ? "number" : "text";
+        var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image");
+        var isImg = (header==="Image"||header==="File");
+        var upBtn = isImg ? ('<button class="adm-up" data-up="'+id+'" data-folder="'+(k==="tiles"?"tiles":"apartments")+'">Upload image</button>') : "";
+        var preview = isImg ? ('<img class="adm-imgpv'+(v?"":" hidden")+'" id="'+id+'_pv" src="'+esc(sbImgUrl(v))+'" alt="">') : "";
+        return '<label class="adm-f'+(wide?" wide":"")+'">'+label+
+          '<input id="'+id+'" data-h="'+esc(header)+'" type="'+t+'" value="'+esc(v)+'"></label>'+
+          (isImg?('<div class="adm-uprow">'+upBtn+preview+'</div>'):"");
+      }).join("");
+      var specs="";
+      if(k==="hospitals"){
+        specs='<div class="adm-specs"><div class="adm-specl">Specialties</div><div class="adm-specg">'+
+          HOSP_SPECS.map(function(s){
+            var sid="ag_h_"+i+"_"+s.replace(/[^A-Za-z0-9]/g,"");
+            return '<button class="adm-spec'+(admBoolOn(r_(r,s),s)?" on":"")+'" data-sw="1" id="'+sid+'" data-h="'+esc(s)+'">'+esc(s)+'</button>';
+          }).join("")+'</div></div>';
+      }
+      return '<div class="adm-sec adm-gsec" data-i="'+i+'"><div class="adm-sech">'+esc(title)+
+        (k==="settings"?"":'<button class="adm-del" data-del="'+i+'" title="Delete">Delete</button>')+'</div>'+
+        '<div class="adm-grid">'+fields+'</div>'+specs+'</div>';
+    }).join("");
+    var addable = (k!=="settings");
+    var foot='<div class="adm-save"><button class="pri" id="admGenSave">Save all changes</button></div><div class="adm-msg" id="admGenMsg"></div>'+
+      (addable?'<button class="adm-addrow" id="admGenAdd">+ Add row</button>':'')+'</div>';
+    $("admGenPane").innerHTML=head+(rows.length?body:'<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>')+foot;
+    ADM2.view=rows;
+  }
+  function admGenSave(){
+    var k=ADM2.sec, cols=ADM_COLS[k], rows=ADM2.view||[], tbl=SB_TAB2TBL[ADM_TABLES[k]];
+    var msg=$("admGenMsg"), btn=$("admGenSave");
+    btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
+    var jobs=[];
+    Array.prototype.forEach.call(document.querySelectorAll(".adm-gsec"),function(sec){
+      var i=parseInt(sec.getAttribute("data-i"),10), r=rows[i]; if(!r) return;
+      var upd={}, any=false;
+      Array.prototype.forEach.call(sec.querySelectorAll("[data-h]"),function(el){
+        var header=el.getAttribute("data-h"), db=sbCol(tbl,header); if(!db) return;
+        var isTog = el.classList.contains("adm-sw")||el.classList.contains("adm-spec");
+        var offVal = (header==="Active") ? "No" : "";
+        var v = isTog ? (el.classList.contains("on")?"X":offVal) : String(el.value||"").trim();
+        if(String(r_(r,header))!==v){ upd[db]=v; r[header]=v; any=true; }
+      });
+      if(any){
+        var idv=r.__id;
+        if(idv) jobs.push(sbWrite("PATCH",tbl+"?id=eq."+idv,upd));
+        else {
+          var key=cols[0][0], kv=r_(r,key), kdb=sbCol(tbl,key);
+          jobs.push(sbWrite("PATCH",tbl+"?"+kdb+"=eq."+encodeURIComponent(kv),upd));
+        }
+      }
+    });
+    if(!jobs.length){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg"; msg.textContent="No changes to save."; return; }
+    Promise.all(jobs).then(function(res){
+      btn.disabled=false; btn.textContent="Save all changes";
+      var bad=res.filter(function(x){return !x.ok;}).length;
+      if(bad){ msg.className="adm-msg err"; msg.textContent="Some changes didn\u2019t save. Try again."; }
+      else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded[k]=false; STATE.settingsDirty=true;
+        setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
+    }).catch(function(){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
+  }
+  function admGenAdd(){
+    var k=ADM2.sec, tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
+    var blank={};
+    cols.forEach(function(c){ blank[sbCol(tbl,c[0])]= (c[2]==="bool"?"X":""); });
+    if(k==="tiles"||k==="cpr"){ var mx=0; (ADM2.data[k]||[]).forEach(function(r){ mx=Math.max(mx,parseFloat(r_(r,"Order"))||0); }); blank[sbCol(tbl,"Order")]=String(mx+1); }
+    sbWrite("POST",tbl,blank).then(function(res){
+      if(!res.ok){ toast("Couldn\u2019t add row."); return; }
+      ADM2.loaded[k]=false; toast("Row added."); admLoadSec(k);
+    }).catch(function(){ toast("Couldn\u2019t add \u2014 check your connection."); });
+  }
+  function admGenDelete(i){
+    var k=ADM2.sec, rows=ADM2.view||[], r=rows[i]; if(!r) return;
+    if(k==="settings"){ toast("Settings can\u2019t be deleted \u2014 clear the value instead."); return; }
+    var tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
+    var key=cols[0][0], kv=r_(r,key), kdb=sbCol(tbl,key);
+    var label=r_(r,"Label")||r_(r,"Name")||kv||"this row";
+    var btn=document.querySelector('.adm-del[data-del="'+i+'"]');
+    if(btn && btn.getAttribute("data-armed")!=="1"){
+      btn.setAttribute("data-armed","1"); btn.textContent="Tap again";
+      setTimeout(function(){ var b=document.querySelector('.adm-del[data-del="'+i+'"]'); if(b){ b.setAttribute("data-armed","0"); b.textContent="Delete"; } },4000);
+      return;
+    }
+    var q = r.__id ? ("id=eq."+r.__id) : (kdb+"=eq."+encodeURIComponent(kv));
+    sbWrite("DELETE",tbl+"?"+q).then(function(res){
+      if(!res.ok){ toast("Couldn\u2019t delete."); return; }
+      ADM2.loaded[k]=false; toast("Deleted."); admLoadSec(k);
+    }).catch(function(){ toast("Couldn\u2019t delete \u2014 check your connection."); });
+  }
+  $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
+  $("admGenPane").addEventListener("click",function(e){
+    var up=e.target.closest?e.target.closest(".adm-up"):null;
+    if(up){
+      var targetId=up.getAttribute("data-up"), folder=up.getAttribute("data-folder")||"misc";
+      sbPickImage(function(file){
+        up.disabled=true; up.textContent="Uploading\u2026";
+        sbUpload(folder,file,{maxDim:900,quality:0.85}).then(function(ref){
+          var inp=$(targetId); if(inp) inp.value=ref;
+          var pv=$(targetId+"_pv"); if(pv){ pv.src=sbImgUrl(ref); pv.classList.remove("hidden"); }
+          up.disabled=false; up.textContent="Upload image";
+          toast("Image uploaded \u2014 press Save to keep it.");
+        }).catch(function(err){
+          up.disabled=false; up.textContent="Upload image";
+          toast("Upload failed."); try{ console.error("upload:",err); }catch(e){}
+        });
+      });
+      return;
+    }
+    var sw=e.target.closest?e.target.closest("[data-sw]"):null;
+    if(sw){ sw.classList.toggle("on"); return; }
+    var del=e.target.closest?e.target.closest(".adm-del"):null;
+    if(del){ admGenDelete(parseInt(del.getAttribute("data-del"),10)); return; }
+    if(e.target.id==="admGenSave"){ admGenSave(); return; }
+    if(e.target.id==="admGenAdd"){ admGenAdd(); return; }
+  });
 
   // ---------- Equipment Finder (cabinet look-up + admin editor) ----------
   var PLACE={loaded:false,cabs:[],cur:null,sel:-1,edit:false,drag:null,editIdx:-1};
@@ -2027,11 +2977,54 @@
   function isFTO(){ return tbTrainees().length>0; }
   function canTaskBook(){ return isObserver()||isAdmin()||isFTO(); }
   function loadPlacement(){
-    return new Promise(function(res,rej){
-      if(window.HOH_PLACE){ res(window.HOH_PLACE); return; }
-      var s=document.createElement("script"); s.src="placement.js";
-      s.onload=function(){ window.HOH_PLACE?res(window.HOH_PLACE):rej(); };
-      s.onerror=rej; document.head.appendChild(s);
+    return Promise.all([
+      fetch(SB_URL+"/rest/v1/cabinets?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      fetch(SB_URL+"/rest/v1/cabinet_bins?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+    ]).then(function(res){
+      var cabs=Array.isArray(res[0])?res[0]:[], bins=Array.isArray(res[1])?res[1]:[];
+      var byCab={};
+      bins.forEach(function(b){
+        (byCab[b.cab_id]=byCab[b.cab_id]||[]).push({
+          n:b.n||"", q:b.q||"",
+          x:parseFloat(b.x)||0, y:parseFloat(b.y)||0,
+          w:parseFloat(b.w)||0, h:parseFloat(b.h)||0,
+          _rowId:b.id
+        });
+      });
+      return cabs.map(function(c){
+        return { id:c.cab_id, name:c.name||"", img:c.img||"", _rowId:c.id, bins:byCab[c.cab_id]||[] };
+      });
+    });
+  }
+  // Save one cabinet (its photo + all its item markers) to Supabase.
+  function cabSaveToDb(cab){
+    if(!cab) return Promise.reject("no-cabinet");
+    var imgVal = cab._img || cab.img || "";
+    var cq = cab._rowId ? ("id=eq."+cab._rowId) : ("cab_id=eq."+encodeURIComponent(cab.id));
+    return sbWrite("PATCH","cabinets?"+cq,{ name:cab.name||"", img:imgVal })
+      .then(function(r){ if(!r.ok) throw "cab-failed"; })
+      .then(function(){ return sbWrite("DELETE","cabinet_bins?cab_id=eq."+encodeURIComponent(cab.id)); })
+      .then(function(){
+        var rows=(cab.bins||[]).map(function(b,i){
+          return { cab_id:cab.id, n:b.n||"", q:b.q||"",
+                   x:String(b.x), y:String(b.y), w:String(b.w), h:String(b.h), sort_order:String(i+1) };
+        });
+        return rows.length ? sbWrite("POST","cabinet_bins",rows) : {ok:true};
+      })
+      .then(function(r){ if(r && r.ok===false) throw "bins-failed"; cab.img=imgVal; cab._dirty=false; return true; });
+  }
+  function cabSaveNow(){
+    var cab=PLACE.cur;
+    if(!cab){ toast("Open a cabinet first."); return; }
+    var btns=[$("cabSave"),$("cabSaveHome")];
+    btns.forEach(function(b){ if(b){ b.disabled=true; b.textContent="Saving\u2026"; } });
+    cabSaveToDb(cab).then(function(){
+      btns.forEach(function(b){ if(b){ b.disabled=false; b.textContent="Save"; } });
+      PLACE.loaded=false; toast("Saved.");
+    }).catch(function(err){
+      btns.forEach(function(b){ if(b){ b.disabled=false; b.textContent="Save"; } });
+      toast("Couldn\u2019t save \u2014 check your connection.");
+      try{ console.error("cabinet save:",err); }catch(e){}
     });
   }
   function closePlaceScreen(){ $("placeScreen").classList.remove("open"); }
@@ -2113,7 +3106,7 @@
   function closeCab(){ $("placeDetail").classList.remove("open"); setHomeEdit(false); }
   function drawCab(){
     var c=PLACE.cur; if(!c) return;
-    var src=c._img||c.img||"";
+    var src=sbImgUrl(c._img||c.img||"");
     var boxes="";
     c.bins.forEach(function(b,k){
       boxes+='<div class="cbin" data-i="'+k+'" style="left:'+(b.x*100)+'%;top:'+(b.y*100)+
@@ -2189,26 +3182,22 @@
     PLACE.cur.bins.splice(PLACE.editIdx,1); PLACE.sel=-1; drawCab(); navBack();
   }
   // ----- photo upload -----
-  function pickPhoto(){ $("cabFile").value=""; $("cabFile").click(); }
-  $("cabFile").addEventListener("change",function(){
-    var f=this.files&&this.files[0]; if(!f||!PLACE.cur) return;
-    var fr=new FileReader();
-    fr.onload=function(){
-      var im=new Image();
-      im.onload=function(){
-        var mw=1100, s=Math.min(1,mw/im.naturalWidth);
-        var cv=document.createElement("canvas");
-        cv.width=Math.round(im.naturalWidth*s); cv.height=Math.round(im.naturalHeight*s);
-        cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);
-        var url; try{ url=cv.toDataURL("image/webp",0.8); if(url.indexOf("image/webp")<0) throw 0; }
-        catch(e){ url=cv.toDataURL("image/jpeg",0.82); }
-        PLACE.cur._img=url; PLACE.cur._dirty=true;
-        drawCab(); toast("Photo set. Remember to Save & download.");
-      };
-      im.src=fr.result;
-    };
-    fr.readAsDataURL(f);
-  });
+  function pickPhoto(){
+    if(!PLACE.cur){ toast("Open a cabinet first."); return; }
+    sbPickImage(function(file){
+      var b=$("cabPhotoBtn"); b.disabled=true; b.textContent="Uploading\u2026";
+      sbUpload("cabinets",file,{maxDim:1400,quality:0.85}).then(function(ref){
+        PLACE.cur._img=ref; PLACE.cur._dirty=true;
+        b.disabled=false; b.textContent="Replace photo";
+        drawCab();
+        toast("Photo set \u2014 press Save to keep it.");
+      }).catch(function(err){
+        b.disabled=false; b.textContent="Replace photo";
+        toast("Upload failed: "+String(err).slice(0,80));
+        try{ console.error("cabinet photo:",err); }catch(e){}
+      });
+    });
+  }
   // ----- drag / resize on photo -----
   (function(){
     var ph=$("cabPhoto");
@@ -2313,11 +3302,11 @@
   $("cabBack").addEventListener("click",navBack);
   $("placeEdit").addEventListener("click",function(){ setHomeEdit(!PLACE.edit); });
   $("cabAdd").addEventListener("click",addCabinet);
-  $("cabSaveHome").addEventListener("click",saveDownload);
+  $("cabSaveHome").addEventListener("click",cabSaveNow);
   $("cabEdit").addEventListener("click",function(){ setCabEdit(!PLACE.edit); });
   $("cabPhotoBtn").addEventListener("click",pickPhoto);
   $("cabAddItem").addEventListener("click",function(){ openItemEdit(-1); });
-  $("cabSave").addEventListener("click",saveDownload);
+  $("cabSave").addEventListener("click",cabSaveNow);
   $("itemSave").addEventListener("click",saveItemEdit);
   $("itemCancel").addEventListener("click",navBack);
   $("itemDelete").addEventListener("click",deleteItem);
@@ -2334,12 +3323,27 @@
   // ---------- Required Equipment (compliance checklist) ----------
   var EQ={loaded:false,d:null,tier:"all",q:"",edit:false,collapsed:{},editId:null};
   function loadEquip(){
-    return new Promise(function(res,rej){
-      if(window.HOH_EQUIP){ res(window.HOH_EQUIP); return; }
-      var s=document.createElement("script"); s.src="equipment.js";
-      s.onload=function(){ window.HOH_EQUIP?res(window.HOH_EQUIP):rej(); };
-      s.onerror=rej; document.head.appendChild(s);
+    return Promise.all([
+      fetch(SB_URL+"/rest/v1/equipment_items?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      fetch(SB_URL+"/rest/v1/equipment_meta?select=*",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+    ]).then(function(res){
+      var rows=Array.isArray(res[0])?res[0]:[], meta=Array.isArray(res[1])?res[1]:[];
+      var M={}; meta.forEach(function(m){ M[m.mkey]=m.mvalue||""; });
+      var cats=(M.cats||"").split("|").filter(function(c){return c;});
+      var items=rows.map(function(r){
+        var subs=[]; try{ subs=JSON.parse(r.subs||"[]")||[]; }catch(e){ subs=[]; }
+        return { id:parseInt(r.item_id,10)||r.id, rowId:r.id, tier:r.tier||"bls", cat:r.cat||"Miscellaneous",
+                 name:r.name||"", qty:r.qty||"", src:r.src||"", ours:r.ours||"", notes:r.notes||"",
+                 image:r.image||"", have:false, subs:subs };
+      });
+      if(!cats.length){ var seen={}; items.forEach(function(i){ if(!seen[i.cat]){seen[i.cat]=1;cats.push(i.cat);} }); }
+      return { legend:{s:M.legend_s||"",c:M.legend_c||"",sc:M.legend_sc||""}, note:M.note||"", cats:cats, items:items };
     });
+  }
+  function eqRowPayload(it){
+    return { item_id:String(it.id), tier:it.tier||"", cat:it.cat||"", name:it.name||"", qty:it.qty||"",
+             src:it.src||"", ours:it.ours||"", notes:it.notes||"", image:it.image||"",
+             subs:JSON.stringify(it.subs||[]) };
   }
   function closeEquip(){ $("equipScreen").classList.remove("open"); }
   function openEquip(){
@@ -2397,6 +3401,7 @@
     }
     row.innerHTML=
       '<span class="eq-cb'+(it.have?' on':'')+'" data-have="1"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+      (it.image?('<img class="eq-thumb" src="'+esc(sbImgUrl(it.image))+'" alt="" data-zoom="'+esc(sbImgUrl(it.image))+'">'):'')+
       '<div class="eq-main"><div class="eq-nm">'+esc(it.name)+'</div>'+
         '<div class="eq-meta"><span class="eq-badge '+tier+'">'+tier.toUpperCase()+'</span>'+
         (it.qty?'<span class="eq-qty">Qty '+esc(it.qty)+'</span>':'')+
@@ -2434,25 +3439,65 @@
     $("eqName").value=it.name||""; $("eqCat").value=it.cat||""; $("eqTier").value=it.tier||"bls";
     $("eqQty").value=it.qty||""; $("eqSrc").value=it.src||"c"; $("eqOurs").value=it.ours||""; $("eqNotes").value=it.notes||"";
     var dl=$("eqCatList"); dl.innerHTML=EQ.d.cats.map(function(c){return '<option value="'+esc(c)+'">';}).join("");
+    EQ.pendingImage=undefined;
+    var pv=$("eqImgPv"), cb=$("eqImgClear"), ib=$("eqImgBtn");
+    if(it.image){ pv.src=sbImgUrl(it.image); pv.classList.remove("hidden"); cb.style.display=""; ib.textContent="Change photo"; }
+    else { pv.classList.add("hidden"); pv.src=""; cb.style.display="none"; ib.textContent="Upload photo"; }
     if($("eqEdit").classList.contains("hidden")) navOpen(closeEqEdit);
     $("eqEdit").classList.remove("hidden");
   }
   function closeEqEdit(){ $("eqEdit").classList.add("hidden"); EQ.editId=null; }
+  function eqSaveAll(){
+    if(!EQ.d || !EQ.d.items){ toast("Nothing to save yet."); return; }
+    var btn=$("equipSave"); btn.disabled=true; btn.textContent="Saving\u2026";
+    var jobs=EQ.d.items.map(function(it){
+      var q = it.rowId ? ("id=eq."+it.rowId) : ("item_id=eq."+encodeURIComponent(String(it.id)));
+      return sbWrite("PATCH","equipment_items?"+q, eqRowPayload(it));
+    });
+    jobs.push(sbWrite("PATCH","equipment_meta?mkey=eq.cats",{mvalue:(EQ.d.cats||[]).join("|")}));
+    Promise.all(jobs).then(function(res){
+      btn.disabled=false; btn.textContent="Save";
+      var bad=res.filter(function(r){ return r && r.ok===false; }).length;
+      if(bad) toast("Some items didn\u2019t save.");
+      else { toast("Saved."); EQ.loaded=false; }
+    }).catch(function(){ btn.disabled=false; btn.textContent="Save"; toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
   function saveEqItem(){
     var nm=$("eqName").value.trim(); if(!nm){ $("eqName").focus(); return; }
     var cat=$("eqCat").value.trim()||"Miscellaneous";
-    if(EQ.d.cats.indexOf(cat)<0) EQ.d.cats.push(cat);
+    if(EQ.d.cats.indexOf(cat)<0){ EQ.d.cats.push(cat); eqSaveCats(); }
     var vals={name:nm,cat:cat,tier:$("eqTier").value,qty:$("eqQty").value.trim(),src:$("eqSrc").value,
       ours:$("eqOurs").value.trim(),notes:$("eqNotes").value.trim()};
+    if(EQ.pendingImage!==undefined) vals.image=EQ.pendingImage;
+    var target;
     if(EQ.editId==null){
       var maxId=0; EQ.d.items.forEach(function(x){ if(x.id>maxId) maxId=x.id; });
-      EQ.d.items.push({id:maxId+1,tier:vals.tier,cat:vals.cat,name:vals.name,qty:vals.qty,src:vals.src,
-        ours:vals.ours,have:false,notes:vals.notes,subs:[]});
-    }else{ var it=eqById(EQ.editId); for(var k in vals) it[k]=vals[k]; }
+      target={id:maxId+1,tier:vals.tier,cat:vals.cat,name:vals.name,qty:vals.qty,src:vals.src,
+        ours:vals.ours,have:false,notes:vals.notes,image:vals.image||"",subs:[]};
+      EQ.d.items.push(target);
+      sbWrite("POST","equipment_items",eqRowPayload(target))
+        .then(function(r){ if(!r.ok) throw "x"; EQ.loaded=false; toast("Item added."); })
+        .catch(function(){ toast("Couldn\u2019t save the new item."); });
+    }else{
+      target=eqById(EQ.editId); for(var k in vals) target[k]=vals[k];
+      var q = target.rowId ? ("id=eq."+target.rowId) : ("item_id=eq."+encodeURIComponent(String(target.id)));
+      sbWrite("PATCH","equipment_items?"+q, eqRowPayload(target))
+        .then(function(r){ if(!r.ok) throw "x"; toast("Saved."); })
+        .catch(function(){ toast("Couldn\u2019t save."); });
+    }
+    EQ.pendingImage=undefined;
     navBack(); renderEquip();
+  }
+  function eqSaveCats(){
+    try{ sbWrite("PATCH","equipment_meta?mkey=eq.cats",{mvalue:(EQ.d.cats||[]).join("|")}).catch(function(){}); }catch(e){}
   }
   function deleteEqItem(){
     if(EQ.editId==null){ navBack(); return; }
+    var it=eqById(EQ.editId);
+    var q = (it&&it.rowId) ? ("id=eq."+it.rowId) : ("item_id=eq."+encodeURIComponent(String(EQ.editId)));
+    sbWrite("DELETE","equipment_items?"+q)
+      .then(function(r){ if(!r.ok) throw "x"; toast("Deleted."); })
+      .catch(function(){ toast("Couldn\u2019t delete."); });
     EQ.d.items=EQ.d.items.filter(function(x){return x.id!==EQ.editId;});
     navBack(); renderEquip();
   }
@@ -2489,10 +3534,27 @@
   $("equipBack").addEventListener("click",navBack);
   $("equipEdit").addEventListener("click",function(){ setEqEdit(!EQ.edit); });
   $("equipAdd").addEventListener("click",function(){ openEqEdit(null); });
-  $("equipSave").addEventListener("click",eqSaveDownload);
+  $("equipSave").addEventListener("click",eqSaveAll);
   $("equipCsv").addEventListener("click",eqCSV);
   $("equipPrint").addEventListener("click",eqPrint);
   $("eqSaveItem").addEventListener("click",saveEqItem);
+  $("eqImgBtn").addEventListener("click",function(){
+    sbPickImage(function(file){
+      var b=$("eqImgBtn"); b.disabled=true; b.textContent="Uploading\u2026";
+      sbUpload("equipment",file,{maxDim:900,quality:0.85}).then(function(ref){
+        EQ.pendingImage=ref;
+        var pv=$("eqImgPv"); pv.src=sbImgUrl(ref); pv.classList.remove("hidden");
+        $("eqImgClear").style.display="";
+        b.disabled=false; b.textContent="Change photo";
+        toast("Photo added \u2014 press Save.");
+      }).catch(function(err){ b.disabled=false; b.textContent="Upload photo"; toast("Upload failed."); try{console.error("eq img:",err);}catch(e){} });
+    });
+  });
+  $("eqImgClear").addEventListener("click",function(){
+    EQ.pendingImage="";
+    $("eqImgPv").classList.add("hidden"); $("eqImgPv").src="";
+    this.style.display="none"; $("eqImgBtn").textContent="Upload photo";
+  });
   $("eqCancel").addEventListener("click",navBack);
   $("eqDelete").addEventListener("click",deleteEqItem);
   $("equipSearch").addEventListener("input",function(){ EQ.q=this.value; renderEquip(); });
@@ -2766,10 +3828,11 @@
   }
   function closeAptMap(){ $("aptMapScreen").classList.remove("open"); }
   function saveAptMarkers(slug){
-    var url=getSetting("Profile Update URL",""); if(!url) return;
-    var markers=(APTM.by[slug]||[]).map(function(m){ return {label:m.label, x:m.fx, y:m.fy}; });
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"aptmarkers",file:slug,markers:markers})})
-      .then(function(r){return r.text();}).then(function(){ toast("Pins saved."); }).catch(function(){ toast("Couldn\u2019t save pins."); });
+    var markers=(APTM.by[slug]||[]).map(function(m){ return {file:slug, label:m.label, x:String(m.fx), y:String(m.fy)}; });
+    sbWrite("DELETE","apartment_markers?file=eq."+encodeURIComponent(slug))
+      .then(function(){ return markers.length ? sbWrite("POST","apartment_markers",markers) : {ok:true}; })
+      .then(function(r){ if(r && r.ok===false) toast("Couldn\u2019t save pins."); else toast("Pins saved."); })
+      .catch(function(){ toast("Couldn\u2019t save pins."); });
   }
   $("aptBack").addEventListener("click",navBack);
   $("aptMapBack").addEventListener("click",navBack);
@@ -2981,12 +4044,14 @@
     if(!v){ $("certModalErr").textContent="Pick the new expiration date."; return; }
     if(!CERTUP.col){ $("certModalErr").textContent="This item has no date field to update."; return; }
     var p=v.split("-"), mdy=(+p[1])+"/"+(+p[2])+"/"+p[0];
-    var url=getSetting("Profile Update URL","");
+    var dbcol=sbCol("certifications", CERTUP.col);
     var btn=$("certModalSave"); btn.disabled=true; btn.textContent="Saving\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"cert",unit:CERTUP.unit,col:CERTUP.col,value:mdy,cert:CERTUP.cert})})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){}
+    if(!dbcol){ btn.disabled=false; btn.textContent="Save date"; $("certModalErr").textContent="Couldn\u2019t find that field."; return; }
+    var upd={}; upd[dbcol]=mdy;
+    sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(CERTUP.unit),upd)
+      .then(function(r){
         btn.disabled=false; btn.textContent="Save date";
-        if(!ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
+        if(!r.ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
         $("certModal").classList.add("hidden"); CERTUP=null;
         CERT.loaded=false; toast("Expiration date updated.");
         openCerts();
@@ -3001,9 +4066,10 @@
     setTimeout(function(){ if($("medInput")) $("medInput").focus(); }, 150);
   }
   function closeMeds(){ $("medScreen").classList.remove("open"); }
+  var DRUG_URL="https://hoh-drug.1josepheber.workers.dev/";
   function medPost(payload, ok, fail){
-    var url=getSetting("Profile Update URL","");
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
+    var url=getSetting("Drug Lookup URL","")||DRUG_URL;
+    fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
       .then(function(r){return r.text();}).then(function(t){ var j; try{j=JSON.parse(t);}catch(e){j=null;} ok(j); }).catch(function(){ if(fail)fail(); });
   }
   function medSuggest(q){
@@ -3155,8 +4221,6 @@
   }
   function tbApply(action, unit, id, extra){
     var by=(STATE.me&&STATE.me.unit)||"";
-    var payload={ kind:"task", action:action, unit:unit, taskId:id, by:by };
-    if(extra) for(var k in extra) payload[k]=extra[k];
     var kk=tbKey(unit,id), p=TB.prog[kk]||{"Unit":unit,"Task ID":id};
     var d=new Date(), ds=(d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear();
     if(action==="self"){ p["Self Marked"]="X"; p["Self Date"]=ds; }
@@ -3166,9 +4230,17 @@
     else if(action==="count"){ p["Count"]=extra.count; }
     TB.prog[kk]=p;
     if(TB.view==="book") tbRenderBook(TB.unit); else tbRouteView();
-    var url=getSetting("Profile Update URL","");
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok) toast("Couldn\u2019t save \u2014 it may not have been recorded."); })
+    var row={ unit:unit, task_id:id, self_marked:p["Self Marked"]||"", self_date:p["Self Date"]||"",
+      confirmed:p["Confirmed"]||"", confirmed_by:p["Confirmed By"]||"", confirmed_date:p["Confirmed Date"]||"", count:String(p["Count"]||"") };
+    fetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:sbAuthHeaders()})
+      .then(function(r){ return r.json(); })
+      .then(function(existing){
+        if(Array.isArray(existing) && existing.length){
+          return sbWrite("PATCH","task_progress?id=eq."+existing[0].id,row);
+        }
+        return sbWrite("POST","task_progress",row);
+      })
+      .then(function(r){ if(r && !r.ok) toast("Couldn\u2019t save \u2014 it may not have been recorded."); })
       .catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   if($("tbBody")) $("tbBody").addEventListener("click", function(e){
@@ -3223,7 +4295,7 @@
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
       if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),
-        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),types:[]}; order.push(key); }
+        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),photo:r_(r,"Photo"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
@@ -3231,6 +4303,7 @@
       if(!m.address) m.address=r_(r,"Address");
       if(!m.dob) m.dob=r_(r,"DOB");
       if(!m.level) m.level=r_(r,"Level");
+      if(!m.photo) m.photo=r_(r,"Photo");
       if(!m.tshirt) m.tshirt=r_(r,"T-Shirt Size");
       if(!m.dress) m.dress=r_(r,"Dress Shirt Size");
       if(!m.polo) m.polo=r_(r,"Polo Shirt Size");
@@ -3274,7 +4347,10 @@
         if(secs) extra='<div class="dir-extra">'+secs+'</div>';
       }
       return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'">'+
-        '<div class="dir-head"><span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
+        '<div class="dir-head">'+
+          (p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">')
+                  :('<span class="dir-photo ph"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>'))+
+          '<span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         ((p.level||typeStr)?'<div class="dir-tags">'+(p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+(typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+'</div>':'')+
         (canDob&&p.dob?'<div class="dir-dob">DOB: '+esc(p.dob)+'</div>':'')+
         (acts?'<div class="dir-act">'+acts+'</div>':'')+extra+'</div>';
@@ -3322,14 +4398,21 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
+    var _pp=sbImgUrl(r_(row,"Photo"));
     b.innerHTML='<div class="prof-card">'+
-      '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
-      '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
-      (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
+      '<div class="prof-hdr"><div class="prof-hdrt">'+
+        '<div class="prof-name">'+esc(name||"\u2014")+'</div>'+
+        '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
+        (r_(row,"DOB")?'<div class="prof-dob">Date of birth: <b>'+esc(r_(row,"DOB"))+'</b></div>':'')+
+      '</div>'+
+      '<button class="prof-photo" id="profPhoto" title="Change photo">'+
+        (_pp?('<img src="'+esc(_pp)+'" alt="">'):'<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>')+
+        '<span class="prof-photo-edit">Change</span>'+
+      '</button></div>'+
       '<label class="prof-l">Phone<input id="profPhone" type="tel" value="'+esc(r_(row,"Phone"))+'" placeholder="Your phone number"></label>'+
       '<label class="prof-l">Address<textarea id="profAddr" rows="2" placeholder="Street, City, State ZIP">'+esc(r_(row,"Address"))+'</textarea></label>'+
       '<label class="prof-l">Personal email (for reminders)<input id="profAltEmail" type="email" value="'+esc(r_(row,"Personal Email"))+'" placeholder="you@example.com"></label>'+
@@ -3355,36 +4438,31 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 7.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 8.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
+    var _pb=$("profPhoto");
+    if(_pb) _pb.addEventListener("click",function(){
+      if(demoNo()) return;
+      sbPickImage(function(file){
+        toast("Uploading photo\u2026");
+        sbUpload("photos",file,{maxDim:600,quality:0.85}).then(function(ref){
+          return sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),{photo:ref}).then(function(r){
+            if(!r.ok) throw "save-failed";
+            if(row) row["Photo"]=ref;
+            DIR.loaded=false;
+            var im=_pb.querySelector("img");
+            if(im){ im.src=sbImgUrl(ref); }
+            else { _pb.innerHTML='<img src="'+esc(sbImgUrl(ref))+'" alt=""><span class="prof-photo-edit">Change</span>'; }
+            toast("Photo updated.");
+          });
+        }).catch(function(err){ toast("Photo upload failed: "+String(err).slice(0,90)); try{console.error("photo:",err);}catch(e){} });
+      });
+    });
     renderBioRow();
   }
-  function changePassword(){
-    if(demoNo()) return;
-    var cur=$("pwCur").value.trim(), np=$("pwNew").value.trim(), np2=$("pwNew2").value.trim(), note=$("pwNote");
-    note.style.color=""; note.textContent="";
-    if(!cur){ note.textContent="Enter your current password."; return; }
-    if(np.length<4){ note.textContent="New password must be at least 4 characters."; return; }
-    if(np!==np2){ note.textContent="The new passwords don\u2019t match."; return; }
-    var url=getSetting("Profile Update URL","");
-    if(!url){ note.textContent="Saving isn\u2019t set up yet."; return; }
-    var btn=$("pwSave"); btn.disabled=true; btn.textContent="Updating\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"pw",unit:(STATE.me&&STATE.me.unit)||"",cur:cur,newpw:np})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
-        btn.disabled=false; btn.textContent="Update password";
-        if(res.ok===false){
-          note.textContent = (res.error==="bad current") ? "Your current password isn\u2019t right." : "Couldn\u2019t update. Try again.";
-          return;
-        }
-        STATE.me.pw=np; try{localStorage.setItem(LS,JSON.stringify(STATE.me));}catch(e){}
-        $("pwCur").value=""; $("pwNew").value=""; $("pwNew2").value="";
-        note.style.color="#2f9e44"; note.textContent="Password updated.";
-        toast("Password updated.");
-      }).catch(function(){ btn.disabled=false; btn.textContent="Update password"; note.textContent="Couldn\u2019t reach the server \u2014 check your connection."; });
-  }
+  // (legacy password change removed — sign-in is Google-only)
   function renderBioRow(){
     var w=$("profBioWrap"); if(!w) return;
     bioAvail().then(function(ok){
@@ -3403,21 +4481,15 @@
   }
   function saveProfile(){
     if(demoNo()) return;
-    var url=getSetting("Profile Update URL","");
     var note=$("profNote");
-    if(!url){ note.className="prof-note err"; note.textContent="Self-update isn\u2019t set up yet. Tell your coordinator."; return; }
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
     var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
       ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms") };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    var body={unit:STATE.me.unit,phone:phone,address:addr,tshirt:extra.tshirt,dress:extra.dress,polo:extra.polo,hat:extra.hat,coat:extra.coat,ecName:extra.ecName,ecPhone:extra.ecPhone,ecRel:extra.ecRel,altEmail:extra.altEmail,textHome:extra.textHome,textMethod:extra.textMethod};
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(body)})
-      .then(function(r){ return r.text(); })
-      .then(function(t){
-        var ok=true; try{ var j=JSON.parse(t); ok=(j.ok!==false); }catch(e){}
-        finishProfile(ok, phone, addr, extra);
-      })
-      .catch(function(){ finishProfile(true, phone, addr, extra); });
+    var upd={ phone:phone, address:addr, t_shirt_size:extra.tshirt, dress_shirt_size:extra.dress, polo_shirt_size:extra.polo, hat_size:extra.hat, coat_size:extra.coat, emergency_contact:extra.ecName, emergency_phone:extra.ecPhone, emergency_relationship:extra.ecRel, personal_email:extra.altEmail, text_home:extra.textHome, text_home_method:extra.textMethod };
+    sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),upd)
+      .then(function(r){ finishProfile(r.ok, phone, addr, extra); })
+      .catch(function(){ finishProfile(false, phone, addr, extra); });
   }
   function finishProfile(ok, phone, addr, extra){
     var btn=$("profSave"), note=$("profNote");
@@ -3446,6 +4518,13 @@
   function openQMenu(){
     var thOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Text Home","on")||"on").trim());
     var b=$("qTextHome"); if(b) b.style.display = thOn ? "" : "none";
+    // Only offer "Install app" when it isn't installed yet.
+    var ib=$("qInstall");
+    if(ib){
+      var installed=false;
+      try{ installed = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }catch(e){}
+      ib.style.display = installed ? "none" : "";
+    }
     $("qMenu").classList.remove("hidden");
   }
   function closeQMenu(){ $("qMenu").classList.add("hidden"); }
@@ -3456,6 +4535,41 @@
   $("qCpr").addEventListener("click",function(){ closeQMenu(); openCpr(); });
   $("qNotes").addEventListener("click",function(){ closeQMenu(); openNotes(); });
   $("qTextHome").addEventListener("click",function(){ closeQMenu(); doTextHome(); });
+  $("qInstall").addEventListener("click",function(){ closeQMenu(); doInstall(); });
+  function pwaStandalone(){ return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }
+  function doInstall(){
+    if(pwaStandalone()){ toast("The app is already installed on this device."); return; }
+    if(window.__pwaPrompt){
+      try{ window.__pwaPrompt.prompt(); window.__pwaPrompt.userChoice.then(function(){ window.__pwaPrompt=null; }); }catch(e){ showInstallHelp(); }
+      return;
+    }
+    showInstallHelp();
+  }
+  function showInstallHelp(){
+    var ua=navigator.userAgent||"";
+    var ios=/iphone|ipad|ipod/i.test(ua)||((navigator.platform==="MacIntel"||/Macintosh/.test(ua))&&navigator.maxTouchPoints>1);
+    var inApp=/FBAN|FBAV|Instagram|Line|WhatsApp|Snapchat|Twitter/i.test(ua);
+    var steps;
+    if(inApp){
+      steps='<p class="ins-warn">This page opened inside another app, so it can\u2019t be installed from here.</p>'+
+        '<ol><li>Tap the <b>\u22ef</b> or <b>Share</b> button on this screen.</li>'+
+        '<li>Choose <b>Open in '+(ios?"Safari":"Chrome")+'</b>.</li>'+
+        '<li>Then open this menu again and tap <b>Install app</b>.</li></ol>';
+    } else if(ios){
+      steps='<ol><li>Make sure you\u2019re in <b>Safari</b> (not Chrome).</li>'+
+        '<li>Tap the <b>Share</b> button \u2014 the square with an arrow pointing up, at the bottom of the screen.</li>'+
+        '<li>Scroll down and tap <b>Add to Home Screen</b>.</li>'+
+        '<li>Tap <b>Add</b> in the top right.</li></ol>';
+    } else {
+      steps='<ol><li>Tap the <b>\u22ee</b> menu in the top right of Chrome.</li>'+
+        '<li>Tap <b>Install app</b> (or <b>Add to Home screen</b>).</li>'+
+        '<li>Confirm.</li></ol>';
+    }
+    $("insBody").innerHTML=steps;
+    $("insModal").classList.remove("hidden");
+  }
+  $("insClose").addEventListener("click",function(){ $("insModal").classList.add("hidden"); });
+  $("insModal").addEventListener("click",function(e){ if(e.target===this) this.classList.add("hidden"); });
   function doTextHome(){
     if(STATE.demo){ toast("Not available in the demo."); return; }
     var raw=(STATE.me&&STATE.me.textHome)?String(STATE.me.textHome):"";
@@ -3742,20 +4856,16 @@
   function cprLogText(){ return CPR.log.slice().reverse().map(function(e){ return cprFmt(e.t)+"  "+e.label+"  ("+e.clock+")"; }).join("\n"); }
   function saveCodeLog(){
     if(demoNo()){ cprSaveDone(true); return; }
-    var url=getSetting("Code Log URL","")||getSetting("Profile Update URL","");
-    if(!url){ toast("Saving isn\u2019t set up yet. Tell your coordinator."); return; }
     if(!CPR.log.length){ toast("Nothing to save yet."); return; }
     var mode=$("cprTrain").checked?"Training":"Real";
-    var payload={ kind:"codelog", unit:(STATE.me&&STATE.me.unit)||"",
+    var row={ saved_at:nowStamp(), unit:(STATE.me&&STATE.me.unit)||"",
       name:((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()),
-      email:(G.email||""),
-      mode:mode, duration:cprFmt(CPR.total), shocks:CPR.shocks, epis:CPR.epis, cycles:CPR.cycNum,
+      mode:mode, duration:cprFmt(CPR.total), shocks:String(CPR.shocks), epis:String(CPR.epis), cycles:String(CPR.cycNum),
       started:(CPR.log.length?CPR.log[CPR.log.length-1].clock:""), log:cprLogText() };
     var btn=$("cprSave"); btn.disabled=true; btn.textContent="Saving\u2026";
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){ return r.text(); })
-      .then(function(t){ var ok=true; try{ ok=JSON.parse(t).ok!==false; }catch(e){} cprSaveDone(ok); })
-      .catch(function(){ cprSaveDone(true); });
+    sbWrite("POST","code_logs",row)
+      .then(function(r){ cprSaveDone(r.ok); })
+      .catch(function(){ cprSaveDone(false); });
   }
   function cprSaveDone(ok){
     var btn=$("cprSave"); btn.disabled=false; btn.textContent="Save code log";
@@ -3783,6 +4893,7 @@
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
   function doSignout(){
+    try{ sbaClear(); }catch(e){}
     if(confirm("Sign out on this device? You'll need to sign in with your Google account to get back in.")){
       try{localStorage.setItem("hoh_signedout","1");}catch(e){}
       localStorage.removeItem(LS);localStorage.removeItem("hoh_demo");bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}
@@ -3793,7 +4904,8 @@
     try{scRestore();}catch(e){}
     var hadCache=bootFromCache();
     boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
-    pingSeen();}
+    pingSeen();
+    try{ navRestore(); }catch(e){}}
 
   var BIO_KEY="hoh_bio_v1";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }
@@ -3840,6 +4952,7 @@
     var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
     if(saved && (saved.email||saved.pw)){
       STATE.me=saved;
+      try{ sbaEnsure(); }catch(e){}
       var b=bioGet();
       if(b&&b.enabled){ if(isUnlocked()){ enter(); } else { showBioGate(); } } else { enter(); }
       return;
@@ -3858,6 +4971,28 @@
       showNotSet();
     });
   }
+  function afterSbaLogin(){
+    $("gLoad").classList.remove("hidden");
+    $("gErr").textContent="";
+    var p = SBA.email ? Promise.resolve(SBA.email) : sbaFetchUser();
+    p.then(function(email){
+      G.email=String(email||"").toLowerCase(); G.verified=true;
+      if(G.email.slice(-(ORG_DOMAIN.length+1))!=="@"+ORG_DOMAIN){
+        $("gLoad").classList.add("hidden");
+        $("gBtn").disabled=false;
+        $("gErr").textContent="Use your @"+ORG_DOMAIN+" account.";
+        sbaClear(); return;
+      }
+      startAfterGoogle();
+    }).catch(function(err){
+      $("gLoad").classList.add("hidden");
+      $("gBtn").disabled=false;
+      $("gErr").textContent="Couldn\u2019t complete sign-in. Please try again.";
+      try{ console.error("Supabase sign-in:", err); }catch(e){}
+      sbaClear();
+    });
+  }
+
   function showNotSet(){
     try{ var el=$("notsetEmail"); if(el) el.textContent=G.email||"\u2014"; }catch(e){}
     $("gate").classList.remove("hidden");
@@ -3865,6 +5000,10 @@
   function gSignIn(){
     try{localStorage.removeItem("hoh_signedout");}catch(e){}
     $("gErr").textContent=""; $("gLoad").classList.remove("hidden"); $("gBtn").disabled=true;
+    // Supabase runs the Google sign-in and redirects back here with a session.
+    sbaStartOAuth();
+  }
+  function gSignInLegacy(){
     gRequest({}).then(function(){ return gVerify(); }).then(function(){
       $("gLoad").classList.add("hidden"); $("gBtn").disabled=false; startAfterGoogle();
     }).catch(function(err){
@@ -3880,23 +5019,89 @@
   $("guestBtn").addEventListener("click",function(){ guestLogin($("guestCode").value); });
   $("guestCode").addEventListener("keydown",function(e){ if(e.key==="Enter") guestLogin($("guestCode").value); });
   $("demoExit").addEventListener("click",exitDemo);
-  function gTrySilent(){
-    $("gLoad").classList.remove("hidden");
-    gRequest({prompt:""}).then(function(){ return gVerify(); })
-      .then(function(){ $("gLoad").classList.add("hidden"); startAfterGoogle(); })
-      .catch(function(){ $("gLoad").classList.add("hidden"); });
+  function sbaEstablish(){
+    if(sbaValid()) return Promise.resolve(SBA.email);
+    if(SBA.refresh){ return sbaRefresh().then(function(){ return SBA.email; }).catch(function(){ return null; }); }
+    return Promise.resolve(null);
   }
+  // Supabase handles the whole Google sign-in itself (redirect flow — reliable everywhere).
+  function sbaStartOAuth(){
+    try{ localStorage.setItem("hoh_sbauth_return", location.pathname+location.search); }catch(e){}
+    var back = location.origin + location.pathname;
+    location.href = SB_URL + "/auth/v1/authorize?provider=google"
+      + "&redirect_to=" + encodeURIComponent(back)
+      + "&scopes=" + encodeURIComponent("email profile");
+  }
+  // When Supabase redirects back, the session arrives in the URL fragment.
+  function sbaCatchRedirect(){
+    try{
+      var h=location.hash||"";
+      if(h.indexOf("access_token=")<0) return false;
+      var p={}; h.replace(/^#/,"").split("&").forEach(function(kv){
+        var i=kv.indexOf("="); if(i>0) p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1));
+      });
+      if(!p.access_token) return false;
+      SBA.token=p.access_token; SBA.refresh=p.refresh_token||"";
+      SBA.exp=Date.now()+((parseInt(p.expires_in,10)||3600)*1000);
+      sbaSave();
+      try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){}
+      return true;
+    }catch(e){ return false; }
+  }
+  // Look up who this session belongs to. Resolves with the email.
+  function sbaFetchUser(){
+    if(!SBA.token) return Promise.reject("no-token");
+    return fetch(SB_URL+"/auth/v1/user",{headers:{apikey:SB_ANON,Authorization:"Bearer "+SBA.token}})
+      .then(function(r){ if(!r.ok) throw "user-failed"; return r.json(); })
+      .then(function(u){
+        if(!u||!u.email) throw "no-email";
+        SBA.email=u.email; SBA.sub=u.id||""; sbaSave();
+        return u.email;
+      });
+  }
+
+  function gTrySilent(){ /* legacy Google popup - no longer used; Supabase handles sign-in */ }
   function checkDemoEnabled(){
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:"__probe__"})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck("__probe__")
+      .then(function(res){
         if(res && res.error!=="off"){ var v=$("viewDemo"); if(v) v.classList.remove("hidden"); }
       }).catch(function(){});
   }
   function gRenewQuiet(){
-    try{ gRequest({prompt:""}).then(function(){ return gVerify(); }).then(function(){ boot().catch(function(){}); }).catch(function(){}); }catch(e){}
+    try{ sbaEnsure().then(function(ok){ if(ok) boot().catch(function(){}); }).catch(function(){}); }catch(e){}
   }
-  function googleBoot(){ if(window.google&&google.accounts&&google.accounts.oauth2){ gInit(); var out=false; try{ out=!!localStorage.getItem("hoh_signedout"); }catch(e){} if(out) return; var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){} if(saved&&(saved.email||saved.pw)){ startAfterGoogle(); return; } if(loadGTok()){ startAfterGoogle(); } else { gTrySilent(); } } else setTimeout(googleBoot,150); }
+  function googleBoot(){
+    try{ sbaLoad(); }catch(e){}
+    try{
+      var _q=(location.hash||"")+"&"+(location.search||"");
+      if(_q.indexOf("error")>=0 && _q.indexOf("access_token=")<0){
+        var _p={}; _q.replace(/[#?&]/g," ").trim().split(/[&\s]+/).forEach(function(kv){
+          var i=kv.indexOf("="); if(i>0) _p[decodeURIComponent(kv.slice(0,i))]=decodeURIComponent(kv.slice(i+1).replace(/\+/g," "));
+        });
+        var msg=_p.error_description||_p.error_code||_p.error||"Sign-in was rejected.";
+        try{ history.replaceState(null,"",location.pathname); }catch(e){}
+        var ge=$("gErr"); if(ge) ge.textContent=msg;
+        try{ console.error("Supabase OAuth returned:", _p); }catch(e){}
+        return;
+      }
+    }catch(e){}
+    try{ if(sbaCatchRedirect()){ afterSbaLogin(); return; } }catch(e){}
+    var out=false; try{ out=!!localStorage.getItem("hoh_signedout"); }catch(e){}
+    if(out) return;
+    var saved=null; try{saved=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
+    if(saved && saved.email){
+      // Known member on this device: go straight in, and quietly refresh the Supabase session.
+      try{ sbaEnsure(); }catch(e){}
+      startAfterGoogle(); return;
+    }
+    if(sbaValid() || SBA.refresh){
+      // We have a Supabase session but don't know who they are yet.
+      sbaEnsure().then(function(){
+        if(SBA.email){ afterSbaLogin(); }
+      }).catch(function(){});
+    }
+    // Otherwise: leave the sign-in screen up. No popups.
+  }
   (function boot0(){
     var hasDemo=false; try{ hasDemo=!!localStorage.getItem("hoh_demo"); }catch(e){}
     if(hasDemo){
@@ -4663,12 +5868,20 @@
   }
   function schPost(payload,after){
     if(demoNo()){ availBusy(false); if($("availToggle"))$("availToggle").disabled=false; return; }
-    var url=getSetting("Profile Update URL","");
-    if(!url){ toast("Saving isn\u2019t set up yet."); availBusy(false); $("availToggle").disabled=false; return; }
     availBusy(true);
-    fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)})
-      .then(function(r){return r.text();}).then(function(t){ var ok=true; try{ok=JSON.parse(t).ok!==false;}catch(e){} if(!ok)throw"f"; if(after)after(); })
-      .catch(function(){ availBusy(false); $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); });
+    function fail(){ availBusy(false); $("availToggle").disabled=false; toast("Couldn\u2019t save \u2014 check your connection."); }
+    var req;
+    if(payload.action==="del"){
+      req=sbWrite("DELETE","schedule?sched_id=eq."+encodeURIComponent(payload.id));
+    } else if(payload.action==="setloc"){
+      req=sbWrite("PATCH","schedule?sched_id=eq."+encodeURIComponent(payload.id),
+        { lat:String(payload.lat==null?"":payload.lat), lng:String(payload.lng==null?"":payload.lng), loc_source:payload.locSource||"" });
+    } else {
+      req=sbWrite("POST","schedule",{ sched_id:payload.id||"", unit:payload.unit||"", start_at:payload.start||"", end_at:payload.end||"",
+        label:payload.label||"", lat:String(payload.lat==null?"":payload.lat), lng:String(payload.lng==null?"":payload.lng),
+        loc_source:payload.locSource||"", created:nowStamp() });
+    }
+    req.then(function(r){ if(!r.ok) throw "f"; if(after) after(); }).catch(fail);
   }
   function addSlot(s,e,src,lat,lng,msg){
     var id="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -4969,7 +6182,7 @@
 
     // Android / Chromium: capture the real install prompt
     window.addEventListener("beforeinstallprompt",function(e){
-      e.preventDefault(); deferred=e; go.style.display=""; go.textContent="Install"; showBar();
+      e.preventDefault(); deferred=e; window.__pwaPrompt=e; go.style.display=""; go.textContent="Install"; showBar();
     });
     go.addEventListener("click",function(){
       if(deferred){
@@ -4982,7 +6195,7 @@
     });
 
     // Once installed, hide immediately and it won't come back (standalone check)
-    window.addEventListener("appinstalled", hideBar);
+    window.addEventListener("appinstalled", function(){ window.__pwaPrompt=null; hideBar(); });
 
     // iOS never fires beforeinstallprompt: show a How-to-install button until installed
     if(isIOS() && !standalone()){
