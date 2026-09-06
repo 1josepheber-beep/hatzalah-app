@@ -1052,7 +1052,13 @@
   .tile.foldertile .fm{border-radius:7px;background:#fff;background-size:cover;background-position:center;
     display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1px 2px rgba(16,38,74,.16)}
   .tile.foldertile .fm.empty{background:rgba(255,255,255,.45);box-shadow:none}
-  .tile.foldertile .fm img{width:100%;height:100%;object-fit:cover;display:block}
+  .tile.foldertile .fm{background:#fff;overflow:hidden}
+  .minitile{width:100%;height:100%;border:0;padding:0;margin:0;border-radius:0;box-shadow:none;
+    display:flex;align-items:center;justify-content:center;background:var(--card);position:relative;overflow:hidden}
+  .minitile .lab,.minitile .adm{display:none!important}
+  .minitile img.bg{width:100%;height:100%;object-fit:cover;display:block}
+  .minitile .ic{width:100%;height:100%;border-radius:0;background:#eaf0f9;display:flex;align-items:center;justify-content:center}
+  .minitile .ic svg{width:14px;height:14px;stroke:var(--navy);fill:none;stroke-width:2}
   .tile.foldertile .fm.ic{background:#eaf0f9}
   .tile.foldertile .fm svg{width:15px;height:15px;stroke:var(--navy);fill:none;stroke-width:2}
   .tile.foldertile .fm.more{background:var(--navy)}
@@ -1137,7 +1143,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 9.6</div>
+  <div class="ver-line">Version 9.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1252,7 +1258,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 9.6</div>
+  <div class="ver-line">Version 9.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2323,22 +2329,18 @@
     var all=(f.labels||[]).map(tileByLabel).filter(tileVisible);
     var grid=document.createElement("div");
     grid.className="fgrid";
-    var show = (all.length>4) ? all.slice(0,3) : all.slice(0,4);
-    var extra = all.length - show.length;
+    var show=(all.length>4)?all.slice(0,3):all.slice(0,4);
+    var extra=all.length-show.length;
 
     show.forEach(function(t){
       var cell=document.createElement("span");
       cell.className="fm";
-      var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
-      function useIcon(){
-        cell.className="fm ic";
-        cell.innerHTML='<svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||((r_(t,"Type")||"").toLowerCase()==="board"?"board":""))+'</svg>';
-      }
-      if(img){
-        var im=document.createElement("img");
-        im.alt=""; im.onerror=useIcon; im.src=img;   // real <img>, so a bad path falls back
-        cell.appendChild(im);
-      } else useIcon();
+      // Re-use the real tile markup, shrunk down. Whatever renders on the home
+      // screen renders here, so there is nothing separate to keep in step.
+      var mini=buildTileEl(t);
+      mini.className=mini.className.replace("tile","minitile");
+      mini.removeAttribute("data-label");
+      cell.appendChild(mini);
       grid.appendChild(cell);
     });
 
@@ -2348,7 +2350,6 @@
       more.innerHTML='<span class="fmore">+'+extra+'</span>';
       grid.appendChild(more);
     }
-    // always fill to four cells so the grid keeps its 2x2 shape
     while(grid.children.length<4){
       var e2=document.createElement("span"); e2.className="fm empty"; grid.appendChild(e2);
     }
@@ -5165,7 +5166,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5207,7 +5208,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -6998,6 +6999,7 @@
         SWREG=reg;
         if(reg.waiting && navigator.serviceWorker.controller) UPD_READY=true;
         reg.addEventListener("updatefound",function(){ watchWorker(reg.installing); });
+        try{ reg.update().catch(function(){}); }catch(e){}       // check for a newer build right away
         setInterval(function(){ reg.update().catch(function(){}); }, 15*60*1000);
       }).catch(function(){});
     });

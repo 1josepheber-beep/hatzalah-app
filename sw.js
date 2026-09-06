@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v9.6";
+var CACHE="hoh-v9.7";
 var SHELL=["./","./index.html","./proto_index.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
 self.addEventListener("notificationclick",function(e){
@@ -16,6 +16,16 @@ self.addEventListener("install",function(e){
 self.addEventListener("activate",function(e){
   e.waitUntil(caches.keys().then(function(keys){
     return Promise.all(keys.map(function(k){if(k!==CACHE)return caches.delete(k);}));
+  }).then(function(){
+    // Drop the saved copy of the page and pull a fresh one, so a stale page can
+    // never be served back after an update (that caused an apparent "revert").
+    return caches.open(CACHE).then(function(c){
+      return Promise.all([c.delete("./index.html"),c.delete("./")]).then(function(){
+        return fetch("./index.html",{cache:"reload"}).then(function(res){
+          if(res&&res.ok) return c.put("./index.html",res.clone());
+        }).catch(function(){});
+      });
+    });
   }).then(function(){return self.clients.claim();}));
 });
 self.addEventListener("fetch",function(e){
