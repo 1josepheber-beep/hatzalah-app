@@ -1176,7 +1176,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.9</div>
+  <div class="ver-line">Version 11.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1291,7 +1291,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.9</div>
+  <div class="ver-line">Version 11.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1942,7 +1942,18 @@
     }
     var out=[],page=0;
     function fetchPage(){
-      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),{headers:sbAuthHeaders(),cache:"no-store"})
+      var qurl=SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000);
+      return fetch(qurl,{headers:sbAuthHeaders(),cache:"no-store"})
+        .then(function(r){
+          // token expired mid-request: refresh once and try again rather than
+          // returning nothing (which used to look like "member not found")
+          if(r.status===401||r.status===403){
+            return sbaEnsure().then(function(){
+              return fetch(qurl,{headers:sbAuthHeaders(),cache:"no-store"});
+            });
+          }
+          return r;
+        })
         .then(function(r){ return r.json(); })
         .then(function(rows){
           if(!Array.isArray(rows)) return out;
@@ -2163,7 +2174,11 @@
           var mp=normPw(STATE.me.pw), mpHash=res[3]||"";
           for(var i=0;i<rows.length;i++){ if(pwMatch(rows[i]["Password"], mp, mpHash)){ found=rows[i]; break; } }
         }
-        if(!fromCache){
+        // Only sign someone out when we are CERTAIN they were removed or deactivated.
+        // A roster that failed to load (network blip, token expiring mid-request)
+        // must never be read as "you are no longer a member" - that was signing
+        // people out at random and is why re-opening the app let them straight back in.
+        if(!fromCache && rows && rows.length>1){
           var act=found?String(found["Active"]||"").trim().toLowerCase():"";
           var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
           if(!stillActive){
@@ -5427,7 +5442,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5469,7 +5484,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
