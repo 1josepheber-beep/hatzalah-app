@@ -571,6 +571,8 @@
   .adm-empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
   .adm-addbtn{margin:0;padding:11px 12px;border-top:1px solid var(--line);background:#fff}
   .adm-addbtn button{width:100%;background:var(--navy);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
+  .adm-addbtn button.ghost{background:#fff;color:var(--navy);border:1px solid var(--line);margin-top:8px;font-size:13px}
+  .adm-addbtn button.ghost:active{background:#eef2f7}
   .adm-body{padding:16px;max-width:760px;margin:0 auto}
   .adm-ph{display:flex;align-items:center;justify-content:center;height:100%;color:var(--mut);font-size:14px;padding:30px;text-align:center}
   .adm-mh{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
@@ -1134,7 +1136,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 9.3</div>
+  <div class="ver-line">Version 9.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1249,7 +1251,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 9.3</div>
+  <div class="ver-line">Version 9.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1462,7 +1464,10 @@
       <div class="adm-srch"><input id="admSearch" type="search" placeholder="Search name, unit, email" enterkeyhint="search"></div>
       <div class="adm-chips" id="admChips"></div>
       <div class="adm-list" id="admList"></div>
-      <div class="adm-addbtn"><button id="admAdd">+ Add member</button></div>
+      <div class="adm-addbtn">
+        <button id="admAdd">+ Add member</button>
+        <button id="admExport" class="ghost">Download all as spreadsheet</button>
+      </div>
     </div>
     <div class="adm-right" id="admRight">
       <div class="adm-ph">Select a member to view and edit their record.</div>
@@ -2320,7 +2325,7 @@
       var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
       var more=(extra>0 && idx===3) ? '<span class="fmore">+'+(extra+1)+'</span>' : '';
       if(extra>0 && idx===3) return '<span class="fm more">'+more+'</span>';
-      return img ? '<span class="fm" style="background-image:url('+JSON.stringify(img)+')"></span>'
+      return img ? '<span class="fm" style="background-image:url(&quot;'+esc(img)+'&quot;)"></span>'
                  : '<span class="fm ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||"")+'</svg></span>';
     }).join("");
     var have=inner.length;
@@ -3038,6 +3043,57 @@
         admRender(); admRenderDetail();
       }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
+  function admExportCsv(){
+    var roster=ADM.rows||[], certs=ADM.certs||[];
+    if(!roster.length){ toast("Nothing to export yet."); return; }
+
+    // every certification column, discovered from the data
+    var certCols=[];
+    if(certs.length){
+      var seen={};
+      certs.forEach(function(c){
+        for(var k in c){
+          if(k==="__id") continue;
+          var kl=k.toLowerCase();
+          if(kl==="unit"||kl==="unit #"||kl==="first name"||kl==="last name") continue;
+          if(!seen[k]){ seen[k]=1; certCols.push(k); }
+        }
+      });
+    }
+    var rosterCols=["Unit","Last Name","First Name","Email","Personal Email","Phone","Address","DOB",
+      "Type","Level","Status","FTO","Admin","Dispatcher","Active","Last Active",
+      "T-Shirt Size","Dress Shirt Size","Polo Shirt Size","Hat Size","Coat Size",
+      "Emergency Contact","Emergency Phone","Emergency Relationship","Text Home","Text Home Method"];
+
+    var certByUnit={};
+    certs.forEach(function(c){ var u=normUnit(r_(c,"Unit #")||r_(c,"Unit")); if(u) certByUnit[u]=c; });
+
+    function cell(v){
+      v=String(v==null?"":v);
+      return /[",\n\r]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v;
+    }
+    var header=rosterCols.concat(certCols).map(cell).join(",");
+    var lines=[header];
+
+    roster.slice().sort(function(a,b){ return admName(a).localeCompare(admName(b)); })
+      .forEach(function(r){
+        if(!r_(r,"Unit") && !r_(r,"Last Name")) return;
+        var c=certByUnit[normUnit(r_(r,"Unit"))]||{};
+        var row=rosterCols.map(function(h){ return cell(r_(r,h)); })
+                .concat(certCols.map(function(h){ return cell(r_(c,h)); }));
+        lines.push(row.join(","));
+      });
+
+    // BOM so Excel reads accents and Hebrew correctly
+    var blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+    var d=new Date();
+    var name="Hatzalah Members "+d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)+".csv";
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ a.remove(); URL.revokeObjectURL(url); }catch(e){} },500);
+    toast("Downloaded \u2014 open it in Excel.");
+  }
   function admAddMember(){
     $("admAddModal").classList.remove("hidden");
     ["amF","amL","amU","amE"].forEach(function(id){ var e=$(id); if(e) e.value=""; });
@@ -3072,6 +3128,7 @@
   $("admChips").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-chip"):null; if(!b) return; ADM.filter=b.getAttribute("data-f"); admRender(); });
   $("admList").addEventListener("click",function(e){ var row=e.target.closest?e.target.closest(".adm-row"):null; if(!row) return; admSelect(row.getAttribute("data-u")); });
   $("admAdd").addEventListener("click",admAddMember);
+  $("admExport").addEventListener("click",admExportCsv);
   $("amCancel").addEventListener("click",admAddClose);
   $("amSave").addEventListener("click",admAddSave);
   $("admAddModal").addEventListener("click",function(e){ if(e.target===this) admAddClose(); });
@@ -5082,7 +5139,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5124,7 +5181,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
