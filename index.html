@@ -627,6 +627,8 @@
   .adm-cert .pill.pause{background:#ede4fb;color:#5b3aa8}
   .adm-pausebtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
   .adm-pausebtn.on{background:#ede4fb;border-color:#c9b3f0;color:#5b3aa8}
+  .adm-certdel{flex:0 0 auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
+  .adm-certdel.armed{background:var(--red);color:#fff;border-color:var(--red)}
   .adm-addcert{width:100%;border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:11px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;margin-top:14px}
   .adm-addcert:active{background:#eef2f7}
   .stand-body{padding:16px 14px 34px;max-width:560px;margin:0 auto;overflow:auto}
@@ -1148,7 +1150,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.4</div>
+  <div class="ver-line">Version 10.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1263,7 +1265,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.4</div>
+  <div class="ver-line">Version 10.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3027,6 +3029,7 @@
               (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
               (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not required")+'</button>':'')+
               (pk&&!isna?'<button class="adm-pausebtn'+(paused?" on":"")+'" data-pause="'+esc(pk)+'">'+(paused?"Resume emails":"Pause emails")+'</button>':'')+
+              (pk?'<button class="adm-certdel" data-delcert="'+esc(pk)+'" data-name="'+esc(c.name)+'" data-armed="0">Remove</button>':'')+
             '</div></div>';
         });
         body='<div class="adm-sec"><div class="adm-sech">Certifications<span class="bdg">N/A = hidden from that member</span></div>'+rows+
@@ -3110,6 +3113,41 @@
         r["Active"]=making; DIR.loaded=false; toast(word+"d.");
         admRender(); admRenderDetail();
       }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
+  }
+  function admRemoveCertConfirm(expCol, niceName){
+    $("cprxEdit").innerHTML='<div class="adm-modal" id="rcModal"><div class="adm-mbox">'+
+      '<h3>Remove \u201C'+esc(niceName)+'\u201D?</h3>'+
+      '<p class="adm-msub">This deletes the certification and every member\u2019s dates for it, '+
+      'across the whole organization. It cannot be undone.</p>'+
+      '<p class="adm-msub" style="color:var(--ink);font-weight:700">If you only want it gone for one person, '+
+      'use <b>Not required</b> instead.</p>'+
+      '<div class="adm-merr" id="rc_err"></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="rc_cancel">Keep it</button>'+
+      '<button class="pri" id="rc_ok" style="background:var(--red)">Yes, remove it</button></div>'+
+      '</div></div>';
+    $("rc_cancel").addEventListener("click",function(){ $("cprxEdit").innerHTML=""; });
+    $("rcModal").addEventListener("click",function(e){ if(e.target===this) $("cprxEdit").innerHTML=""; });
+    $("rc_ok").addEventListener("click",function(){
+      var btn=this, err=$("rc_err");
+      btn.disabled=true; btn.textContent="Removing\u2026"; err.textContent="";
+      fetch(SB_URL+"/rest/v1/rpc/remove_certification",{
+        method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+        body:JSON.stringify({exp_column:expCol})
+      }).then(function(r){ return r.json(); })
+        .then(function(j){
+          btn.disabled=false; btn.textContent="Yes, remove it";
+          if(!j||!j.ok){ err.textContent=(j&&j.error)||"Couldn\u2019t remove it."; return; }
+          $("cprxEdit").innerHTML="";
+          toast("\u201C"+niceName+"\u201D removed.");
+          ADM.loaded=false; CERT.loaded=false;
+          Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
+            ADM.rows=res[0]||[]; ADM.certs=res[1]||[];
+            try{ CERT.certCols = ADM.certs.length ? computeCertCols(ADM.certs[0]) : []; }catch(e){}
+            ADM.loaded=true; admRenderDetail();
+          });
+        })
+        .catch(function(){ btn.disabled=false; btn.textContent="Yes, remove it"; err.textContent="Couldn\u2019t reach the server."; });
+    });
   }
   function admAddCertOpen(){
     $("cprxEdit").innerHTML='<div class="adm-modal" id="acModal"><div class="adm-mbox">'+
@@ -3251,6 +3289,16 @@
   $("amSave").addEventListener("click",admAddSave);
   $("admAddModal").addEventListener("click",function(e){ if(e.target===this) admAddClose(); });
   $("admRight").addEventListener("click",function(e){
+    var dc=e.target.closest?e.target.closest(".adm-certdel"):null;
+    if(dc){
+      if(dc.getAttribute("data-armed")!=="1"){
+        dc.setAttribute("data-armed","1"); dc.classList.add("armed"); dc.textContent="Remove for everyone?";
+        setTimeout(function(){ if(dc.getAttribute("data-armed")==="1"){ dc.setAttribute("data-armed","0"); dc.classList.remove("armed"); dc.textContent="Remove"; } },5000);
+        return;
+      }
+      admRemoveCertConfirm(dc.getAttribute("data-delcert"), dc.getAttribute("data-name"));
+      return;
+    }
     if(e.target.id==="admAddCert"){ admAddCertOpen(); return; }
     var pz=e.target.closest?e.target.closest(".adm-pausebtn"):null;
     if(pz){
@@ -5278,7 +5326,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5320,7 +5368,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
