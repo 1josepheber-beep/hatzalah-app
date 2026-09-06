@@ -694,6 +694,17 @@
   .adm-item.open .adm-itemb{display:block}
   .adm-item .adm-del{margin:6px 0 0;width:100%}
   .adm-save .pri.hot{background:#C8202E}
+  .adm-usage{background:#fff;border-bottom:1px solid var(--line);flex:0 0 auto}
+  .au-wrap{display:flex;gap:18px;padding:11px 14px;flex-wrap:wrap;align-items:flex-start}
+  .au-item{flex:1;min-width:200px}
+  .au-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;font-weight:800;color:var(--ink);margin-bottom:5px;gap:8px}
+  .au-num{color:var(--mut);font-weight:700;white-space:nowrap}
+  .au-bar{height:7px;background:#eef1f5;border-radius:999px;overflow:hidden}
+  .au-bar>span{display:block;height:100%;border-radius:999px}
+  .au-bar>span.ok{background:#1e9e57} .au-bar>span.warn{background:var(--gold)} .au-bar>span.bad{background:var(--red)}
+  .au-sub{font-size:10.5px;color:var(--mut);margin-top:4px}
+  .au-warn{width:100%;font-size:12px;font-weight:700;color:#8a1f1f;background:#fdecec;border:1px solid #f3b6b6;border-radius:9px;padding:8px 11px}
+  .au-warn.soft{color:#8a6d00;background:#fff3d6;border-color:#f0d58f}
   .adm-secbar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
   .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
   .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -1150,7 +1161,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 10.5</div>
+  <div class="ver-line">Version 10.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1265,7 +1276,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 10.5</div>
+  <div class="ver-line">Version 10.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1472,6 +1483,7 @@
     <button class="back" id="admBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
     <h2 id="admTitle">Members</h2>
   </div>
+  <div class="adm-usage" id="admUsage"></div>
   <div class="adm-secbar" id="admSecs"></div>
   <div class="adm-wrap">
     <div class="adm-left" id="admMembersPane">
@@ -2906,6 +2918,7 @@
     if(!$("admScreen").classList.contains("open")) navOpen(closeAdmin);
     $("admScreen").classList.add("open");
     admPaintSecs();
+    try{ admLoadUsage(); }catch(e){}
     if(!ADM.loaded){
       $("admList").innerHTML='<div class="adm-empty">Loading\u2026</div>';
       Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
@@ -3383,6 +3396,41 @@
     if(k==="members"){ $("admMembersPane").style.display=""; $("admRight").style.display=""; $("admGenPane").style.display="none"; admRender(); $("admRight").innerHTML='<div class="adm-ph">Select a member to view and edit their record.</div>'; return; }
     $("admMembersPane").style.display="none"; $("admRight").style.display="none"; $("admGenPane").style.display="";
     admLoadSec(k);
+  }
+  function admBytes(n){
+    n=Number(n)||0;
+    if(n<1024) return n+" B";
+    if(n<1048576) return (n/1024).toFixed(0)+" KB";
+    if(n<1073741824) return (n/1048576).toFixed(1)+" MB";
+    return (n/1073741824).toFixed(2)+" GB";
+  }
+  function admLoadUsage(){
+    var box=$("admUsage"); if(!box) return;
+    fetch(SB_URL+"/rest/v1/rpc/usage_stats",{method:"POST",headers:sbAuthHeaders({"Content-Type":"application/json"}),body:"{}"})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j||!j.ok){ box.innerHTML=""; return; }
+        // free plan allowances; change these in Settings if you upgrade
+        var dbCap=parseFloat(getSetting("Storage Limit DB MB","500"))*1048576;
+        var fileCap=parseFloat(getSetting("Storage Limit Files MB","1024"))*1048576;
+        function bar(label,used,cap,extra){
+          var pct=cap>0?Math.min(100,Math.round(used/cap*100)):0;
+          var cls=pct>=90?"bad":(pct>=75?"warn":"ok");
+          return '<div class="au-item"><div class="au-top"><span>'+label+'</span>'+
+            '<span class="au-num">'+admBytes(used)+' of '+admBytes(cap)+' \u00b7 '+pct+'%</span></div>'+
+            '<div class="au-bar"><span class="'+cls+'" style="width:'+Math.max(pct,1)+'%"></span></div>'+
+            (extra?'<div class="au-sub">'+extra+'</div>':'')+'</div>';
+        }
+        var warn="";
+        var dbPct=dbCap>0?(j.db_bytes/dbCap*100):0, fPct=fileCap>0?(j.file_bytes/fileCap*100):0;
+        if(dbPct>=90||fPct>=90) warn='<div class="au-warn">You\u2019re close to the limit \u2014 time to clear old logs or upgrade.</div>';
+        else if(dbPct>=75||fPct>=75) warn='<div class="au-warn soft">Getting full. Worth keeping an eye on.</div>';
+        box.innerHTML='<div class="au-wrap">'+
+          bar("Database",j.db_bytes,dbCap,"")+
+          bar("Photos &amp; images",j.file_bytes,fileCap,(j.file_count||0)+" file"+((j.file_count==1)?"":"s"))+
+          warn+'</div>';
+      })
+      .catch(function(){ box.innerHTML=""; });
   }
   function admPaintSecs(){
     $("admSecs").innerHTML=ADM_SECS.map(function(s){
@@ -5326,7 +5374,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5368,7 +5416,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 10.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
