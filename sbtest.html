@@ -1042,7 +1042,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1157,7 +1157,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>
+  <div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1626,7 +1626,7 @@
   var DCACHE="hoh_data_v1_sb";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
-  var GUEST_URL="https://script.google.com/macros/s/AKfycbz1whkfWWlbj5Q8WelSB57s2cToyiJ35i0xxwr5iw3OGGZlttRBohDsVCkk8oJGyzH6/exec";
+  // (Apps Script URL removed - the app talks to Supabase directly now)
   var ORG_DOMAIN="houstonhatzalah.org";
   var G={token:"",exp:0,email:"",client:null,pending:null,inflight:null,verified:false};
   // ---------- Supabase Auth (per-person identity) ----------
@@ -1887,14 +1887,30 @@
     $("app").classList.remove("hidden");
     boot().catch(function(){ toast("Couldn't load the demo."); });
   }
+  function guestCheck(code){
+    return fetch(SB_URL+"/rest/v1/rpc/guest_demo",{
+      method:"POST",
+      headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({code:String(code||"")})
+    }).then(function(r){ return r.json(); })
+      .then(function(j){
+        if(!j || !j.ok) return j||{ok:false};
+        // normalise tiles/settings into the shape the demo expects
+        var tiles=(j.tiles||[]).map(function(row){
+          var o={}, m=SB_COLMAP["tiles"]||{};
+          for(var k in row){ if(k==="id") continue; o[m[k]||k]=row[k]==null?"":String(row[k]); }
+          return o;
+        });
+        return { ok:true, name:j.name||"Guest", tiles:tiles, settings:j.settings||{} };
+      });
+  }
   function guestLogin(code){
     var err=$("guestErr"); if(err) err.textContent="";
     code=String(code||"").trim();
     if(!code){ if(err) err.textContent="Enter the demo passcode."; return; }
     var btn=$("guestBtn"); if(btn){ btn.disabled=true; btn.textContent="Checking\u2026"; }
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:code})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck(code)
+      .then(function(res){
         if(btn){ btn.disabled=false; btn.textContent="Enter demo"; }
         if(res.ok){ try{localStorage.setItem("hoh_demo_sb",code);}catch(e){} startGuest(res); }
         else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn\u2019t valid or is inactive."; }
@@ -1904,9 +1920,8 @@
   function resumeDemo(){
     var code=null; try{ code=localStorage.getItem("hoh_demo_sb"); }catch(e){}
     if(!code) return false;
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:code})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck(code)
+      .then(function(res){
         if(res.ok){ startGuest(res); }
         else { try{localStorage.removeItem("hoh_demo_sb");}catch(e){} if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); }
       }).catch(function(){ if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); });
@@ -4383,7 +4398,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -4423,7 +4438,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:32 AM</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">TEST BUILD Sep 6, 1:41 AM</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -5040,9 +5055,8 @@
 
   function gTrySilent(){ /* legacy Google popup - no longer used; Supabase handles sign-in */ }
   function checkDemoEnabled(){
-    fetch(GUEST_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({kind:"guest",code:"__probe__"})})
-      .then(function(r){return r.text();}).then(function(t){
-        var res={}; try{res=JSON.parse(t);}catch(e){}
+    guestCheck("__probe__")
+      .then(function(res){
         if(res && res.error!=="off"){ var v=$("viewDemo"); if(v) v.classList.remove("hidden"); }
       }).catch(function(){});
   }
@@ -6206,6 +6220,6 @@
   }
 })();
 </script>
-<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:32 AM</div>
+<div id="sbBuildBadge" style="position:fixed;left:6px;bottom:6px;z-index:9999;background:rgba(9,26,52,.82);color:#fff;font:700 10px -apple-system,Segoe UI,Roboto,sans-serif;padding:4px 9px;border-radius:999px;pointer-events:none;letter-spacing:.02em">TEST BUILD Sep 6, 1:41 AM</div>
 </body>
 </html>
