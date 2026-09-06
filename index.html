@@ -1176,7 +1176,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.0</div>
+  <div class="ver-line">Version 11.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1291,7 +1291,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.0</div>
+  <div class="ver-line">Version 11.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3476,8 +3476,33 @@
         var inner='<div class="au-wrap">'+
           bar("Database",j.db_bytes,dbCap,"")+
           bar("Photos &amp; images",j.file_bytes,fileCap,(j.file_count||0)+" file"+((j.file_count==1)?"":"s"))+
+          '<div class="au-item" id="auRepo"></div>'+
           warn+'</div>';
         box.innerHTML=inner;
+        // GitHub repository size (public API, no key needed)
+        var repo=getSetting("GitHub Repo","1josepheber-beep/hatzalah-app");
+        if(repo){
+          fetch("https://api.github.com/repos/"+repo)
+            .then(function(r){ return r.ok?r.json():null; })
+            .then(function(g){
+              if(!g||typeof g.size!=="number") return;
+              var used=g.size*1024;
+              var cap=parseFloat(getSetting("Storage Limit Repo MB","1024"))*1048576;
+              var html2=bar("App files (GitHub)",used,cap,"protocols, images, the app itself");
+              var el=document.getElementById("auRepo");
+              if(el) el.outerHTML=html2;
+              var p2=cap>0?Math.round(used/cap*100):0;
+              if(p2>ADM_USAGE.pct){
+                ADM_USAGE.pct=p2;
+                var ub2=$("admUsageBtn");
+                if(ub2){ ub2.classList.remove("ok","warn","bad");
+                  ub2.classList.add(p2>=90?"bad":(p2>=75?"warn":"ok"));
+                  $("admUsagePct").textContent=p2+"%"; }
+              }
+              ADM_USAGE.html=$("admUsage")?$("admUsage").innerHTML:ADM_USAGE.html;
+            })
+            .catch(function(){ var el=document.getElementById("auRepo"); if(el) el.outerHTML=""; });
+        }
         // small coloured button for phones
         ADM_USAGE={html:inner, pct:Math.round(Math.max(dbPct,fPct))};
         var ub=$("admUsageBtn");
@@ -5442,7 +5467,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5484,7 +5509,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
