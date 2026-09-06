@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v8.0";
+var CACHE="hoh-v8.1";
 var SHELL=["./","./index.html","./proto_index.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
 self.addEventListener("notificationclick",function(e){
@@ -23,13 +23,22 @@ self.addEventListener("fetch",function(e){
   if(req.method!=="GET") return;
   var url=new URL(req.url);
 
-  // Google Sheets data: network-first, fall back to last cached copy (offline)
-  if(url.hostname.indexOf("docs.google.com")>-1){
+  // Supabase data + uploaded images: NETWORK-FIRST, fall back to the last cached
+  // copy when offline. This is what lets hospitals, certifications, equipment,
+  // cabinets, vitals and the apartment list still work with no signal on a call.
+  if(url.hostname.indexOf("supabase.co")>-1){
     e.respondWith(
       fetch(req).then(function(res){
-        var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);});
+        if(res && res.ok){ var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);}); }
         return res;
-      }).catch(function(){return caches.match(req);})
+      }).catch(function(){
+        return caches.match(req).then(function(hit){
+          if(hit) return hit;
+          // Nothing cached yet: hand back an empty list so the screen degrades
+          // gracefully instead of hanging.
+          return new Response("[]",{status:200,headers:{"Content-Type":"application/json"}});
+        });
+      })
     );
     return;
   }
