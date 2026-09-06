@@ -561,6 +561,12 @@
   .adm-row.sel{border-color:var(--navy);box-shadow:0 0 0 2px rgba(20,61,117,.12)}
   .adm-row.als{border-left-color:#2f9e44} .adm-row.emt{border-left-color:#2a6fb5} .adm-row.medic{border-left-color:#8a5cc7}
   .adm-row.inact{opacity:.55;border-left-color:#b9c0cc}
+  .adm-cdot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;margin-right:1px}
+  .adm-cdot.ok{background:#2f9e44}
+  .adm-cdot.soon{background:var(--gold)}
+  .adm-cdot.expired{background:var(--red);box-shadow:0 0 0 3px rgba(200,32,46,.15)}
+  .adm-cdot.none{background:#dfe4ec}
+  .adm-chip[data-f="certs"].on{background:var(--red);border-color:var(--red)}
   .adm-row .ri{flex:1;min-width:0}
   .adm-nm{font-weight:800;font-size:14.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .adm-sub{font-size:11.5px;color:var(--mut);margin-top:3px;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
@@ -733,6 +739,10 @@
   .ins-steps li{font-size:14.5px;line-height:1.6;margin-bottom:9px;color:var(--ink)}
   .ins-steps b{font-weight:800}
   .ins-warn{background:#fff3d6;border:1px solid #f0d58f;color:#8a6d00;border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5;margin:0 0 14px;font-weight:600}
+  .adm-certline{display:inline-block;font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 10px;margin-top:8px}
+  .adm-certline.ok{background:#e4f6e9;color:#1e7a3d}
+  .adm-certline.warn{background:#fff3d6;color:#8a6d00}
+  .adm-certline.bad{background:#fdecec;color:#8a1f1f}
   .adm-seen{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);margin-top:7px;font-weight:600}
   .adm-seen svg{width:14px;height:14px;stroke:var(--mut);fill:none;stroke-width:2;flex:0 0 auto}
   .adm-seen b{color:var(--ink);font-weight:800}
@@ -1176,7 +1186,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.2</div>
+  <div class="ver-line">Version 11.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1291,7 +1301,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.2</div>
+  <div class="ver-line">Version 11.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2975,6 +2985,20 @@
     } else admRender();
   }
   function closeAdmin(){ $("admScreen").classList.remove("open"); document.body.classList.remove("admdetail"); }
+  function admCertState(unit){
+    if(!CERT.certCols||!CERT.certCols.length) return "";
+    var cr=admCertRow(unit); if(!cr) return "";
+    var worst="ok", any=false;
+    CERT.certCols.forEach(function(c){
+      if(certIsNA(cr,c)) return;
+      var v=certExpVal(cr,c); if(!v) return;
+      any=true;
+      var k=certStatus(v).k;
+      if(k==="expired") worst="expired";
+      else if(k==="soon" && worst!=="expired") worst="soon";
+    });
+    return any?worst:"";
+  }
   function admRender(){
     var q=ADM.q.toLowerCase().trim();
     var list=ADM.rows.filter(function(r){
@@ -2983,17 +3007,23 @@
       if(ADM.filter==="active" && !act) return false;
       if(ADM.filter==="inactive" && act) return false;
       if(ADM.filter==="admins" && !isX(r["Admin"])) return false;
+      if(ADM.filter==="certs"){ var st=admCertState(r_(r,"Unit")); if(st!=="expired"&&st!=="soon") return false; }
       if(q){ var hay=((r_(r,"First Name")||"")+" "+(r_(r,"Last Name")||"")+" "+(r_(r,"Unit")||"")+" "+(r_(r,"Email")||"")).toLowerCase(); if(hay.indexOf(q)<0) return false; }
       return true;
     }).sort(function(a,b){ return admName(a).localeCompare(admName(b)); });
     var nA=0,nI=0,nAd=0;
     ADM.rows.forEach(function(r){ if(!r_(r,"Unit")&&!r_(r,"Last Name"))return; if(admIsActive(r))nA++; else nI++; if(isX(r["Admin"]))nAd++; });
-    $("admChips").innerHTML=[["active","Active ("+nA+")"],["inactive","Inactive ("+nI+")"],["admins","Admins ("+nAd+")"],["all","All"]]
+    var nCert=0;
+    ADM.rows.forEach(function(r){ if(!r_(r,"Unit")&&!r_(r,"Last Name"))return; if(!admIsActive(r))return;
+      var st=admCertState(r_(r,"Unit")); if(st==="expired"||st==="soon") nCert++; });
+    $("admChips").innerHTML=[["active","Active ("+nA+")"],["inactive","Inactive ("+nI+")"],["admins","Admins ("+nAd+")"],["certs","Certs due ("+nCert+")"],["all","All"]]
       .map(function(c){ return '<button class="adm-chip'+(ADM.filter===c[0]?" on":"")+'" data-f="'+c[0]+'">'+c[1]+'</button>'; }).join("");
     $("admList").innerHTML = list.length ? list.map(function(r){
       var u=r_(r,"Unit"), lv=r_(r,"Level"), ty=r_(r,"Type"), act=admIsActive(r);
       var selk=ADM.sel && ADM.sel===u;
+      var cst=admCertState(u);
       return '<div class="adm-row '+admLvClass(lv)+(act?"":" inact")+(selk?" sel":"")+'" data-u="'+esc(u)+'">'+
+        (cst?'<span class="adm-cdot '+cst+'" title="'+(cst==="expired"?"Has an expired certification":(cst==="soon"?"A certification expires soon":"Certifications up to date"))+'"></span>':'<span class="adm-cdot none"></span>')+
         '<div class="ri"><div class="adm-nm">'+esc(admName(r))+'</div><div class="adm-sub"><span>'+esc(u||"")+'</span>'+
         (lv?'<span class="adm-tag lvl">'+esc(lv)+'</span>':'')+
         (ty?'<span class="adm-tag">'+esc(ty)+'</span>':'')+
@@ -3040,6 +3070,11 @@
         '<span class="adm-photo-edit">Change</span></button>'+
       '<div class="t"><h3>'+esc(admName(r))+'</h3><div class="u">'+esc(r_(r,"Unit")||"")+
       (r_(r,"Level")?" \u00b7 "+esc(r_(r,"Level")):"")+(admIsActive(r)?"":" \u00b7 INACTIVE")+'</div>'+
+      (function(){ var st=admCertState(r_(r,"Unit"));
+        if(st==="expired") return '<div class="adm-certline bad">Has an expired certification</div>';
+        if(st==="soon") return '<div class="adm-certline warn">A certification expires soon</div>';
+        if(st==="ok") return '<div class="adm-certline ok">Certifications up to date</div>';
+        return ''; })()+
       (function(){ var la=admAgo(r_(r,"Last Active"));
         return la ? '<div class="adm-seen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Last opened the app <b>'+esc(la)+'</b></div>'
                   : '<div class="adm-seen dim"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Has not opened the app yet</div>'; })()+
@@ -5481,7 +5516,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5523,7 +5558,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
