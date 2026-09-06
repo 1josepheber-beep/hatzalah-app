@@ -753,7 +753,15 @@
   .adm-photo svg{width:30px;height:30px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .adm-photo-edit{position:absolute;left:0;right:0;bottom:0;background:rgba(20,61,117,.82);color:#fff;font-size:9.5px;font-weight:800;padding:3px 0}
   .dir-photo{width:46px;height:46px;border-radius:12px;object-fit:cover;border:1px solid var(--line);flex:0 0 auto;margin-right:4px;background:#eef2f7}
+  .dir-photo.tap{cursor:zoom-in}
   .dir-photo.ph{display:inline-flex;align-items:center;justify-content:center}
+  .photoview{position:fixed;inset:0;z-index:120;background:rgba(9,26,52,.92);display:flex;
+    align-items:center;justify-content:center;flex-direction:column;padding:24px;backdrop-filter:blur(4px)}
+  .photoview img{max-width:100%;max-height:78vh;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.5);object-fit:contain}
+  .pv-close{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:14px;width:42px;height:42px;
+    border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:26px;line-height:1;cursor:pointer;font-family:inherit}
+  .pv-close:active{background:rgba(255,255,255,.3)}
+  .pv-name{color:#fff;font-weight:800;font-size:16px;margin-top:16px;text-align:center}
   .dir-photo.ph svg{width:24px;height:24px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .eq-imgrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
   .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
@@ -1186,7 +1194,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.4</div>
+  <div class="ver-line">Version 11.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1301,7 +1309,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.4</div>
+  <div class="ver-line">Version 11.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5417,6 +5425,18 @@
     });
     return order.map(function(k){return map[k];});
   }
+  function openPhoto(src, who){
+    var w=document.createElement("div");
+    w.className="photoview";
+    w.innerHTML='<button class="pv-close" aria-label="Close">\u00D7</button>'+
+      '<img src="'+esc(src)+'" alt="">'+
+      (who?'<div class="pv-name">'+esc(who)+'</div>':'');
+    function close(){ try{ w.remove(); }catch(e){} document.removeEventListener("keydown",esc2); }
+    function esc2(e){ if(e.key==="Escape") close(); }
+    w.addEventListener("click",function(e){ if(e.target===w||e.target.className==="pv-close") close(); });
+    document.addEventListener("keydown",esc2);
+    document.body.appendChild(w);
+  }
   function renderDir(){
     var body=$("dirBody"), q=DIR.q.toLowerCase().trim();
     var people=dirMerged().filter(function(p){
@@ -5454,7 +5474,7 @@
         if(l.indexOf("emt")>=0||l==="bls") return " lv-emt";
         return "";})(p.level)+'">'+
         '<div class="dir-head">'+
-          (p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">')
+          (p.photo?('<img class="dir-photo tap" src="'+esc(sbImgUrl(p.photo))+'" alt="" data-big="'+esc(sbImgUrl(p.photo))+'" data-who="'+esc(nm)+'">')
                   :('<span class="dir-photo ph"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>'))+
           '<span class="dir-nm">'+esc(nm)+'</span>'+(p.unit?'<span class="dir-unit">'+esc(p.unit)+'</span>':'')+'</div>'+
         ((p.level||typeStr)?'<div class="dir-tags">'+(p.level?'<span class="dir-level '+esc(p.level.toLowerCase())+'">'+esc(p.level)+'</span>':'')+(typeStr?'<span class="dir-badge">'+esc(typeStr)+'</span>':'')+'</div>':'')+
@@ -5463,6 +5483,8 @@
     }).join("");
   }
   $("dirBody").addEventListener("click",function(e){
+    var ph=e.target.closest?e.target.closest(".dir-photo.tap"):null;
+    if(ph){ e.stopPropagation(); openPhoto(ph.getAttribute("data-big"), ph.getAttribute("data-who")); return; }
     var c=e.target.closest?e.target.closest(".dir-btn"):null; if(!c) return;
     if(c.getAttribute("data-tel")){ location.href="tel:"+c.getAttribute("data-tel"); return; }
     if(c.getAttribute("data-addr")){ window.open("https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(c.getAttribute("data-addr")),"_blank","noopener"); }
@@ -5516,7 +5538,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5558,7 +5580,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
