@@ -502,7 +502,7 @@
   .dir-unit{flex:0 0 auto;font-size:13px;color:var(--mut);font-weight:800;background:#f1f3f7;padding:3px 10px;border-radius:8px;white-space:nowrap;margin-top:1px}
   .dir-level{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:#fff;padding:3px 9px;border-radius:7px;background:#7a8699}
   .dir-level.als{background:#2f9e44}
-  .dir-level.emt,.dir-level.bls{background:#2a6fb5}
+  .dir-level.emt,.dir-level.bls,.dir-level.aemt{background:#2a6fb5}
   .dir-level.medic,.dir-level.paramedic{background:#8a5cc7}
   .dir-dob{font-size:12.5px;color:var(--mut);font-weight:700;margin-top:8px}
   .dir-act{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
@@ -1176,7 +1176,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.1</div>
+  <div class="ver-line">Version 11.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1291,7 +1291,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.1</div>
+  <div class="ver-line">Version 11.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2929,7 +2929,11 @@
 
   // ---------- Admin Portal ----------
   var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false};
-  function admLvClass(l){ l=String(l||"").toLowerCase(); return l==="als"?"als":((l==="emt"||l==="bls")?"emt":(l.indexOf("medic")>=0?"medic":"")); }
+  function admLvClass(l){ l=String(l||"").toLowerCase();
+    if(l==="als") return "als";
+    if(l.indexOf("medic")>=0) return "medic";
+    if(l.indexOf("emt")>=0||l==="bls") return "emt";
+    return ""; }
   function admIsActive(r){ var a=String(r_(r,"Active")||"").trim().toLowerCase(); return a===""||a==="x"||a==="yes"||a==="true"; }
   function admAgo(v){
     if(!v) return "";
@@ -3006,6 +3010,12 @@
     admRender(); admRenderDetail();
     try{ $("admRight").scrollTop=0; }catch(e){}
   }
+  function admList(settingKey, fallback){
+    var raw=String(getSetting(settingKey,"")||"").trim();
+    if(!raw) return fallback;
+    var out=raw.split(",").map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+    return out.length?out:fallback;
+  }
   function admFld(id,label,val,ph,type){ return '<label class="adm-f">'+label+'<input id="'+id+'" type="'+(type||"text")+'" value="'+esc(val||"")+'" placeholder="'+esc(ph||"")+'"></label>'; }
   function admSel(id,label,val,opts,allowOther){
     val=String(val==null?"":val).trim();
@@ -3042,9 +3052,9 @@
         admFld("adEm","Org email (used to sign in)",r_(r,"Email"),"name@houstonhatzalah.org","email")+
         '<div class="adm-note">Must match their Google account exactly, or they won\u2019t be able to sign in.</div></div>'+
         '<div class="adm-sec"><div class="adm-sech">Role &amp; access</div>'+
-        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),["Responder","Non Responder","Dispatcher"])+
-        admSel("adLv","Level",r_(r,"Level"),["EMT","ALS","Doctor","PR"])+'</div>'+
-        '<div class="adm-2">'+admSel("adSt","Status",r_(r,"Status"),["Primary","Backup","Observer","Dispatcher"])+
+        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),admList("Member Types",["Responder","Non Responder","Dispatcher"]))+
+        admSel("adLv","Level",r_(r,"Level"),admList("Member Levels",["EMT","AEMT","ALS","Doctor","PR"]))+'</div>'+
+        '<div class="adm-2">'+admSel("adSt","Status",r_(r,"Status"),admList("Member Statuses",["Primary","Backup","Observer","Dispatcher"]))+
         admFld("adFto","FTO for units",r_(r,"FTO"),"e.g. H-44, H-51")+'</div>'+
         admSw("adAdmin","Administrator","Full access \u2014 sees everyone\u2019s private info and can edit members",isX(r["Admin"]),true)+
         admSw("adDisp","Dispatcher","Sees the responder status board instead of the normal tiles",isX(r["Dispatcher"]))+
@@ -5403,7 +5413,11 @@
         if(ecHtml) secs+='<div class="esec"><div class="elbl">'+PHN+'Emergency Contact</div>'+ecHtml+'</div>';
         if(secs) extra='<div class="dir-extra">'+secs+'</div>';
       }
-      return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();return l==="als"?" lv-als":(l==="emt"||l==="bls")?" lv-emt":(l.indexOf("medic")>=0?" lv-medic":"");})(p.level)+'">'+
+      return '<div class="dir-card'+(function(l){l=(l||"").toLowerCase();
+        if(l==="als") return " lv-als";
+        if(l.indexOf("medic")>=0) return " lv-medic";
+        if(l.indexOf("emt")>=0||l==="bls") return " lv-emt";
+        return "";})(p.level)+'">'+
         '<div class="dir-head">'+
           (p.photo?('<img class="dir-photo" src="'+esc(sbImgUrl(p.photo))+'" alt="">')
                   :('<span class="dir-photo ph"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>'))+
@@ -5467,7 +5481,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5509,7 +5523,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
