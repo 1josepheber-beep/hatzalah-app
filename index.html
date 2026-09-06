@@ -1043,11 +1043,20 @@
   .rebar-per button{background:transparent;color:#cdd8ea;border:1px solid #47597a;border-radius:8px;padding:6px 11px;font-weight:800;cursor:pointer}
   .rebar-per button.on{background:#fff;color:var(--navy);border-color:#fff}
   /* ---- Tile folders (per device) ---- */
-  .tile.foldertile{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-  .tile.foldertile .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px;width:52px;height:52px}
-  .tile.foldertile .fm{border-radius:6px;background:rgba(255,255,255,.28);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .tile.foldertile .fm.empty{background:rgba(255,255,255,.10)}
-  .tile.foldertile .fm svg{width:14px;height:14px;stroke:#fff;fill:none;stroke-width:2;opacity:.9}
+  /* Folder tile: a frosted container showing miniatures of what's inside */
+  .tile.foldertile{background:linear-gradient(180deg,#e8edf5,#dde4ef);border:1px solid #cfd8e6;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),var(--shadow)}
+  .tile.foldertile .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:58px;height:58px}
+  .tile.foldertile .fm{border-radius:7px;background:#fff;background-size:cover;background-position:center;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 1px 2px rgba(16,38,74,.16)}
+  .tile.foldertile .fm.empty{background:rgba(255,255,255,.45);box-shadow:none}
+  .tile.foldertile .fm.ic{background:#eaf0f9}
+  .tile.foldertile .fm svg{width:15px;height:15px;stroke:var(--navy);fill:none;stroke-width:2}
+  .tile.foldertile .fm.more{background:var(--navy)}
+  .tile.foldertile .fmore{color:#fff;font-size:12px;font-weight:800}
+  .tile.foldertile .lab{color:var(--ink)}
+  .fungroup.armed{background:rgba(200,32,46,.9);border-color:rgba(255,255,255,.5);font-weight:800}
+  #reReset.armed{background:var(--red);color:#fff;border-color:var(--red)}
   .tile.mergehover{outline:4px solid #fff;outline-offset:-4px;transform:scale(1.14);transition:transform .15s;box-shadow:0 0 0 6px rgba(255,255,255,.28),0 12px 30px rgba(0,0,0,.35);z-index:5}
   .tile.mergehover::after{content:"Drop to group";position:absolute;left:0;right:0;bottom:-2px;font-size:9.5px;font-weight:800;color:#fff;background:rgba(9,26,52,.75);padding:3px 0;letter-spacing:.03em}
   .fsheet{position:fixed;inset:0;z-index:90;background:rgba(9,26,52,.62);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)}
@@ -1125,7 +1134,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 9.1</div>
+  <div class="ver-line">Version 9.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1240,7 +1249,7 @@
 
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 9.1</div>
+  <div class="ver-line">Version 9.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2305,13 +2314,17 @@
     b.className="tile foldertile";
     b.setAttribute("data-folder",f.id);
     b.setAttribute("data-label","\u0192:"+f.id);
-    var inner=(f.labels||[]).map(tileByLabel).filter(tileVisible).slice(0,4);
-    var mini=inner.map(function(t){
+    var all=(f.labels||[]).map(tileByLabel).filter(tileVisible);
+    var inner=all.slice(0,4), extra=all.length-inner.length;
+    var mini=inner.map(function(t,idx){
       var img=sbImgUrl(r_(t,"Image URL")||r_(t,"Image")||"");
+      var more=(extra>0 && idx===3) ? '<span class="fmore">+'+(extra+1)+'</span>' : '';
+      if(extra>0 && idx===3) return '<span class="fm more">'+more+'</span>';
       return img ? '<span class="fm" style="background-image:url('+JSON.stringify(img)+')"></span>'
                  : '<span class="fm ic"><svg viewBox="0 0 24 24">'+icon(r_(t,"Icon")||"")+'</svg></span>';
     }).join("");
-    while(mini.split("<span").length-1 < 4) mini+='<span class="fm empty"></span>';
+    var have=inner.length;
+    while(have<4){ mini+='<span class="fm empty"></span>'; have++; }
     b.innerHTML='<div class="fgrid">'+mini+'</div><div class="lab">'+esc(f.name||"Folder")+'</div>';
     return b;
   }
@@ -2352,11 +2365,20 @@
     }
     wrap.querySelector("#fClose").addEventListener("click",closeF);
     wrap.addEventListener("click",function(e){ if(e.target===wrap) closeF(); });
-    wrap.querySelector("#fUngroup").addEventListener("click",function(){
+    var ug=wrap.querySelector("#fUngroup");
+    ug.addEventListener("click",function(){
+      if(ug.getAttribute("data-armed")!=="1"){
+        ug.setAttribute("data-armed","1");
+        ug.classList.add("armed");
+        ug.textContent="Tap again to ungroup \u2014 tiles go back to the home screen";
+        setTimeout(function(){ if(ug.getAttribute("data-armed")==="1"){ ug.setAttribute("data-armed","0"); ug.classList.remove("armed"); ug.textContent="Ungroup \u2014 put these back on the home screen"; } },4000);
+        return;
+      }
       var fs=getFolders().filter(function(x2){ return x2.id!==f.id; });
       saveFolders(fs);
       try{ wrap.remove(); }catch(e){}
       paintTiles();
+      toast("Folder removed.");
     });
   }
 
@@ -2389,11 +2411,20 @@
   // ---- Long-press to rearrange tiles (saved per device) ----
   var RE={on:false, el:null, dragging:false, justDragged:false, offX:0, offY:0, lpTimer:0, sx:0, sy:0, hoverEl:null, mergeT:0, mergeReady:null, hoverX:0, hoverY:0};
   function saveTileOrderFromDOM(){
-    var labels=[]; Array.prototype.forEach.call($("grid").children,function(el){ var l=el.getAttribute("data-label"); if(l) labels.push(l); });
+    var labels=[], fs=getFolders();
+    Array.prototype.forEach.call($("grid").children,function(el){
+      var fid=el.getAttribute("data-folder");
+      if(fid){
+        // store the folder's tiles at this position so the folder stays put
+        for(var i=0;i<fs.length;i++){ if(fs[i].id===fid){ (fs[i].labels||[]).forEach(function(l){ labels.push(l); }); } }
+        return;
+      }
+      var l=el.getAttribute("data-label"); if(l) labels.push(l);
+    });
     try{ localStorage.setItem("hoh_tileorder", JSON.stringify(labels)); }catch(e){}
   }
   function enterReorder(){ if(RE.on) return; RE.on=true; $("grid").classList.add("reordering"); if($("reBar")) $("reBar").classList.remove("hidden"); }
-  function exitReorder(){ RE.on=false; RE.dragging=false; $("grid").classList.remove("reordering"); if($("reBar")) $("reBar").classList.add("hidden"); if(RE.el){ RE.el.classList.remove("dragging"); RE.el.style.transform=""; RE.el=null; } saveTileOrderFromDOM(); }
+  function exitReorder(skipSave){ RE.on=false; RE.dragging=false; $("grid").classList.remove("reordering"); if($("reBar")) $("reBar").classList.add("hidden"); if(RE.el){ RE.el.classList.remove("dragging"); RE.el.style.transform=""; RE.el=null; } if(!skipSave) saveTileOrderFromDOM(); }
   function beginDrag(tile, cx, cy){
     RE.el=tile; RE.dragging=true; tile.classList.add("dragging");
     var r=tile.getBoundingClientRect(); RE.offX=cx-r.left; RE.offY=cy-r.top;
@@ -2455,6 +2486,7 @@
     }
     saveFolders(fs);
     paintTiles();
+    saveTileOrderFromDOM();
   }
   function endDrag(){
     var merged=false;
@@ -2494,7 +2526,19 @@
     window.addEventListener("mouseup",function(){ if(RE.lpTimer){ clearTimeout(RE.lpTimer); RE.lpTimer=0; } if(RE.dragging) endDrag(); });
     g.addEventListener("contextmenu",function(e){ e.preventDefault(); });
     if($("reDone")) $("reDone").addEventListener("click",exitReorder);
-    if($("reReset")) $("reReset").addEventListener("click",function(){ try{localStorage.removeItem("hoh_tileorder"); localStorage.removeItem("hoh_tilefolders");}catch(e){} exitReorder(); paintTiles(); });
+    if($("reReset")) $("reReset").addEventListener("click",function(){
+      var b=this;
+      if(b.getAttribute("data-armed")!=="1"){
+        b.setAttribute("data-armed","1"); b.classList.add("armed"); b.textContent="Tap to confirm";
+        setTimeout(function(){ if(b.getAttribute("data-armed")==="1"){ b.setAttribute("data-armed","0"); b.classList.remove("armed"); b.textContent="Reset"; } },4000);
+        return;
+      }
+      b.setAttribute("data-armed","0"); b.classList.remove("armed"); b.textContent="Reset";
+      try{ localStorage.removeItem("hoh_tileorder"); localStorage.removeItem("hoh_tilefolders"); }catch(e){}
+      exitReorder(true);          // don't save the current arrangement back
+      paintTiles();
+      toast("Tiles reset to the standard layout.");
+    });
     if($("reCols2")) $("reCols2").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","2");}catch(e){} applyTileCols(); });
     if($("reCols3")) $("reCols3").addEventListener("click",function(){ try{localStorage.setItem("hoh_tilecols","3");}catch(e){} applyTileCols(); });
   })();
@@ -5038,7 +5082,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5080,7 +5124,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 9.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
