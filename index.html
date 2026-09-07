@@ -656,6 +656,10 @@
   .adm-pausebtn.on{background:#ede4fb;border-color:#c9b3f0;color:#5b3aa8}
   .adm-certdel{flex:0 0 auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
   .adm-certdel.armed{background:var(--red);color:#fff;border-color:var(--red)}
+  .adm-ct{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .adm-ct:last-child{border-bottom:0}
+  .adm-ctn{flex:1;min-width:0;font-weight:700;font-size:14.5px}
+  .adm-ctd{font-size:12px;color:var(--mut);font-weight:400;margin-top:3px}
   .adm-addcert{width:100%;border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:11px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;margin-top:14px}
   .adm-addcert:active{background:#eef2f7}
   .stand-body{padding:16px 14px 34px;max-width:560px;margin:0 auto;overflow:auto}
@@ -1215,7 +1219,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.8</div>
+  <div class="ver-line">Version 11.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1331,7 +1335,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.8</div>
+  <div class="ver-line">Version 11.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3479,6 +3483,7 @@
     {k:"members",label:"Members"},
     {k:"settings",label:"Settings"},
     {k:"tiles",label:"Tiles"},
+    {k:"certtypes",label:"Certifications"},
     {k:"hospitals",label:"Hospitals"},
     {k:"apartments",label:"Apartments"},
     {k:"tasklist",label:"Task List"},
@@ -3596,6 +3601,15 @@
     }).join("");
   }
   function admLoadSec(k){
+    if(k==="certtypes"){
+      if(CERT.certCols&&CERT.certCols.length){ admRenderCertTypes(); return; }
+      $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
+      fetchTab("Certifications").then(function(rows){
+        if(rows&&rows.length){ CERT.rows=rows; CERT.certCols=computeCertCols(rows[0]); }
+        admRenderCertTypes();
+      }).catch(function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn\u2019t load.</div>'; });
+      return;
+    }
     var tab=ADM_TABLES[k];
     $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
     if(ADM2.loaded[k]){ admRenderSec(k); return; }
@@ -3607,6 +3621,51 @@
     // The app treats a blank "Active" as active, so the toggle must agree.
     if(v==="") return (header==="Active");
     return v==="x"||v==="yes"||v==="true"; }
+  function admRenderCertTypes(){
+    var cols=(CERT.certCols||[]);
+    var raw=String(getSetting("Certifications That Block Response","")||"").trim();
+    var list=raw.split(",").map(function(s){return s.trim().toLowerCase();}).filter(function(s){return s;});
+    var allBlock=(list.length===0);
+    var rows=cols.map(function(c,i){
+      var key=(sbCol("certifications", c.expKey||c.singleKey||"")||"").toLowerCase();
+      var on = allBlock || list.indexOf(String(c.name).toLowerCase())>=0 || (key && list.indexOf(key)>=0);
+      return '<div class="adm-ct"><div class="adm-ctn">'+esc(c.name)+
+        '<div class="adm-ctd">'+(on?"Cannot respond to patients while expired"
+                                  :"Reminders only \u2014 can still respond")+'</div></div>'+
+        '<button class="adm-sw'+(on?" on":"")+'" data-block="'+esc(c.name)+'"></button></div>';
+    }).join("");
+    $("admGenPane").innerHTML='<div class="adm-body">'+
+      '<div class="adm-mh"><div class="t"><h3>Certifications</h3><div class="u">'+cols.length+' in use</div></div></div>'+
+      '<div class="adm-help">Turn a certification <b>on</b> if being expired means that person '+
+        'cannot respond to patients. Leave it <b>off</b> for things like the ambulance permit \u2014 '+
+        'they still get reminders, they just aren\u2019t told they can\u2019t respond.</div>'+
+      (allBlock?'<div class="au-warn soft" style="margin-bottom:14px">Nothing is configured yet, so every certification is treated as blocking. Turn off the ones that shouldn\u2019t be.</div>':'')+
+      '<div class="adm-sec">'+(rows||'<div class="adm-empty">No certifications yet.</div>')+'</div>'+
+      '<div class="adm-save"><button class="pri" id="admGenSave">Save changes</button></div>'+
+      '<div class="adm-msg" id="admGenMsg"></div></div>';
+    ADM2.dirty=false;
+  }
+  function admSaveCertTypes(){
+    var on=[];
+    Array.prototype.forEach.call(document.querySelectorAll("[data-block]"),function(b){
+      if(b.classList.contains("on")) on.push(b.getAttribute("data-block"));
+    });
+    var msg=$("admGenMsg"), btn=$("admGenSave");
+    btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
+    // an empty list would mean "everything blocks", so store a marker instead
+    var val = on.length ? on.join(", ") : "(none)";
+    sbWrite("PATCH","settings?setting=eq."+encodeURIComponent("Certifications That Block Response"),{value:val})
+      .then(function(r){
+        btn.disabled=false; btn.textContent="Save changes";
+        if(!r.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; return; }
+        STATE.settings["Certifications That Block Response"]=val;
+        ADM2.dirty=false; btn.classList.remove("hot");
+        msg.className="adm-msg ok"; msg.textContent="Saved.";
+        try{ paintCertBanner(); }catch(e){}
+        setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500);
+      })
+      .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; });
+  }
   function admRenderCpr(){
     var rows=(ADM2.data.cpr||[]).slice().sort(function(a,b){
       return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
@@ -3768,6 +3827,7 @@
   }
   function admRenderSec(k){
     if(k==="cpr"){ admRenderCpr(); return; }
+    if(k==="certtypes"){ admRenderCertTypes(); return; }
     var cols=ADM_COLS[k], rows=(ADM2.data[k]||[]).slice();
     if(k==="tiles"||k==="cpr") rows.sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
     var help={
@@ -3949,6 +4009,7 @@
     return confirm("You have unsaved changes. Leave without saving?");
   }
   function admGenSave(){
+    if(ADM2.sec==="certtypes"){ admSaveCertTypes(); return; }
     var k=ADM2.sec, cols=ADM_COLS[k], rows=ADM2.view||[], tbl=SB_TAB2TBL[ADM_TABLES[k]];
     var msg=$("admGenMsg"), btn=$("admGenSave");
     btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
@@ -4823,6 +4884,7 @@
   }
   function certBlocks(c){
     var raw=String(getSetting("Certifications That Block Response","")||"").trim();
+    if(raw==="(none)") return false;            // explicitly: nothing blocks
     if(!raw) return true;                       // nothing configured = treat all as blocking
     var list=raw.split(",").map(function(s){return s.trim().toLowerCase();}).filter(function(s){return s;});
     var key=(sbCol("certifications", c.expKey||c.singleKey||"")||"").toLowerCase();
@@ -5604,7 +5666,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5646,7 +5708,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
