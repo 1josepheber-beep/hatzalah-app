@@ -1219,7 +1219,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.9</div>
+  <div class="ver-line">Version 12.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1335,7 +1335,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.9</div>
+  <div class="ver-line">Version 12.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3632,7 +3632,7 @@
       return '<div class="adm-ct"><div class="adm-ctn">'+esc(c.name)+
         '<div class="adm-ctd">'+(on?"Cannot respond to patients while expired"
                                   :"Reminders only \u2014 can still respond")+'</div></div>'+
-        '<button class="adm-sw'+(on?" on":"")+'" data-block="'+esc(c.name)+'"></button></div>';
+        '<button class="adm-sw'+(on?" on":"")+'" data-sw="1" data-block="'+esc(c.name)+'"></button></div>';
     }).join("");
     $("admGenPane").innerHTML='<div class="adm-body">'+
       '<div class="adm-mh"><div class="t"><h3>Certifications</h3><div class="u">'+cols.length+' in use</div></div></div>'+
@@ -3641,6 +3641,18 @@
         'they still get reminders, they just aren\u2019t told they can\u2019t respond.</div>'+
       (allBlock?'<div class="au-warn soft" style="margin-bottom:14px">Nothing is configured yet, so every certification is treated as blocking. Turn off the ones that shouldn\u2019t be.</div>':'')+
       '<div class="adm-sec">'+(rows||'<div class="adm-empty">No certifications yet.</div>')+'</div>'+
+      // the wording each group receives, right where you decide the grouping
+      '<div class="adm-sec"><div class="adm-sech">Email wording \u2014 switched ON<span class="bdg">cannot respond</span></div>'+
+        '<div class="adm-note" style="margin-bottom:12px">Sent when one of the certifications switched on above expires.</div>'+
+        '<label class="adm-f wide">Subject<input id="ce_sub_block" value="'+esc(getSetting("Cert Email Subject (expired)",""))+'" placeholder="Your {cert} has expired \u2014 Hatzalah of Houston"></label>'+
+        '<label class="adm-f wide">Message<textarea id="ce_body_block" rows="7" placeholder="Leave blank to use the standard wording">'+esc(getSetting("Cert Email Body (expired)",""))+'</textarea></label>'+
+      '</div>'+
+      '<div class="adm-sec"><div class="adm-sech">Email wording \u2014 switched OFF<span class="bdg">can still respond</span></div>'+
+        '<div class="adm-note" style="margin-bottom:12px">Sent when one of the certifications switched off above expires.</div>'+
+        '<label class="adm-f wide">Subject<input id="ce_sub_soft" value="'+esc(getSetting("Cert Email Subject (expired, non-blocking)",""))+'" placeholder="Action needed: your {cert} has expired \u2014 Hatzalah of Houston"></label>'+
+        '<label class="adm-f wide">Message<textarea id="ce_body_soft" rows="7" placeholder="Leave blank to use the standard wording">'+esc(getSetting("Cert Email Body (expired, non-blocking)",""))+'</textarea></label>'+
+        '<div class="adm-note">You can use {name}, {unit}, {cert}, {date} and {link} \u2014 they are filled in automatically.</div>'+
+      '</div>'+
       '<div class="adm-save"><button class="pri" id="admGenSave">Save changes</button></div>'+
       '<div class="adm-msg" id="admGenMsg"></div></div>';
     ADM2.dirty=false;
@@ -3654,11 +3666,21 @@
     btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
     // an empty list would mean "everything blocks", so store a marker instead
     var val = on.length ? on.join(", ") : "(none)";
-    sbWrite("PATCH","settings?setting=eq."+encodeURIComponent("Certifications That Block Response"),{value:val})
-      .then(function(r){
+    function put(k,v){
+      STATE.settings[k]=v;
+      return sbWrite("PATCH","settings?setting=eq."+encodeURIComponent(k),{value:v});
+    }
+    Promise.all([
+      put("Certifications That Block Response", val),
+      put("Cert Email Subject (expired)", ($("ce_sub_block")||{}).value||""),
+      put("Cert Email Body (expired)", ($("ce_body_block")||{}).value||""),
+      put("Cert Email Subject (expired, non-blocking)", ($("ce_sub_soft")||{}).value||""),
+      put("Cert Email Body (expired, non-blocking)", ($("ce_body_soft")||{}).value||"")
+    ])
+      .then(function(rs){
+        var r={ok:rs.every(function(x){return x&&x.ok!==false;})};
         btn.disabled=false; btn.textContent="Save changes";
         if(!r.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; return; }
-        STATE.settings["Certifications That Block Response"]=val;
         ADM2.dirty=false; btn.classList.remove("hot");
         msg.className="adm-msg ok"; msg.textContent="Saved.";
         try{ paintCertBanner(); }catch(e){}
@@ -3829,6 +3851,13 @@
     if(k==="cpr"){ admRenderCpr(); return; }
     if(k==="certtypes"){ admRenderCertTypes(); return; }
     var cols=ADM_COLS[k], rows=(ADM2.data[k]||[]).slice();
+    if(k==="settings"){
+      // these now live in the Certifications section, so they aren't shown twice
+      var moved={"certifications that block response":1,"cert email subject (expired)":1,
+                 "cert email body (expired)":1,"cert email subject (expired, non-blocking)":1,
+                 "cert email body (expired, non-blocking)":1};
+      rows=rows.filter(function(r){ return !moved[String(r_(r,"Setting")).trim().toLowerCase()]; });
+    }
     if(k==="tiles"||k==="cpr") rows.sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
     var help={
       settings:"Tap a setting to open it. These control how the app behaves for everyone \u2014 changes apply the next time members open the app.",
@@ -5666,7 +5695,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5708,7 +5737,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");

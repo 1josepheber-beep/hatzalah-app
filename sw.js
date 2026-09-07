@@ -1,5 +1,5 @@
 /* Hatzalah of Houston - service worker */
-var CACHE="hoh-v11.9";
+var CACHE="hoh-v12.0";
 var SHELL=["./","./index.html","./proto_index.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
 self.addEventListener("notificationclick",function(e){
