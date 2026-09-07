@@ -164,6 +164,21 @@
   @keyframes cpralert{0%,100%{background:#fff}50%{background:#ffd7da}}
   .cpr-epi.due{border-color:var(--gold)} .cpr-epi.due div#cprEpi{color:#b57c1e}
   .cpr-epi.over{border-color:var(--red)} .cpr-epi.over div#cprEpi{color:var(--red)}
+  .cert-banner{display:flex;align-items:center;gap:12px;border-radius:14px;padding:13px 14px;margin:0 0 14px;
+    cursor:pointer;border:1px solid transparent;box-shadow:var(--shadow)}
+  .cert-banner.hidden{display:none}
+  .cert-banner .cb-i{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .cert-banner .cb-i svg{width:19px;height:19px;fill:none;stroke-width:2}
+  .cert-banner .cb-t{flex:1;min-width:0}
+  .cert-banner .cb-t b{display:block;font-size:14.5px;font-weight:800;line-height:1.25}
+  .cert-banner .cb-t span{display:block;font-size:12.5px;margin-top:2px;line-height:1.4;opacity:.9}
+  .cert-banner .cb-go{width:18px;height:18px;fill:none;stroke-width:2.5;flex:0 0 auto;opacity:.6}
+  .cert-banner.bad{background:#fdecec;border-color:#f3b6b6;color:#8a1f1f}
+  .cert-banner.bad .cb-i{background:#f8d3d3} .cert-banner.bad svg{stroke:#8a1f1f}
+  .cert-banner.warn{background:#fff3d6;border-color:#f0d58f;color:#8a6d00}
+  .cert-banner.warn .cb-i{background:#fbe6ae} .cert-banner.warn svg{stroke:#8a6d00}
+  .cert-banner.soft{background:#eef4fc;border-color:#cfe0f5;color:#1d4a86}
+  .cert-banner.soft .cb-i{background:#dceaf9} .cert-banner.soft svg{stroke:#1d4a86}
   .cpr-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .cpr-b{border:0;border-radius:13px;padding:16px 10px;font-size:16px;font-weight:800;color:#fff;cursor:pointer}
   .cpr-b:active{opacity:.82}
@@ -1200,7 +1215,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 11.7</div>
+  <div class="ver-line">Version 11.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1313,9 +1328,10 @@
     <div class="sresults" id="sresults"></div>
   </div>
 
+  <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 11.7</div>
+  <div class="ver-line">Version 11.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4800,8 +4816,52 @@
       var me=(STATE.me&&STATE.me.unit)?normUnit(STATE.me.unit):"";
       var mine=rows.filter(function(r){ return normUnit(r["Unit #"]||r["Unit"])===me; });
       CERT.myWorst = mine.length? memberWorst(mine[0]) : "ok";
+      CERT.myIssues = mine.length? myCertIssues(mine[0]) : null;
       applyCertGlow();
+      paintCertBanner();
     }).catch(function(){});
+  }
+  function certBlocks(c){
+    var raw=String(getSetting("Certifications That Block Response","")||"").trim();
+    if(!raw) return true;                       // nothing configured = treat all as blocking
+    var list=raw.split(",").map(function(s){return s.trim().toLowerCase();}).filter(function(s){return s;});
+    var key=(sbCol("certifications", c.expKey||c.singleKey||"")||"").toLowerCase();
+    return list.indexOf(String(c.name).toLowerCase())>=0 || (key && list.indexOf(key)>=0);
+  }
+  function myCertIssues(row){
+    var out={expiredBlocking:[], expiredOther:[], soon:[]};
+    (CERT.certCols||[]).forEach(function(c){
+      if(certIsNA(row,c)) return;
+      var v=certExpVal(row,c); if(!v) return;
+      var k=certStatus(v).k;
+      if(k==="expired"){ (certBlocks(c)?out.expiredBlocking:out.expiredOther).push(c.name); }
+      else if(k==="soon"){ out.soon.push(c.name); }
+    });
+    return out;
+  }
+  function paintCertBanner(){
+    var host=$("certBanner"); if(!host) return;
+    var i=CERT.myIssues;
+    if(!i || STATE.demo){ host.innerHTML=""; host.className="cert-banner hidden"; return; }
+    function names(a){ return a.length>2 ? (a.slice(0,2).join(", ")+" and "+(a.length-2)+" more") : a.join(" and "); }
+    var cls, title, sub;
+    if(i.expiredBlocking.length){
+      cls="bad";
+      title="You are not cleared to respond";
+      sub=names(i.expiredBlocking)+(i.expiredBlocking.length===1?" has expired.":" have expired.")+" Renew and update it in the app.";
+    } else if(i.expiredOther.length){
+      cls="warn";
+      title="Something needs renewing";
+      sub=names(i.expiredOther)+(i.expiredOther.length===1?" has expired.":" have expired.")+" You can still respond to patients.";
+    } else if(i.soon.length){
+      cls="soft";
+      title="Expiring soon";
+      sub=names(i.soon)+(i.soon.length===1?" expires":" expire")+" in the next 30 days.";
+    } else { host.innerHTML=""; host.className="cert-banner hidden"; return; }
+    host.className="cert-banner "+cls;
+    host.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+      '<div class="cb-t"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></div>'+
+      '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
   }
   function applyCertGlow(){
     var btn=document.querySelector('.tile[data-type="certifications"],.tile[data-type="certs"]');
@@ -5544,7 +5604,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5586,7 +5646,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 11.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -5685,6 +5745,7 @@
     $("qMenu").classList.remove("hidden");
   }
   function closeQMenu(){ $("qMenu").classList.add("hidden"); }
+  $("certBanner").addEventListener("click",function(){ if(!this.classList.contains("hidden")) openCerts(); });
   $("qActions").addEventListener("click",openQMenu);
   $("qCancel").addEventListener("click",closeQMenu);
   $("qMenu").addEventListener("click",function(e){ if(e.target===this) closeQMenu(); });
