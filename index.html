@@ -626,8 +626,14 @@
   .adm-save .pri:disabled{opacity:.6}
   .adm-danger{background:#fff;color:var(--red);border:1px solid #f3b6b6;border-radius:12px;padding:13px;font-weight:800;font-size:14px;cursor:pointer;width:100%;margin-top:6px}
   .adm-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.45}
-  .adm-cert{padding:14px 0;border-bottom:1px solid var(--line)}
+  .adm-cert{padding:14px 20px 14px 16px;margin:0 -20px;border-bottom:1px solid var(--line);
+    border-left:4px solid transparent}
   .adm-cert:last-child{border-bottom:0}
+  /* status colours — same scheme the member-facing certification list uses */
+  .adm-cert.expired{border-left-color:var(--red);background:rgba(200,32,46,.05)}
+  .adm-cert.soon{border-left-color:var(--gold);background:rgba(201,147,58,.07)}
+  .adm-cert.ok{border-left-color:#2f9e44}
+  .adm-cert.na,.adm-cert.none{border-left-color:#c3ccda}
   .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .adm-cert .cn{font-weight:700;font-size:14.5px;min-width:0;flex:1}
   .adm-cert .cd{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400}
@@ -3156,7 +3162,7 @@
           var key=c.expKey||c.singleKey||c.numKey;
           var nk=(c.numKey && c.numKey!==key) ? c.numKey : "";
           var pk=certKeyOf(c), paused=certIsPaused(cr,c);
-          rows+='<div class="adm-cert">'+
+          rows+='<div class="adm-cert '+(isna?"na":(st.k||"none"))+'">'+
             '<div class="ctop"><span class="cn">'+esc(c.name)+
               (isna?'<div class="cd">Not required \u2014 hidden from this member</div>'
                    :(paused?'<div class="cd">Reminder emails paused</div>':''))+'</span>'+pill+
@@ -3425,6 +3431,17 @@
   $("amCancel").addEventListener("click",admAddClose);
   $("amSave").addEventListener("click",admAddSave);
   $("admAddModal").addEventListener("click",function(e){ if(e.target===this) admAddClose(); });
+  // keep the coloured stripe in step with what the admin is typing
+  function admCertTint(inp){
+    var card=inp.closest?inp.closest(".adm-cert"):null; if(!card) return;
+    var v=String(inp.value||"").trim(), low=v.toLowerCase();
+    var k=(low==="n/a"||low==="na") ? "na" : (certStatus(v).k||"none");
+    card.className="adm-cert "+k;
+  }
+  $("admRight").addEventListener("input",function(e){
+    var t=e.target;
+    if(t&&t.classList&&t.classList.contains("adm-cdate")) admCertTint(t);
+  });
   $("admRight").addEventListener("click",function(e){
     var dc=e.target.closest?e.target.closest(".adm-certdel"):null;
     if(dc){
@@ -3457,6 +3474,7 @@
       var nkey=na.getAttribute("data-num")||"";
       if(nkey){ var ninp=$("admRight").querySelector('.adm-cnum[data-col="'+nkey.replace(/"/g,'\\"')+'"]');
         if(ninp) ninp.style.display = on ? "" : "none"; }
+      if(inp) admCertTint(inp);
       na.setAttribute("data-on", on?"0":"1");
       na.textContent = on ? "Not required" : "Require";
       return;
