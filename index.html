@@ -799,6 +799,22 @@
   .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
   .eq-imgpv.hidden{display:none}
   .eq-thumb{width:42px;height:42px;object-fit:cover;border-radius:9px;border:1px solid var(--line);flex:0 0 auto;cursor:zoom-in}
+  .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .adm-fileref{font-size:12px;color:var(--mut)}
+  /* Resources list */
+  .res-row{display:flex;align-items:center;gap:12px;padding:14px 12px;border-top:1px solid var(--line);
+    background:#fff;cursor:pointer}
+  .res-row:first-child{border-top:0}
+  .res-row:active{background:#f4f7fb}
+  .res-ic{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;
+    justify-content:center;font-size:10px;font-weight:800;letter-spacing:.03em;color:#fff;background:var(--navy)}
+  .res-ic.pdf{background:#c0392b} .res-ic.img{background:#2f9e44} .res-ic.doc{background:#2a6fb5}
+  .res-main{flex:1;min-width:0}
+  .res-nm{font-weight:700;font-size:14.5px;line-height:1.3}
+  .res-ds{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
+  .res-fn{font-size:11px;color:#9aa7b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .res-go{flex:0 0 auto;width:22px;height:22px;stroke:#9aa7b8;fill:none;stroke-width:2}
+  .res-note{font-size:12px;color:var(--mut);padding:12px;text-align:center;line-height:1.5}
   .adm-uprow{display:flex;align-items:center;gap:10px;margin:-6px 0 14px}
   .adm-up{border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
   .adm-up:disabled{opacity:.6}
@@ -1226,7 +1242,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 12.3</div>
+  <div class="ver-line">Version 12.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1342,7 +1358,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 12.3</div>
+  <div class="ver-line">Version 12.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1506,6 +1522,16 @@
   <div class="apt-hint" id="aptMapHint">Pinch or double-tap to zoom &middot; drag to move</div>
 </div>
 
+<div class="screen" id="resScreen">
+  <div class="scr-head">
+    <button class="back" id="resBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Resources</h2>
+  </div>
+  <div class="scr-search" id="resSearchWrap">
+    <input id="resSearch" type="search" placeholder="Search documents" enterkeyhint="search">
+  </div>
+  <div class="scr-body" id="resBody"></div>
+</div>
 <div class="screen" id="certScreen">
   <div class="scr-head">
     <button class="back" id="certBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -1822,8 +1848,8 @@
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
-  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads"};
-  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"}};
+  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources"};
+  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
@@ -2363,10 +2389,79 @@
       return "sb:"+name;   // store this short reference in the table
     });
   }
+  // ---- Documents (Resources) -------------------------------------------
+  // These live in a PRIVATE bucket. Nothing here can be opened with a plain
+  // link: the app asks Supabase for a signed link that expires after an hour,
+  // so a document cannot be read by anyone who is not signed in.
+  var SB_DOCS="docs";
+  function docSafeName(n){
+    var s=String(n||"file").replace(/\.[^.]*$/,"");
+    s=s.replace(/[^A-Za-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60);
+    return s||"file";
+  }
+  function docExt(n){
+    var m=String(n||"").match(/\.([A-Za-z0-9]{1,8})$/);
+    return m?m[1].toLowerCase():"bin";
+  }
+  var DOC_TYPES={pdf:"application/pdf",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",
+    gif:"image/gif",webp:"image/webp",heic:"image/heic",doc:"application/msword",
+    docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"};
+  function sbUploadDoc(file){
+    var ext=docExt(file.name), mime=DOC_TYPES[ext]||file.type||"application/octet-stream";
+    // the original name is kept in the path so the admin list stays readable
+    var name="resources/"+Date.now().toString(36)+"-"+docSafeName(file.name)+"."+ext;
+    return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(name),{
+      method:"POST",
+      headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON),
+                "Content-Type":mime, "x-upsert":"true" },
+      body:file
+    }).then(function(r){
+      if(!r.ok) return r.text().then(function(t){
+        var msg=t||("upload-"+r.status);
+        try{ var j=JSON.parse(t); msg=(j.message||j.error||msg)+" ("+r.status+")"; }catch(e){ msg=msg+" ("+r.status+")"; }
+        try{ console.error("Doc upload failed:", r.status, t); }catch(e){}
+        throw msg;
+      });
+      return "doc:"+name;
+    });
+  }
+  // Turn "doc:resources/xyz-sop.pdf" into a link that works for one hour.
+  function sbSignedUrl(ref, downloadAs){
+    var path=String(ref||"").replace(/^doc:/,"");
+    if(!path) return Promise.reject("no-file");
+    return fetch(SB_URL+"/storage/v1/object/sign/"+SB_DOCS+"/"+encodeURI(path),{
+      method:"POST",
+      headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON),
+                "Content-Type":"application/json" },
+      body:JSON.stringify({expiresIn:3600})
+    }).then(function(r){
+      if(!r.ok) throw "sign-"+r.status;
+      return r.json();
+    }).then(function(j){
+      var u=j.signedURL||j.signedUrl||"";
+      if(!u) throw "no-signed-url";
+      if(u.indexOf("http")!==0) u=SB_URL+"/storage/v1"+(u.indexOf("/")===0?"":"/")+u;
+      if(downloadAs) u+=(u.indexOf("?")>-1?"&":"?")+"download="+encodeURIComponent(downloadAs);
+      return u;
+    });
+  }
+  function docFileName(ref){
+    var p=String(ref||"").replace(/^doc:/,"").split("/").pop()||"";
+    return p.replace(/^[a-z0-9]+-/,"");   // strip the timestamp prefix
+  }
+  function docIsImage(ref){ return /^(png|jpe?g|gif|webp|heic)$/.test(docExt(docFileName(ref))); }
+
   // Generic "pick a file" helper
   function sbPickImage(cb){
     var inp=document.createElement("input");
     inp.type="file"; inp.accept="image/*"; inp.style.display="none";
+    inp.addEventListener("change",function(){ var f=inp.files&&inp.files[0]; document.body.removeChild(inp); if(f) cb(f); });
+    document.body.appendChild(inp); inp.click();
+  }
+  function sbPickDoc(cb){
+    var inp=document.createElement("input");
+    inp.type="file"; inp.accept=".pdf,.png,.jpg,.jpeg,.gif,.webp,.heic,.doc,.docx,application/pdf,image/*";
+    inp.style.display="none";
     inp.addEventListener("change",function(){ var f=inp.files&&inp.files[0]; document.body.removeChild(inp); if(f) cb(f); });
     document.body.appendChild(inp); inp.click();
   }
@@ -2939,6 +3034,7 @@
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
     if(type==="admin"||type==="adminportal"||type==="manage"){ openAdmin(); return; }
     if(type==="directory"||type==="members"||type==="contacts"){ openDirectory(); return; }
+    if(type==="resources"||type==="documents"||type==="docs"){ openResources(); return; }
     toast('"'+r_(t,"Label")+'" is being added next.');
   }
 
@@ -3512,22 +3608,24 @@
     {k:"apartments",label:"Apartments"},
     {k:"tasklist",label:"Task List"},
     {k:"cpr",label:"CPR Buttons"},
+    {k:"resources",label:"Resources"},
     {k:"uploads",label:"Upload Types"},
     {k:"guests",label:"Guest Codes"}
   ];
-  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List"};
-  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1};
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources"};
+  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
     "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
   // column spec per section: [header, label, kind, opts]
   var ADM_COLS={
     settings:[["Setting","Setting","ro"],["Value","Value","text"]],
     tiles:[["Label","Label","text"],
-           ["Type","Type","sel:link=Web link or phone number|app=Open another app|hospitals=Hospitals|protocols=Protocols|erg=ERG|medication=Medication lookup|certifications=Certifications|taskbook=Task Book|equipment=State Equipment checklist|placement=Equipment Finder|apartments=Apartments Finder|directory=Members Directory|upload=File Uploader|board=Scheduler / status board|availability=Availability|admin=Admin portal"],
+           ["Type","Type","sel:link=Web link or phone number|app=Open another app|hospitals=Hospitals|protocols=Protocols|erg=ERG|medication=Medication lookup|certifications=Certifications|taskbook=Task Book|equipment=State Equipment checklist|placement=Equipment Finder|apartments=Apartments Finder|directory=Members Directory|upload=File Uploader|board=Scheduler / status board|availability=Availability|resources=Resources|admin=Admin portal"],
            ["Target","Target","text"],
            ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
     apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
     cpr:[["Label","Label","text"],["Action","What it does","sel:log|drug|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
+    resources:[["Title","Title","text"],["Description","Description (optional)","text"],["File","File","file"],["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Phone (Call)","Phone","text"],
@@ -3902,7 +4000,7 @@
 
     var body=rows.map(function(r,i){
       var title = k==="settings" ? r_(r,"Setting")
-                : (r_(r,"Label")||r_(r,"Name")||r_(r,"Hospital Name")||r_(r,"Task")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
+                : (r_(r,"Label")||r_(r,"Name")||r_(r,"Hospital Name")||r_(r,"Task")||r_(r,"Title")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
       var sub="";
       if(k==="settings") sub=r_(r,"Value");
       else if(k==="tiles") sub=r_(r,"Type");
@@ -3910,6 +4008,7 @@
       else if(k==="hospitals") sub=r_(r,"Phone (Call)");
       else if(k==="apartments") sub=r_(r,"Address");
       else if(k==="tasklist") sub=r_(r,"Category");
+      else if(k==="resources") sub=docFileName(r_(r,"File"));
       var off = (k!=="settings" && !admBoolOn(r_(r,"Active"),"Active"));
 
       var fields=cols.map(function(c){
@@ -3931,6 +4030,15 @@
           // keep any value already saved that isn't in the list, so nothing is silently changed
           if(v && !hit) o+='<option value="'+esc(v)+'" selected>'+esc(v)+'</option>';
           return '<label class="adm-f">'+label+'<select id="'+id+'" data-h="'+esc(header)+'">'+o+'</select></label>';
+        }
+        if(kind==="file"){
+          var fn=docFileName(v);
+          return '<label class="adm-f wide">'+label+
+            '<input id="'+id+'" data-h="'+esc(header)+'" type="text" value="'+esc(v)+'" readonly '+
+              'placeholder="No file uploaded yet" class="adm-fileref"></label>'+
+            '<div class="adm-uprow"><button class="adm-up" data-up="'+id+'" data-doc="1">'+
+              (v?"Replace file":"Upload PDF or image")+'</button>'+
+            '<span class="adm-fname" id="'+id+'_fn">'+(fn?esc(fn):"")+'</span></div>';
         }
         var t = kind==="num" ? "number" : "text";
         var wide = (header==="Value"||header==="Target"||header==="Address"||header==="Image"||header==="Task"||header==="Address (Navigate)"||header==="Specialties (summary)");
@@ -4128,6 +4236,7 @@
       var bad=res.filter(function(x){return !x.ok;}).length;
       if(bad){ msg.className="adm-msg err"; msg.textContent="Some changes didn\u2019t save. Try again."; }
       else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded[k]=false; STATE.settingsDirty=true;
+        if(k==="resources") RES.loaded=false;
         ADM2.dirty=false; var sb=$("admGenSave"); if(sb){ sb.classList.remove("hot"); sb.textContent="Save changes"; }
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
     }).catch(function(){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
@@ -4136,7 +4245,7 @@
     var k=ADM2.sec, tbl=SB_TAB2TBL[ADM_TABLES[k]], cols=ADM_COLS[k];
     var blank={};
     cols.forEach(function(c){ blank[sbCol(tbl,c[0])]= (c[2]==="bool"?"X":""); });
-    if(k==="tiles"||k==="cpr"){ var mx=0; (ADM2.data[k]||[]).forEach(function(r){ mx=Math.max(mx,parseFloat(r_(r,"Order"))||0); }); blank[sbCol(tbl,"Order")]=String(mx+1); }
+    if(ADM_ORDERABLE[k]){ var mx=0; (ADM2.data[k]||[]).forEach(function(r){ mx=Math.max(mx,parseFloat(r_(r,"Order"))||0); }); blank[sbCol(tbl,"Order")]=String(mx+1); }
     sbWrite("POST",tbl,blank).then(function(res){
       if(!res.ok){ toast("Couldn\u2019t add row."); return; }
       ADM2.loaded[k]=false; toast("Row added."); admLoadSec(k);
@@ -4183,6 +4292,23 @@
     var up=e.target.closest?e.target.closest(".adm-up"):null;
     if(up){
       var targetId=up.getAttribute("data-up"), folder=up.getAttribute("data-folder")||"misc";
+      if(up.getAttribute("data-doc")){
+        sbPickDoc(function(file){
+          if(file.size>50*1024*1024){ toast("That file is over 50 MB \u2014 too big to upload."); return; }
+          var was=up.textContent;
+          up.disabled=true; up.textContent="Uploading\u2026";
+          sbUploadDoc(file).then(function(ref){
+            var inp=$(targetId); if(inp) inp.value=ref;
+            var fn=$(targetId+"_fn"); if(fn) fn.textContent=docFileName(ref);
+            up.disabled=false; up.textContent="Replace file";
+            toast("Uploaded \u2014 press Save to keep it.");
+          }).catch(function(err){
+            up.disabled=false; up.textContent=was;
+            toast("Upload failed."); try{ console.error("doc upload:",err); }catch(e){}
+          });
+        });
+        return;
+      }
       sbPickImage(function(file){
         up.disabled=true; up.textContent="Uploading\u2026";
         sbUpload(folder,file,{maxDim:900,quality:0.85}).then(function(ref){
@@ -5229,6 +5355,80 @@
     window.addEventListener("mouseup",function(){ md=null; });
   })();
 
+  // ---------- Resources (SOPs, rules, forms) ----------
+  var RES={loaded:false,rows:[],q:""};
+  function closeResources(){ $("resScreen").classList.remove("open"); }
+  function openResources(){
+    if(demoNo()) return;
+    if(!$("resScreen").classList.contains("open")) navOpen(closeResources);
+    $("resScreen").classList.add("open");
+    if(RES.loaded){ renderRes(); return; }
+    $("resBody").innerHTML='<div class="empty">Loading\u2026</div>';
+    fetchTab("Resources").then(function(rows){
+      RES.rows=rows||[]; RES.loaded=true; renderRes();
+    }).catch(function(){
+      $("resBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>';
+    });
+  }
+  function resKind(ref){
+    var e=docExt(docFileName(ref));
+    if(e==="pdf") return "pdf";
+    if(docIsImage(ref)) return "img";
+    if(e==="doc"||e==="docx") return "doc";
+    return "doc";
+  }
+  function renderRes(){
+    var b=$("resBody"), q=String(RES.q||"").toLowerCase().trim();
+    var list=RES.rows.filter(function(r){
+      if(!admBoolOn(r_(r,"Active"),"Active")) return false;
+      if(!r_(r,"File")) return false;
+      if(q){
+        var hay=(r_(r,"Title")+" "+r_(r,"Description")+" "+docFileName(r_(r,"File"))).toLowerCase();
+        if(hay.indexOf(q)<0) return false;
+      }
+      return true;
+    });
+    list.sort(function(a,b2){
+      var x=parseFloat(r_(a,"Order"))||9999, y=parseFloat(r_(b2,"Order"))||9999;
+      if(x!==y) return x-y;
+      return r_(a,"Title").toLowerCase().localeCompare(r_(b2,"Title").toLowerCase());
+    });
+    if(!list.length){
+      b.innerHTML='<div class="empty">'+(q?"No documents match that search.":"No documents have been added yet.")+'</div>';
+      return;
+    }
+    b.innerHTML=list.map(function(r){
+      var ref=r_(r,"File"), k=resKind(ref), fn=docFileName(ref), ds=r_(r,"Description");
+      return '<div class="res-row" data-ref="'+esc(ref)+'" data-t="'+esc(r_(r,"Title")||fn)+'">'+
+        '<div class="res-ic '+k+'">'+(k==="img"?"IMG":(k==="pdf"?"PDF":"DOC"))+'</div>'+
+        '<div class="res-main"><div class="res-nm">'+esc(r_(r,"Title")||fn)+'</div>'+
+          (ds?'<div class="res-ds">'+esc(ds)+'</div>':'')+
+          '<div class="res-fn">'+esc(fn)+'</div></div>'+
+        '<svg class="res-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
+    }).join("")+'<div class="res-note">Documents open with a secure link that expires after an hour.</div>';
+  }
+  $("resBack").addEventListener("click",function(){ navBack(); });
+  $("resSearch").addEventListener("input",function(){ RES.q=this.value; renderRes(); });
+  $("resBody").addEventListener("click",function(e){
+    var row=e.target.closest?e.target.closest(".res-row"):null; if(!row) return;
+    var ref=row.getAttribute("data-ref"), title=row.getAttribute("data-t")||"";
+    if(!ref) return;
+    // A popup opened inside an async callback gets blocked on iOS, so open the
+    // tab first and point it at the signed link once we have it.
+    var isImg=docIsImage(ref);
+    var win=isImg?null:window.open("","_blank");
+    toast("Opening\u2026");
+    sbSignedUrl(ref).then(function(u){
+      if(isImg){ openPhoto(u,title); return; }
+      if(win && !win.closed){ win.location.href=u; }
+      else { window.open(u,"_blank","noopener"); }
+    }).catch(function(err){
+      if(win && !win.closed) try{ win.close(); }catch(e){}
+      toast("Couldn\u2019t open that document.");
+      try{ console.error("resource open:",err); }catch(e){}
+    });
+  });
+
   function openCerts(){
     if(!$("certScreen").classList.contains("open")) navOpen(closeCerts);
     $("certScreen").classList.add("open");
@@ -5729,7 +5929,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5771,7 +5971,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
