@@ -631,10 +631,11 @@
   .adm-cert .ctop{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .adm-cert .cn{font-weight:700;font-size:14.5px;min-width:0;flex:1}
   .adm-cert .cd{font-size:12px;color:var(--mut);margin-top:3px;font-weight:400}
-  /* phone: the date gets its own full-width row, the buttons wrap underneath */
+  /* phone: each input gets its own full-width row, the buttons wrap underneath */
   .adm-cert .cbot{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
   .adm-cert input{flex:1 1 100%;width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;
     padding:12px 13px;font-size:16px;font-family:inherit;background:#fff}
+  .adm-cert input.adm-cnum{font-variant-numeric:tabular-nums}
   .adm-cert input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(20,61,117,.10)}
   .adm-cert input::placeholder{color:#9aa7b8}
   .adm-cert .pill{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;flex:0 0 auto;letter-spacing:.03em}
@@ -643,8 +644,8 @@
   @media (min-width:820px){
     .adm-cert{display:grid;grid-template-columns:1fr auto;gap:10px 14px;align-items:center}
     .adm-cert .ctop{margin-bottom:0}
-    .adm-cert .cbot{flex-wrap:nowrap}
-    .adm-cert input{width:150px;flex:0 0 auto}
+    .adm-cert .cbot{flex-wrap:wrap;justify-content:flex-end;max-width:440px}
+    .adm-cert input{width:138px;flex:0 0 auto}
     .adm-cert .cbot > button{flex:0 0 auto}
   }
   .adm-cert .pill.ok{background:#e4f6e9;color:#1e7a3d}
@@ -1219,7 +1220,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 12.0</div>
+  <div class="ver-line">Version 12.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1335,7 +1336,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 12.0</div>
+  <div class="ver-line">Version 12.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3153,6 +3154,7 @@
           var pill = isna ? '<span class="pill na">N/A</span>'
             : (!v ? '' : '<span class="pill '+(st.k==="expired"?"exp":(st.k==="soon"?"soon":"ok"))+'">'+(st.k==="expired"?"Expired":(st.k==="soon"?"Soon":"OK"))+'</span>');
           var key=c.expKey||c.singleKey||c.numKey;
+          var nk=(c.numKey && c.numKey!==key) ? c.numKey : "";
           var pk=certKeyOf(c), paused=certIsPaused(cr,c);
           rows+='<div class="adm-cert">'+
             '<div class="ctop"><span class="cn">'+esc(c.name)+
@@ -3160,8 +3162,9 @@
                    :(paused?'<div class="cd">Reminder emails paused</div>':''))+'</span>'+pill+
               (paused?'<span class="pill pause">Paused</span>':'')+'</div>'+
             '<div class="cbot">'+
+              (nk?'<input class="adm-cnum" data-col="'+esc(nk)+'" value="'+esc(cr[nk]==null?"":cr[nk])+'" placeholder="Certificate #"'+(isna?' style="display:none"':'')+'>':'')+
               (key?'<input class="adm-cdate" data-col="'+esc(key)+'" value="'+esc(isna?"N/A":(v||""))+'" placeholder="M/D/YYYY or N/A">':'')+
-              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not req.")+'</button>':'')+
+              (key?'<button class="adm-nabtn" data-na="'+esc(key)+'" data-num="'+esc(nk)+'" data-on="'+(isna?"1":"0")+'">'+(isna?"Require":"Not req.")+'</button>':'')+
               (pk&&!isna?'<button class="adm-pausebtn'+(paused?" on":"")+'" data-pause="'+esc(pk)+'">'+(paused?"Resume":"Pause")+'</button>':'')+
               (pk?'<button class="adm-certdel" data-delcert="'+esc(pk)+'" data-name="'+esc(c.name)+'" data-armed="0">Remove</button>':'')+
             '</div></div>';
@@ -3204,7 +3207,7 @@
       var cr=admCertRow(ADM.sel);
       if(!cr){ btn.disabled=false; btn.textContent="Save changes"; return; }
       var cupd={}, any=false;
-      Array.prototype.forEach.call(document.querySelectorAll(".adm-cdate"),function(inp){
+      Array.prototype.forEach.call(document.querySelectorAll(".adm-cdate,.adm-cnum"),function(inp){
         var header=inp.getAttribute("data-col"), db=sbCol("certifications",header);
         if(db){ cupd[db]=String(inp.value||"").trim(); cr[header]=cupd[db]; any=true; }
       });
@@ -3451,6 +3454,9 @@
       var key=na.getAttribute("data-na"), on=na.getAttribute("data-on")==="1";
       var inp=$("admRight").querySelector('.adm-cdate[data-col="'+key+'"]');
       if(inp){ inp.value = on ? "" : "N/A"; }
+      var nkey=na.getAttribute("data-num")||"";
+      if(nkey){ var ninp=$("admRight").querySelector('.adm-cnum[data-col="'+nkey.replace(/"/g,'\\"')+'"]');
+        if(ninp) ninp.style.display = on ? "" : "none"; }
       na.setAttribute("data-on", on?"0":"1");
       na.textContent = on ? "Not required" : "Require";
       return;
@@ -5695,7 +5701,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5737,7 +5743,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
