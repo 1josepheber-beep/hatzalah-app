@@ -802,6 +802,19 @@
   .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm-fileref{font-size:12px;color:var(--mut)}
   /* Resources list */
+  /* In-app PDF reader */
+  .pdf-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:#f7f9fc}
+  .pdf-pg{flex:1;min-width:0;font-size:12px;color:var(--mut);font-weight:700;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pdf-btn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;
+    padding:8px 12px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;min-width:38px}
+  .pdf-btn:active{background:#eef2f7}
+  .pdf-btn:disabled{opacity:.5}
+  .pdf-body{background:#5b6675;padding:12px 0 30px;overflow-x:auto}
+  .pdf-page{display:block;margin:0 auto 12px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.28);max-width:none}
+  .pdf-msg{color:#fff;text-align:center;padding:34px 20px;font-size:14px;line-height:1.6}
+  .pdf-msg button{margin-top:14px;border:0;background:#fff;color:var(--navy);border-radius:10px;
+    padding:11px 18px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit}
   .res-row{display:flex;align-items:center;gap:12px;padding:14px 12px;border-top:1px solid var(--line);
     background:#fff;cursor:pointer}
   .res-row:first-child{border-top:0}
@@ -1242,7 +1255,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 12.4</div>
+  <div class="ver-line">Version 12.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1358,7 +1371,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 12.4</div>
+  <div class="ver-line">Version 12.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1522,6 +1535,19 @@
   <div class="apt-hint" id="aptMapHint">Pinch or double-tap to zoom &middot; drag to move</div>
 </div>
 
+<div class="screen" id="pdfScreen">
+  <div class="scr-head">
+    <button class="back" id="pdfBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2 id="pdfTitle">Document</h2>
+  </div>
+  <div class="pdf-bar">
+    <span class="pdf-pg" id="pdfPg"></span>
+    <button class="pdf-btn" id="pdfZout" aria-label="Zoom out">&#8722;</button>
+    <button class="pdf-btn" id="pdfZin" aria-label="Zoom in">+</button>
+    <button class="pdf-btn" id="pdfDl">Download</button>
+  </div>
+  <div class="scr-body pdf-body" id="pdfBody"></div>
+</div>
 <div class="screen" id="resScreen">
   <div class="scr-head">
     <button class="back" id="resBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -5355,6 +5381,124 @@
     window.addEventListener("mouseup",function(){ md=null; });
   })();
 
+  // ---------- In-app PDF reader ----------
+  // PDF.js is fetched only the first time someone opens a PDF. If it can't be
+  // reached (a filtered network will block the CDN) the reader says so and
+  // offers to open the document in the browser instead.
+  var PDFJS_VER="3.11.174";
+  var PDFJS_BASE="https://cdn.jsdelivr.net/npm/pdfjs-dist@"+PDFJS_VER+"/";
+  var PDFJS_SRC=PDFJS_BASE+"build/pdf.min.js";
+  var PDFJS_WORKER=PDFJS_BASE+"build/pdf.worker.min.js";
+  // Many documents reference Helvetica/Times without embedding them. Without
+  // these two folders that text silently fails to draw.
+  var PDFJS_FONTS=PDFJS_BASE+"standard_fonts/";
+  var PDFJS_CMAPS=PDFJS_BASE+"cmaps/";
+  var PDFV={url:"",name:"",ref:"",doc:null,zoom:1,busy:false};
+  var pdfLibP=null;
+  function loadPdfLib(){
+    if(window.pdfjsLib){
+      try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER; }catch(e){}
+      return Promise.resolve(window.pdfjsLib);
+    }
+    if(pdfLibP) return pdfLibP;
+    pdfLibP=new Promise(function(res,rej){
+      var s=document.createElement("script"); s.src=PDFJS_SRC; s.async=true;
+      var to=setTimeout(function(){ rej("pdf-timeout"); },20000);
+      s.onload=function(){ clearTimeout(to);
+        if(!window.pdfjsLib) return rej("pdf-missing");
+        try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS_WORKER; }catch(e){}
+        res(window.pdfjsLib); };
+      s.onerror=function(){ clearTimeout(to); rej("pdf-blocked"); };
+      document.head.appendChild(s);
+    });
+    pdfLibP["catch"](function(){ pdfLibP=null; });   // let it be retried
+    return pdfLibP;
+  }
+  function closePdfView(){
+    $("pdfScreen").classList.remove("open");
+    try{ if(PDFV.doc && PDFV.doc.destroy) PDFV.doc.destroy(); }catch(e){}
+    PDFV.doc=null; $("pdfBody").innerHTML="";
+  }
+  function pdfFallbackMsg(msg){
+    $("pdfBody").innerHTML='<div class="pdf-msg">'+esc(msg)+
+      '<br><button id="pdfFallback">Open in browser</button></div>';
+    var fb=$("pdfFallback");
+    if(fb) fb.addEventListener("click",function(){
+      if(PDFV.url) window.open(PDFV.url,"_blank","noopener");
+    });
+  }
+  function openPdfView(url,title,ref){
+    PDFV.url=url; PDFV.name=title||"Document"; PDFV.ref=ref||""; PDFV.zoom=1;
+    if(!$("pdfScreen").classList.contains("open")) navOpen(closePdfView);
+    $("pdfScreen").classList.add("open");
+    $("pdfTitle").textContent=PDFV.name;
+    $("pdfPg").textContent="";
+    $("pdfBody").innerHTML='<div class="pdf-msg">Loading document\u2026</div>';
+    loadPdfLib().then(function(lib){
+      return lib.getDocument({url:url, standardFontDataUrl:PDFJS_FONTS,
+        cMapUrl:PDFJS_CMAPS, cMapPacked:true}).promise;
+    }).then(function(doc){
+      PDFV.doc=doc; renderPdf();
+    })["catch"](function(err){
+      try{ console.error("pdf open:",err); }catch(e){}
+      pdfFallbackMsg(err==="pdf-blocked"||err==="pdf-timeout"
+        ? "This document viewer couldn\u2019t load on this network."
+        : "This document couldn\u2019t be shown in the app.");
+    });
+  }
+  function renderPdf(){
+    var body=$("pdfBody"), doc=PDFV.doc; if(!doc || PDFV.busy) return;
+    PDFV.busy=true; body.innerHTML="";
+    $("pdfPg").textContent=doc.numPages+(doc.numPages===1?" page":" pages")+
+      (PDFV.zoom>1?"  \u00B7 "+Math.round(PDFV.zoom*100)+"%":"");
+    var avail=(body.clientWidth||320)-20;
+    var base=Math.max(220, Math.min(avail, 1100));
+    var width=base*PDFV.zoom;
+    var dpr=Math.min(window.devicePixelRatio||1, 2);
+    var n=0;
+    function next(){
+      n++;
+      if(n>doc.numPages){ PDFV.busy=false; return; }
+      doc.getPage(n).then(function(pg){
+        var v1=pg.getViewport({scale:1});
+        var sc=width/v1.width;
+        var vp=pg.getViewport({scale:sc*dpr});
+        var cv=document.createElement("canvas");
+        cv.className="pdf-page";
+        cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
+        cv.style.width=Math.floor(vp.width/dpr)+"px";
+        cv.style.height=Math.floor(vp.height/dpr)+"px";
+        body.appendChild(cv);
+        return pg.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+      }).then(next)["catch"](function(e){
+        try{ console.error("pdf page "+n+":",e); }catch(x){}
+        next();
+      });
+    }
+    next();
+  }
+  function pdfZoom(d){
+    if(!PDFV.doc) return;
+    var z=Math.round((PDFV.zoom+d)*10)/10;
+    z=Math.max(1, Math.min(3, z));
+    if(z===PDFV.zoom) return;
+    PDFV.zoom=z; PDFV.busy=false; renderPdf();
+  }
+  $("pdfBack").addEventListener("click",function(){ navBack(); });
+  $("pdfZin").addEventListener("click",function(){ pdfZoom(0.5); });
+  $("pdfZout").addEventListener("click",function(){ pdfZoom(-0.5); });
+  $("pdfDl").addEventListener("click",function(){
+    if(!PDFV.ref){ if(PDFV.url) window.open(PDFV.url,"_blank","noopener"); return; }
+    var nm=(PDFV.name||"document").replace(/[\\/:*?"<>|]+/g,"-")+".pdf";
+    var w=window.open("","_blank");
+    sbSignedUrl(PDFV.ref,nm).then(function(u){
+      if(w && !w.closed) w.location.href=u; else window.open(u,"_blank","noopener");
+    })["catch"](function(){
+      if(w && !w.closed) try{ w.close(); }catch(e){}
+      toast("Couldn\u2019t start the download.");
+    });
+  });
+
   // ---------- Resources (SOPs, rules, forms) ----------
   var RES={loaded:false,rows:[],q:""};
   function closeResources(){ $("resScreen").classList.remove("open"); }
@@ -5403,7 +5547,7 @@
         '<div class="res-ic '+k+'">'+(k==="img"?"IMG":(k==="pdf"?"PDF":"DOC"))+'</div>'+
         '<div class="res-main"><div class="res-nm">'+esc(r_(r,"Title")||fn)+'</div>'+
           (ds?'<div class="res-ds">'+esc(ds)+'</div>':'')+
-          '<div class="res-fn">'+esc(fn)+'</div></div>'+
+        '</div>'+
         '<svg class="res-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
     }).join("")+'<div class="res-note">Documents open with a secure link that expires after an hour.</div>';
   }
@@ -5413,16 +5557,28 @@
     var row=e.target.closest?e.target.closest(".res-row"):null; if(!row) return;
     var ref=row.getAttribute("data-ref"), title=row.getAttribute("data-t")||"";
     if(!ref) return;
-    // A popup opened inside an async callback gets blocked on iOS, so open the
-    // tab first and point it at the signed link once we have it.
     var isImg=docIsImage(ref);
-    var win=isImg?null:window.open("","_blank");
+    var isPdf=(docExt(docFileName(ref))==="pdf");
     toast("Opening\u2026");
+    if(isPdf){
+      sbSignedUrl(ref).then(function(u){ openPdfView(u,title,ref); })
+        ["catch"](function(err){ toast("Couldn\u2019t open that document.");
+          try{ console.error("resource open:",err); }catch(e){} });
+      return;
+    }
+    if(isImg){
+      sbSignedUrl(ref).then(function(u){ openPhoto(u,title); })
+        ["catch"](function(err){ toast("Couldn\u2019t open that document.");
+          try{ console.error("resource open:",err); }catch(e){} });
+      return;
+    }
+    // Word and anything else: hand off to the browser. The tab is opened up
+    // front because iOS blocks popups created inside an async callback.
+    var win=window.open("","_blank");
     sbSignedUrl(ref).then(function(u){
-      if(isImg){ openPhoto(u,title); return; }
       if(win && !win.closed){ win.location.href=u; }
       else { window.open(u,"_blank","noopener"); }
-    }).catch(function(err){
+    })["catch"](function(err){
       if(win && !win.closed) try{ win.close(); }catch(e){}
       toast("Couldn\u2019t open that document.");
       try{ console.error("resource open:",err); }catch(e){}
@@ -5929,7 +6085,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -5971,7 +6127,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
