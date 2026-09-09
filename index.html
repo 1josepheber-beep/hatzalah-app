@@ -318,7 +318,35 @@
   .cbin .cchip{display:none;position:absolute;left:50%;bottom:100%;transform:translateX(-50%);
     white-space:nowrap;background:var(--red);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;
     border-radius:5px;margin-bottom:4px;box-shadow:0 1px 4px rgba(0,0,0,.4)}
-  .cbin.sel{border-color:var(--red);background:rgba(200,32,46,.22);box-shadow:0 0 0 2px rgba(200,32,46,.45)}
+  .cbin.sel{border-color:var(--red);background:rgba(200,32,46,.22);box-shadow:0 0 0 2px rgba(200,32,46,.45);
+    animation:cbinpulse 1.15s ease-in-out infinite}
+  @keyframes cbinpulse{
+    0%,100%{background:rgba(200,32,46,.18);box-shadow:0 0 0 2px rgba(200,32,46,.5),0 0 0 0 rgba(200,32,46,.55)}
+    50%{background:rgba(200,32,46,.36);box-shadow:0 0 0 3px rgba(200,32,46,.95),0 0 0 13px rgba(200,32,46,0)}
+  }
+  /* Four arrows pointing in at the selected bin, so the eye finds it fast. */
+  .cbin .carr{display:none;position:absolute;width:0;height:0;border:8px solid transparent;pointer-events:none;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+  .cbin.sel .carr{display:block}
+  .cbin .carr.t{top:-19px;left:50%;border-top-color:var(--red);border-bottom-width:0;
+    animation:carrT .95s ease-in-out infinite}
+  .cbin .carr.b{bottom:-19px;left:50%;border-bottom-color:var(--red);border-top-width:0;
+    animation:carrB .95s ease-in-out infinite}
+  .cbin .carr.l{left:-19px;top:50%;border-left-color:var(--red);border-right-width:0;
+    animation:carrL .95s ease-in-out infinite}
+  .cbin .carr.r{right:-19px;top:50%;border-right-color:var(--red);border-left-width:0;
+    animation:carrR .95s ease-in-out infinite}
+  @keyframes carrT{0%,100%{transform:translate(-50%,-4px)}50%{transform:translate(-50%,2px)}}
+  @keyframes carrB{0%,100%{transform:translate(-50%,4px)}50%{transform:translate(-50%,-2px)}}
+  @keyframes carrL{0%,100%{transform:translate(-4px,-50%)}50%{transform:translate(2px,-50%)}}
+  @keyframes carrR{0%,100%{transform:translate(4px,-50%)}50%{transform:translate(-2px,-50%)}}
+  /* Editing means dragging boxes about — movement there would just get in the way. */
+  .cab-photo.editing .cbin.sel{animation:none}
+  .cab-photo.editing .cbin .carr{display:none}
+  @media (prefers-reduced-motion:reduce){
+    .cbin.sel{animation:none}
+    .cbin .carr{animation:none}
+  }
   .cbin.sel .cbadge{background:var(--red)}
   .cbin.sel .cchip{display:block}
   .cab-zoom{position:absolute;right:10px;bottom:10px;z-index:5;border:0;cursor:pointer;
@@ -1257,7 +1285,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 12.8</div>
+  <div class="ver-line">Version 12.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1373,7 +1401,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 12.8</div>
+  <div class="ver-line">Version 12.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4513,7 +4541,9 @@
     c.bins.forEach(function(b,k){
       boxes+='<div class="cbin" data-i="'+k+'" style="left:'+(b.x*100)+'%;top:'+(b.y*100)+
         '%;width:'+(b.w*100)+'%;height:'+(b.h*100)+'%"><span class="cbadge">'+(k+1)+
-        '</span><span class="cchip">'+esc(b.n)+'</span><span class="rsz" data-rsz="'+k+'"></span></div>';
+        '</span><span class="cchip">'+esc(b.n)+'</span><span class="rsz" data-rsz="'+k+'"></span>'+
+        '<span class="carr t"></span><span class="carr b"></span>'+
+        '<span class="carr l"></span><span class="carr r"></span></div>';
     });
     var ph=$("cabPhoto");
     ph.innerHTML=(src?'<img id="cabImg" src="'+esc(src)+'" alt="">':'')+boxes;
@@ -6087,7 +6117,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6129,7 +6159,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
