@@ -504,6 +504,12 @@
   .cert-modal-l input{border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px;color:var(--ink)}
   .cert-modal-note{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.4}
   .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
+  .rem-body{font-size:13.5px;color:var(--ink);line-height:1.55}
+  .rem-body p{margin:0 0 10px}
+  .rem-body p:last-child{margin-bottom:0}
+  .rem-body b{color:var(--navy)}
+  .rem-to{background:#f4f7fb;border:1px solid var(--line);border-radius:10px;padding:9px 11px;
+    font-size:12.5px;color:var(--mut);margin:0 0 10px;word-break:break-word}
   .cert-modal-btns{display:flex;gap:10px;margin-top:14px}
   .cert-modal-btns button{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-modal-btns .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
@@ -1285,7 +1291,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.1</div>
+  <div class="ver-line">Version 13.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1401,7 +1407,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.1</div>
+  <div class="ver-line">Version 13.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1597,6 +1603,16 @@
     <input id="certSearch" type="search" placeholder="Search members" enterkeyhint="search">
   </div>
   <div class="scr-body" id="certBody"></div>
+  <div class="cert-modal hidden" id="certRemindModal">
+    <div class="cert-modal-box">
+      <div class="cert-modal-h" id="certRemindH">Reminders are already set up</div>
+      <div class="rem-body" id="certRemindBody"></div>
+      <div class="cert-modal-btns">
+        <button class="cert-modal-cancel" id="certRemindCal">Add to my calendar</button>
+        <button class="cert-modal-save" id="certRemindOk">OK</button>
+      </div>
+    </div>
+  </div>
   <div class="cert-modal hidden" id="certModal">
     <div class="cert-modal-box">
       <div class="cert-modal-h" id="certModalH">Update certification</div>
@@ -5694,6 +5710,41 @@
     var cal=e.target.closest?e.target.closest(".cert-cal"):null;
     if(cal){
       var name=decodeURIComponent(cal.getAttribute("data-cal")), exp=new Date(+cal.getAttribute("data-d"));
+      openRemindInfo(name,exp);
+    }
+  });
+  // Explains the automatic emails first — most people don't need to do anything.
+  function openRemindInfo(name,exp){
+    var me=STATE.me||{}, org=r_(me,"Email"), pers=r_(me,"Personal Email");
+    var to = org ? ('<div class="rem-to">Sent to <b>'+esc(org)+'</b>'+
+              (pers?' and <b>'+esc(pers)+'</b>':'')+'</div>') : '';
+    $("certRemindH").textContent="Reminders for "+name;
+    $("certRemindBody").innerHTML =
+      '<p>You don\u2019t need to set anything up \u2014 reminder emails are sent automatically.</p>'+
+      to +
+      '<p>They start about <b>90 days</b> before it expires, again around <b>60 days</b>, '+
+      'then <b>every week</b> through the final month. If it does lapse, they keep coming '+
+      'weekly until it\u2019s renewed.</p>'+
+      '<p>You\u2019ll also see a notice at the top of the home screen once it\u2019s within 30 days.</p>'+
+      (pers?'':'<p>Want them at a personal address too? Add one under your profile.</p>')+
+      '<p>If you\u2019d also like it in your own calendar, use the button below.</p>';
+    REMIND.name=name; REMIND.exp=exp;
+    $("certRemindModal").classList.remove("hidden");
+  }
+  var REMIND={name:"",exp:null};
+  function closeRemindInfo(){ $("certRemindModal").classList.add("hidden"); }
+  $("certRemindOk").addEventListener("click",closeRemindInfo);
+  $("certRemindModal").addEventListener("click",function(e){
+    if(e.target===$("certRemindModal")) closeRemindInfo();
+  });
+  $("certRemindCal").addEventListener("click",function(){
+    var name=REMIND.name, exp=REMIND.exp;
+    if(!name||!exp){ closeRemindInfo(); return; }
+    closeRemindInfo();
+    certCalendarFile(name,exp);
+  });
+  function certCalendarFile(name,exp){
+    {
       var rem=new Date(exp.getTime()-30*86400000);
       function ymd(d){ return d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
       function nd(d){ return new Date(d.getTime()+86400000); }
@@ -5710,7 +5761,7 @@
       dlBlob((name.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"")||"cert")+"_reminders.ics", new Blob([ics],{type:"text/calendar"}));
       toast("Calendar file downloaded \u2014 open it to add both reminders.");
     }
-  });
+  }
   $("certBack").addEventListener("click",navBack);
   $("certSearch").addEventListener("input",function(){ renderCerts(this.value); });
 
@@ -6119,7 +6170,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6161,7 +6212,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
