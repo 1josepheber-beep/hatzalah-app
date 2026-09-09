@@ -1291,7 +1291,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.4</div>
+  <div class="ver-line">Version 13.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1407,7 +1407,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.4</div>
+  <div class="ver-line">Version 13.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3101,7 +3101,20 @@
 
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
-    try{ if(window.gtag) gtag('event','tile_tap',{ tile_label:r_(t,"Label")||"", tile_type:type||"", member_unit:(STATE.me&&STATE.me.unit)||"" }); }catch(e){}
+    try{
+      if(window.gtag){
+        var lbl=r_(t,"Label")||"", unit=(STATE.me&&STATE.me.unit)||"";
+        gtag('event','tile_tap',{ tile_label:lbl, tile_type:type||"", member_unit:unit });
+        // Also log it as a page view so the tile shows up by name in the
+        // "Pages and screens" report, not just as a custom event.
+        var slug=lbl.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||(type||"tile");
+        gtag('event','page_view',{
+          page_title: lbl || type || "Tile",
+          page_path: "/tile/"+slug,
+          page_location: location.origin+location.pathname+"#"+slug
+        });
+      }
+    }catch(e){}
     if(type==="link"){var u=r_(t,"Target");if(!u){toast("No link set for this tile.");return;} if(/^(tel:|mailto:)/i.test(u)){location.href=u;}else{window.open(u,"_blank","noopener");} return;}
     if(type==="hospitals"){ openHospitals(); return; }
     if(type==="protocols"){ openProtocols(); return; }
@@ -6220,7 +6233,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6262,7 +6275,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
