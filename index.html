@@ -504,11 +504,6 @@
   .cert-modal-l input{border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px;color:var(--ink)}
   .cert-modal-note{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.4}
   .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
-  .cal-chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 12px}
-  .cal-chip{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;
-    padding:7px 12px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
-  .cal-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-  .cal-chip:disabled{opacity:.4;cursor:default}
   .rem-body{font-size:13.5px;color:var(--ink);line-height:1.55}
   .rem-body p{margin:0 0 10px}
   .rem-body p:last-child{margin-bottom:0}
@@ -1296,7 +1291,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.3</div>
+  <div class="ver-line">Version 13.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1412,7 +1407,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.3</div>
+  <div class="ver-line">Version 13.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1612,8 +1607,7 @@
     <div class="cert-modal-box">
       <div class="cert-modal-h" id="certCalH">When should we remind you?</div>
       <div class="rem-body"><p id="certCalSub"></p></div>
-      <div class="cal-chips" id="certCalChips"></div>
-      <label class="cert-modal-l">Reminder date<input type="date" id="certCalDate"></label>
+      <label class="cert-modal-l">Remind me on<input type="date" id="certCalDate"></label>
       <div class="cert-modal-err" id="certCalErr"></div>
       <div class="cert-modal-btns">
         <button class="cert-modal-cancel" id="certCalCancel">Cancel</button>
@@ -5766,47 +5760,25 @@
   function ymdLocal(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
   function openCalPicker(name,exp){
     REMIND.name=name; REMIND.exp=exp;
-    $("certCalH").textContent="Remind me about "+name;
+    $("certCalH").textContent="Extra reminder for "+name;
     var today=new Date(); today.setHours(0,0,0,0);
     $("certCalSub").textContent = (exp < today)
-      ? ("This expired "+fmtDate(exp)+". Pick a day to be reminded to renew it.")
-      : ("It expires "+fmtDate(exp)+". Pick when you\u2019d like the calendar reminder.");
+      ? ("This expired "+fmtDate(exp)+". Pick any day you\u2019d like a reminder in your own calendar.")
+      : ("It expires "+fmtDate(exp)+". Pick any day you\u2019d like an extra reminder in your own calendar. "+
+         "The automatic emails carry on regardless.");
     $("certCalErr").textContent="";
-    var opts=[["3 months before",90],["2 months before",60],["1 month before",30],
-              ["2 weeks before",14],["1 week before",7],["On the day",0]];
-    var html="";
-    opts.forEach(function(o){
-      var d=new Date(exp.getTime()-o[1]*86400000); d.setHours(0,0,0,0);
-      var past=d<today;
-      html+='<button class="cal-chip" data-days="'+o[1]+'"'+(past?" disabled":"")+'>'+o[0]+'</button>';
-    });
-    $("certCalChips").innerHTML=html;
     // default to a month before, or today if that has already gone by
     var def=new Date(exp.getTime()-30*86400000); def.setHours(0,0,0,0);
     if(def<today) def=today;
     $("certCalDate").value=ymdLocal(def);
-    markCalChip();
     $("certCalModal").classList.remove("hidden");
-  }
-  function markCalChip(){
-    var v=$("certCalDate").value, exp=REMIND.exp;
-    Array.prototype.forEach.call($("certCalChips").querySelectorAll(".cal-chip"),function(b){
-      var d=new Date(exp.getTime()-(+b.getAttribute("data-days"))*86400000);
-      b.classList.toggle("on", ymdLocal(d)===v);
-    });
   }
   function closeCalPicker(){ $("certCalModal").classList.add("hidden"); }
   $("certCalCancel").addEventListener("click",closeCalPicker);
   $("certCalModal").addEventListener("click",function(e){
     if(e.target===$("certCalModal")) closeCalPicker();
   });
-  $("certCalDate").addEventListener("input",function(){ $("certCalErr").textContent=""; markCalChip(); });
-  $("certCalChips").addEventListener("click",function(e){
-    var b=e.target.closest?e.target.closest(".cal-chip"):null;
-    if(!b||b.disabled) return;
-    $("certCalDate").value=ymdLocal(new Date(REMIND.exp.getTime()-(+b.getAttribute("data-days"))*86400000));
-    $("certCalErr").textContent=""; markCalChip();
-  });
+  $("certCalDate").addEventListener("input",function(){ $("certCalErr").textContent=""; });
   $("certCalGo").addEventListener("click",function(){
     var v=$("certCalDate").value;
     if(!v){ $("certCalErr").textContent="Pick a date first."; return; }
@@ -6248,7 +6220,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6290,7 +6262,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
