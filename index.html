@@ -1285,7 +1285,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 12.9</div>
+  <div class="ver-line">Version 13.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1401,7 +1401,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 12.9</div>
+  <div class="ver-line">Version 13.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3082,7 +3082,10 @@
     if(type==="board"){ var bh=$("boardScreen").querySelector("h2"); if(bh) bh.textContent=r_(t,"Label")||"Responder Status"; openBoard(false); return; }
     if(type==="app"){ launchApp(r_(t,"Target")); return; }
     if(type==="placement"||type==="product"){ openPlacement(); return; }
-    if(type==="equipment"||type==="checklist"){ openEquipFrame(); return; }
+    if(type==="equipment"||type==="checklist"){ openEquip(); return; }
+    // The original site, kept reachable for comparison while the built-in
+    // screen beds in. Not offered in the Type dropdown.
+    if(type==="equipment-old"||type==="checklist-old"){ openEquipFrame(); return; }
     if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
     if(type==="certifications"||type==="certs"){ openCerts(); return; }
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
@@ -6117,7 +6120,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6159,7 +6162,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 12.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
