@@ -377,7 +377,7 @@ window.addEventListener('unhandledrejection', function(e){
   <button class="filt fc" data-f="conly" data-label="City only">City only (53)</button>
   <div class="spacer"></div>
   <input type="search" id="q" placeholder="Search equipment…">
-  <button class="act" id="publish">Publish to site</button>
+  <button class="act" id="publish">Save</button>
   <button class="act ghost" id="foldall">Collapse all</button>
   <button class="act ghost" id="edit">Edit list</button>
   <button class="act" id="xlsx">Download Excel</button>
@@ -706,7 +706,7 @@ if (ok(local) && ok(baked) && (local.t||0) <= (baked.t||0)){
 
 if (ok(local)){
   MODEL = local.rows;
-  loadNote = 'Unsaved edits on this device, ' + (local.savedAt||'') + '. Press Publish to site to share them.';
+  loadNote = 'Unsaved edits on this device, ' + (local.savedAt||'') + '. Press Save to share them.';
 } else if (ok(baked)){
   MODEL = baked.rows;
   loadNote = 'Published version, saved ' + (baked.savedAt||'earlier') + '.';
@@ -1110,7 +1110,7 @@ function bakedHTML(){
 
   // Reset transient UI, or the published page arrives frozen mid-click.
   const set = (sel, txt) => { const el = doc.querySelector(sel); if (el) el.textContent = txt; };
-  set('#publish', 'Publish to site');
+  set('#publish', 'Save');
   set('#edit', 'Edit list');
   set('#foldall', 'Collapse all');
   set('#savestate', '');
@@ -1171,7 +1171,7 @@ document.getElementById('publish').addEventListener('click', async ()=>{
   } catch(err){
     say('Save failed: ' + String(err.message||err));
   } finally {
-    btn.disabled = false; btn.textContent = 'Publish to site';
+    btn.disabled = false; btn.textContent = 'Save';
   }
 });
 
