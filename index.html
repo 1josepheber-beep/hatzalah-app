@@ -1298,7 +1298,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.8</div>
+  <div class="ver-line">Version 13.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1414,7 +1414,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.8</div>
+  <div class="ver-line">Version 13.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1632,6 +1632,18 @@
       </div>
     </div>
   </div>
+  <div class="cert-modal hidden" id="certUpModal">
+    <div class="cert-modal-box">
+      <div class="cert-modal-h" id="certUpH">Before you upload</div>
+      <div class="rem-body"><p id="certUpSub"></p></div>
+      <label class="cert-modal-l">New expiration date<input type="date" id="certUpDate"></label>
+      <div class="cert-modal-err" id="certUpErr"></div>
+      <div class="cert-modal-btns">
+        <button class="cert-modal-cancel" id="certUpSkip">I don&rsquo;t have it yet</button>
+        <button class="cert-modal-save" id="certUpGo">Save and upload</button>
+      </div>
+    </div>
+  </div>
   <div class="cert-modal hidden" id="certModal">
     <div class="cert-modal-box">
       <div class="cert-modal-h" id="certModalH">Update certification</div>
@@ -1780,7 +1792,7 @@
     <div class="cpr-cycle" id="cprCycleBox"><small>COMPRESSION CYCLE</small><div id="cprCycle">2:00</div>
       <div class="cpr-sub">Cycle <b id="cprCycNum">1</b> &middot; rhythm check at 0:00</div></div>
     <div class="cpr-epi" id="cprEpiBox"><small>SINCE LAST EPI</small><div id="cprEpi">0:00</div>
-      <div class="cpr-sub" id="cprEpiHint">Give every 3\u20135 min</div></div>
+      <div class="cpr-sub" id="cprEpiHint">Give every 3&ndash;5 min</div></div>
     <div class="cpr-grid">
       <button class="cpr-b start" id="cprStart">Start</button>
       <button class="cpr-b metro" id="cprMetro">Metronome</button>
@@ -5745,7 +5757,8 @@
     var st=certStatus(exp);
     var cal= st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(c.name)+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
     var edit = (editable && (c.expKey||c.singleKey)) ? '<button class="cert-edit" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey)+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Edit date</button>' : '';
-    var up = editable ? '<button class="cert-up" data-cert="'+esc(c.name)+'">Upload</button>' : '';
+    var up = editable ? ('<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey||"")+
+      '" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Upload</button>') : '';
     return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
       '<div class="cert-st">'+esc(st.label)+'</div></div><div class="cert-btns">'+cal+edit+up+'</div></div>';
@@ -5905,8 +5918,64 @@
       $("certModal").classList.remove("hidden"); return;
     }
     var u=ev.target.closest?ev.target.closest(".cert-up"):null;
-    if(u){ openUpload("", u.getAttribute("data-cert")); return; }
+    if(u){ openUpBeforeDate(u.getAttribute("data-cert"), u.getAttribute("data-col"), u.getAttribute("data-unit")); return; }
   });
+  // Asks for the expiration date at the moment they are holding the card,
+  // then hands them to the upload form. Catching it here is the only reliable
+  // point -- once they leave for the form, they are gone.
+  var CERTUPD=null;
+  function openUpBeforeDate(cert, col, unit){
+    if(demoNo()) return;
+    if(!col){ openUpload("", cert); return; }   // nothing to date, e.g. a one-time item
+    CERTUPD={cert:cert, col:col, unit:unit};
+    $("certUpH").textContent="Before you upload \u2014 "+cert;
+    $("certUpSub").textContent="Enter the new expiration date from the card you\u2019re about to upload. "+
+      "It saves straight away, so nobody has to chase you for it.";
+    $("certUpErr").textContent="";
+    $("certUpDate").value="";
+    $("certUpGo").disabled=true;
+    $("certUpModal").classList.remove("hidden");
+  }
+  function closeUpBefore(){ $("certUpModal").classList.add("hidden"); CERTUPD=null; }
+  $("certUpDate").addEventListener("input",function(){
+    $("certUpErr").textContent="";
+    $("certUpGo").disabled=!this.value;
+  });
+  $("certUpSkip").addEventListener("click",function(){
+    var c=CERTUPD?CERTUPD.cert:"";
+    closeUpBefore();
+    toast("No problem \u2014 add the date when you have it.");
+    openUpload("", c);
+  });
+  $("certUpModal").addEventListener("click",function(e){
+    if(e.target===$("certUpModal")) closeUpBefore();
+  });
+  $("certUpGo").addEventListener("click",function(){
+    if(!CERTUPD) return;
+    var v=$("certUpDate").value;
+    if(!v){ $("certUpErr").textContent="Pick the new expiration date."; return; }
+    var p=v.split("-"), mdy=(+p[1])+"/"+(+p[2])+"/"+p[0];
+    var dbcol=sbCol("certifications", CERTUPD.col);
+    if(!dbcol){ $("certUpErr").textContent="Couldn\u2019t find that field."; return; }
+    var btn=this; btn.disabled=true; btn.textContent="Saving\u2026";
+    var upd={}; upd[dbcol]=mdy;
+    var cert=CERTUPD.cert, unit=CERTUPD.unit;
+    sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(unit),upd)
+      .then(function(r){
+        btn.disabled=false; btn.textContent="Save and upload";
+        if(!r.ok){ $("certUpErr").textContent="Couldn\u2019t save. Try again."; return; }
+        closeUpBefore();
+        CERT.loaded=false;
+        toast("Date saved. Now upload the document.");
+        pokeCertMailer(unit);
+        openUpload("", cert);
+      })
+      .catch(function(){
+        btn.disabled=false; btn.textContent="Save and upload";
+        $("certUpErr").textContent="Couldn\u2019t save \u2014 check your connection.";
+      });
+  });
+
   $("certModalCancel").addEventListener("click",function(){ $("certModal").classList.add("hidden"); CERTUP=null; });
   $("certModalSave").addEventListener("click",function(){
     if(!CERTUP) return;
@@ -6318,7 +6387,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6360,7 +6429,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
