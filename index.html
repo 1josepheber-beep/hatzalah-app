@@ -1355,7 +1355,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 15.1</div>
+  <div class="ver-line">Version 15.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1473,7 +1473,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 15.1</div>
+  <div class="ver-line">Version 15.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3886,7 +3886,7 @@
               ["Audience","Who sees it","sel:everyone=Everyone|admins=Admins only"],
               ["Show Results","Members see poll results","bool"],
               ["Anonymous","Anonymous poll (cannot be undone)","bool"],
-              ["Show Until","Show until (M/D/YYYY)","text"],
+              ["Show Until","Show until","date"],
               ["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
@@ -4070,7 +4070,6 @@
         ADM2.dirty=false; btn.classList.remove("hot");
         msg.className="adm-msg ok"; msg.textContent="Saved.";
         try{ paintCertBanner(); }catch(e){}
-        try{ loadAnnouncements().then(function(){ paintNotices(); }); }catch(e){}
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500);
       })
       .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; });
@@ -4295,6 +4294,16 @@
           if(v && !hit) o+='<option value="'+esc(v)+'" selected>'+esc(v)+'</option>';
           return '<label class="adm-f">'+label+'<select id="'+id+'" data-h="'+esc(header)+'">'+o+'</select></label>';
         }
+        if(kind==="date"){
+          // stored as M/D/YYYY to match every other date in the app, but edited
+          // with the phone's own calendar
+          var iso="";
+          var dm=String(v||"").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if(dm) iso=dm[3]+"-"+("0"+dm[1]).slice(-2)+"-"+("0"+dm[2]).slice(-2);
+          else if(/^\d{4}-\d{2}-\d{2}$/.test(String(v||""))) iso=String(v);
+          return '<label class="adm-f wide">'+label+
+            '<input id="'+id+'" data-h="'+esc(header)+'" data-date="1" type="date" value="'+esc(iso)+'"></label>';
+        }
         if(kind==="file"){
           var fn=docFileName(v);
           return '<label class="adm-f wide">'+label+
@@ -4483,6 +4492,11 @@
         var isTog = el.classList.contains("adm-sw")||el.classList.contains("adm-spec");
         var offVal = (header==="Active") ? "No" : "";
         var v = isTog ? (el.classList.contains("on")?"X":offVal) : String(el.value||"").trim();
+        // a date input hands back YYYY-MM-DD; everything else in the app uses M/D/YYYY
+        if(!isTog && el.getAttribute && el.getAttribute("data-date") && v){
+          var dp=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if(dp) v=(+dp[2])+"/"+(+dp[3])+"/"+dp[1];
+        }
         if(String(r_(r,header))!==v){ upd[db]=v; r[header]=v; any=true; }
       });
       if(any){
@@ -5335,6 +5349,7 @@
       CERT.myIssues = mine.length? myCertIssues(mine[0]) : null;
       applyCertGlow();
       paintCertBanner();
+      try{ loadAnnouncements().then(paintNotices); }catch(e){}
     }).catch(function(){});
   }
   function certBlocks(c){
@@ -5371,6 +5386,7 @@
     if(String(r_(a,"Audience")||"everyone").toLowerCase()==="admins" && !isAdmin()) return false;
     return true;
   }
+  function annId(a){ return (a && (a.__id!=null?a.__id:a.id)); }
   function annMine(id){
     var u=annMyUnit().toLowerCase();
     for(var i=0;i<ANN.reads.length;i++){
@@ -5415,7 +5431,7 @@
     (ANN.rows||[]).forEach(function(a){
       if(!annLive(a)) return;
       var kind=String(r_(a,"Kind")||"feature").toLowerCase();
-      var mine=annMine(a.id);
+      var mine=annMine(annId(a));
       if(kind==="confirm"){
         if(mine && mine.action==="confirmed") return;
         out.push({pri:2, cls:"ann", title:r_(a,"Title"), sub:"Read and confirm",
@@ -5481,7 +5497,7 @@
   function openNotice(a){
     ANN.cur=a; ANN.pick=""; ANN.ticked=false;
     var kind=String(r_(a,"Kind")||"feature").toLowerCase();
-    var mine=annMine(a.id);
+    var mine=annMine(annId(a));
     $("nxPill").className="nx-pill "+kind;
     $("nxPill").textContent = kind==="poll" ? "Poll" : (kind==="confirm" ? "Please read" : "New");
     $("nxTitle").textContent=r_(a,"Title");
@@ -5531,7 +5547,7 @@
     var opts=annOptions(a), counts={}, total=0;
     opts.forEach(function(o){ counts[o]=0; });
     (ANN.reads||[]).forEach(function(r){
-      if(String(r.ann_id)!==String(a.id) || r.action!=="voted") return;
+      if(String(r.ann_id)!==String(annId(a)) || r.action!=="voted") return;
       if(counts[r.choice]!=null){ counts[r.choice]++; total++; }
     });
     $("nxExtra").innerHTML=opts.map(function(o){
@@ -5548,7 +5564,7 @@
   $("nxGo").addEventListener("click",function(){
     var a=ANN.cur; if(!a) return;
     var kind=String(r_(a,"Kind")||"feature").toLowerCase();
-    var mine=annMine(a.id);
+    var mine=annMine(annId(a));
 
     if(kind==="poll" && mine && mine.action==="voted" && $("nxGo").textContent==="Change my vote"){
       ANN.pick=""; openNotice(a); $("nxGo").disabled=true; return;   // back to the choices
@@ -5558,7 +5574,7 @@
 
     var action = kind==="poll" ? "voted" : (kind==="confirm" ? "confirmed" : "seen");
     var btn=$("nxGo"); btn.disabled=true; var was=btn.textContent; btn.textContent="Saving\u2026";
-    annRespond(a.id, action, ANN.pick).then(function(ok){
+    annRespond(annId(a), action, ANN.pick).then(function(ok){
       btn.disabled=false; btn.textContent=was;
       if(!ok){ $("nxErr").textContent="Couldn\u2019t save that. Try again."; return; }
       var target=r_(a,"Target");
@@ -5600,7 +5616,7 @@
       return String(m["Active"]||"").trim().toLowerCase()!=="no";
     }).length || 0;
     var n=0;
-    (ANN.reads||[]).forEach(function(x){ if(String(x.ann_id)===String(r.__id||r.id)) n++; });
+    (ANN.reads||[]).forEach(function(x){ if(String(x.ann_id)===String(annId(r))) n++; });
     if(kind==="confirm") return n+" of "+total+" confirmed";
     if(kind==="poll") return n+" of "+total+" voted";
     return "Seen by "+n;
@@ -6728,7 +6744,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6770,7 +6786,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
