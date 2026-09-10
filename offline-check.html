@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline check &middot; Hatzalah of Houston</title>
+<style>
+  :root{--navy:#143D75;--line:#dde4ee;--mut:#6b7a90;--ink:#16202e;--red:#c8202e;--grn:#2f9e44}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;
+       background:#eef1f6;color:var(--ink);padding:16px}
+  .wrap{max-width:640px;margin:0 auto}
+  h1{font-size:18px;margin:0 0 4px;color:var(--navy)}
+  p.sub{font-size:13px;color:var(--mut);margin:0 0 14px;line-height:1.5}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;
+       border-top:1px solid var(--line);font-size:14px}
+  .row:first-child{border-top:0}
+  .n{font-weight:800;text-align:right;word-break:break-word}
+  .ok{color:var(--grn)} .bad{color:var(--red)}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--navy);margin:0 0 8px}
+  .verdict{font-size:15px;font-weight:800;padding:12px 14px;border-radius:11px;margin-bottom:10px;line-height:1.45}
+  .verdict.good{background:#e4f6e9;color:#1e7a3d}
+  .verdict.warn{background:#fff3d6;color:#8a6d00}
+  .verdict.bad{background:#fdecec;color:#8a1f1f}
+  ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--mut);line-height:1.6}
+  li{word-break:break-all}
+  button{width:100%;border:0;background:var(--navy);color:#fff;font-weight:800;font-size:14px;
+         padding:13px;border-radius:11px;font-family:inherit;margin-top:8px}
+  .ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+  pre{white-space:pre-wrap;word-break:break-word;font-size:11.5px;color:var(--red);margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Offline check</h1>
+  <p class="sub">Shows what this phone has saved. Run it with a signal, then again with the
+  signal off &mdash; the numbers should stay the same.</p>
+  <div id="out"><div class="card">Checking&hellip;</div></div>
+  <button id="again">Check again</button>
+  <button class="ghost" id="wipe">Clear everything saved</button>
+</div>
+<script>
+(function(){
+  var out = document.getElementById("out");
+  var steps = [];
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  function add(html){ var d=document.createElement("div"); d.innerHTML=html; out.appendChild(d); }
+  function note(s){ steps.push(s); }
+
+  /* If anything goes wrong the reason lands on screen, rather than a blank page. */
+  function fail(where, err){
+    out.innerHTML =
+      '<div class="verdict bad">Could not finish the check.</div>'+
+      '<div class="card"><h2>What happened</h2>'+
+      '<div class="row"><b>Failed at</b><span class="n">'+esc(where)+'</span></div>'+
+      '<pre>'+esc((err && (err.message||err.name)) || String(err))+'</pre>'+
+      '<h2 style="margin-top:12px">Got as far as</h2><ul><li>'+
+        steps.map(esc).join('</li><li>')+'</li></ul></div>';
+  }
+  window.onerror = function(m){ fail("page script", m); return true; };
+
+  function classify(u){
+    if(u.indexOf("/storage/v1/object/public/") > -1) return "images";
+    if(u.indexOf("/rest/v1/") > -1) return "data";
+    if(/\/(protocols|erg|cabinets|apartments)\//.test(u)) return "pages";
+    return "app";
+  }
+  var LABEL = {data:"Database records", images:"Photos and icons",
+               pages:"Protocol / ERG pages", app:"App files"};
+
+  function run(){
+    out.innerHTML = '<div class="card">Checking&hellip;</div>';
+    steps = [];
+    var info = { sw:false, ctrl:false, names:[], usage:null,
+                 buckets:{images:[],data:[],pages:[],app:[]}, total:0 };
+
+    if(!("caches" in window)){
+      fail("start", "This browser has no offline storage. If the address starts with http:// try https:// instead.");
+      return;
+    }
+    note("offline storage available");
+
+    var p = Promise.resolve();
+
+    if("serviceWorker" in navigator){
+      p = p.then(function(){
+        return navigator.serviceWorker.getRegistration().then(function(reg){
+          info.sw = !!reg;
+          info.ctrl = !!navigator.serviceWorker.controller;
+          note("service worker checked");
+        });
+      })["catch"](function(){ note("service worker check failed, carrying on"); });
+    } else {
+      note("no service worker support in this browser");
+    }
+
+    p = p.then(function(){
+      return caches.keys().then(function(names){
+        info.names = names || [];
+        note("found " + info.names.length + " cache(s)");
+        var chain = Promise.resolve();
+        info.names.forEach(function(n){
+          chain = chain.then(function(){
+            return caches.open(n).then(function(c){
+              return c.keys().then(function(ks){
+                info.total += ks.length;
+                ks.forEach(function(r){ info.buckets[classify(r.url)].push(r.url); });
+              });
+            })["catch"](function(){ note("could not read cache: " + n); });
+          });
+        });
+        return chain;
+      });
+    });
+
+    p = p.then(function(){
+      note("counted " + info.total + " saved items");
+      if(navigator.storage && navigator.storage.estimate){
+        return navigator.storage.estimate().then(function(e){
+          info.usage = e && e.usage;
+        })["catch"](function(){});
+      }
+    });
+
+    p.then(function(){ render(info); })["catch"](function(err){ fail("reading caches", err); });
+  }
+
+  function render(info){
+    out.innerHTML = "";
+    var v, cls;
+    if(!info.sw){ v = "No service worker installed \u2014 nothing can work offline yet."; cls="bad"; }
+    else if(!info.ctrl){ v = "Installed, but not in control of this page yet. Close every tab and the app, then reopen."; cls="warn"; }
+    else if(info.total < 20){ v = "Only " + info.total + " items saved. Browse the app with a signal first."; cls="warn"; }
+    else { v = "Looks healthy \u2014 " + info.total + " items saved."; cls="good"; }
+    add('<div class="verdict '+cls+'">'+esc(v)+'</div>');
+
+    var s = '<div class="card"><h2>Status</h2>'+
+      '<div class="row"><b>Service worker</b><span class="n '+(info.sw?"ok":"bad")+'">'+(info.sw?"installed":"missing")+'</span></div>'+
+      '<div class="row"><b>Controlling this page</b><span class="n '+(info.ctrl?"ok":"bad")+'">'+(info.ctrl?"yes":"no")+'</span></div>'+
+      '<div class="row"><b>Connection</b><span class="n">'+(navigator.onLine?"online":"offline")+'</span></div>'+
+      '<div class="row"><b>Caches</b><span class="n">'+esc(info.names.join(", ")||"none")+'</span></div>';
+    if(info.usage != null){
+      s += '<div class="row"><b>Space used</b><span class="n">'+(info.usage/1048576).toFixed(1)+' MB</span></div>';
+    }
+    add(s + '</div>');
+
+    ["data","images","pages","app"].forEach(function(k){
+      var list = info.buckets[k];
+      var c = '<div class="card"><h2>'+LABEL[k]+'</h2>'+
+        '<div class="row"><b>Saved</b><span class="n '+(list.length?"ok":"bad")+'">'+list.length+'</span></div>';
+      if(list.length){
+        c += '<ul>' + list.slice(0,10).map(function(u){
+          var short = u.split("/").slice(3).join("/");
+          try{ short = decodeURIComponent(short); }catch(e){}
+          return '<li>' + esc(short.slice(0,90)) + '</li>';
+        }).join("") + '</ul>';
+        if(list.length > 10) c += '<p class="sub" style="margin:8px 0 0">&hellip;and '+(list.length-10)+' more</p>';
+      } else {
+        c += '<p class="sub" style="margin:8px 0 0">Nothing saved here yet.</p>';
+      }
+      add(c + '</div>');
+    });
+  }
+
+  document.getElementById("again").onclick = function(){ run(); };
+  document.getElementById("wipe").onclick = function(){
+    if(!confirm("Delete everything saved for offline use?")) return;
+    caches.keys().then(function(names){
+      return Promise.all(names.map(function(n){ return caches.delete(n); }));
+    }).then(function(){ alert("Cleared."); run(); })
+      ["catch"](function(err){ fail("clearing", err); });
+  };
+
+  run();
+})();
+</script>
+</body>
+</html>
