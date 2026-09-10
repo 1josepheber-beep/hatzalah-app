@@ -173,6 +173,49 @@
   .cert-banner .cb-t b{display:block;font-size:14.5px;font-weight:800;line-height:1.25}
   .cert-banner .cb-t span{display:block;font-size:12.5px;margin-top:2px;line-height:1.4;opacity:.9}
   .cert-banner .cb-go{width:18px;height:18px;fill:none;stroke-width:2.5;flex:0 0 auto;opacity:.6}
+  .cert-banner.ann{background:#eef4fd;border-color:#c9daf3;color:var(--navy)}
+  .cert-banner.ann .cb-i{background:#dbe7fa} .cert-banner.ann svg{stroke:var(--navy)}
+  .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
+  .cert-banner.poll .cb-i{background:#e6dbfb} .cert-banner.poll svg{stroke:#5b3aa8}
+  .nx-more{text-align:center;font-size:12px;color:var(--mut);text-decoration:underline;
+    margin:-6px 0 14px;cursor:pointer}
+  .nx-more.hidden{display:none}
+  .nx-modal{position:fixed;inset:0;background:rgba(9,20,38,.55);z-index:220;display:flex;
+    align-items:center;justify-content:center;padding:16px}
+  .nx-modal.hidden{display:none}
+  .nx-box{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:440px;
+    max-height:86vh;overflow:auto}
+  .nx-box h3{margin:0 0 6px;font-size:17px;color:var(--navy)}
+  .nx-box p{margin:0 0 13px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+  .nx-pill{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.05em;
+    text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:9px}
+  .nx-pill.feature{background:#e7f0fb;color:var(--navy)}
+  .nx-pill.confirm{background:#fff3d6;color:#8a6d00}
+  .nx-pill.poll{background:#f2ecfd;color:#5b3aa8}
+  .nx-chk{display:flex;gap:10px;align-items:flex-start;background:#f6f8fc;border:1px solid var(--line);
+    border-radius:11px;padding:11px;font-size:13px;line-height:1.45;cursor:pointer;margin-bottom:10px}
+  .nx-box2{width:20px;height:20px;border:2px solid var(--navy);border-radius:5px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .nx-box2.on{background:var(--navy)}
+  .nx-box2 svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:3;opacity:0}
+  .nx-box2.on svg{opacity:1}
+  .nx-opt{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:8px;
+    font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px}
+  .nx-opt .dot{width:19px;height:19px;border:2px solid var(--navy);border-radius:50%;flex:0 0 auto}
+  .nx-opt.on{border-color:var(--navy);background:#f4f7fb}
+  .nx-opt.on .dot{background:var(--navy);box-shadow:inset 0 0 0 3px #fff}
+  .nx-res{margin-bottom:10px}
+  .nx-res .lb{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;gap:8px}
+  .nx-res .lb b{color:var(--navy)}
+  .nx-bar{height:9px;background:#e7edf5;border-radius:999px;overflow:hidden}
+  .nx-bar i{display:block;height:100%;background:var(--navy);border-radius:999px}
+  .nx-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+  .nx-btns button{border:0;border-radius:11px;padding:12px;font-weight:800;font-size:14px;
+    font-family:inherit;cursor:pointer}
+  .nx-go{background:var(--navy);color:#fff}
+  .nx-go:disabled{opacity:.45}
+  .nx-later{background:#fff;color:var(--mut);border:1px solid var(--line)}
+  .nx-err{font-size:12.5px;color:var(--red);min-height:16px;margin-top:6px}
   .cert-banner.bad{background:#fdecec;border-color:#f3b6b6;color:#8a1f1f}
   .cert-banner.bad .cb-i{background:#f8d3d3} .cert-banner.bad svg{stroke:#8a1f1f}
   .cert-banner.warn{background:#fff3d6;border-color:#f0d58f;color:#8a6d00}
@@ -1312,7 +1355,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 14.3</div>
+  <div class="ver-line">Version 15.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1426,9 +1469,11 @@
   </div>
 
   <div class="cert-banner hidden" id="certBanner"></div>
+  <div id="noticeStack"></div>
+  <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 14.3</div>
+  <div class="ver-line">Version 15.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1592,6 +1637,19 @@
   <div class="apt-hint" id="aptMapHint">Pinch or double-tap to zoom &middot; drag to move</div>
 </div>
 
+<div class="nx-modal hidden" id="nxModal">
+  <div class="nx-box">
+    <span class="nx-pill" id="nxPill"></span>
+    <h3 id="nxTitle"></h3>
+    <p id="nxBody"></p>
+    <div id="nxExtra"></div>
+    <div class="nx-err" id="nxErr"></div>
+    <div class="nx-btns">
+      <button class="nx-go" id="nxGo"></button>
+      <button class="nx-later" id="nxLater">Later</button>
+    </div>
+  </div>
+</div>
 <div class="screen" id="pdfScreen">
   <div class="scr-head">
     <button class="back" id="pdfBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -1965,8 +2023,8 @@
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
-  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources"};
-  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"}};
+  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements"};
+  var SB_COLMAP={"task_list":{"task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
@@ -3800,11 +3858,12 @@
     {k:"tasklist",label:"Task List"},
     {k:"cpr",label:"CPR Buttons"},
     {k:"resources",label:"Resources"},
+    {k:"announce",label:"Announcements"},
     {k:"uploads",label:"Upload Types"},
     {k:"guests",label:"Guest Codes"}
   ];
-  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources"};
-  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1};
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements"};
+  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
     "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
   // column spec per section: [header, label, kind, opts]
@@ -3817,6 +3876,16 @@
     apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
     cpr:[["Label","Label","text"],["Action","What it does","sel:log|drug|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
     resources:[["Title","Title","text"],["Description","Description (optional)","text"],["File","File","file"],["Active","Active","bool"]],
+    announce:[["Title","Title","text"],
+              ["Kind","Type","sel:feature=New feature (shows once)|confirm=Needs confirming|poll=Poll"],
+              ["Body","Message","text"],
+              ["Target","Takes them to","sel:=Nowhere|certifications=Certifications|protocols=Protocols|hospitals=Hospitals|apartments=Apartments Finder|placement=Equipment Finder|resources=Resources|directory=Members Directory|board=Scheduler|taskbook=Task Book|profile=Their profile"],
+              ["Options","Poll choices (one per line)","text"],
+              ["Audience","Who sees it","sel:everyone=Everyone|admins=Admins only"],
+              ["Show Results","Members see poll results","bool"],
+              ["Anonymous","Anonymous poll (cannot be undone)","bool"],
+              ["Show Until","Show until (M/D/YYYY)","text"],
+              ["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Phone (Call)","Phone","text"],
@@ -3999,6 +4068,7 @@
         ADM2.dirty=false; btn.classList.remove("hot");
         msg.className="adm-msg ok"; msg.textContent="Saved.";
         try{ paintCertBanner(); }catch(e){}
+        try{ loadAnnouncements().then(function(){ paintNotices(); }); }catch(e){}
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500);
       })
       .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; });
@@ -4200,6 +4270,7 @@
       else if(k==="apartments") sub=r_(r,"Address");
       else if(k==="tasklist") sub=r_(r,"Category");
       else if(k==="resources") sub=docFileName(r_(r,"File"));
+      else if(k==="announce") sub=annAdminSub(r);
       var off = (k!=="settings" && !admBoolOn(r_(r,"Active"),"Active"));
 
       var fields=cols.map(function(c){
@@ -5283,7 +5354,261 @@
     });
     return out;
   }
+  // ---------- Announcements, confirmations and polls ----------
+  // One strip at the top of the home screen, shared with the certification
+  // banner. Fixed priority, never more than two on show, and anything that
+  // stops someone responding always stands alone.
+  var ANN={loaded:false, rows:[], reads:[], cur:null, pick:"", ticked:false};
+
+  function annMyUnit(){ return (STATE.me&&STATE.me.unit)?String(STATE.me.unit):""; }
+  function annOn(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="x"||v==="yes"||v==="true"; }
+  function annLive(a){
+    if(!annOn(r_(a,"Active"))) return false;
+    var until=r_(a,"Show Until");
+    if(until){ var d=parseCertDate(until); if(d){ d.setHours(23,59,59,999); if(new Date()>d) return false; } }
+    if(String(r_(a,"Audience")||"everyone").toLowerCase()==="admins" && !isAdmin()) return false;
+    return true;
+  }
+  function annMine(id){
+    var u=annMyUnit().toLowerCase();
+    for(var i=0;i<ANN.reads.length;i++){
+      var r=ANN.reads[i];
+      if(String(r.ann_id)===String(id) && String(r.unit||"").toLowerCase()===u) return r;
+    }
+    return null;
+  }
+  function annOptions(a){
+    return String(r_(a,"Options")||"").split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean);
+  }
+  function loadAnnouncements(){
+    if(STATE.demo){ ANN.loaded=true; ANN.rows=[]; ANN.reads=[]; return Promise.resolve(); }
+    return Promise.all([
+      fetchTab("Announcements")["catch"](function(){return [];}),
+      fetch(SB_URL+"/rest/v1/announcement_reads?select=*",{headers:sbAuthHeaders()})
+        .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+    ]).then(function(res){
+      ANN.rows=res[0]||[]; ANN.reads=res[1]||[]; ANN.loaded=true;
+    });
+  }
+  // Build every pending notice, in the order they should appear.
+  function noticeList(){
+    var out=[];
+    var i=CERT.myIssues;
+    function names(a){ return a.length>2 ? (a.slice(0,2).join(", ")+" and "+(a.length-2)+" more") : a.join(" and "); }
+    if(i && !STATE.demo){
+      if(i.expiredBlocking.length){
+        out.push({pri:1, cls:"bad", title:"You are not cleared to respond",
+          sub:names(i.expiredBlocking)+(i.expiredBlocking.length===1?" has expired.":" have expired.")+" Renew and update it in the app.",
+          go:function(){ openCerts(); }});
+      } else if(i.expiredOther.length){
+        out.push({pri:4, cls:"warn", title:"Something needs renewing",
+          sub:names(i.expiredOther)+(i.expiredOther.length===1?" has expired.":" have expired.")+" You can still respond to patients.",
+          go:function(){ openCerts(); }});
+      } else if(i.soon.length){
+        out.push({pri:4, cls:"soft", title:"Expiring soon",
+          sub:names(i.soon)+(i.soon.length===1?" expires":" expire")+" in the next 30 days.",
+          go:function(){ openCerts(); }});
+      }
+    }
+    (ANN.rows||[]).forEach(function(a){
+      if(!annLive(a)) return;
+      var kind=String(r_(a,"Kind")||"feature").toLowerCase();
+      var mine=annMine(a.id);
+      if(kind==="confirm"){
+        if(mine && mine.action==="confirmed") return;
+        out.push({pri:2, cls:"ann", title:r_(a,"Title"), sub:"Read and confirm",
+          go:function(){ openNotice(a); }});
+      } else if(kind==="poll"){
+        if(mine && mine.action==="voted") return;   // voted: it drops off the strip
+        out.push({pri:3, cls:"poll", title:r_(a,"Title"), sub:"Tap to vote",
+          go:function(){ openNotice(a); }});
+      } else {
+        if(mine) return;                            // features show once only
+        out.push({pri:5, cls:"ann", title:r_(a,"Title"), sub:r_(a,"Body").slice(0,70),
+          go:function(){ openNotice(a); }});
+      }
+    });
+    out.sort(function(x,y){ return x.pri-y.pri; });
+    // A blocking certification stands alone; nothing competes with it.
+    if(out.length && out[0].pri===1) return {show:[out[0]], hidden:out.slice(1)};
+    // A "new feature" only appears when nothing else is waiting.
+    var real=out.filter(function(n){ return n.pri<5; });
+    if(real.length) out=real;
+    return {show:out.slice(0,2), hidden:out.slice(2)};
+  }
+  function paintNotices(){
+    var host=$("noticeStack"), more=$("noticeMore");
+    if(!host) return;
+    var n=noticeList();
+    NOTICE_ACTIONS=[];
+    host.innerHTML=n.show.map(function(x,ix){
+      NOTICE_ACTIONS.push(x.go);
+      return '<div class="cert-banner '+x.cls+'" data-nx="'+ix+'">'+
+        '<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+        '<div class="cb-t"><b>'+esc(x.title)+'</b><span>'+esc(x.sub)+'</span></div>'+
+        '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
+    }).join("");
+    if(n.hidden.length){
+      more.className="nx-more";
+      more.textContent=n.hidden.length+" more notice"+(n.hidden.length===1?"":"s");
+      NOTICE_HIDDEN=n.hidden;
+    } else { more.className="nx-more hidden"; NOTICE_HIDDEN=[]; }
+  }
+  var NOTICE_ACTIONS=[], NOTICE_HIDDEN=[], NOTICE_EXPANDED=false;
+  document.addEventListener("click",function(e){
+    var b=e.target.closest?e.target.closest("[data-nx]"):null;
+    if(b){ var f=NOTICE_ACTIONS[+b.getAttribute("data-nx")]; if(f) f(); return; }
+    if(e.target && e.target.id==="noticeMore"){
+      NOTICE_EXPANDED=true;
+      var host=$("noticeStack");
+      NOTICE_HIDDEN.forEach(function(x){
+        var ix=NOTICE_ACTIONS.push(x.go)-1;
+        var d=document.createElement("div");
+        d.className="cert-banner "+x.cls; d.setAttribute("data-nx",ix);
+        d.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+          '<div class="cb-t"><b>'+esc(x.title)+'</b><span>'+esc(x.sub)+'</span></div>'+
+          '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
+        host.appendChild(d);
+      });
+      $("noticeMore").className="nx-more hidden";
+      return;
+    }
+  });
+
+  function closeNotice(){ $("nxModal").classList.add("hidden"); ANN.cur=null; }
+  function openNotice(a){
+    ANN.cur=a; ANN.pick=""; ANN.ticked=false;
+    var kind=String(r_(a,"Kind")||"feature").toLowerCase();
+    var mine=annMine(a.id);
+    $("nxPill").className="nx-pill "+kind;
+    $("nxPill").textContent = kind==="poll" ? "Poll" : (kind==="confirm" ? "Please read" : "New");
+    $("nxTitle").textContent=r_(a,"Title");
+    $("nxBody").textContent=r_(a,"Body");
+    $("nxErr").textContent="";
+    var extra=$("nxExtra"); extra.innerHTML="";
+
+    if(kind==="confirm"){
+      extra.innerHTML='<div class="nx-chk" id="nxTick"><span class="nx-box2"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+        '<span>I have read and understood this</span></div>';
+      $("nxTick").addEventListener("click",function(){
+        ANN.ticked=!ANN.ticked;
+        this.querySelector(".nx-box2").classList.toggle("on",ANN.ticked);
+        $("nxGo").disabled=!ANN.ticked;
+      });
+      $("nxGo").textContent="Confirm"; $("nxGo").disabled=true;
+      $("nxLater").textContent="Read later";
+    } else if(kind==="poll"){
+      var opts=annOptions(a);
+      var voted = mine && mine.action==="voted";
+      var showRes = annOn(r_(a,"Show Results"));
+      if(voted && showRes){ renderPollResults(a, mine); }
+      else {
+        extra.innerHTML=opts.map(function(o,ix){
+          return '<div class="nx-opt'+((mine&&mine.choice===o)?" on":"")+'" data-opt="'+esc(o)+'">'+
+            '<span class="dot"></span><span>'+esc(o)+'</span></div>';
+        }).join("");
+        if(mine&&mine.choice) ANN.pick=mine.choice;
+        extra.addEventListener("click",function(e){
+          var o=e.target.closest?e.target.closest(".nx-opt"):null; if(!o) return;
+          Array.prototype.forEach.call(extra.querySelectorAll(".nx-opt"),function(x){x.classList.remove("on");});
+          o.classList.add("on"); ANN.pick=o.getAttribute("data-opt");
+          $("nxGo").disabled=false; $("nxErr").textContent="";
+        });
+        $("nxGo").textContent = voted ? "Change my vote" : "Submit";
+        $("nxGo").disabled = !ANN.pick;
+        $("nxLater").textContent="Later";
+      }
+    } else {
+      $("nxGo").textContent = r_(a,"Target") ? "Show me" : "Got it";
+      $("nxGo").disabled=false;
+      $("nxLater").textContent="Later";
+    }
+    $("nxModal").classList.remove("hidden");
+  }
+  function renderPollResults(a, mine){
+    var opts=annOptions(a), counts={}, total=0;
+    opts.forEach(function(o){ counts[o]=0; });
+    (ANN.reads||[]).forEach(function(r){
+      if(String(r.ann_id)!==String(a.id) || r.action!=="voted") return;
+      if(counts[r.choice]!=null){ counts[r.choice]++; total++; }
+    });
+    $("nxExtra").innerHTML=opts.map(function(o){
+      var c=counts[o]||0, pct=total?Math.round(c/total*100):0;
+      var yours=(mine&&mine.choice===o)?'  \u2190 your vote':'';
+      return '<div class="nx-res"><div class="lb"><span>'+esc(o)+esc(yours)+'</span><b>'+c+'</b></div>'+
+        '<div class="nx-bar"><i style="width:'+pct+'%"></i></div></div>';
+    }).join("")+'<div class="prof-hint">'+total+' vote'+(total===1?'':'s')+' so far.</div>';
+    $("nxGo").textContent="Change my vote"; $("nxGo").disabled=false;
+    $("nxLater").textContent="Close";
+  }
+  $("nxLater").addEventListener("click",closeNotice);
+  $("nxModal").addEventListener("click",function(e){ if(e.target===this) closeNotice(); });
+  $("nxGo").addEventListener("click",function(){
+    var a=ANN.cur; if(!a) return;
+    var kind=String(r_(a,"Kind")||"feature").toLowerCase();
+    var mine=annMine(a.id);
+
+    if(kind==="poll" && mine && mine.action==="voted" && $("nxGo").textContent==="Change my vote"){
+      ANN.pick=""; openNotice(a); $("nxGo").disabled=true; return;   // back to the choices
+    }
+    if(kind==="poll" && !ANN.pick){ $("nxErr").textContent="Pick an option first."; return; }
+    if(kind==="confirm" && !ANN.ticked){ $("nxErr").textContent="Please tick the box first."; return; }
+
+    var action = kind==="poll" ? "voted" : (kind==="confirm" ? "confirmed" : "seen");
+    var btn=$("nxGo"); btn.disabled=true; var was=btn.textContent; btn.textContent="Saving\u2026";
+    annRespond(a.id, action, ANN.pick).then(function(ok){
+      btn.disabled=false; btn.textContent=was;
+      if(!ok){ $("nxErr").textContent="Couldn\u2019t save that. Try again."; return; }
+      var target=r_(a,"Target");
+      closeNotice();
+      paintNotices();
+      if(kind==="feature" && target){ setTimeout(function(){ openTileByType(target); },150); }
+      else if(kind==="poll"){ setTimeout(function(){ openNotice(a); },150); }
+    });
+  });
+  function annRespond(id, action, choice){
+    var unit=annMyUnit();
+    if(!unit || STATE.demo) return Promise.resolve(false);
+    return fetch(SB_URL+"/rest/v1/rpc/announcement_respond",{
+      method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+      body:JSON.stringify({p_ann_id:id, p_unit:unit, p_action:action, p_choice:choice||""})
+    }).then(function(r){ return r.json(); }).then(function(j){
+      if(j&&j.ok){
+        var m=annMine(id);
+        if(m){ m.action=action; m.choice=choice||""; }
+        else ANN.reads.push({ann_id:id, unit:unit, action:action, choice:choice||""});
+        return true;
+      }
+      return false;
+    })["catch"](function(){ return false; });
+  }
+  // Opens whatever screen a tile of that type would open.
+  function openTileByType(type){
+    var t=(STATE.tiles||[]).filter(function(x){
+      return String(r_(x,"Type")||"").toLowerCase()===String(type||"").toLowerCase();
+    })[0];
+    if(t){ openTile(t); return; }
+    openTile({Type:type, Label:type, Target:""});
+  }
+
+  // "31 of 48 confirmed" under each row in the admin list.
+  function annAdminSub(r){
+    var kind=String(r_(r,"Kind")||"feature").toLowerCase();
+    var total=(ADM.rows||[]).filter(function(m){
+      return String(m["Active"]||"").trim().toLowerCase()!=="no";
+    }).length || 0;
+    var n=0;
+    (ANN.reads||[]).forEach(function(x){ if(String(x.ann_id)===String(r.__id||r.id)) n++; });
+    if(kind==="confirm") return n+" of "+total+" confirmed";
+    if(kind==="poll") return n+" of "+total+" voted";
+    return "Seen by "+n;
+  }
   function paintCertBanner(){
+    // superseded by the notice stack, which includes the certification banner
+    var host=$("certBanner"); if(host){ host.innerHTML=""; host.className="cert-banner hidden"; }
+    paintNotices();
+  }
+  function paintCertBannerOld(){
     var host=$("certBanner"); if(!host) return;
     var i=CERT.myIssues;
     if(!i || STATE.demo){ host.innerHTML=""; host.className="cert-banner hidden"; return; }
@@ -6401,7 +6726,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6443,7 +6768,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
