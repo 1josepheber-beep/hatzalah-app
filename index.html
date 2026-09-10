@@ -1291,7 +1291,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.6</div>
+  <div class="ver-line">Version 13.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1407,7 +1407,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.6</div>
+  <div class="ver-line">Version 13.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3408,14 +3408,23 @@
       var cr=admCertRow(ADM.sel);
       if(!cr){ btn.disabled=false; btn.textContent="Save changes"; return; }
       var cupd={}, any=false;
+      var dateChanged=false;
       Array.prototype.forEach.call(document.querySelectorAll(".adm-cdate,.adm-cnum"),function(inp){
         var header=inp.getAttribute("data-col"), db=sbCol("certifications",header);
-        if(db){ cupd[db]=String(inp.value||"").trim(); cr[header]=cupd[db]; any=true; }
+        if(db){
+          var v=String(inp.value||"").trim();
+          // only an expiry date can clear someone to respond; a number can't
+          if(inp.classList.contains("adm-cdate") && String(cr[header]==null?"":cr[header]).trim()!==v) dateChanged=true;
+          cupd[db]=v; cr[header]=cupd[db]; any=true;
+        }
       });
       if(!any){ btn.disabled=false; btn.textContent="Save changes"; return; }
+      var certUnit=ADM.sel;
       sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(ADM.sel),cupd)
         .then(function(res){ btn.disabled=false; btn.textContent="Save changes";
-          if(res.ok){ msg.className="adm-msg ok"; msg.textContent="Saved."; CERT.loaded=false; }
+          if(res.ok){ msg.className="adm-msg ok"; msg.textContent="Saved."; CERT.loaded=false;
+            if(dateChanged) pokeCertMailer(certUnit);
+          }
           else { msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; } })
         .catch(function(){ btn.disabled=false; btn.textContent="Save changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
       return;
@@ -6252,7 +6261,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6294,7 +6303,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
