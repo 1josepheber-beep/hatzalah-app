@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "14.1";
+var VERSION = "14.2";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -88,9 +88,31 @@ self.addEventListener("fetch",function(e){
       return;
     }
 
+    /* Photos from the public bucket - tile icons, member photos, cabinet
+       pictures. These arrive through <img> tags, which are cross-origin
+       "no-cors" requests, so the browser hands back an OPAQUE response:
+       status 0, res.ok false. Checking res.ok therefore threw every single
+       image away and nothing was ever saved. Accept opaque here, and serve
+       cache-first since an uploaded file never changes under the same name. */
+    if(url.pathname.indexOf("/object/public/") > -1){
+      e.respondWith(
+        caches.match(req.url, {ignoreVary:true}).then(function(hit){
+          if(hit) return hit;
+          return fetch(req).then(function(res){
+            if(res && (res.ok || res.type === "opaque")){
+              var copy = res.clone();
+              caches.open(DATA).then(function(c){ c.put(req.url, copy); });
+            }
+            return res;
+          }).catch(function(){ return hit; });
+        })
+      );
+      return;
+    }
+
     /* Everything else from Supabase - the roster, hospitals, certifications,
-       equipment, cabinets, apartments, and photos from the public bucket -
-       tries the network briefly, then falls back to the last good copy. */
+       equipment, cabinets, apartments - tries the network briefly, then falls
+       back to the last good copy. */
     e.respondWith(
       timedFetch(req, NET_TIMEOUT_MS).then(function(res){
         if(res && res.ok){
@@ -125,7 +147,7 @@ self.addEventListener("fetch",function(e){
       caches.match(req.url, {ignoreVary:true}).then(function(hit){
         if(hit && hit.ok) return hit;
         return fetch(req).then(function(res){
-          if(res && res.ok){
+          if(res && (res.ok || res.type === "opaque")){
             var copy = res.clone();
             caches.open(DATA).then(function(c){ c.put(req.url, copy); });
           }
