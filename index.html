@@ -696,6 +696,13 @@
   .adm-pausebtn{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
   .adm-pausebtn.on{background:#ede4fb;border-color:#c9b3f0;color:#5b3aa8}
   .adm-certdel{flex:0 0 auto;border:1px solid #f3b6b6;background:#fff;color:var(--red);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:800;cursor:pointer}
+  .rc-opt{border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px;cursor:pointer;background:#fff}
+  .rc-opt:active{background:#f4f7fb}
+  .rc-opt b{display:block;font-size:14px;color:var(--navy);margin-bottom:3px}
+  .rc-opt span{display:block;font-size:12.5px;color:var(--mut);line-height:1.45}
+  .rc-opt.danger b{color:var(--red)}
+  .rc-opt.danger.armed{background:var(--red);border-color:var(--red)}
+  .rc-opt.danger.armed b,.rc-opt.danger.armed span{color:#fff}
   .adm-certdel.armed{background:var(--red);color:#fff;border-color:var(--red)}
   .adm-ct{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
   .adm-ct:last-child{border-bottom:0}
@@ -1291,7 +1298,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 13.7</div>
+  <div class="ver-line">Version 13.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1407,7 +1414,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 13.7</div>
+  <div class="ver-line">Version 13.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3462,6 +3469,61 @@
       }).catch(function(){ toast("Couldn\u2019t save \u2014 check your connection."); });
   }
   function admRemoveCertConfirm(expCol, niceName){
+    var who=ADM.sel||"this member";
+    admHost().innerHTML='<div class="adm-modal" id="rcModal"><div class="adm-mbox">'+
+      '<h3>Remove \u201C'+esc(niceName)+'\u201D?</h3>'+
+      '<p class="adm-msub">Choose how far this should go.</p>'+
+      '<div class="rc-opt" id="rc_one"><b>Just '+esc(who)+'</b>'+
+        '<span>Marks it Not required for them. Nobody else changes.</span></div>'+
+      '<div class="rc-opt danger" id="rc_all"><b>Everyone in the organization</b>'+
+        '<span>Deletes the certification and every member\u2019s dates for it. Cannot be undone.</span></div>'+
+      '<div class="adm-merr" id="rc_err"></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="rc_cancel">Cancel</button></div>'+
+      '</div></div>';
+    $("rc_cancel").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("rcModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
+
+    function done(msg){
+      admHost().innerHTML=""; toast(msg);
+      ADM.loaded=false; CERT.loaded=false;
+      Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
+        ADM.rows=res[0]||[]; ADM.certs=res[1]||[];
+        try{ CERT.certCols = ADM.certs.length ? computeCertCols(ADM.certs[0]) : []; }catch(e){}
+        admRender(); admRenderDetail();
+      });
+    }
+    function call(fn, body, el, label){
+      var err=$("rc_err"); err.textContent=""; el.style.opacity=".5";
+      fetch(SB_URL+"/rest/v1/rpc/"+fn,{
+        method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+        body:JSON.stringify(body)
+      }).then(function(r){ return r.json(); })
+        .then(function(j){
+          el.style.opacity="";
+          if(!j||!j.ok){ err.textContent=(j&&j.error)||"Couldn\u2019t remove it."; return; }
+          done(label);
+        })
+        .catch(function(){ el.style.opacity=""; err.textContent="Couldn\u2019t remove it \u2014 check your connection."; });
+    }
+    $("rc_one").addEventListener("click",function(){
+      call("remove_certification_for_member",{exp_column:expCol, member_unit:ADM.sel},
+           this, "\u201C"+niceName+"\u201D marked Not required for "+who+".");
+    });
+    $("rc_all").addEventListener("click",function(){
+      var el=this;
+      if(el.getAttribute("data-armed")!=="1"){
+        el.setAttribute("data-armed","1"); el.classList.add("armed");
+        el.querySelector("span").textContent="Tap again to confirm \u2014 this cannot be undone.";
+        setTimeout(function(){ if(el.getAttribute("data-armed")==="1"){
+          el.setAttribute("data-armed","0"); el.classList.remove("armed");
+          el.querySelector("span").textContent="Deletes the certification and every member\u2019s dates for it. Cannot be undone.";
+        } },5000);
+        return;
+      }
+      call("remove_certification",{exp_column:expCol}, el, "\u201C"+niceName+"\u201D removed for everyone.");
+    });
+  }
+  function admRemoveCertConfirmOld(expCol, niceName){
     admHost().innerHTML='<div class="adm-modal" id="rcModal"><div class="adm-mbox">'+
       '<h3>Remove \u201C'+esc(niceName)+'\u201D?</h3>'+
       '<p class="adm-msub">This deletes the certification and every member\u2019s dates for it, '+
@@ -3649,11 +3711,6 @@
   $("admRight").addEventListener("click",function(e){
     var dc=e.target.closest?e.target.closest(".adm-certdel"):null;
     if(dc){
-      if(dc.getAttribute("data-armed")!=="1"){
-        dc.setAttribute("data-armed","1"); dc.classList.add("armed"); dc.textContent="Remove for everyone?";
-        setTimeout(function(){ if(dc.getAttribute("data-armed")==="1"){ dc.setAttribute("data-armed","0"); dc.classList.remove("armed"); dc.textContent="Remove"; } },5000);
-        return;
-      }
       admRemoveCertConfirm(dc.getAttribute("data-delcert"), dc.getAttribute("data-name"));
       return;
     }
@@ -6261,7 +6318,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6303,7 +6360,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<div class="prof-bio" id="profBioWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 13.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
