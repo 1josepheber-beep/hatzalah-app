@@ -1383,7 +1383,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 15.4</div>
+  <div class="ver-line">Version 15.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1501,7 +1501,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 15.4</div>
+  <div class="ver-line">Version 15.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5580,14 +5580,14 @@
           return '<div class="nx-opt'+((mine&&mine.choice===o)?" on":"")+'" data-opt="'+esc(o)+'">'+
             '<span class="dot"></span><span>'+esc(o)+'</span></div>';
         }).join("");
-        if(mine&&mine.choice) ANN.pick=mine.choice;
+        if(mine&&mine.choice && !annOn(r_(a,"Anonymous"))) ANN.pick=mine.choice;
         extra.addEventListener("click",function(e){
           var o=e.target.closest?e.target.closest(".nx-opt"):null; if(!o) return;
           Array.prototype.forEach.call(extra.querySelectorAll(".nx-opt"),function(x){x.classList.remove("on");});
           o.classList.add("on"); ANN.pick=o.getAttribute("data-opt");
           $("nxGo").disabled=false; $("nxErr").textContent="";
         });
-        $("nxGo").textContent = voted ? "Change my vote" : "Submit";
+        $("nxGo").textContent = voted ? (annOn(r_(a,"Anonymous"))?"Close":"Change my vote") : "Submit";
         $("nxGo").disabled = !ANN.pick;
         $("nxLater").textContent="Later";
       }
@@ -5601,8 +5601,11 @@
   function renderPollResults(a, mine){
     var opts=annOptions(a), counts={}, total=0;
     opts.forEach(function(o){ counts[o]=0; });
+    var anon=annOn(r_(a,"Anonymous"));
     (ANN.reads||[]).forEach(function(r){
-      if(String(r.ann_id)!==String(annId(a)) || r.action!=="voted") return;
+      if(String(r.ann_id)!==String(annId(a))) return;
+      // anonymous polls keep the choice on a separate ballot row
+      if(r.action!==(anon?"ballot":"voted")) return;
       if(counts[r.choice]!=null){ counts[r.choice]++; total++; }
     });
     $("nxExtra").innerHTML=opts.map(function(o){
@@ -5631,7 +5634,7 @@
     var btn=$("nxGo"); btn.disabled=true; var was=btn.textContent; btn.textContent="Saving\u2026";
     annRespond(annId(a), action, ANN.pick).then(function(ok){
       btn.disabled=false; btn.textContent=was;
-      if(!ok){ $("nxErr").textContent="Couldn\u2019t save that. Try again."; return; }
+      if(!ok){ $("nxErr").textContent=ANN.lastErr||"Couldn\u2019t save that. Try again."; return; }
       var target=r_(a,"Target");
       closeNotice();
       paintNotices();
@@ -5646,6 +5649,7 @@
       method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
       body:JSON.stringify({p_ann_id:id, p_unit:unit, p_action:action, p_choice:choice||""})
     }).then(function(r){ return r.json(); }).then(function(j){
+      ANN.lastErr=(j&&j.error)||"";
       if(j&&j.ok){
         var m=annMine(id);
         if(m){ m.action=action; m.choice=choice||""; }
@@ -5689,6 +5693,9 @@
         return String(m["Active"]||"").trim().toLowerCase()!=="no";
       });
       var reads=res[1]||[];
+      // "(ballot)" rows are anonymous choices, not members
+      reads=reads.filter(function(x){ return String(x.unit||"")!=="(ballot)"; });
+      var ballots=(res[1]||[]).filter(function(x){ return x.action==="ballot"; });
       var byUnit={};
       reads.forEach(function(x){ byUnit[String(x.unit||"").trim().toLowerCase()]=x; });
 
@@ -5696,7 +5703,8 @@
       if(kind==="poll"){
         var opts=annOptions(a), counts={}, tot=0;
         opts.forEach(function(o){ counts[o]=0; });
-        reads.forEach(function(x){ if(counts[x.choice]!=null){ counts[x.choice]++; tot++; } });
+        var src = anon ? ballots : reads;
+        src.forEach(function(x){ if(counts[x.choice]!=null){ counts[x.choice]++; tot++; } });
         $("rspTally").innerHTML='<div class="rsp-tal">'+opts.map(function(o){
           var c=counts[o]||0, pct=tot?Math.round(c/tot*100):0;
           return '<div class="lb"><span>'+esc(o)+'</span><b>'+c+'</b></div>'+
@@ -5705,10 +5713,24 @@
       }
 
       if(anon){
-        $("rspSub").textContent=reads.length+" vote"+(reads.length===1?"":"s")+" \u2014 anonymous, so no names were recorded";
-        $("rspBar").style.width="100%";
-        $("rspList").innerHTML='<div class="adm-empty">This poll was set to anonymous, so who voted was never stored.</div>';
-        RSP.rows=[];
+        var votedN=reads.length;
+        $("rspSub").textContent=votedN+" of "+roster.length+" voted \u2014 anonymous, so the choices aren\u2019t linked to anyone";
+        $("rspBar").style.width=(roster.length?Math.round(votedN/roster.length*100):0)+"%";
+        var out2=roster.map(function(m){
+          var unit=r_(m,"Unit"), hit=byUnit[unit.trim().toLowerCase()];
+          return {unit:unit, name:(r_(m,"Last Name")+", "+r_(m,"First Name")).replace(/^, |, $/,""),
+                  yes:!!hit, choice:"", at:""};
+        });
+        out2.sort(function(x,y){ if(x.yes!==y.yes) return x.yes?1:-1;
+          return x.unit.localeCompare(y.unit,undefined,{numeric:true}); });
+        RSP.rows=out2;
+        $("rspList").innerHTML='<div class="prof-hint" style="padding:10px 0">Who voted is shown below. '+
+          'What each person chose was never recorded.</div>'+
+          out2.map(function(r){
+            return '<div class="rsp-row"><span class="rsp-u">'+esc(r.unit)+'</span>'+
+              '<span class="rsp-n">'+esc(r.name)+'</span>'+
+              (r.yes?'<span class="rsp-y">Voted</span>':'<span class="rsp-x">No</span>')+'</div>';
+          }).join("");
         return;
       }
 
@@ -6895,7 +6917,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.4</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6937,7 +6959,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.4</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
