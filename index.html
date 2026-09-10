@@ -871,6 +871,9 @@
   .res-fn{font-size:11px;color:#9aa7b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .res-go{flex:0 0 auto;width:22px;height:22px;stroke:#9aa7b8;fill:none;stroke-width:2}
   .res-note{font-size:12px;color:var(--mut);padding:12px;text-align:center;line-height:1.5}
+  .off-bar{height:8px;background:#e7edf5;border-radius:999px;overflow:hidden;margin:6px 0 10px}
+  .off-bar i{display:block;height:100%;background:var(--navy);border-radius:999px;transition:width .25s ease}
+  .prof-off{margin-top:4px}
   .adm-uprow{display:flex;align-items:center;gap:10px;margin:-6px 0 14px}
   .adm-up{border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:10px;padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
   .adm-up:disabled{opacity:.6}
@@ -1298,7 +1301,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 14.0</div>
+  <div class="ver-line">Version 14.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1414,7 +1417,7 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 14.0</div>
+  <div class="ver-line">Version 14.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -6387,7 +6390,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6427,9 +6430,9 @@
       '<div class="prof-hint">Used by the \u201CText Home\u201D button in Quick Actions \u2014 it opens your SMS or WhatsApp so this number knows you\u2019ve been called out. You still tap send.</div>'+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
-      '<div class="prof-bio" id="profBioWrap"></div>'+
+      '<div class="prof-bio" id="profBioWrap"></div>'+'<div class="prof-off" id="profOffWrap"></div>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 14.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -6458,8 +6461,112 @@
       });
     });
     renderBioRow();
+    renderOfflineRow();
   }
   // (legacy password change removed — sign-in is Google-only)
+  // ---------- Save for offline ----------
+  // Nothing is stored until a screen has been opened, which is no use to a
+  // member standing outside a building with no signal on a screen they've never
+  // visited. This fetches the lot in one go. Anything already saved is skipped,
+  // so running it again after new maps are added is quick.
+  var OFFDL={running:false};
+  function offCachedSet(){
+    if(!("caches" in window)) return Promise.resolve(null);
+    return caches.keys().then(function(names){
+      var seen={};
+      return Promise.all(names.map(function(n){
+        return caches.open(n).then(function(c){
+          return c.keys().then(function(ks){ ks.forEach(function(r){ seen[r.url]=1; }); });
+        })["catch"](function(){});
+      })).then(function(){ return seen; });
+    })["catch"](function(){ return null; });
+  }
+  // Everything worth having on a call, gathered from what the app already knows.
+  function offCollect(){
+    var urls=[];
+    function push(u){ if(u && urls.indexOf(u)<0) urls.push(u); }
+    function img(v){ var u=sbImgUrl(v); if(u) push(u); }
+    function rest(tbl){
+      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*",{headers:sbAuthHeaders()})
+        .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; });
+    }
+    return Promise.all([
+      fetchTab("Tiles")["catch"](function(){return [];}),
+      fetchTab("Roster")["catch"](function(){return [];}),
+      fetchTab("apartments")["catch"](function(){return [];}),
+      rest("cabinets"),
+      rest("equipment_items")
+    ]).then(function(res){
+      (res[0]||[]).forEach(function(t){ img(r_(t,"Image")); });
+      (res[1]||[]).forEach(function(m){ img(r_(m,"Photo")); });
+      (res[2]||[]).forEach(function(a){
+        var f=r_(a,"File");
+        if(f){ if(/^(sb:|https?:|storage\/)/i.test(f)) img(f); else push("apartments/"+f); }
+      });
+      (res[3]||[]).forEach(function(c){ img(c.img); });
+      (res[4]||[]).forEach(function(i){ img(i.image); });
+      // protocol pages live in the repo alongside the app
+      return loadProtocols().then(function(d){
+        var n=(d&&d.pages&&d.pages.length)||0;
+        for(var i=1;i<=n;i++) push("protocols/p"+("00"+i).slice(-3)+".webp");
+        return urls;
+      })["catch"](function(){ return urls; });
+    });
+  }
+  function renderOfflineRow(msg, pct, disabled){
+    var w=$("profOffWrap"); if(!w) return;
+    w.innerHTML=
+      '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>Use without a signal</div>'+
+      '<div class="prof-hint">Your phone only keeps screens you have already opened. Tap this once on '+
+      'Wi\u2011Fi and everything \u2014 apartment maps, cabinet photos, the directory and protocols \u2014 '+
+      'is saved for when you have no signal.</div>'+
+      (pct!=null?'<div class="off-bar"><i style="width:'+pct+'%"></i></div>':'')+
+      '<button class="ebtn" id="offDlBtn"'+(disabled?" disabled":"")+'>'+
+        (OFFDL.running?"Saving\u2026":"Save everything for offline")+'</button>'+
+      '<div class="prof-note" id="offNote">'+(msg?esc(msg):"")+'</div>';
+    var b=$("offDlBtn");
+    if(b && !disabled) b.addEventListener("click",offDownload);
+  }
+  function offDownload(){
+    if(OFFDL.running) return;
+    if(!navigator.onLine){ renderOfflineRow("You need a signal to do this."); return; }
+    OFFDL.running=true;
+    renderOfflineRow("Working out what to save\u2026", 0, true);
+    Promise.all([offCollect(), offCachedSet()]).then(function(r){
+      var all=r[0]||[], have=r[1]||{};
+      var todo=all.filter(function(u){
+        var abs=u; try{ abs=new URL(u, location.href).href; }catch(e){}
+        return !have[abs];
+      });
+      if(!todo.length){
+        OFFDL.running=false;
+        renderOfflineRow("Already saved \u2014 nothing new to fetch. ("+all.length+" items)");
+        return;
+      }
+      var done=0, failed=0, i=0, CONC=4;
+      function next(){
+        if(i>=todo.length) return Promise.resolve();
+        var u=todo[i++];
+        return fetch(u,{mode:"no-cors"}).then(function(){ done++; },function(){ failed++; })
+          .then(function(){
+            renderOfflineRow("Saved "+done+" of "+todo.length+"\u2026",
+                             Math.round(((done+failed)/todo.length)*100), true);
+            return next();
+          });
+      }
+      var lanes=[]; for(var k=0;k<CONC;k++) lanes.push(next());
+      return Promise.all(lanes).then(function(){
+        OFFDL.running=false;
+        renderOfflineRow(failed
+          ? ("Saved "+done+" items. "+failed+" couldn\u2019t be fetched \u2014 try again on a stronger connection.")
+          : ("All set \u2014 "+done+" items saved. The app will work without a signal."), 100);
+      });
+    })["catch"](function(){
+      OFFDL.running=false;
+      renderOfflineRow("Couldn\u2019t save right now. Try again on Wi\u2011Fi.");
+    });
+  }
+
   function renderBioRow(){
     var w=$("profBioWrap"); if(!w) return;
     bioAvail().then(function(ok){
