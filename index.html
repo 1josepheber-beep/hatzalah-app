@@ -883,6 +883,34 @@
   .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
   .eq-imgpv.hidden{display:none}
   .eq-thumb{width:42px;height:42px;object-fit:cover;border-radius:9px;border:1px solid var(--line);flex:0 0 auto;cursor:zoom-in}
+  .adm-resp{display:block;width:100%;border:1px solid var(--line);background:#fff;color:var(--navy);
+    border-radius:10px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;margin-bottom:8px}
+  .rsp-modal{position:fixed;inset:0;background:rgba(9,20,38,.55);z-index:230;display:flex;
+    align-items:center;justify-content:center;padding:14px}
+  .rsp-modal.hidden{display:none}
+  .rsp-box{background:#fff;border-radius:16px;width:100%;max-width:520px;max-height:88vh;
+    display:flex;flex-direction:column;overflow:hidden}
+  .rsp-h{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+  .rsp-h b{display:block;font-size:15.5px;color:var(--navy)}
+  .rsp-h span{font-size:12.5px;color:var(--mut)}
+  .rsp-bar{height:9px;background:#e7edf5;border-radius:999px;overflow:hidden;margin:9px 0 0}
+  .rsp-bar i{display:block;height:100%;background:#2f9e44;border-radius:999px}
+  .rsp-list{overflow:auto;padding:4px 16px}
+  .rsp-row{display:flex;align-items:baseline;gap:9px;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+  .rsp-row:first-child{border-top:0}
+  .rsp-u{font-weight:800;color:var(--navy);min-width:46px}
+  .rsp-n{flex:1;min-width:0}
+  .rsp-y{color:#2f9e44;font-weight:800;font-size:12px}
+  .rsp-x{color:var(--red);font-weight:800;font-size:12px}
+  .rsp-c{font-size:12px;color:var(--mut);display:block}
+  .rsp-f{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:9px}
+  .rsp-f button{flex:1;border:0;border-radius:10px;padding:12px;font-weight:800;font-size:13.5px;
+    font-family:inherit;cursor:pointer}
+  .rsp-dl{background:var(--navy);color:#fff}
+  .rsp-cl{background:#fff;color:var(--mut);border:1px solid var(--line)}
+  .rsp-tal{padding:10px 16px;border-top:1px solid var(--line);background:#f7f9fc}
+  .rsp-tal .lb{display:flex;justify-content:space-between;font-size:12.5px;margin:6px 0 3px}
+  .rsp-tal .lb b{color:var(--navy)}
   .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm-fileref{font-size:12px;color:var(--mut)}
   /* Resources list */
@@ -1355,7 +1383,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 15.2</div>
+  <div class="ver-line">Version 15.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1473,7 +1501,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 15.2</div>
+  <div class="ver-line">Version 15.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1637,6 +1665,16 @@
   <div class="apt-hint" id="aptMapHint">Pinch or double-tap to zoom &middot; drag to move</div>
 </div>
 
+<div class="rsp-modal hidden" id="rspModal">
+  <div class="rsp-box">
+    <div class="rsp-h"><b id="rspTitle"></b><span id="rspSub"></span>
+      <div class="rsp-bar"><i id="rspBar" style="width:0%"></i></div></div>
+    <div id="rspTally"></div>
+    <div class="rsp-list" id="rspList"></div>
+    <div class="rsp-f"><button class="rsp-cl" id="rspClose">Close</button>
+      <button class="rsp-dl" id="rspDl">Download</button></div>
+  </div>
+</div>
 <div class="nx-modal hidden" id="nxModal">
   <div class="nx-box">
     <span class="nx-pill" id="nxPill"></span>
@@ -4341,6 +4379,7 @@
         '</div>'+
         '<div class="adm-itemb">'+
           '<div class="adm-grid">'+fields+'</div>'+specs+
+          (k==="announce"?('<button class="adm-resp" data-resp="'+i+'">See who responded</button>'):"")+
           (k==="settings"?"":'<button class="adm-del" data-del="'+i+'">Delete this row</button>')+
         '</div></div>';
     }).join("");
@@ -4603,6 +4642,13 @@
     }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
+    var rsp=e.target.closest?e.target.closest(".adm-resp"):null;
+    if(rsp){
+      var ri=+rsp.getAttribute("data-resp");
+      var arow=(ADM2.data["announce"]||[])[ri];
+      if(arow) openResponses(arow);
+      return;
+    }
     var del=e.target.closest?e.target.closest(".adm-del"):null;
     if(del){ admGenDelete(parseInt(del.getAttribute("data-del"),10)); return; }
     if(e.target.id==="admGenSave"){ admGenSave(); return; }
@@ -5610,6 +5656,102 @@
   }
 
   // "31 of 48 confirmed" under each row in the admin list.
+  // Who has confirmed / voted, and who hasn't.
+  var RSP={rows:[], title:"", kind:""};
+  function closeResp(){ $("rspModal").classList.add("hidden"); }
+  $("rspClose").addEventListener("click",closeResp);
+  $("rspModal").addEventListener("click",function(e){ if(e.target===this) closeResp(); });
+  function openResponses(a){
+    var id=annId(a), kind=String(r_(a,"Kind")||"feature").toLowerCase();
+    var anon=annOn(r_(a,"Anonymous")) && kind==="poll";
+    RSP.title=r_(a,"Title"); RSP.kind=kind;
+    $("rspTitle").textContent=RSP.title;
+    $("rspSub").textContent="Loading\u2026";
+    $("rspTally").innerHTML=""; $("rspList").innerHTML="";
+    $("rspBar").style.width="0%";
+    $("rspModal").classList.remove("hidden");
+
+    Promise.all([
+      fetchTab("Roster")["catch"](function(){return [];}),
+      fetch(SB_URL+"/rest/v1/announcement_reads?select=*&ann_id=eq."+encodeURIComponent(id),
+            {headers:sbAuthHeaders()}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+    ]).then(function(res){
+      var roster=(res[0]||[]).filter(function(m){
+        return String(m["Active"]||"").trim().toLowerCase()!=="no";
+      });
+      var reads=res[1]||[];
+      var byUnit={};
+      reads.forEach(function(x){ byUnit[String(x.unit||"").trim().toLowerCase()]=x; });
+
+      // running tally for polls
+      if(kind==="poll"){
+        var opts=annOptions(a), counts={}, tot=0;
+        opts.forEach(function(o){ counts[o]=0; });
+        reads.forEach(function(x){ if(counts[x.choice]!=null){ counts[x.choice]++; tot++; } });
+        $("rspTally").innerHTML='<div class="rsp-tal">'+opts.map(function(o){
+          var c=counts[o]||0, pct=tot?Math.round(c/tot*100):0;
+          return '<div class="lb"><span>'+esc(o)+'</span><b>'+c+'</b></div>'+
+                 '<div class="rsp-bar"><i style="width:'+pct+'%;background:var(--navy)"></i></div>';
+        }).join("")+'</div>';
+      }
+
+      if(anon){
+        $("rspSub").textContent=reads.length+" vote"+(reads.length===1?"":"s")+" \u2014 anonymous, so no names were recorded";
+        $("rspBar").style.width="100%";
+        $("rspList").innerHTML='<div class="adm-empty">This poll was set to anonymous, so who voted was never stored.</div>';
+        RSP.rows=[];
+        return;
+      }
+
+      var done=0, out=[];
+      roster.forEach(function(m){
+        var unit=r_(m,"Unit"), key=unit.trim().toLowerCase();
+        var hit=byUnit[key];
+        if(hit) done++;
+        out.push({unit:unit,
+                  name:(r_(m,"Last Name")+", "+r_(m,"First Name")).replace(/^, |, $/,""),
+                  yes:!!hit, choice:hit?(hit.choice||""):"",
+                  at:hit?(hit.at||""):""});
+      });
+      // people who haven't responded first - they're the ones you'd chase
+      out.sort(function(x,y){
+        if(x.yes!==y.yes) return x.yes?1:-1;
+        return x.unit.localeCompare(y.unit,undefined,{numeric:true});
+      });
+      RSP.rows=out;
+
+      var word = kind==="poll" ? "voted" : (kind==="confirm" ? "confirmed" : "seen it");
+      $("rspSub").textContent=done+" of "+roster.length+" "+word;
+      $("rspBar").style.width=(roster.length?Math.round(done/roster.length*100):0)+"%";
+      $("rspList").innerHTML=out.map(function(r){
+        return '<div class="rsp-row"><span class="rsp-u">'+esc(r.unit)+'</span>'+
+          '<span class="rsp-n">'+esc(r.name)+
+            (r.choice?'<span class="rsp-c">'+esc(r.choice)+'</span>':'')+
+          '</span>'+
+          (r.yes?'<span class="rsp-y">'+esc(fmtWhen(r.at))+'</span>'
+                :'<span class="rsp-x">No</span>')+'</div>';
+      }).join("") || '<div class="adm-empty">Nobody on the roster.</div>';
+    })["catch"](function(){
+      $("rspSub").textContent="Couldn\u2019t load.";
+    });
+  }
+  function fmtWhen(iso){
+    if(!iso) return "Yes";
+    var d=new Date(iso); if(isNaN(d)) return "Yes";
+    return d.toLocaleDateString([], {month:"short", day:"numeric"})+", "+
+           d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+  }
+  $("rspDl").addEventListener("click",function(){
+    if(!RSP.rows.length){ toast("Nothing to download."); return; }
+    var head=["Unit","Name",(RSP.kind==="poll"?"Voted":"Responded"),"Choice","When"];
+    var lines=[head.join(",")].concat(RSP.rows.map(function(r){
+      return [r.unit, r.name, (r.yes?"Yes":"No"), r.choice, r.at]
+        .map(function(x){ return '"'+String(x==null?"":x).replace(/"/g,'""')+'"'; }).join(",");
+    }));
+    var name=RSP.title.replace(/[^A-Za-z0-9]+/g,"_").slice(0,40)||"responses";
+    dlBlob(name+".csv", new Blob([lines.join("\r\n")],{type:"text/csv"}));
+  });
+
   function annAdminSub(r){
     var kind=String(r_(r,"Kind")||"feature").toLowerCase();
     var total=(ADM.rows||[]).filter(function(m){
@@ -6744,7 +6886,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6786,7 +6928,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
