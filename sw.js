@@ -1,7 +1,4 @@
 /* Hatzalah of Houston - service worker */
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 
 /* Two caches, on purpose.
 
@@ -44,12 +41,6 @@ self.addEventListener("message",function(e){
   if(e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
 });
 
-=======
->>>>>>> Stashed changes
-var CACHE="hoh-v13.9";
-var SHELL=["./","./index.html","./proto_index.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
-self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
->>>>>>> edae94f829475cc6a444ee5da0ba4ce4a404d64a
 self.addEventListener("notificationclick",function(e){
   e.notification.close();
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(function(cs){
