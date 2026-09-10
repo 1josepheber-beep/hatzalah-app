@@ -1383,7 +1383,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 15.5</div>
+  <div class="ver-line">Version 15.6</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1501,7 +1501,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 15.5</div>
+  <div class="ver-line">Version 15.6</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5458,9 +5458,11 @@
     return Promise.all([
       fetchTab("Announcements")["catch"](function(){return [];}),
       fetch(SB_URL+"/rest/v1/announcement_reads?select=*",{headers:sbAuthHeaders()})
+        .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
+      fetch(SB_URL+"/rest/v1/poll_tallies?select=*",{headers:sbAuthHeaders()})
         .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
     ]).then(function(res){
-      ANN.rows=res[0]||[]; ANN.reads=res[1]||[]; ANN.loaded=true;
+      ANN.rows=res[0]||[]; ANN.reads=res[1]||[]; ANN.tallies=res[2]||[]; ANN.loaded=true;
     });
   }
   // Build every pending notice, in the order they should appear.
@@ -5492,8 +5494,9 @@
         out.push({pri:2, cls:"ann", title:r_(a,"Title"), sub:"Read and confirm",
           go:function(){ openNotice(a); }});
       } else if(kind==="poll"){
-        if(mine && mine.action==="voted") return;   // voted: it drops off the strip
-        out.push({pri:3, cls:"poll", title:r_(a,"Title"), sub:"Tap to vote",
+        var didVote = mine && mine.action==="voted";
+        out.push({pri: didVote?6:3, cls:"poll", title:r_(a,"Title"),
+          sub: didVote ? "You voted \u2014 tap to see the results" : "Tap to vote",
           go:function(){ openNotice(a); }});
       } else {
         if(mine) return;                            // features show once only
@@ -5505,7 +5508,7 @@
     // A blocking certification stands alone; nothing competes with it.
     if(out.length && out[0].pri===1) return {show:[out[0]], hidden:out.slice(1)};
     // A "new feature" only appears when nothing else is waiting.
-    var real=out.filter(function(n){ return n.pri<5; });
+    var real=out.filter(function(n){ return n.pri<5 || n.pri===6; });
     if(real.length) out=real;
     return {show:out.slice(0,2), hidden:out.slice(2)};
   }
@@ -5602,12 +5605,18 @@
     var opts=annOptions(a), counts={}, total=0;
     opts.forEach(function(o){ counts[o]=0; });
     var anon=annOn(r_(a,"Anonymous"));
-    (ANN.reads||[]).forEach(function(r){
-      if(String(r.ann_id)!==String(annId(a))) return;
-      // anonymous polls keep the choice on a separate ballot row
-      if(r.action!==(anon?"ballot":"voted")) return;
-      if(counts[r.choice]!=null){ counts[r.choice]++; total++; }
-    });
+    if(anon){
+      // counters only - individual anonymous votes are never stored
+      (ANN.tallies||[]).forEach(function(t){
+        if(String(t.ann_id)!==String(annId(a))) return;
+        if(counts[t.choice]!=null){ counts[t.choice]+=(+t.votes||0); total+=(+t.votes||0); }
+      });
+    } else {
+      (ANN.reads||[]).forEach(function(r){
+        if(String(r.ann_id)!==String(annId(a)) || r.action!=="voted") return;
+        if(counts[r.choice]!=null){ counts[r.choice]++; total++; }
+      });
+    }
     $("nxExtra").innerHTML=opts.map(function(o){
       var c=counts[o]||0, pct=total?Math.round(c/total*100):0;
       var yours=(mine&&mine.choice===o)?'  \u2190 your vote':'';
@@ -5639,7 +5648,10 @@
       closeNotice();
       paintNotices();
       if(kind==="feature" && target){ setTimeout(function(){ openTileByType(target); },150); }
-      else if(kind==="poll"){ setTimeout(function(){ openNotice(a); },150); }
+      else if(kind==="poll"){
+        // re-read so the counts include the vote just cast
+        loadAnnouncements().then(function(){ paintNotices(); openNotice(a); });
+      }
     });
   });
   function annRespond(id, action, choice){
@@ -5687,15 +5699,20 @@
     Promise.all([
       fetchTab("Roster")["catch"](function(){return [];}),
       fetch(SB_URL+"/rest/v1/announcement_reads?select=*&ann_id=eq."+encodeURIComponent(id),
+            {headers:sbAuthHeaders()}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
+      fetch(SB_URL+"/rest/v1/poll_tallies?select=*&ann_id=eq."+encodeURIComponent(id),
             {headers:sbAuthHeaders()}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
     ]).then(function(res){
+      var adminsOnly=String(r_(a,"Audience")||"everyone").toLowerCase()==="admins";
       var roster=(res[0]||[]).filter(function(m){
-        return String(m["Active"]||"").trim().toLowerCase()!=="no";
+        if(String(m["Active"]||"").trim().toLowerCase()==="no") return false;
+        // "x of y" has to mean y people who could actually respond
+        if(adminsOnly && !isX(m["Admin"])) return false;
+        return true;
       });
       var reads=res[1]||[];
       // "(ballot)" rows are anonymous choices, not members
-      reads=reads.filter(function(x){ return String(x.unit||"")!=="(ballot)"; });
-      var ballots=(res[1]||[]).filter(function(x){ return x.action==="ballot"; });
+      reads=reads.filter(function(x){ return x.action!=="ballot"; });
       var byUnit={};
       reads.forEach(function(x){ byUnit[String(x.unit||"").trim().toLowerCase()]=x; });
 
@@ -5703,8 +5720,13 @@
       if(kind==="poll"){
         var opts=annOptions(a), counts={}, tot=0;
         opts.forEach(function(o){ counts[o]=0; });
-        var src = anon ? ballots : reads;
-        src.forEach(function(x){ if(counts[x.choice]!=null){ counts[x.choice]++; tot++; } });
+        if(anon){
+          (res[2]||[]).forEach(function(t){
+            if(counts[t.choice]!=null){ counts[t.choice]+=(+t.votes||0); tot+=(+t.votes||0); }
+          });
+        } else {
+          reads.forEach(function(x){ if(counts[x.choice]!=null){ counts[x.choice]++; tot++; } });
+        }
         $("rspTally").innerHTML='<div class="rsp-tal">'+opts.map(function(o){
           var c=counts[o]||0, pct=tot?Math.round(c/tot*100):0;
           return '<div class="lb"><span>'+esc(o)+'</span><b>'+c+'</b></div>'+
@@ -6917,7 +6939,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.6</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -6959,7 +6981,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.6</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
