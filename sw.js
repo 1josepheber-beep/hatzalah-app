@@ -1,7 +1,55 @@
 /* Hatzalah of Houston - service worker */
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+
+/* Two caches, on purpose.
+
+   SHELL is versioned. It holds the app's own files, and it gets wiped on every
+   new version so a stale page can never come back after an update.
+
+   DATA is NOT versioned, and is never deleted on update. It holds the things
+   that are expensive to fetch and slow to lose: protocol pages, ERG pages,
+   cabinet and apartment photos, and the last good copy of every Supabase
+   response. Before this split, every deploy emptied the lot, so anyone who
+   updated the app started again from nothing and had no offline copy until
+   they had re-opened each screen with a signal. */
+var VERSION = "14.0";
+var SHELL   = "hoh-shell-" + VERSION;
+var DATA    = "hoh-data";          /* deliberately has no version in the name */
+
+var SHELL_FILES = ["./","./index.html","./proto_index.js","./manifest.webmanifest",
+                   "./icon-192.png","./icon-512.png","./ruleof9.webp"];
+
+/* A dead-slow connection is worse than no connection: fetch() will sit there
+   for 30 seconds or more instead of failing, so the screen just hangs. Give the
+   network a short window, then serve what we already have. */
+var NET_TIMEOUT_MS = 4000;
+
+function timedFetch(req, ms){
+  return new Promise(function(resolve, reject){
+    var settled = false;
+    var timer = setTimeout(function(){ if(!settled){ settled = true; reject(new Error("slow")); } }, ms);
+    fetch(req).then(function(res){
+      if(settled) return;
+      settled = true; clearTimeout(timer); resolve(res);
+    }, function(err){
+      if(settled) return;
+      settled = true; clearTimeout(timer); reject(err);
+    });
+  });
+}
+
+self.addEventListener("message",function(e){
+  if(e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+});
+
+=======
+>>>>>>> Stashed changes
 var CACHE="hoh-v13.9";
 var SHELL=["./","./index.html","./proto_index.js","./manifest.webmanifest","./icon-192.png","./icon-512.png","./ruleof9.webp"];
 self.addEventListener("message",function(e){ if(e.data&&e.data.type==="SKIP_WAITING") self.skipWaiting(); });
+>>>>>>> edae94f829475cc6a444ee5da0ba4ce4a404d64a
 self.addEventListener("notificationclick",function(e){
   e.notification.close();
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(function(cs){
@@ -9,58 +57,84 @@ self.addEventListener("notificationclick",function(e){
     if(clients.openWindow) return clients.openWindow("./");
   }));
 });
+
 self.addEventListener("install",function(e){
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(SHELL);}).catch(function(){}));
+  e.waitUntil(caches.open(SHELL).then(function(c){ return c.addAll(SHELL_FILES); }).catch(function(){}));
 });
-self.addEventListener("activate",function(e){
-  e.waitUntil(caches.keys().then(function(keys){
-    return Promise.all(keys.map(function(k){if(k!==CACHE)return caches.delete(k);}));
-  }).then(function(){
-    // Drop the saved copy of the page and pull a fresh one, so a stale page can
-    // never be served back after an update (that caused an apparent "revert").
-    return caches.open(CACHE).then(function(c){
-      return Promise.all([c.delete("./index.html"),c.delete("./")]).then(function(){
-        return fetch("./index.html",{cache:"reload"}).then(function(res){
-          if(res&&res.ok) return c.put("./index.html",res.clone());
-        }).catch(function(){});
-      });
-    });
-  }).then(function(){return self.clients.claim();}));
-});
-self.addEventListener("fetch",function(e){
-  var req=e.request;
-  if(req.method!=="GET") return;
-  var url=new URL(req.url);
 
-  // Supabase data + uploaded images: NETWORK-FIRST, fall back to the last cached
-  // copy when offline. This is what lets hospitals, certifications, equipment,
-  // cabinets, vitals and the apartment list still work with no signal on a call.
-  if(url.hostname.indexOf("supabase.co")>-1){
+self.addEventListener("activate",function(e){
+  e.waitUntil(
+    caches.keys().then(function(keys){
+      return Promise.all(keys.map(function(k){
+        if(k === SHELL || k === DATA) return null;   /* keep the current shell and ALL saved content */
+        return caches.delete(k);                     /* only older shells go */
+      }));
+    }).then(function(){
+      /* Re-pull the page itself so an update always takes effect immediately. */
+      return caches.open(SHELL).then(function(c){
+        return Promise.all([c.delete("./index.html"), c.delete("./")]).then(function(){
+          return fetch("./index.html",{cache:"reload"}).then(function(res){
+            if(res && res.ok) return c.put("./index.html", res.clone());
+          }).catch(function(){});
+        });
+      });
+    }).then(function(){ return self.clients.claim(); })
+  );
+});
+
+self.addEventListener("fetch",function(e){
+  var req = e.request;
+  if(req.method !== "GET") return;
+  var url = new URL(req.url);
+
+  if(url.hostname.indexOf("supabase.co") > -1){
+
+    /* Signed document links carry a one-time token, so every request is a
+       different URL and caching them would only waste space. These genuinely
+       need a connection. */
+    if(url.pathname.indexOf("/object/sign/") > -1 || url.search.indexOf("token=") > -1){
+      return;
+    }
+
+    /* Everything else from Supabase - the roster, hospitals, certifications,
+       equipment, cabinets, apartments, and photos from the public bucket -
+       tries the network briefly, then falls back to the last good copy. */
     e.respondWith(
-      fetch(req).then(function(res){
-        if(res && res.ok){ var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);}); }
+      timedFetch(req, NET_TIMEOUT_MS).then(function(res){
+        if(res && res.ok){
+          var copy = res.clone();
+          caches.open(DATA).then(function(c){ c.put(req, copy); });
+        }
         return res;
       }).catch(function(){
-        return caches.match(req).then(function(hit){
+        return caches.match(req, {cacheName:DATA}).then(function(hit){
           if(hit) return hit;
-          // Nothing cached yet: hand back an empty list so the screen degrades
-          // gracefully instead of hanging.
-          return new Response("[]",{status:200,headers:{"Content-Type":"application/json"}});
+          return caches.match(req).then(function(any){
+            if(any) return any;
+            /* Nothing saved yet. Hand back an empty list so the screen shows its
+               "nothing here" state instead of spinning forever. */
+            return new Response("[]",{status:200,headers:{"Content-Type":"application/json"}});
+          });
         });
       })
     );
     return;
   }
 
-  // Protocol page images: CACHE-FIRST (they never change). Once viewed, they load
-  // instantly and work fully offline; only fetch from network on first view.
-  if(url.origin===location.origin && (url.pathname.indexOf("/protocols/")>-1||url.pathname.indexOf("/cabinets/")>-1||url.pathname.indexOf("/erg/")>-1||url.pathname.indexOf("/apartments/")>-1)){
+  /* Protocol, ERG, cabinet and apartment images never change once published, so
+     serve them from disk the moment we have them. */
+  if(url.origin === location.origin &&
+     (url.pathname.indexOf("/protocols/") > -1 || url.pathname.indexOf("/cabinets/") > -1 ||
+      url.pathname.indexOf("/erg/") > -1 || url.pathname.indexOf("/apartments/") > -1)){
     e.respondWith(
       caches.match(req).then(function(hit){
         if(hit && hit.ok) return hit;
         return fetch(req).then(function(res){
-          if(res && res.ok){ var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);}); }
+          if(res && res.ok){
+            var copy = res.clone();
+            caches.open(DATA).then(function(c){ c.put(req, copy); });
+          }
           return res;
         }).catch(function(){ return hit; });
       })
@@ -68,22 +142,27 @@ self.addEventListener("fetch",function(e){
     return;
   }
 
-  // App's own files (HTML/JS/icons): NETWORK-FIRST with no-store so a new deploy
-  // always wins when online; fall back to cache only when offline.
-  if(url.origin===location.origin){
+  /* The app's own files: newest wins when there is a signal, cache when there
+     is not. Also time-limited, so a crawling connection can't leave someone
+     staring at a blank screen. */
+  if(url.origin === location.origin){
     e.respondWith(
-      fetch(req,{cache:"no-store"}).then(function(res){
-        var copy=res.clone(); caches.open(CACHE).then(function(c){c.put(req,copy);});
+      timedFetch(new Request(req, {cache:"no-store"}), NET_TIMEOUT_MS).then(function(res){
+        if(res && res.ok){
+          var copy = res.clone();
+          caches.open(SHELL).then(function(c){ c.put(req, copy); });
+        }
         return res;
       }).catch(function(){
-        return caches.match(req).then(function(hit){ return hit || caches.match("./index.html"); });
+        return caches.match(req).then(function(hit){
+          return hit || caches.match("./index.html");
+        });
       })
     );
     return;
   }
 
-  // Cross-origin (map tiles, Leaflet, Google Maps/APIs, fonts): DON'T intercept.
-  // Letting the browser fetch these natively keeps the installed PWA's service
-  // worker from breaking the map and other third-party resources.
+  /* Cross-origin (map tiles, Leaflet, Google, fonts): left alone on purpose.
+     Intercepting these breaks the map inside an installed app. */
   return;
 });
