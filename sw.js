@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "14.0";
+var VERSION = "14.1";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -95,13 +95,16 @@ self.addEventListener("fetch",function(e){
       timedFetch(req, NET_TIMEOUT_MS).then(function(res){
         if(res && res.ok){
           var copy = res.clone();
-          caches.open(DATA).then(function(c){ c.put(req, copy); });
+          /* Key on the URL alone. Supabase sends a Vary header and the
+             Authorization token changes between sessions, so matching on the
+             full Request could never find what we had already saved. */
+          caches.open(DATA).then(function(c){ c.put(req.url, copy); });
         }
         return res;
       }).catch(function(){
-        return caches.match(req, {cacheName:DATA}).then(function(hit){
+        return caches.match(req.url, {cacheName:DATA, ignoreVary:true}).then(function(hit){
           if(hit) return hit;
-          return caches.match(req).then(function(any){
+          return caches.match(req.url, {ignoreVary:true}).then(function(any){
             if(any) return any;
             /* Nothing saved yet. Hand back an empty list so the screen shows its
                "nothing here" state instead of spinning forever. */
@@ -119,12 +122,12 @@ self.addEventListener("fetch",function(e){
      (url.pathname.indexOf("/protocols/") > -1 || url.pathname.indexOf("/cabinets/") > -1 ||
       url.pathname.indexOf("/erg/") > -1 || url.pathname.indexOf("/apartments/") > -1)){
     e.respondWith(
-      caches.match(req).then(function(hit){
+      caches.match(req.url, {ignoreVary:true}).then(function(hit){
         if(hit && hit.ok) return hit;
         return fetch(req).then(function(res){
           if(res && res.ok){
             var copy = res.clone();
-            caches.open(DATA).then(function(c){ c.put(req, copy); });
+            caches.open(DATA).then(function(c){ c.put(req.url, copy); });
           }
           return res;
         }).catch(function(){ return hit; });
@@ -141,12 +144,12 @@ self.addEventListener("fetch",function(e){
       timedFetch(new Request(req, {cache:"no-store"}), NET_TIMEOUT_MS).then(function(res){
         if(res && res.ok){
           var copy = res.clone();
-          caches.open(SHELL).then(function(c){ c.put(req, copy); });
+          caches.open(SHELL).then(function(c){ c.put(req.url, copy); });
         }
         return res;
       }).catch(function(){
-        return caches.match(req).then(function(hit){
-          return hit || caches.match("./index.html");
+        return caches.match(req.url, {ignoreVary:true}).then(function(hit){
+          return hit || caches.match("./index.html", {ignoreVary:true});
         });
       })
     );
