@@ -1383,7 +1383,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 15.8</div>
+  <div class="ver-line">Version 15.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1501,7 +1501,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 15.8</div>
+  <div class="ver-line">Version 15.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5428,6 +5428,10 @@
   // stops someone responding always stands alone.
   var ANN={loaded:false, rows:[], reads:[], cur:null, pick:"", ticked:false};
 
+  // Only this device knows which option it picked on an anonymous poll.
+  function annLocalKey(id){ return "hoh_anonvote_"+id; }
+  function annLocalChoice(id){ try{ return localStorage.getItem(annLocalKey(id))||""; }catch(e){ return ""; } }
+  function annSetLocalChoice(id, c){ try{ localStorage.setItem(annLocalKey(id), c||""); }catch(e){} }
   function annMyUnit(){ return (STATE.me&&STATE.me.unit)?String(STATE.me.unit):""; }
   function annOn(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="x"||v==="yes"||v==="true"; }
   function annLive(a){
@@ -5600,6 +5604,14 @@
         }).join("");
         if(mine&&mine.choice && !annOn(r_(a,"Anonymous"))){
           ANN.pick=mine.choice;
+        } else if(annOn(r_(a,"Anonymous"))){
+          var lk=annLocalChoice(annId(a));
+          if(lk){
+            ANN.pick=lk;
+            Array.prototype.forEach.call(extra.querySelectorAll(".nx-opt"),function(x){
+              if(x.getAttribute("data-opt")===lk) x.classList.add("on");
+            });
+          }
         }
         extra.addEventListener("click",function(e){
           var o=e.target.closest?e.target.closest(".nx-opt"):null; if(!o) return;
@@ -5642,9 +5654,15 @@
     }).join("")+'<div class="prof-hint">'+total+' vote'+(total===1?'':'s')+' so far.</div>';
     // An anonymous vote has no ballot to find, so there is nothing to change.
     if(annOn(r_(a,"Anonymous"))){
-      $("nxGo").textContent="Close"; $("nxGo").disabled=false;
-      $("nxLater").textContent="";
-      $("nxLater").style.display="none";
+      var known=annLocalChoice(annId(a));
+      if(known){
+        $("nxGo").textContent="Change my vote"; $("nxGo").disabled=false;
+        $("nxLater").textContent="Close"; $("nxLater").style.display="";
+      } else {
+        // voted on another phone, or storage was cleared - nothing to change
+        $("nxGo").textContent="Close"; $("nxGo").disabled=false;
+        $("nxLater").textContent=""; $("nxLater").style.display="none";
+      }
     } else {
       $("nxGo").textContent="Change my vote"; $("nxGo").disabled=false;
       $("nxLater").textContent="Close"; $("nxLater").style.display="";
@@ -5665,6 +5683,27 @@
       return;
     }
     if(kind==="poll" && !ANN.pick){ $("nxErr").textContent="Pick an option first."; return; }
+
+    // Anonymous and already voted: move one from the old choice to the new one.
+    if(kind==="poll" && annOn(r_(a,"Anonymous")) && mine && mine.action==="voted"){
+      var oldc=annLocalChoice(annId(a));
+      if(!oldc){ $("nxErr").textContent="This phone doesn\u2019t have a record of your vote, so it can\u2019t be changed."; return; }
+      if(oldc===ANN.pick){ closeNotice(); return; }
+      var b2=$("nxGo"); b2.disabled=true; var w2=b2.textContent; b2.textContent="Saving\u2026";
+      fetch(SB_URL+"/rest/v1/rpc/announcement_change_vote",{
+        method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+        body:JSON.stringify({p_ann_id:annId(a), p_unit:annMyUnit(), p_old:oldc, p_new:ANN.pick})
+      }).then(function(r){ return r.json(); }).then(function(j){
+        b2.disabled=false; b2.textContent=w2;
+        if(!j||!j.ok){ $("nxErr").textContent=(j&&j.error)||"Couldn\u2019t change it."; return; }
+        annSetLocalChoice(annId(a), ANN.pick);
+        loadAnnouncements().then(function(){ paintNotices(); openNotice(a); });
+      })["catch"](function(){
+        b2.disabled=false; b2.textContent=w2;
+        $("nxErr").textContent="Couldn\u2019t change it \u2014 check your connection.";
+      });
+      return;
+    }
     if(kind==="confirm" && !ANN.ticked){ $("nxErr").textContent="Please tick the box first."; return; }
 
     var action = kind==="poll" ? "voted" : (kind==="confirm" ? "confirmed" : "seen");
@@ -5701,6 +5740,7 @@
     }).then(function(r){ return r.json(); }).then(function(j){
       ANN.lastErr=(j&&j.error)||"";
       if(j&&j.ok){
+        if(action==="voted" && choice) annSetLocalChoice(id, choice);
         var m=annMine(id);
         if(m){ m.action=action; m.choice=choice||""; }
         else ANN.reads.push({ann_id:id, unit:unit, action:action, choice:choice||""});
@@ -6977,7 +7017,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7019,7 +7059,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 15.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
