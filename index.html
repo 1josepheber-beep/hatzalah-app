@@ -1391,7 +1391,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 17.1</div>
+  <div class="ver-line">Version 17.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1510,7 +1510,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 17.1</div>
+  <div class="ver-line">Version 17.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2517,7 +2517,10 @@
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       try{ scApplySettings(); }catch(e){}
-      paintHeader(); paintTiles(); loadCerts(); updateAvailBtn();
+      paintHeader(); paintTiles(); updateAvailBtn();
+      // fired together, not one behind the other
+      loadCerts();
+      try{ loadAnnouncements().then(paintNotices); }catch(e){}
       // Analytics identity must be set on every open, cached or not.
       try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
       if(!fromCache){
@@ -5462,7 +5465,6 @@
       CERT.myIssues = mine.length? myCertIssues(mine[0]) : null;
       applyCertGlow();
       paintCertBanner();
-      try{ loadAnnouncements().then(paintNotices); }catch(e){}
     }).catch(function(){});
   }
   function certBlocks(c){
@@ -5522,6 +5524,13 @@
     }
     return null;
   }
+  // Loaded on demand, the first time a poll is opened.
+  function loadTallies(){
+    return fetch(SB_URL+"/rest/v1/poll_tallies?select=*",{headers:sbAuthHeaders()})
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ ANN.tallies=rows||[]; return ANN.tallies; })
+      ["catch"](function(){ return ANN.tallies||[]; });
+  }
   function annOptions(a){
     // one per line is the intended way, but commas are accepted so a list typed
     // on a single line still works
@@ -5549,10 +5558,9 @@
       annRest(),
       fetch(SB_URL+"/rest/v1/announcement_reads?select=*",{headers:sbAuthHeaders()})
         .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
-      fetch(SB_URL+"/rest/v1/poll_tallies?select=*",{headers:sbAuthHeaders()})
-        .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+      Promise.resolve([])
     ]).then(function(res){
-      ANN.rows=res[0]||[]; ANN.reads=res[1]||[]; ANN.tallies=res[2]||[]; ANN.loaded=true;
+      ANN.rows=res[0]||[]; ANN.reads=res[1]||[]; ANN.tallies=ANN.tallies||[]; ANN.loaded=true;
     });
   }
   // Build every pending notice, in the order they should appear.
@@ -5668,7 +5676,12 @@
       var opts=annOptions(a);
       var voted = mine && mine.action==="voted";
       var showRes = annOn(r_(a,"Show Results"));
-      if(voted && showRes && !forceOptions){ renderPollResults(a, mine); }
+      if(voted && showRes && !forceOptions){
+        if(annOn(r_(a,"Anonymous")) && !(ANN.tallies||[]).length){
+          $("nxExtra").innerHTML='<div class="prof-hint">Loading results\u2026</div>';
+          loadTallies().then(function(){ renderPollResults(a, mine); });
+        } else { renderPollResults(a, mine); }
+      }
       else {
         extra.innerHTML=opts.map(function(o,ix){
           return '<div class="nx-opt'+((mine&&mine.choice===o)?" on":"")+'" data-opt="'+esc(o)+'">'+
@@ -7100,7 +7113,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7142,7 +7155,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7731,7 +7744,7 @@
     try{scRestore();}catch(e){}
     var hadCache=bootFromCache();
     boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
-    pingSeen(true);
+    setTimeout(function(){ pingSeen(true); },1200);
     try{ navRestore(); }catch(e){}}
 
   // Reopening an installed app doesn't reload the page, so this is the only
