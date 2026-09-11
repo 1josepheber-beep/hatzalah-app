@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "17.4";
+var VERSION = "17.5";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -39,6 +39,9 @@ function timedFetch(req, ms){
 
 self.addEventListener("message",function(e){
   if(e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
+  if(e.data && e.data.type === "WHICH_VERSION" && e.source){
+    e.source.postMessage({type:"SW_VERSION", version:VERSION});
+  }
 });
 
 self.addEventListener("notificationclick",function(e){
@@ -71,6 +74,12 @@ self.addEventListener("activate",function(e){
         });
       });
     }).then(function(){ return self.clients.claim(); })
+     .then(function(){
+       /* Tell every open tab a new build is in place. */
+       return self.clients.matchAll({type:"window"}).then(function(cs){
+         cs.forEach(function(c){ c.postMessage({type:"UPDATE_READY", version:VERSION}); });
+       });
+     })
   );
 });
 
