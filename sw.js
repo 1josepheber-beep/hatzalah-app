@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "16.2";
+var VERSION = "16.3";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
