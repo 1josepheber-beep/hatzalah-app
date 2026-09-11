@@ -168,15 +168,15 @@
     cursor:pointer;border:1px solid transparent;box-shadow:var(--shadow)}
   .cert-banner.hidden{display:none}
   .cert-banner .cb-i{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
-  .cert-banner .cb-i svg{width:19px;height:19px;fill:none;stroke-width:2}
+  .cert-banner .cb-i svg{width:19px;height:19px;fill:#fff;stroke:none}
   .cert-banner .cb-t{flex:1;min-width:0}
   .cert-banner .cb-t b{display:block;font-size:14.5px;font-weight:800;line-height:1.25}
   .cert-banner .cb-t span{display:block;font-size:12.5px;margin-top:2px;line-height:1.4;opacity:.9}
   .cert-banner .cb-go{width:18px;height:18px;fill:none;stroke-width:2.5;flex:0 0 auto;opacity:.6}
   .cert-banner.ann{background:#eef4fd;border-color:#c9daf3;color:var(--navy)}
-  .cert-banner.ann .cb-i{background:#dbe7fa} .cert-banner.ann svg{stroke:var(--navy)}
+  .cert-banner.ann .cb-i{background:var(--navy)}
   .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
-  .cert-banner.poll .cb-i{background:#e6dbfb} .cert-banner.poll svg{stroke:#5b3aa8}
+  .cert-banner.poll .cb-i{background:#5b3aa8}
   .nx-more{text-align:center;font-size:12px;color:var(--mut);text-decoration:underline;
     margin:-6px 0 14px;cursor:pointer}
   .nx-more.hidden{display:none}
@@ -217,11 +217,11 @@
   .nx-later{background:#fff;color:var(--mut);border:1px solid var(--line)}
   .nx-err{font-size:12.5px;color:var(--red);min-height:16px;margin-top:6px}
   .cert-banner.bad{background:#fdecec;border-color:#f3b6b6;color:#8a1f1f}
-  .cert-banner.bad .cb-i{background:#f8d3d3} .cert-banner.bad svg{stroke:#8a1f1f}
+  .cert-banner.bad .cb-i{background:var(--red)}
   .cert-banner.warn{background:#fff3d6;border-color:#f0d58f;color:#8a6d00}
-  .cert-banner.warn .cb-i{background:#fbe6ae} .cert-banner.warn svg{stroke:#8a6d00}
+  .cert-banner.warn .cb-i{background:var(--gold)}
   .cert-banner.soft{background:#eef4fc;border-color:#cfe0f5;color:#1d4a86}
-  .cert-banner.soft .cb-i{background:#dceaf9} .cert-banner.soft svg{stroke:#1d4a86}
+  .cert-banner.soft .cb-i{background:#1d4a86}
   .cpr-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
   .cpr-b{border:0;border-radius:13px;padding:16px 10px;font-size:16px;font-weight:800;color:#fff;cursor:pointer}
   .cpr-b:active{opacity:.82}
@@ -1383,7 +1383,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 16.1</div>
+  <div class="ver-line">Version 16.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1501,7 +1501,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 16.1</div>
+  <div class="ver-line">Version 16.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5426,6 +5426,16 @@
   // One strip at the top of the home screen, shared with the certification
   // banner. Fixed priority, never more than two on show, and anything that
   // stops someone responding always stands alone.
+  // Solid icons, one per kind of notice. Built from plain shapes so nothing
+  // goes lopsided at small sizes the way a rounded triangle does.
+  var NX_ICON={
+    blocked:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2zm0-4h-2V7h2z"/>',
+    confirm:'<path d="M5 3h9l5 5v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1zm8 1.5V9h4.5zM7.5 12h9v1.6h-9zm0 3.4h6V17h-6z"/>',
+    poll:'<path d="M4 19h3v-8H4zm6.5 0h3V5h-3zm6.5 0h3v-6h-3z"/>',
+    clock:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 10.6l3.5 2.1-.9 1.5L11 13.4V6.5h2z"/>',
+    star:'<path d="M12 3l2 5.2 5.2 2-5.2 2L12 17.4 10 12.2 4.8 10.2 10 8.2z"/>'
+  };
+  function nxIcon(k){ return NX_ICON[k]||NX_ICON.star; }
   var ANN={loaded:false, rows:[], reads:[], cur:null, pick:"", ticked:false};
 
   // Only this device knows which option it picked on an anonymous poll.
@@ -5490,15 +5500,15 @@
     function names(a){ return a.length>2 ? (a.slice(0,2).join(", ")+" and "+(a.length-2)+" more") : a.join(" and "); }
     if(i && !STATE.demo){
       if(i.expiredBlocking.length){
-        out.push({pri:1, cls:"bad", title:"You are not cleared to respond",
+        out.push({pri:1, cls:"bad", ic:"blocked", title:"You are not cleared to respond",
           sub:names(i.expiredBlocking)+(i.expiredBlocking.length===1?" has expired.":" have expired.")+" Renew and update it in the app.",
           go:function(){ openCerts(); }});
       } else if(i.expiredOther.length){
-        out.push({pri:4, cls:"warn", title:"Something needs renewing",
+        out.push({pri:4, cls:"warn", ic:"clock", title:"Something needs renewing",
           sub:names(i.expiredOther)+(i.expiredOther.length===1?" has expired.":" have expired.")+" You can still respond to patients.",
           go:function(){ openCerts(); }});
       } else if(i.soon.length){
-        out.push({pri:4, cls:"soft", title:"Expiring soon",
+        out.push({pri:4, cls:"soft", ic:"clock", title:"Expiring soon",
           sub:names(i.soon)+(i.soon.length===1?" expires":" expire")+" in the next 30 days.",
           go:function(){ openCerts(); }});
       }
@@ -5509,16 +5519,16 @@
       var mine=annMine(annId(a));
       if(kind==="confirm"){
         if(mine && mine.action==="confirmed") return;
-        out.push({pri:2, cls:"ann", title:r_(a,"Title"), sub:"Read and confirm",
+        out.push({pri:2, cls:"ann", ic:"confirm", title:r_(a,"Title"), sub:"Read and confirm",
           go:function(){ openNotice(a); }});
       } else if(kind==="poll"){
         var didVote = mine && mine.action==="voted";
-        out.push({pri: didVote?6:3, cls:"poll", title:r_(a,"Title"),
+        out.push({pri: didVote?6:3, cls:"poll", ic:"poll", title:r_(a,"Title"),
           sub: didVote ? "You voted \u2014 tap to see the results" : "Tap to vote",
           go:function(){ openNotice(a); }});
       } else {
         if(mine) return;                            // features show once only
-        out.push({pri:5, cls:"ann", title:r_(a,"Title"), sub:r_(a,"Body").slice(0,70),
+        out.push({pri:5, cls:"ann", ic:"star", title:r_(a,"Title"), sub:r_(a,"Body").slice(0,70),
           go:function(){ openNotice(a); }});
       }
     });
@@ -5538,7 +5548,7 @@
     host.innerHTML=n.show.map(function(x,ix){
       NOTICE_ACTIONS.push(x.go);
       return '<div class="cert-banner '+x.cls+'" data-nx="'+ix+'">'+
-        '<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+        '<div class="cb-i"><svg viewBox="0 0 24 24">'+nxIcon(x.ic)+'</svg></div>'+
         '<div class="cb-t"><b>'+esc(x.title)+'</b><span>'+esc(x.sub)+'</span></div>'+
         '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
     }).join("");
@@ -5559,7 +5569,7 @@
         var ix=NOTICE_ACTIONS.push(x.go)-1;
         var d=document.createElement("div");
         d.className="cert-banner "+x.cls; d.setAttribute("data-nx",ix);
-        d.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+        d.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24">'+nxIcon(x.ic)+'</svg></div>'+
           '<div class="cb-t"><b>'+esc(x.title)+'</b><span>'+esc(x.sub)+'</span></div>'+
           '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
         host.appendChild(d);
@@ -5930,7 +5940,7 @@
       sub=names(i.soon)+(i.soon.length===1?" expires":" expire")+" in the next 30 days.";
     } else { host.innerHTML=""; host.className="cert-banner hidden"; return; }
     host.className="cert-banner "+cls;
-    host.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0z"/></svg></div>'+
+    host.innerHTML='<div class="cb-i"><svg viewBox="0 0 24 24">'+nxIcon(x.ic)+'</svg></div>'+
       '<div class="cb-t"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></div>'+
       '<svg class="cb-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>';
   }
@@ -7028,7 +7038,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7070,7 +7080,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
