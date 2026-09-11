@@ -165,8 +165,9 @@
   .cpr-epi.due{border-color:var(--gold)} .cpr-epi.due div#cprEpi{color:#b57c1e}
   .cpr-epi.over{border-color:var(--red)} .cpr-epi.over div#cprEpi{color:var(--red)}
   .cert-banner{display:flex;align-items:center;gap:12px;border-radius:14px;padding:13px 14px;
-    margin:0 12px 12px;
+    margin:8px 12px 0;
     cursor:pointer;border:1px solid transparent;box-shadow:var(--shadow)}
+  .cert-banner + .cert-banner{margin-top:12px}
   .cert-banner.hidden{display:none}
   .cert-banner .cb-i{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
   .cert-banner .cb-i svg{width:19px;height:19px;fill:#fff;stroke:none}
@@ -179,7 +180,7 @@
   .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
   .cert-banner.poll .cb-i{background:#5b3aa8}
   .nx-more{text-align:center;font-size:12px;color:var(--mut);text-decoration:underline;
-    margin:-4px 12px 12px;cursor:pointer}
+    margin:10px 12px 0;cursor:pointer}
   .nx-more.hidden{display:none}
   .nx-modal{position:fixed;inset:0;background:rgba(9,20,38,.55);z-index:220;display:flex;
     align-items:center;justify-content:center;padding:16px}
@@ -1384,7 +1385,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 16.3</div>
+  <div class="ver-line">Version 16.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1502,7 +1503,7 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 16.3</div>
+  <div class="ver-line">Version 16.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -7039,7 +7040,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7081,7 +7082,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
