@@ -179,6 +179,12 @@
   .cert-banner.ann .cb-i{background:var(--navy)}
   .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
   .cert-banner.poll .cb-i{background:#5b3aa8}
+  .upd-bar{display:flex;align-items:center;gap:10px;margin:0 12px 12px;padding:11px 13px;
+    border-radius:12px;background:var(--navy);color:#fff;box-shadow:var(--shadow)}
+  .upd-bar.hidden{display:none}
+  .upd-bar span{flex:1;min-width:0;font-size:13px;font-weight:700}
+  .upd-bar button{flex:0 0 auto;border:0;border-radius:9px;background:#fff;color:var(--navy);
+    font-weight:800;font-size:12.5px;padding:8px 14px;cursor:pointer;font-family:inherit}
   .nx-more{text-align:center;font-size:12px;color:var(--mut);text-decoration:underline;
     margin:10px 12px 0;cursor:pointer}
   .nx-more.hidden{display:none}
@@ -1385,7 +1391,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 16.9</div>
+  <div class="ver-line">Version 17.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1501,9 +1507,10 @@
   <div class="cert-banner hidden" id="certBanner"></div>
   <div id="noticeStack"></div>
   <div class="nx-more hidden" id="noticeMore"></div>
+  <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 16.9</div>
+  <div class="ver-line">Version 17.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -7093,7 +7100,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7135,7 +7142,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 16.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7733,6 +7740,23 @@
     if(document.visibilityState==="visible") pingSeen();
   });
   window.addEventListener("focus",function(){ pingSeen(); });
+
+  // The service worker serves the saved copy instantly, then checks for a new
+  // build behind the scenes. When there is one, offer the reload rather than
+  // swapping it out underneath someone mid-call.
+  try{
+    if(navigator.serviceWorker){
+      navigator.serviceWorker.addEventListener("message",function(e){
+        if(e.data && e.data.type==="UPDATE_READY"){
+          var b=$("updBar"); if(b) b.classList.remove("hidden");
+        }
+      });
+    }
+  }catch(e){}
+  try{
+    var ug=$("updGo");
+    if(ug) ug.addEventListener("click",function(){ location.reload(); });
+  }catch(e){}
 
   var BIO_KEY="hoh_bio_v1";
   function markUnlocked(){ try{localStorage.setItem("hoh_unlock_until",String(Date.now()+60*60000));}catch(e){} }

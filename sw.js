@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "16.9";
+var VERSION = "17.0";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -158,20 +158,42 @@ self.addEventListener("fetch",function(e){
     return;
   }
 
-  /* The app's own files: newest wins when there is a signal, cache when there
-     is not. Also time-limited, so a crawling connection can't leave someone
-     staring at a blank screen. */
+  /* The app's own files.
+
+     These used to be network-first: every single open waited for a 728 KB
+     download before anything appeared, and on a middling connection it timed
+     out and served the cached copy anyway - which is why it felt slow AND
+     sometimes showed an old version.
+
+     Now the saved copy is served straight away, and a fresh one is fetched
+     quietly in the background. When that turns out to be a new build, the
+     page is told, and it offers a reload. Fast every time, and never silently
+     out of date. */
   if(url.origin === location.origin){
     e.respondWith(
-      timedFetch(new Request(req, {cache:"no-store"}), NET_TIMEOUT_MS).then(function(res){
-        if(res && res.ok){
-          var copy = res.clone();
-          caches.open(SHELL).then(function(c){ c.put(req.url, copy); });
-        }
-        return res;
-      }).catch(function(){
-        return caches.match(req.url, {ignoreVary:true}).then(function(hit){
-          return hit || caches.match("./index.html", {ignoreVary:true});
+      caches.open(SHELL).then(function(cache){
+        return cache.match(req.url, {ignoreVary:true}).then(function(hit){
+
+          var fresh = fetch(new Request(req, {cache:"no-store"})).then(function(res){
+            if(res && res.ok){
+              var tag = res.headers.get("etag") || res.headers.get("last-modified") || "";
+              var oldTag = hit ? (hit.headers.get("etag") || hit.headers.get("last-modified") || "") : "";
+              cache.put(req.url, res.clone());
+              /* Only shout about the page itself, not every asset. */
+              if(hit && tag && oldTag && tag !== oldTag && /\/(index\.html)?$/.test(url.pathname)){
+                self.clients.matchAll({type:"window"}).then(function(cs){
+                  cs.forEach(function(c){ c.postMessage({type:"UPDATE_READY"}); });
+                });
+              }
+            }
+            return res;
+          }).catch(function(){ return null; });
+
+          /* Serve what we have; fall back to the network only if we have nothing. */
+          if(hit) return hit;
+          return fresh.then(function(res){
+            return res || caches.match("./index.html", {ignoreVary:true});
+          });
         });
       })
     );
