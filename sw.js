@@ -11,12 +11,12 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "17.0";
+var VERSION = "17.1";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
 var SHELL_FILES = ["./","./index.html","./proto_index.js","./manifest.webmanifest",
-                   "./icon-192.png","./icon-512.png","./ruleof9.webp"];
+                   "./icon-192.png","./icon-512.png","./ruleof9.webp","./logo.png"];
 
 /* A dead-slow connection is worse than no connection: fetch() will sit there
    for 30 seconds or more instead of failing, so the screen just hangs. Give the
