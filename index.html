@@ -1431,7 +1431,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 18.3</div>
+  <div class="ver-line">Version 18.5</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1550,7 +1550,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 18.3</div>
+  <div class="ver-line">Version 18.5</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4218,35 +4218,7 @@
   function admRenderCpr(){
     var rows=(ADM2.data.cpr||[]).slice().sort(function(a,b){
       return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
-    // Vitals runs to hundreds of rows. Filter by tab and search before
-    // editing, rather than scrolling the lot.
-    var filtBar="";
-    if(k==="vitals"){
-      ADM2.vf=ADM2.vf||{tab:"",q:""};
-      var tabs=[];
-      rows.forEach(function(r){ var t=r_(r,"Tab"); if(t && tabs.indexOf(t)<0) tabs.push(t); });
-      filtBar='<div class="vf-bar">'+
-        '<div class="vf-chips">'+
-          '<button class="vf-chip'+(ADM2.vf.tab?"":" on")+'" data-vtab="">All</button>'+
-          tabs.map(function(t){
-            return '<button class="vf-chip'+(ADM2.vf.tab===t?" on":"")+'" data-vtab="'+esc(t)+'">'+esc(t)+'</button>';
-          }).join("")+
-        '</div>'+
-        '<input class="vf-q" id="vfQ" type="search" placeholder="Search vitals" value="'+esc(ADM2.vf.q)+'">'+
-        '<div class="vf-count" id="vfCount"></div></div>';
-    }
-    var shownCount=0, lastSection=null;
     var body=rows.map(function(r,i){
-      if(k==="vitals"){
-        var f=ADM2.vf||{tab:"",q:""};
-        if(f.tab && r_(r,"Tab")!==f.tab) return "";
-        if(f.q){
-          var hay=(r_(r,"Tab")+" "+r_(r,"Section")+" "+r_(r,"Item")+" "+
-                   r_(r,"Value")+" "+r_(r,"Value2")+" "+r_(r,"Value3")).toLowerCase();
-          if(hay.indexOf(f.q.toLowerCase().trim())<0) return "";
-        }
-        shownCount++;
-      }
       var off=!admBoolOn(r_(r,"Active"),"Active");
       return '<button type="button" class="cprx-b'+(off?" off":"")+'" data-i="'+i+'" '+
         'style="background:'+cprColor(r_(r,"Color"))+'">'+esc(r_(r,"Label")||"(no label)")+
@@ -4402,6 +4374,38 @@
       if(btn){ btn.firstChild&&(btn.innerHTML=esc(r["Label"])+(r["Active"]==="No"?'<span class="cprx-off">off</span>':'')); btn.style.background=cprColor(r["Color"]); btn.classList.toggle("off",r["Active"]==="No"); }
     });
   }
+  // Settings that belong together are shown as one card. Purely how they are
+  // displayed -- each still lives in its own row, so nothing that reads them
+  // needs to change.
+  var SETTING_GROUPS=[
+    {name:"Dispatch",              keys:["Dispatch Label","Dispatch Number"]},
+    {name:"Medical Control",       keys:["Medical Control Label","Medical Control Number"]},
+    {name:"Text Home",             keys:["Text Home","Text Home Message"]},
+    {name:"Scene timer",           keys:["Scene Timer Message","Scene Reminder Message","CPR Cycle Minutes"]},
+    {name:"Storage limits",        keys:["Storage Limit DB MB","Storage Limit Files MB","Storage Limit Repo MB"]},
+    {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]}
+  ];
+  function settingGroupOf(name){
+    name=String(name||"").trim().toLowerCase();
+    for(var i=0;i<SETTING_GROUPS.length;i++){
+      var g=SETTING_GROUPS[i];
+      for(var j=0;j<g.keys.length;j++){
+        if(g.keys[j].toLowerCase()===name) return {g:g, pos:j};
+      }
+    }
+    return null;
+  }
+  // A short label for a field inside a group: "Medical Control Number" -> "Number"
+  function settingShortLabel(full, groupName){
+    var f=String(full||"").trim();
+    var pre=String(groupName||"").trim();
+    if(pre && f.toLowerCase().indexOf(pre.toLowerCase())===0){
+      var rest=f.slice(pre.length).trim();
+      if(rest) return rest.charAt(0).toUpperCase()+rest.slice(1);
+    }
+    return f;
+  }
   function admRenderSec(k){
     if(k==="cpr"){ admRenderCpr(); return; }
     if(k==="certtypes"){ admRenderCertTypes(); return; }
@@ -4447,7 +4451,58 @@
         '<div class="vf-count" id="vfCount"></div></div>';
     }
     var shownCount=0, lastSection=null;
-    var body=rows.map(function(r,i){
+
+    // Settings: fold the related ones into a single card. The grouped rows are
+    // taken out of the normal list and rendered above it. Purely presentation --
+    // each setting is still its own row underneath.
+    var groupHtml="", idxMap=null;
+    if(k==="settings"){
+      var claimed={}, cards=[];
+      SETTING_GROUPS.forEach(function(g){
+        var members=[];
+        g.keys.forEach(function(key){
+          for(var gi=0; gi<rows.length; gi++){
+            if(r_(rows[gi],"Setting").toLowerCase()===key.toLowerCase()){
+              members.push({r:rows[gi], i:gi}); break;
+            }
+          }
+        });
+        if(members.length>1){
+          members.forEach(function(m){ claimed[m.i]=1; });
+          cards.push({name:g.name, members:members});
+        }
+      });
+      groupHtml=cards.map(function(c){
+        var inner=c.members.map(function(m){
+          var fid="ag_settings_"+m.i+"_Value";
+          var fv=r_(m.r,"Value");
+          var flbl=settingShortLabel(r_(m.r,"Setting"), c.name);
+          if(/\bimage$/i.test(r_(m.r,"Setting"))){
+            return '<label class="adm-f wide">'+esc(flbl)+
+              '<input id="'+fid+'" data-h="Value" type="text" value="'+esc(fv)+'" readonly '+
+                'placeholder="No image set \u2014 using the built-in one"></label>'+
+              '<div class="adm-uprow"><button class="adm-up" data-up="'+fid+'" data-folder="misc">'+
+                (fv?"Replace image":"Upload image")+'</button>'+
+                (fv?'<img class="adm-thumb" src="'+esc(sbImgUrl(fv))+'" alt="">':'')+'</div>';
+          }
+          return '<label class="adm-f wide">'+esc(flbl)+
+            '<input id="'+fid+'" data-h="Value" type="text" value="'+esc(fv)+'"></label>';
+        }).join("");
+        return '<div class="adm-item adm-gsec" data-i="'+c.members[0].i+'">'+
+          '<div class="adm-itemh" data-toggle="1">'+
+            '<span class="adm-itemt">'+esc(c.name)+'</span>'+
+            '<span class="adm-itemsub">'+c.members.length+' settings</span>'+
+            '<svg class="adm-car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+
+          '</div><div class="adm-itemb">'+inner+'</div></div>';
+      }).join("");
+      idxMap=[];
+      var kept=[];
+      rows.forEach(function(r,ri){ if(!claimed[ri]){ kept.push(r); idxMap.push(ri); } });
+      rows=kept;
+    }
+
+    var body=rows.map(function(r,n){
+      var i = idxMap ? idxMap[n] : n;
       if(k==="vitals"){
         var f=ADM2.vf||{tab:"",q:""};
         if(f.tab && r_(r,"Tab")!==f.tab) return "";
@@ -4578,7 +4633,7 @@
     if(k==="vitals" && rows.length && shownCount===0){
       listHtml='<div class="adm-sec"><div class="adm-empty">Nothing matches that filter.</div></div>';
     }
-    $("admGenPane").innerHTML=head+filtBar+listHtml+foot;
+    $("admGenPane").innerHTML=head+filtBar+groupHtml+listHtml+foot;
     if(k==="vitals"){
       var cEl=$("vfCount");
       if(cEl) cEl.textContent=shownCount+" of "+rows.length;
@@ -7471,7 +7526,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.5</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7513,7 +7568,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.5</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8140,7 +8195,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 18.3".replace("Version ","");
+  var APP_VERSION="Version 18.5".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
