@@ -947,6 +947,8 @@
   .au-cleanmsg{font-size:12px;color:var(--mut);line-height:1.5;margin-top:7px;text-align:center}
   .au-cleanmsg.err{color:var(--red)}
   .au-cleanmsg.ok{color:#2f9e44}
+  .adm-thumb{width:42px;height:42px;border-radius:9px;object-fit:cover;border:1px solid var(--line);
+    background:#eef2f7;flex:0 0 auto}
   .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm-fileref{font-size:12px;color:var(--mut)}
   /* Resources list */
@@ -1419,7 +1421,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 18.0</div>
+  <div class="ver-line">Version 18.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1538,7 +1540,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 18.0</div>
+  <div class="ver-line">Version 18.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2099,7 +2101,7 @@
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
   var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements"};
-  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active"}};
+  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
@@ -3977,13 +3979,14 @@
     {k:"apartments",label:"Apartments"},
     {k:"tasklist",label:"Task List"},
     {k:"cpr",label:"CPR Buttons"},
+    {k:"vitals",label:"Vitals"},
     {k:"resources",label:"Resources"},
     {k:"announce",label:"Announcements"},
     {k:"uploads",label:"Upload Types"},
     {k:"guests",label:"Guest Codes"}
   ];
-  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements"};
-  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1};
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements",vitals:"Vitals"};
+  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1,vitals:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
     "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
   // column spec per section: [header, label, kind, opts]
@@ -3995,6 +3998,12 @@
            ["Image","Image (path or URL)","text"],["Icon","Icon","text"],["Admin Only","Admin only","bool"],["Active","Active","bool"]],
     apartments:[["Name","Name","text"],["File","File (map image name)","text"],["Address","Address","text"],["Active","Active","bool"]],
     cpr:[["Label","Label","text"],["Action","What it does","sel:log|drug|start|shock|epi|rhythm|rosc"],["Color","Color","text"],["Active","Active","bool"]],
+    vitals:[["Tab","Which tab","sel:Adult=Adult|Pedi=Pediatric|Burns=Burns|Scales=Scales|Other=Other"],
+            ["Section","Section heading","text"],
+            ["Item","Item","text"],
+            ["Value","Value","text"],
+            ["Value2","Second value (optional)","text"],
+            ["Value3","Third value (optional)","text"]],
     resources:[["Title","Title","text"],["Description","Description (optional)","text"],["File","File","file"],["Active","Active","bool"]],
     announce:[["Title","Title","text"],
               ["Kind","Type","sel:feature=New feature (shows once)|confirm=Needs confirming|poll=Poll"],
@@ -4415,6 +4424,18 @@
           // keep any value already saved that isn't in the list, so nothing is silently changed
           if(v && !hit) o+='<option value="'+esc(v)+'" selected>'+esc(v)+'</option>';
           return '<label class="adm-f">'+label+'<select id="'+id+'" data-h="'+esc(header)+'">'+o+'</select></label>';
+        }
+        // A setting that holds a picture gets an uploader, not a text box
+        // nobody could sensibly type into.
+        if(kind==="text" && header==="Value" && /\bimage$/i.test(r_(r,"Setting"))){
+          var cur=String(v||"").trim();
+          return '<label class="adm-f wide">'+label+
+            '<input id="'+id+'" data-h="'+esc(header)+'" type="text" value="'+esc(cur)+'" readonly '+
+              'placeholder="No image set \u2014 using the built-in one"></label>'+
+            '<div class="adm-uprow">'+
+              '<button class="adm-up" data-up="'+id+'" data-folder="misc">'+(cur?"Replace image":"Upload image")+'</button>'+
+              (cur?'<img class="adm-thumb" src="'+esc(sbImgUrl(cur))+'" alt="">':'')+
+            '</div>';
         }
         if(kind==="area"){
           return '<label class="adm-f wide">'+label+
@@ -7349,7 +7370,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7391,7 +7412,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7753,7 +7774,7 @@
           else html+='<div class="vrow"><b>'+esc(x.item)+'</b><span>'+esc(x.value)+'</span></div>';
         });
       }
-      if(low.indexOf("rule of 9")>-1) html+='<img class="vdiagram" src="ruleof9.webp" alt="Rule of 9s body diagram">';
+      if(low.indexOf("rule of 9")>-1) html+='<img class="vdiagram" src="'+esc(ruleOf9Src())+'" alt="Rule of 9s body diagram">';
       html+='</div>';
     });
     return html+'</div>';
@@ -7783,9 +7804,15 @@
       '<div class="vcard"><div class="vhh nav">Rule of 9s (Adult) \u2014 % body surface</div>'+
         _row("Head & neck","9%")+_row("Each arm","9%")+_row("Chest & abdomen","18%")+_row("Entire back","18%")+_row("Each leg","18%")+_row("Genitalia","1%")+
         '<div class="vnote">Palmar method: the patient\u2019s palm is about 1% of body surface.</div>'+
-        '<img class="vdiagram" src="ruleof9.webp" alt="Rule of 9s body diagram">'+
+        '<img class="vdiagram" src="'+esc(ruleOf9Src())+'" alt="Rule of 9s body diagram">'+
       '</div>'+
     '</div>';
+  }
+  // Uses whatever has been uploaded in Admin -> Settings, falling back to the
+  // copy that ships with the app.
+  function ruleOf9Src(){
+    var v=String(getSetting("Rule Of 9 Image","")||"").trim();
+    return v ? sbImgUrl(v) : "ruleof9.webp";
   }
   function vitPedi(){
     return '<div class="vit-body">'+
@@ -7801,7 +7828,7 @@
       '<div class="vcard"><div class="vhh nav">Rule of 9s (Infant) \u2014 % body surface</div>'+
         _row("Head & neck","18%")+_row("Each arm","9%")+_row("Chest & abdomen","18%")+_row("Entire back","18%")+_row("Each leg","14%")+
         '<div class="vnote">Infants carry more surface area in the head and less in the legs. Palm is about 1%.</div>'+
-        '<img class="vdiagram" src="ruleof9.webp" alt="Rule of 9s body diagram">'+
+        '<img class="vdiagram" src="'+esc(ruleOf9Src())+'" alt="Rule of 9s body diagram">'+
       '</div>'+
     '</div>';
   }
@@ -8012,7 +8039,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 18.0".replace("Version ","");
+  var APP_VERSION="Version 18.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
