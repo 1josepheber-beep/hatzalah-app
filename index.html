@@ -832,12 +832,10 @@
   .adm-usagebtn.warn{background:rgba(201,147,58,.42)}
   .adm-usagebtn.bad{background:rgba(200,32,46,.55)}
   .adm-usagebtn.hidden{display:none}
-  @media (max-width:820px){
-    .adm-usage{display:none}
-  }
-  @media (min-width:821px){
-    .adm-usagebtn{display:none!important}
-  }
+  /* The pill and its dialog are used at every width now. The bar strip across
+     the top of the desktop admin screen took a lot of room for something
+     glanced at once a week. */
+  .adm-usage{display:none}
   #uModal .au-wrap{padding:0;gap:14px}
   #uModal .au-item{min-width:100%}
   .au-wrap{display:flex;gap:18px;padding:11px 14px;flex-wrap:wrap;align-items:flex-start}
@@ -919,6 +917,17 @@
   .rsp-tal{padding:10px 16px;border-top:1px solid var(--line);background:#f7f9fc}
   .rsp-tal .lb{display:flex;justify-content:space-between;font-size:12.5px;margin:6px 0 3px}
   .rsp-tal .lb b{color:var(--navy)}
+  .cl-sum{display:flex;align-items:baseline;gap:10px;background:#f4f7fb;border:1px solid var(--line);
+    border-radius:11px;padding:11px 13px;margin-bottom:11px}
+  .cl-sum b{font-size:15px;color:var(--navy)}
+  .cl-sum span{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:700}
+  .cl-list{max-height:210px;overflow:auto;border:1px solid var(--line);border-radius:11px;padding:4px 12px}
+  .cl-row{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .cl-row:first-child{border-top:0}
+  .cl-n{flex:1;min-width:0;word-break:break-all;color:var(--ink)}
+  .cl-s{flex:0 0 auto;color:var(--mut);font-variant-numeric:tabular-nums}
+  .cl-more{padding:9px 0;font-size:12px;color:var(--mut);text-align:center}
+  .adm-mbtns .pri.danger{background:var(--red)}
   .au-clean{display:block;width:100%;margin-top:10px;border:1px solid var(--line);background:#fff;
     color:var(--navy);border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;
     cursor:pointer;font-family:inherit}
@@ -1399,7 +1408,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 17.7</div>
+  <div class="ver-line">Version 17.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1518,7 +1527,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 17.7</div>
+  <div class="ver-line">Version 17.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5626,6 +5635,43 @@
       body:JSON.stringify({prefixes:names})
     }).then(function(r){ return r.ok; })["catch"](function(){ return false; });
   }
+  // A proper dialog rather than the browser's own box, so it matches the rest
+  // of the admin screen.
+  function cleanConfirm(orphans, btn, msg){
+    var bytes=orphans.reduce(function(a,f){ return a+(f.size||0); },0);
+    var rows=orphans.slice(0,40).map(function(f){
+      return '<div class="cl-row"><span class="cl-n">'+esc(f.name)+'</span>'+
+             '<span class="cl-s">'+admBytes(f.size||0)+'</span></div>';
+    }).join("");
+    if(orphans.length>40) rows+='<div class="cl-more">\u2026and '+(orphans.length-40)+' more</div>';
+    admHost().innerHTML='<div class="adm-modal" id="clModal"><div class="adm-mbox">'+
+      '<h3>Remove unused images</h3>'+
+      '<p class="adm-msub">Nothing in the app points at these '+orphans.length+' file'+
+        (orphans.length===1?'':'s')+'. They are usually icons and photos that were replaced.</p>'+
+      '<div class="cl-sum"><b>'+orphans.length+' file'+(orphans.length===1?'':'s')+'</b>'+
+        '<span>'+admBytes(bytes)+' freed</span></div>'+
+      '<div class="cl-list">'+rows+'</div>'+
+      '<div class="adm-merr" id="cl_err"></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="cl_no">Cancel</button>'+
+      '<button class="pri danger" id="cl_go">Delete them</button></div></div></div>';
+    $("cl_no").addEventListener("click",function(){ admHost().innerHTML=""; });
+    $("clModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
+    $("cl_go").addEventListener("click",function(){
+      var g=this; g.disabled=true; g.textContent="Deleting\u2026";
+      imgDelete(orphans.map(function(f){ return f.name; })).then(function(ok){
+        if(!ok){
+          g.disabled=false; g.textContent="Delete them";
+          $("cl_err").textContent="Couldn\u2019t delete. Check the image delete rule has been added.";
+          return;
+        }
+        admHost().innerHTML="";
+        toast("Removed "+orphans.length+" unused file"+(orphans.length===1?"":"s")+".");
+        if(msg){ msg.className="au-cleanmsg ok";
+          msg.textContent="Removed "+orphans.length+" file"+(orphans.length===1?"":"s")+"."; }
+        ADM_USAGE.loaded=false; setTimeout(admLoadUsage,600);
+      });
+    });
+  }
   function admCleanImages(){
     var btn=$("auClean"), msg=$("auCleanMsg");
     if(!btn||!msg) return;
@@ -5643,21 +5689,8 @@
       });
       btn.disabled=false;
       if(!orphans.length){ msg.className="au-cleanmsg ok"; msg.textContent="Nothing to clear \u2014 every file is in use."; return; }
-      var kb=orphans.reduce(function(a,f){return a+(f.size||0);},0)/1024;
-      var list=orphans.slice(0,12).map(function(f){ return "\u2022 "+f.name; }).join("\n");
-      if(orphans.length>12) list+="\n\u2026and "+(orphans.length-12)+" more";
-      if(!confirm("Delete "+orphans.length+" unused file"+(orphans.length===1?"":"s")+
-                  " ("+(kb<1024?kb.toFixed(0)+" KB":(kb/1024).toFixed(2)+" MB")+")?\n\n"+list+
-                  "\n\nThis cannot be undone.")) { msg.textContent=""; return; }
-      btn.disabled=true; msg.textContent="Deleting\u2026";
-      imgDelete(orphans.map(function(f){return f.name;})).then(function(ok){
-        btn.disabled=false;
-        if(ok){ msg.className="au-cleanmsg ok";
-          msg.textContent="Removed "+orphans.length+" file"+(orphans.length===1?"":"s")+".";
-          ADM_USAGE.loaded=false; setTimeout(admLoadUsage,600); }
-        else { msg.className="au-cleanmsg err";
-          msg.textContent="Couldn\u2019t delete. Check that the image delete rule has been added."; }
-      });
+      msg.textContent="";
+      cleanConfirm(orphans, btn, msg);
     })["catch"](function(){
       btn.disabled=false; msg.className="au-cleanmsg err"; msg.textContent="Couldn\u2019t check the files.";
     });
@@ -7248,7 +7281,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7290,7 +7323,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7911,7 +7944,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 17.7".replace("Version ","");
+  var APP_VERSION="Version 17.8".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
