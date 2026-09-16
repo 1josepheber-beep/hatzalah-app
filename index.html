@@ -917,14 +917,25 @@
   .rsp-tal{padding:10px 16px;border-top:1px solid var(--line);background:#f7f9fc}
   .rsp-tal .lb{display:flex;justify-content:space-between;font-size:12.5px;margin:6px 0 3px}
   .rsp-tal .lb b{color:var(--navy)}
+  .cl-head{display:flex;align-items:center;gap:10px;background:#f4f7fb;border:1px solid var(--line);
+    border-radius:11px;padding:10px 12px;margin-bottom:9px;cursor:pointer}
+  .cl-alltx{font-size:13px;font-weight:800;color:var(--navy)}
+  .cl-sum2{margin-left:auto;font-size:12px;color:var(--mut);font-weight:700;font-variant-numeric:tabular-nums}
+  .cl-ck{width:21px;height:21px;border:2px solid var(--navy);border-radius:6px;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff}
+  .cl-ck svg{width:13px;height:13px;stroke:#fff;fill:none;stroke-width:3;opacity:0}
+  .cl-ck.on{background:var(--navy)} .cl-ck.on svg{opacity:1}
+  .cl-ck.some{background:var(--navy);opacity:.45} .cl-ck.some svg{opacity:1}
+  .cl-th{width:40px;height:40px;flex:0 0 auto;border-radius:8px;object-fit:cover;background:#eef2f7;
+    border:1px solid var(--line);cursor:zoom-in}
   .cl-sum{display:flex;align-items:baseline;gap:10px;background:#f4f7fb;border:1px solid var(--line);
     border-radius:11px;padding:11px 13px;margin-bottom:11px}
   .cl-sum b{font-size:15px;color:var(--navy)}
   .cl-sum span{margin-left:auto;font-size:12.5px;color:var(--mut);font-weight:700}
-  .cl-list{max-height:210px;overflow:auto;border:1px solid var(--line);border-radius:11px;padding:4px 12px}
-  .cl-row{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+  .cl-list{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:11px;padding:4px 12px}
+  .cl-row{display:flex;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
   .cl-row:first-child{border-top:0}
-  .cl-n{flex:1;min-width:0;word-break:break-all;color:var(--ink)}
+  .cl-n{flex:1;min-width:0;word-break:break-all;color:var(--ink);cursor:zoom-in}
   .cl-s{flex:0 0 auto;color:var(--mut);font-variant-numeric:tabular-nums}
   .cl-more{padding:9px 0;font-size:12px;color:var(--mut);text-align:center}
   .adm-mbtns .pri.danger{background:var(--red)}
@@ -1408,7 +1419,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 17.8</div>
+  <div class="ver-line">Version 17.9</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1527,7 +1538,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 17.8</div>
+  <div class="ver-line">Version 17.9</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5637,37 +5648,87 @@
   }
   // A proper dialog rather than the browser's own box, so it matches the rest
   // of the admin screen.
+  // A proper dialog rather than the browser's own box, so it matches the rest
+  // of the admin screen. Thumbnails because a filename like
+  // "tiles/mtu6zwsrl34q1.jpg" tells you nothing, and nobody should delete blind.
   function cleanConfirm(orphans, btn, msg){
-    var bytes=orphans.reduce(function(a,f){ return a+(f.size||0); },0);
-    var rows=orphans.slice(0,40).map(function(f){
-      return '<div class="cl-row"><span class="cl-n">'+esc(f.name)+'</span>'+
-             '<span class="cl-s">'+admBytes(f.size||0)+'</span></div>';
+    function fmtSel(){
+      var picked=orphans.filter(function(f){ return f.__keep!==false; });
+      var bytes=picked.reduce(function(a,f){ return a+(f.size||0); },0);
+      return {n:picked.length, bytes:bytes, list:picked};
+    }
+    orphans.forEach(function(f){ f.__keep=true; });
+
+    var rows=orphans.map(function(f,i){
+      var url=sbImgUrl("sb:"+f.name);
+      return '<div class="cl-row" data-i="'+i+'">'+
+        '<span class="cl-ck on" data-ck="'+i+'"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+        '<img class="cl-th" src="'+esc(url)+'" alt="" loading="lazy" data-big="'+esc(url)+'" data-nm="'+esc(f.name)+'">'+
+        '<span class="cl-n" data-big="'+esc(url)+'" data-nm="'+esc(f.name)+'">'+esc(f.name)+'</span>'+
+        '<span class="cl-s">'+admBytes(f.size||0)+'</span></div>';
     }).join("");
-    if(orphans.length>40) rows+='<div class="cl-more">\u2026and '+(orphans.length-40)+' more</div>';
+
     admHost().innerHTML='<div class="adm-modal" id="clModal"><div class="adm-mbox">'+
-      '<h3>Remove unused images</h3>'+
-      '<p class="adm-msub">Nothing in the app points at these '+orphans.length+' file'+
-        (orphans.length===1?'':'s')+'. They are usually icons and photos that were replaced.</p>'+
-      '<div class="cl-sum"><b>'+orphans.length+' file'+(orphans.length===1?'':'s')+'</b>'+
-        '<span>'+admBytes(bytes)+' freed</span></div>'+
+      '<h3>Unused images</h3>'+
+      '<p class="adm-msub">Nothing in the app points at these. Tap one to see it full size. '+
+        'Untick anything you want to keep.</p>'+
+      '<div class="cl-head"><span class="cl-ck on" id="cl_all"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>'+
+        '<span class="cl-alltx">Select all</span><span class="cl-sum2" id="cl_sum"></span></div>'+
       '<div class="cl-list">'+rows+'</div>'+
       '<div class="adm-merr" id="cl_err"></div>'+
       '<div class="adm-mbtns"><button class="ghost" id="cl_no">Cancel</button>'+
-      '<button class="pri danger" id="cl_go">Delete them</button></div></div></div>';
+      '<button class="pri danger" id="cl_go"></button></div></div></div>';
+
+    function paint(){
+      var sel=fmtSel();
+      $("cl_sum").textContent=sel.n+" of "+orphans.length+" \u00b7 "+admBytes(sel.bytes);
+      var g=$("cl_go");
+      g.textContent = sel.n ? ("Delete "+sel.n+" file"+(sel.n===1?"":"s")) : "Nothing selected";
+      g.disabled = !sel.n;
+      var all=$("cl_all");
+      all.classList.toggle("on", sel.n===orphans.length);
+      all.classList.toggle("some", sel.n>0 && sel.n<orphans.length);
+    }
+    paint();
+
     $("cl_no").addEventListener("click",function(){ admHost().innerHTML=""; });
     $("clModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
+
+    $("cl_all").addEventListener("click",function(){
+      var everyOn=orphans.every(function(f){ return f.__keep!==false; });
+      orphans.forEach(function(f){ f.__keep=!everyOn; });
+      Array.prototype.forEach.call($("clModal").querySelectorAll("[data-ck]"),function(c){
+        c.classList.toggle("on", !everyOn);
+      });
+      paint();
+    });
+
+    $("clModal").addEventListener("click",function(e){
+      var ck=e.target.closest?e.target.closest("[data-ck]"):null;
+      if(ck && ck.id!=="cl_all"){
+        var i=+ck.getAttribute("data-ck");
+        orphans[i].__keep = !(orphans[i].__keep!==false);
+        ck.classList.toggle("on", orphans[i].__keep!==false);
+        paint(); return;
+      }
+      var big=e.target.closest?e.target.closest("[data-big]"):null;
+      if(big){ openPhoto(big.getAttribute("data-big"), big.getAttribute("data-nm")); }
+    });
+
     $("cl_go").addEventListener("click",function(){
+      var sel=fmtSel();
+      if(!sel.n) return;
       var g=this; g.disabled=true; g.textContent="Deleting\u2026";
-      imgDelete(orphans.map(function(f){ return f.name; })).then(function(ok){
+      imgDelete(sel.list.map(function(f){ return f.name; })).then(function(ok){
         if(!ok){
-          g.disabled=false; g.textContent="Delete them";
+          g.disabled=false; paint();
           $("cl_err").textContent="Couldn\u2019t delete. Check the image delete rule has been added.";
           return;
         }
         admHost().innerHTML="";
-        toast("Removed "+orphans.length+" unused file"+(orphans.length===1?"":"s")+".");
+        toast("Removed "+sel.n+" unused file"+(sel.n===1?"":"s")+".");
         if(msg){ msg.className="au-cleanmsg ok";
-          msg.textContent="Removed "+orphans.length+" file"+(orphans.length===1?"":"s")+"."; }
+          msg.textContent="Removed "+sel.n+" file"+(sel.n===1?"":"s")+"."; }
         ADM_USAGE.loaded=false; setTimeout(admLoadUsage,600);
       });
     });
@@ -7281,7 +7342,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.8</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.9</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7323,7 +7384,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.8</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.9</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7944,7 +8005,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 17.8".replace("Version ","");
+  var APP_VERSION="Version 17.9".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
