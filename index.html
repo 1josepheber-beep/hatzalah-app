@@ -1431,7 +1431,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 18.7</div>
+  <div class="ver-line">Version 18.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1550,7 +1550,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 18.7</div>
+  <div class="ver-line">Version 18.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4381,7 +4381,16 @@
     {name:"Dispatch",              keys:["Dispatch Label","Dispatch Number"]},
     {name:"Medical Control",       keys:["Medical Control Label","Medical Control Number"]},
     {name:"Text Home",             keys:["Text Home","Text Home Message"]},
-    {name:"Scene timer",           keys:["Scene Timer Message","Scene Reminder Message","CPR Cycle Minutes"]},
+    {name:"Scene timer",           keys:["Scene Timer Minutes","Scene Timer Message",
+                                          "Scene Reminder Minutes","Scene Reminder Message",
+                                          "Scene Timer Snooze Minutes"]},
+    {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
+    {name:"Certification emails",  keys:["Cert Reminder Days",
+                                          "Cert Email Subject (expiring)","Cert Email Body (expiring)",
+                                          "Cert Email Subject (expired)","Cert Email Body (expired)",
+                                          "Cert Email Subject (expired, non-blocking)",
+                                          "Cert Email Body (expired, non-blocking)",
+                                          "Cert Email Subject (renewed)","Cert Email Body (renewed)"]},
     {name:"Storage limits",        keys:["Storage Limit DB MB","Storage Limit Files MB","Storage Limit Repo MB"]},
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]}
@@ -7553,7 +7562,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7595,7 +7604,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8222,7 +8231,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 18.7".replace("Version ","");
+  var APP_VERSION="Version 18.8".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
