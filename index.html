@@ -947,6 +947,16 @@
   .au-cleanmsg{font-size:12px;color:var(--mut);line-height:1.5;margin-top:7px;text-align:center}
   .au-cleanmsg.err{color:var(--red)}
   .au-cleanmsg.ok{color:#2f9e44}
+  .vf-bar{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:11px}
+  .vf-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:9px}
+  .vf-chip{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;
+    padding:7px 13px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+  .vf-chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .vf-q{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:15px;font-family:inherit;background:#fff}
+  .vf-count{font-size:11.5px;color:var(--mut);margin-top:7px;text-align:right;font-weight:700}
+  .vf-sec{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--navy);background:#eef2f7;padding:7px 12px;border-radius:8px;margin:12px 0 7px}
   .adm-thumb{width:42px;height:42px;border-radius:9px;object-fit:cover;border:1px solid var(--line);
     background:#eef2f7;flex:0 0 auto}
   .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1421,7 +1431,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 18.1</div>
+  <div class="ver-line">Version 18.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1540,7 +1550,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 18.1</div>
+  <div class="ver-line">Version 18.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4208,7 +4218,35 @@
   function admRenderCpr(){
     var rows=(ADM2.data.cpr||[]).slice().sort(function(a,b){
       return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
+    // Vitals runs to hundreds of rows. Filter by tab and search before
+    // editing, rather than scrolling the lot.
+    var filtBar="";
+    if(k==="vitals"){
+      ADM2.vf=ADM2.vf||{tab:"",q:""};
+      var tabs=[];
+      rows.forEach(function(r){ var t=r_(r,"Tab"); if(t && tabs.indexOf(t)<0) tabs.push(t); });
+      filtBar='<div class="vf-bar">'+
+        '<div class="vf-chips">'+
+          '<button class="vf-chip'+(ADM2.vf.tab?"":" on")+'" data-vtab="">All</button>'+
+          tabs.map(function(t){
+            return '<button class="vf-chip'+(ADM2.vf.tab===t?" on":"")+'" data-vtab="'+esc(t)+'">'+esc(t)+'</button>';
+          }).join("")+
+        '</div>'+
+        '<input class="vf-q" id="vfQ" type="search" placeholder="Search vitals" value="'+esc(ADM2.vf.q)+'">'+
+        '<div class="vf-count" id="vfCount"></div></div>';
+    }
+    var shownCount=0, lastSection=null;
     var body=rows.map(function(r,i){
+      if(k==="vitals"){
+        var f=ADM2.vf||{tab:"",q:""};
+        if(f.tab && r_(r,"Tab")!==f.tab) return "";
+        if(f.q){
+          var hay=(r_(r,"Tab")+" "+r_(r,"Section")+" "+r_(r,"Item")+" "+
+                   r_(r,"Value")+" "+r_(r,"Value2")+" "+r_(r,"Value3")).toLowerCase();
+          if(hay.indexOf(f.q.toLowerCase().trim())<0) return "";
+        }
+        shownCount++;
+      }
       var off=!admBoolOn(r_(r,"Active"),"Active");
       return '<button type="button" class="cprx-b'+(off?" off":"")+'" data-i="'+i+'" '+
         'style="background:'+cprColor(r_(r,"Color"))+'">'+esc(r_(r,"Label")||"(no label)")+
@@ -4391,7 +4429,35 @@
       '<div class="u">'+rows.length+' row'+(rows.length===1?"":"s")+'</div></div></div>'+
       (help?'<div class="adm-help">'+help+'</div>':'');
 
+    // Vitals runs to hundreds of rows. Filter by tab and search before
+    // editing, rather than scrolling the lot.
+    var filtBar="";
+    if(k==="vitals"){
+      ADM2.vf=ADM2.vf||{tab:"",q:""};
+      var tabs=[];
+      rows.forEach(function(r){ var t=r_(r,"Tab"); if(t && tabs.indexOf(t)<0) tabs.push(t); });
+      filtBar='<div class="vf-bar">'+
+        '<div class="vf-chips">'+
+          '<button class="vf-chip'+(ADM2.vf.tab?"":" on")+'" data-vtab="">All</button>'+
+          tabs.map(function(t){
+            return '<button class="vf-chip'+(ADM2.vf.tab===t?" on":"")+'" data-vtab="'+esc(t)+'">'+esc(t)+'</button>';
+          }).join("")+
+        '</div>'+
+        '<input class="vf-q" id="vfQ" type="search" placeholder="Search vitals" value="'+esc(ADM2.vf.q)+'">'+
+        '<div class="vf-count" id="vfCount"></div></div>';
+    }
+    var shownCount=0, lastSection=null;
     var body=rows.map(function(r,i){
+      if(k==="vitals"){
+        var f=ADM2.vf||{tab:"",q:""};
+        if(f.tab && r_(r,"Tab")!==f.tab) return "";
+        if(f.q){
+          var hay=(r_(r,"Tab")+" "+r_(r,"Section")+" "+r_(r,"Item")+" "+
+                   r_(r,"Value")+" "+r_(r,"Value2")+" "+r_(r,"Value3")).toLowerCase();
+          if(hay.indexOf(f.q.toLowerCase().trim())<0) return "";
+        }
+        shownCount++;
+      }
       var title = k==="settings" ? r_(r,"Setting")
                 : (r_(r,"Label")||r_(r,"Name")||r_(r,"Hospital Name")||r_(r,"Task")||r_(r,"Title")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
       var sub="";
@@ -4480,7 +4546,13 @@
           }).join("")+'</div></div>';
       }
 
-      return '<div class="adm-item adm-gsec'+(off?" off":"")+'" data-i="'+i+'" draggable="false">'+
+      var divider="";
+      if(k==="vitals"){
+        var sec=r_(r,"Section");
+        if(sec!==lastSection){ lastSection=sec;
+          divider='<div class="vf-sec">'+esc(sec||"(no section)")+'</div>'; }
+      }
+      return divider+'<div class="adm-item adm-gsec'+(off?" off":"")+'" data-i="'+i+'" draggable="false">'+
         '<div class="adm-itemh" data-toggle="1">'+
           (orderable?'<span class="adm-grip" data-grip="1" title="Drag to reorder"><svg viewBox="0 0 24 24"><path d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01"/></svg></span>':'')+
           '<span class="adm-itemt">'+esc(title)+(off?' <span class="adm-offtag">off</span>':'')+'</span>'+
@@ -4497,7 +4569,26 @@
     var addable = (k!=="settings");
     var foot='<div class="adm-save"><button class="pri" id="admGenSave">Save changes</button></div><div class="adm-msg" id="admGenMsg"></div>'+
       (addable?'<button class="adm-addrow" id="admGenAdd">+ Add row</button>':'')+'</div>';
-    $("admGenPane").innerHTML=head+(rows.length?('<div class="adm-items" id="admItems">'+body+'</div>'):'<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>')+foot;
+    var listHtml = rows.length
+      ? ('<div class="adm-items" id="admItems">'+body+'</div>')
+      : '<div class="adm-sec"><div class="adm-empty">Nothing here yet.</div></div>';
+    if(k==="vitals" && rows.length && shownCount===0){
+      listHtml='<div class="adm-sec"><div class="adm-empty">Nothing matches that filter.</div></div>';
+    }
+    $("admGenPane").innerHTML=head+filtBar+listHtml+foot;
+    if(k==="vitals"){
+      var cEl=$("vfCount");
+      if(cEl) cEl.textContent=shownCount+" of "+rows.length;
+      var q=$("vfQ");
+      if(q){
+        q.addEventListener("input",function(){
+          ADM2.vf.q=this.value;
+          var pos=this.selectionStart;
+          admRenderSec(k);
+          var n=$("vfQ"); if(n){ n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} }
+        });
+      }
+    }
     ADM2.view=rows;
     ADM2.dirty=false;
     if(orderable) admWireDrag();
@@ -4770,6 +4861,13 @@
     }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
+    var vt=e.target.closest?e.target.closest("[data-vtab]"):null;
+    if(vt){
+      ADM2.vf=ADM2.vf||{tab:"",q:""};
+      ADM2.vf.tab=vt.getAttribute("data-vtab");
+      admRenderSec("vitals");
+      return;
+    }
     var rsp=e.target.closest?e.target.closest(".adm-resp"):null;
     if(rsp){
       var ri=+rsp.getAttribute("data-resp");
@@ -7370,7 +7468,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7412,7 +7510,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8039,7 +8137,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 18.1".replace("Version ","");
+  var APP_VERSION="Version 18.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
