@@ -919,6 +919,14 @@
   .rsp-tal{padding:10px 16px;border-top:1px solid var(--line);background:#f7f9fc}
   .rsp-tal .lb{display:flex;justify-content:space-between;font-size:12.5px;margin:6px 0 3px}
   .rsp-tal .lb b{color:var(--navy)}
+  .au-clean{display:block;width:100%;margin-top:10px;border:1px solid var(--line);background:#fff;
+    color:var(--navy);border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;
+    cursor:pointer;font-family:inherit}
+  .au-clean:active{background:#f4f7fb}
+  .au-clean:disabled{opacity:.5}
+  .au-cleanmsg{font-size:12px;color:var(--mut);line-height:1.5;margin-top:7px;text-align:center}
+  .au-cleanmsg.err{color:var(--red)}
+  .au-cleanmsg.ok{color:#2f9e44}
   .adm-fname{font-size:12px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm-fileref{font-size:12px;color:var(--mut)}
   /* Resources list */
@@ -1391,7 +1399,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 17.6</div>
+  <div class="ver-line">Version 17.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1510,7 +1518,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 17.6</div>
+  <div class="ver-line">Version 17.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3921,10 +3929,12 @@
       var r0=admRow(ADM.sel); if(!r0) return;
       sbPickImage(function(file){
         toast("Uploading photo\u2026");
+        var prev=r_(r0,"Photo");
         sbUpload("photos",file,{maxDim:600,quality:0.85}).then(function(ref){
           return sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(ADM.sel),{photo:ref}).then(function(res){
             if(!res.ok) throw "save-failed";
             r0["Photo"]=ref; DIR.loaded=false; toast("Photo updated."); admRenderDetail();
+            dropOldImage(prev, ref);
           });
         }).catch(function(err){ toast("Couldn\u2019t upload."); try{console.error("photo:",err);}catch(e){} });
       });
@@ -4031,7 +4041,10 @@
           bar("Database",j.db_bytes,dbCap,"")+
           bar("Photos &amp; images",j.file_bytes,fileCap,(j.file_count||0)+" file"+((j.file_count==1)?"":"s"))+
           '<div class="au-item" id="auRepo"></div>'+
-          warn+'</div>';
+          warn+
+          '<button class="au-clean" id="auClean">Clean up unused images</button>'+
+          '<div class="au-cleanmsg" id="auCleanMsg"></div>'+
+          '</div>';
         box.innerHTML=inner;
         // GitHub repository size (public API, no key needed)
         var repo=getSetting("GitHub Repo","1josepheber-beep/hatzalah-app");
@@ -4157,6 +4170,7 @@
         if(!r.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save."; return; }
         ADM2.dirty=false; btn.classList.remove("hot");
         msg.className="adm-msg ok"; msg.textContent="Saved.";
+        flushPendingDrops();   // now the row is saved, the replaced files can go
         try{ paintCertBanner(); }catch(e){}
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500);
       })
@@ -4698,8 +4712,11 @@
       }
       sbPickImage(function(file){
         up.disabled=true; up.textContent="Uploading\u2026";
+        var prevRef=(function(){ var i=$(targetId); return i?String(i.value||"").trim():""; })();
         sbUpload(folder,file,{maxDim:900,quality:0.85}).then(function(ref){
           var inp=$(targetId); if(inp) inp.value=ref;
+          // the row isn't saved yet, so hold the old file until it is
+          if(prevRef && prevRef!==ref && prevRef.indexOf("sb:")===0) PENDING_DROPS.push(prevRef);
           var pv=$(targetId+"_pv"); if(pv){ pv.src=sbImgUrl(ref); pv.classList.remove("hidden"); }
           up.disabled=false; up.textContent="Upload image";
           toast("Image uploaded \u2014 press Save to keep it.");
@@ -5531,6 +5548,124 @@
       .then(function(rows){ ANN.tallies=rows||[]; return ANN.tallies; })
       ["catch"](function(){ return ANN.tallies||[]; });
   }
+  // ---------- Unused image cleanup ----------
+  // Every image reference is stored as "sb:folder/file.jpg". Anything sitting
+  // in the bucket that no row mentions is a leftover -- usually a tile icon or
+  // member photo that was replaced, since uploading a new one never removed
+  // the old file.
+  // Removes the file a replacement supersedes. Without this, every swapped
+  // tile icon and member photo stayed in the bucket for good -- which is how
+  // 20 of 43 files ended up as leftovers.
+  var PENDING_DROPS=[];
+  function flushPendingDrops(){
+    if(!PENDING_DROPS.length) return;
+    var names=PENDING_DROPS.splice(0).map(function(v){ return v.slice(3); });
+    imgDelete(names);
+  }
+  function dropOldImage(prev, now){
+    try{
+      prev=String(prev||"").trim(); now=String(now||"").trim();
+      if(!prev || prev===now) return;
+      if(prev.indexOf("sb:")!==0) return;          // only files we uploaded
+      imgDelete([prev.slice(3)]);
+    }catch(e){}
+  }
+  function imgRefsInUse(){
+    return Promise.all([
+      fetchTab("Tiles")["catch"](function(){return [];}),
+      fetchTab("Roster")["catch"](function(){return [];}),
+      fetchTab("apartments")["catch"](function(){return [];}),
+      fetch(SB_URL+"/rest/v1/cabinets?select=img",{headers:sbAuthHeaders()})
+        .then(function(r){return r.ok?r.json():[];})["catch"](function(){return [];}),
+      fetch(SB_URL+"/rest/v1/equipment_items?select=image",{headers:sbAuthHeaders()})
+        .then(function(r){return r.ok?r.json():[];})["catch"](function(){return [];})
+    ]).then(function(res){
+      var used={};
+      function use(v){ v=String(v||"").trim(); if(!v) return;
+        if(v.indexOf("sb:")===0) v=v.slice(3);
+        if(v) used[v]=1; }
+      (res[0]||[]).forEach(function(t){ use(r_(t,"Image")); });
+      (res[1]||[]).forEach(function(m){ use(r_(m,"Photo")); });
+      (res[2]||[]).forEach(function(a){ use(r_(a,"File")); });
+      (res[3]||[]).forEach(function(c){ use(c.img); });
+      (res[4]||[]).forEach(function(i){ use(i.image); });
+      return used;
+    });
+  }
+  // The bucket is listed folder by folder; a plain list only returns the top level.
+  function imgListAll(){
+    var folders=["tiles","photos","cabinets","apartments","equipment","misc",""];
+    var out=[];
+    function one(prefix){
+      return fetch(SB_URL+"/storage/v1/object/list/"+SB_BUCKET,{
+        method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+        body:JSON.stringify({prefix:prefix, limit:1000, offset:0,
+                             sortBy:{column:"name",order:"asc"}})
+      }).then(function(r){ return r.ok?r.json():[]; })
+        .then(function(rows){
+          (rows||[]).forEach(function(o){
+            if(!o||!o.name) return;
+            if(!o.id && !(o.metadata&&o.metadata.size)) return;   // a folder, not a file
+            out.push({ name:(prefix?prefix+"/":"")+o.name,
+                       size:(o.metadata&&o.metadata.size)||0,
+                       created:o.created_at||"" });
+          });
+        })["catch"](function(){});
+    }
+    return folders.reduce(function(chain,f){
+      return chain.then(function(){ return one(f); });
+    }, Promise.resolve()).then(function(){
+      var seen={}, uniq=[];
+      out.forEach(function(o){ if(!seen[o.name]){ seen[o.name]=1; uniq.push(o); } });
+      return uniq;
+    });
+  }
+  function imgDelete(names){
+    return fetch(SB_URL+"/storage/v1/object/"+SB_BUCKET,{
+      method:"DELETE", headers:sbAuthHeaders({"Content-Type":"application/json"}),
+      body:JSON.stringify({prefixes:names})
+    }).then(function(r){ return r.ok; })["catch"](function(){ return false; });
+  }
+  function admCleanImages(){
+    var btn=$("auClean"), msg=$("auCleanMsg");
+    if(!btn||!msg) return;
+    btn.disabled=true; msg.className="au-cleanmsg"; msg.textContent="Looking\u2026";
+    Promise.all([imgListAll(), imgRefsInUse()]).then(function(res){
+      var files=res[0]||[], used=res[1]||{};
+      var cutoff=Date.now()-24*3600*1000;
+      var orphans=files.filter(function(f){
+        if(used[f.name]) return false;
+        // an image is uploaded a moment before the row that points at it is
+        // saved, so anything very recent is left well alone
+        var t=f.created?Date.parse(f.created):0;
+        if(t && t>cutoff) return false;
+        return true;
+      });
+      btn.disabled=false;
+      if(!orphans.length){ msg.className="au-cleanmsg ok"; msg.textContent="Nothing to clear \u2014 every file is in use."; return; }
+      var kb=orphans.reduce(function(a,f){return a+(f.size||0);},0)/1024;
+      var list=orphans.slice(0,12).map(function(f){ return "\u2022 "+f.name; }).join("\n");
+      if(orphans.length>12) list+="\n\u2026and "+(orphans.length-12)+" more";
+      if(!confirm("Delete "+orphans.length+" unused file"+(orphans.length===1?"":"s")+
+                  " ("+(kb<1024?kb.toFixed(0)+" KB":(kb/1024).toFixed(2)+" MB")+")?\n\n"+list+
+                  "\n\nThis cannot be undone.")) { msg.textContent=""; return; }
+      btn.disabled=true; msg.textContent="Deleting\u2026";
+      imgDelete(orphans.map(function(f){return f.name;})).then(function(ok){
+        btn.disabled=false;
+        if(ok){ msg.className="au-cleanmsg ok";
+          msg.textContent="Removed "+orphans.length+" file"+(orphans.length===1?"":"s")+".";
+          ADM_USAGE.loaded=false; setTimeout(admLoadUsage,600); }
+        else { msg.className="au-cleanmsg err";
+          msg.textContent="Couldn\u2019t delete. Check that the image delete rule has been added."; }
+      });
+    })["catch"](function(){
+      btn.disabled=false; msg.className="au-cleanmsg err"; msg.textContent="Couldn\u2019t check the files.";
+    });
+  }
+  document.addEventListener("click",function(e){
+    if(e.target && e.target.id==="auClean") admCleanImages();
+  });
+
   function annOptions(a){
     // one per line is the intended way, but commas are accepted so a list typed
     // on a single line still works
@@ -7113,7 +7248,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7155,7 +7290,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 17.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7776,7 +7911,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 17.6".replace("Version ","");
+  var APP_VERSION="Version 17.7".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
