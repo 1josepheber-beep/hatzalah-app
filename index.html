@@ -1437,7 +1437,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 19.1</div>
+  <div class="ver-line">Version 19.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1556,7 +1556,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 19.1</div>
+  <div class="ver-line">Version 19.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4426,6 +4426,15 @@
     if(k==="cpr"){ admRenderCpr(); return; }
     if(k==="certtypes"){ admRenderCertTypes(); return; }
     var cols=ADM_COLS[k], rows=(ADM2.data[k]||[]).slice();
+    // Draggable sections were showing rows in database order, so a reorder
+    // looked as if it had not saved even though the members' side had it right.
+    if(ADM_ORDERABLE[k] && orderColOf(SB_TAB2TBL[ADM_TABLES[k]])){
+      rows.sort(function(a,b){
+        var x=parseFloat(r_(a,"Order")), y=parseFloat(r_(b,"Order"));
+        if(isNaN(x)) x=9999; if(isNaN(y)) y=9999;
+        return x-y;
+      });
+    }
     if(k==="settings"){
       // these now live in the Certifications section, so they aren't shown twice
       var moved={"certifications that block response":1,"cert email subject (expired)":1,
@@ -6523,6 +6532,9 @@
       APT.items=items; APT.loaded=true; return items;
     }).catch(function(){ APT.items=aptFallback(); APT.loaded=true; return APT.items; });
   }
+  // Codes get typed both ways -- "2255" and "#2255". Strip any leading hash so
+  // the app adds exactly one and never shows "##".
+  function aptCode(v){ return String(v==null?"":v).trim().replace(/^#+\s*/,""); }
   function aptMatches(a,q){ return (a.name+" "+a.address+" "+(a.code||"")+" "+a.slug.replace(/-/g," ")).toLowerCase().indexOf(q)>-1; }
   function aptLabelMatch(label,q){
     label=String(label||""); q=String(q||"").trim(); if(!q) return false;
@@ -6558,7 +6570,7 @@
       html+='<div class="apt-group">Buildings</div>';
       html+=units.map(function(u){
         return '<button class="apt-item" data-slug="'+esc(u.slug)+'" data-name="'+esc(u.complex)+'" data-label="'+esc(u.label)+'">'+
-          '<span class="apt-nm">'+esc(u.label)+(u.code?'<span class="apt-code">#'+esc(u.code)+'</span>':'')+'</span>'+
+          '<span class="apt-nm">'+esc(u.label)+(aptCode(u.code)?'<span class="apt-code">#'+esc(aptCode(u.code))+'</span>':'')+'</span>'+
           '<span class="apt-addr">'+esc(u.addr||u.complex)+'</span>'+CHEV+'</button>';
       }).join("");
     }
@@ -6566,7 +6578,7 @@
       if(units.length) html+='<div class="apt-group">Complexes</div>';
       html+=complexes.map(function(a){
         return '<button class="apt-item" data-slug="'+esc(a.slug)+'" data-name="'+esc(a.name)+'">'+
-          '<span class="apt-nm">'+esc(a.name)+(a.code?'<span class="apt-code">#'+esc(a.code)+'</span>':'')+'</span>'+
+          '<span class="apt-nm">'+esc(a.name)+(aptCode(a.code)?'<span class="apt-code">#'+esc(aptCode(a.code))+'</span>':'')+'</span>'+
           (a.address?'<span class="apt-addr">'+esc(a.address)+'</span>':'')+CHEV+'</button>';
       }).join("");
     }
@@ -6633,8 +6645,8 @@
     var apt=(APT.items||[]).filter(function(x){ return x.slug===slug; })[0];
     var cb=$("aptCodeBar");
     if(cb){
-      var cd=apt&&apt.code?String(apt.code).trim():"";
-      cb.innerHTML = cd ? '<span class="apt-codebig"><small>Gate</small>'+esc(cd)+'</span>' : "";
+      var cd=apt?aptCode(apt.code):"";
+      cb.innerHTML = cd ? '<span class="apt-codebig"><small>Gate</small>#'+esc(cd)+'</span>' : "";
       cb.style.display = cd ? "" : "none";
     }
     var img=$("aptMapImg"); aptZoomReset(); $("aptPins").innerHTML="";
@@ -7600,7 +7612,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7642,7 +7654,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8269,7 +8281,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 19.1".replace("Version ","");
+  var APP_VERSION="Version 19.3".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
