@@ -1431,7 +1431,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 18.9</div>
+  <div class="ver-line">Version 19.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1550,7 +1550,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 18.9</div>
+  <div class="ver-line">Version 19.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4863,7 +4863,18 @@
         }catch(e){}
       }
       else { msg.className="adm-msg ok"; msg.textContent="Saved."; ADM2.loaded[k]=false; STATE.settingsDirty=true;
-        if(k==="resources") RES.loaded=false;
+        // Clear whichever member-side cache this section feeds, or the change
+        // shows in the admin list and nowhere else until the app is reopened.
+        try{
+          if(k==="resources")  RES.loaded=false;
+          if(k==="apartments"){ APT.loaded=false; APT.items=[]; }
+          if(k==="hospitals")  HOSP.loaded=false;
+          if(k==="tasklist")   TB.loaded=false;
+          if(k==="uploads")    UP.loaded=false;
+          if(k==="vitals")     { VIT.loaded=false; VIT.data=null; }
+          if(k==="announce")   ANN.loaded=false;
+          if(k==="settings")   STATE.settingsDirty=true;
+        }catch(e){}
         ADM2.dirty=false; var sb=$("admGenSave"); if(sb){ sb.classList.remove("hot"); sb.textContent="Save changes"; }
         setTimeout(function(){ var m=$("admGenMsg"); if(m){m.textContent="";m.className="adm-msg";} },2500); }
     }).catch(function(){ btn.disabled=false; btn.textContent="Save all changes"; msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save \u2014 check your connection."; });
@@ -7569,7 +7580,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7611,7 +7622,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 18.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8238,7 +8249,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 18.9".replace("Version ","");
+  var APP_VERSION="Version 19.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
