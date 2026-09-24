@@ -997,6 +997,9 @@
   .res-ic{width:42px;height:42px;border-radius:11px;flex:0 0 auto;display:flex;align-items:center;
     justify-content:center;font-size:10px;font-weight:800;letter-spacing:.03em;color:#fff;background:var(--navy)}
   .res-ic.pdf{background:#c0392b} .res-ic.img{background:#2f9e44} .res-ic.doc{background:#2a6fb5}
+  .res-ic.note{background:#5b6675;font-size:16px;font-style:italic}
+  .res-row.noteonly{cursor:default}
+  .res-row.noteonly:active{background:#fff}
   .res-main{flex:1;min-width:0}
   .res-nm{font-weight:700;font-size:14.5px;line-height:1.3}
   .res-ds{font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.4}
@@ -1444,7 +1447,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 19.7</div>
+  <div class="ver-line">Version 19.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1563,7 +1566,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 19.7</div>
+  <div class="ver-line">Version 19.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -6920,7 +6923,6 @@
     var b=$("resBody"), q=String(RES.q||"").toLowerCase().trim();
     var list=RES.rows.filter(function(r){
       if(!admBoolOn(r_(r,"Active"),"Active")) return false;
-      if(!r_(r,"File")) return false;
       if(q){
         var hay=(r_(r,"Title")+" "+r_(r,"Description")+" "+docFileName(r_(r,"File"))).toLowerCase();
         if(hay.indexOf(q)<0) return false;
@@ -6937,13 +6939,13 @@
       return;
     }
     b.innerHTML=list.map(function(r){
-      var ref=r_(r,"File"), k=resKind(ref), fn=docFileName(ref), ds=r_(r,"Description");
-      return '<div class="res-row" data-ref="'+esc(ref)+'" data-t="'+esc(r_(r,"Title")||fn)+'">'+
-        '<div class="res-ic '+k+'">'+(k==="img"?"IMG":(k==="pdf"?"PDF":"DOC"))+'</div>'+
+      var ref=r_(r,"File"), k=ref?resKind(ref):"note", fn=docFileName(ref), ds=r_(r,"Description");
+      return '<div class="res-row'+(ref?'':' noteonly')+'" data-ref="'+esc(ref)+'" data-t="'+esc(r_(r,"Title")||fn)+'">'+
+        '<div class="res-ic '+k+'">'+(k==="img"?"IMG":(k==="pdf"?"PDF":(k==="note"?"i":"DOC")))+'</div>'+
         '<div class="res-main"><div class="res-nm">'+esc(r_(r,"Title")||fn)+'</div>'+
           (ds?'<div class="res-ds">'+esc(ds)+'</div>':'')+
         '</div>'+
-        '<svg class="res-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>';
+        (ref?'<svg class="res-go" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>':'')+'</div>';
     }).join("")+'<div class="res-note">Documents open with a secure link that expires after an hour.</div>';
   }
   $("resBack").addEventListener("click",function(){ navBack(); });
@@ -6951,7 +6953,7 @@
   $("resBody").addEventListener("click",function(e){
     var row=e.target.closest?e.target.closest(".res-row"):null; if(!row) return;
     var ref=row.getAttribute("data-ref"), title=row.getAttribute("data-t")||"";
-    if(!ref) return;
+    if(!ref) return;   // a note-only entry has nothing to open
     var isImg=docIsImage(ref);
     var isPdf=(docExt(docFileName(ref))==="pdf");
     toast("Opening\u2026");
@@ -7154,7 +7156,8 @@
   document.addEventListener("click",function(ev){
     var e=ev.target.closest?ev.target.closest(".cert-edit"):null;
     if(e){
-      CERTUP={cert:e.getAttribute("data-cert"), col:e.getAttribute("data-col"), unit:e.getAttribute("data-unit")};
+      CERTUP={cert:e.getAttribute("data-cert"), col:e.getAttribute("data-col"), unit:e.getAttribute("data-unit"),
+              oldVal:e.getAttribute("data-old")||""};
       $("certModalH").textContent="Edit "+CERTUP.cert+" expiration";
       $("certModalErr").textContent=""; $("certModalDate").value="";
       $("certModal").classList.remove("hidden"); return;
@@ -7235,7 +7238,9 @@
         btn.disabled=false; btn.textContent="Save date";
         if(!r.ok){ $("certModalErr").textContent="Couldn\u2019t save. Try again."; return; }
         $("certModal").classList.add("hidden");
-        var savedUnit=CERTUP.unit; CERTUP=null;
+        var savedUnit=CERTUP.unit;
+        logCertUpdate(savedUnit, CERTUP.cert, CERTUP.oldVal, mdy);
+        CERTUP=null;
         CERT.loaded=false; toast("Expiration date updated.");
         pokeCertMailer(savedUnit);
         openCerts();
@@ -7245,6 +7250,26 @@
   // Nudges the reminder script to check this one member straight away, so a
   // renewal confirmation arrives in seconds instead of waiting for the nightly
   // run. Fire and forget: if it fails, tonight's run still sends it.
+  // Records who changed a certification date and what it was before. The table
+  // has existed since the migration but nothing ever wrote to it, so there was
+  // no history at all.
+  function logCertUpdate(unit, certName, oldDate, newDate){
+    try{
+      if(STATE.demo) return;
+      oldDate=String(oldDate||"").trim(); newDate=String(newDate||"").trim();
+      if(oldDate===newDate) return;
+      var by=(STATE.me&&STATE.me.unit)?String(STATE.me.unit):"";
+      sbWrite("POST","cert_updates",{
+        when_at: nowStamp(),
+        unit: String(unit||""),
+        certification: String(certName||""),
+        old_date: oldDate,
+        new_date: newDate
+      }).then(function(r){
+        if(!r.ok){ try{ console.warn("cert update not logged:", r.status); }catch(e){} }
+      })["catch"](function(err){ try{ console.warn("cert update not logged:", err); }catch(e){} });
+    }catch(e){}
+  }
   function pokeCertMailer(unit){
     try{
       if(!unit) return;
@@ -7629,7 +7654,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7671,7 +7696,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8298,7 +8323,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 19.7".replace("Version ","");
+  var APP_VERSION="Version 19.8".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -8714,6 +8739,7 @@
         HOSP.loaded=true;
       }).catch(function(){}));
     }
+    if(!RES.loaded){ jobs.push(loadResourcesQuiet()); }
     if(!PROTO.loaded){
       jobs.push(loadProtocols().then(function(d){ initProto(d); }).catch(function(){}));
     }
@@ -8732,6 +8758,10 @@
   var ICO_TILE='<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>';
   var ICO_ERG='<svg viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12z"/><path d="M12 8v5" stroke="#fff"/><circle cx="12" cy="16.5" r="0.8" fill="#fff" stroke="none"/></svg>';
 
+  function loadResourcesQuiet(){
+    return fetchTab("Resources").then(function(rows){ RES.rows=rows||[]; RES.loaded=true; })
+      ["catch"](function(){});
+  }
   function renderGlobal(q){
     var box=$("sresults");
     q=(q||"").trim(); var ql=q.toLowerCase();
@@ -8739,6 +8769,10 @@
 
     var hosp=(HOSP.rows||[]).filter(function(r){
       return (r_(r,"Hospital Name")+" "+r_(r,"Specialties (summary)")).toLowerCase().indexOf(ql)>-1;
+    }).slice(0,6);
+    var res=(ANN.resList||RES.rows||[]).filter(function(r){
+      if(!admBoolOn(r_(r,"Active"),"Active")) return false;
+      return (r_(r,"Title")+" "+r_(r,"Description")).toLowerCase().indexOf(ql)>-1;
     }).slice(0,6);
     var pro=[];
     if(PROTO.loaded){
@@ -8828,6 +8862,7 @@
         }
       });
     });
+    var ICO_RES='<svg viewBox="0 0 24 24"><path d="M5 3h9l5 5v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 12h8M8 16h5"/></svg>';
     var ICO_APT='<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2"/></svg>';
     var ICO_PIN2='<svg viewBox="0 0 24 24"><path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7z"/><circle cx="12" cy="9" r="2.4" fill="#fff" stroke="none"/></svg>';
     if(aptmk.length){
@@ -8837,6 +8872,15 @@
           '<div class="sic">'+ICO_PIN2+'</div><div class="st"><b>'+esc(m.label)+'</b>'+
           '<span>'+esc(m.complex)+(m.addr?' \u00b7 '+esc(m.addr):'')+'</span></div>'+
           (aptCode(m.code)?'<span class="sr-code">#'+esc(aptCode(m.code))+'</span>':'')+'</div>';
+      });
+    }
+    if(res.length){
+      html+='<div class="sr-h">Resources</div>';
+      res.forEach(function(r){
+        var ref=r_(r,"File");
+        html+='<div class="sr-item" data-t="res" data-ref="'+esc(ref)+'" data-title="'+esc(r_(r,"Title"))+'">'+
+          '<div class="sic">'+ICO_RES+'</div><div class="st"><b>'+esc(r_(r,"Title"))+'</b>'+
+          '<span>'+esc(r_(r,"Description")||(ref?docFileName(ref):"Resources"))+'</span></div></div>';
       });
     }
     if(apts.length){
@@ -8907,6 +8951,19 @@
     hideGlobal();
     if(t==="person"){ openDirToPerson(it.getAttribute("data-q")||""); $("search").value=""; return; }
     if(t==="aptm"){ openAptByKey(it.getAttribute("data-slug"), it.getAttribute("data-label")); return; }
+    if(t==="res"){
+      var rf=it.getAttribute("data-ref")||"", rt=it.getAttribute("data-title")||"";
+      if(!rf){ openResources(); return; }          // a note has nothing to open
+      if(docIsImage(rf)){
+        sbSignedUrl(rf).then(function(u){ openPhoto(u,rt); })["catch"](function(){ toast("Couldn\u2019t open that."); });
+        return;
+      }
+      if(docExt(docFileName(rf))==="pdf"){
+        sbSignedUrl(rf).then(function(u){ openPdfView(u,rt,rf); })["catch"](function(){ toast("Couldn\u2019t open that."); });
+        return;
+      }
+      openResources(); return;
+    }
     if(t==="apt"){ openAptByKey(it.getAttribute("data-slug")); return; }
     if(t==="h"){
       var q=it.getAttribute("data-q");
@@ -9583,6 +9640,7 @@
   $("protoSearch").addEventListener("input",function(){
     var v=this.value;
     var go=function(){ renderProtoDropdown(v); };
+    if(!RES.loaded){ jobs.push(loadResourcesQuiet()); }
     if(!PROTO.loaded){ loadProtocols().then(function(d){ initProto(d); go(); }).catch(function(){}); }
     else go();
   });
