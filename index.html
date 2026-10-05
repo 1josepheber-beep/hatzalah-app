@@ -594,6 +594,13 @@
     border-left:4px solid var(--line)}
   .cert-row.expired{border-left-color:var(--red);background:rgba(200,32,46,.05)}
   .cert-row.soon{border-left-color:var(--gold);background:rgba(201,147,58,.07)}
+  /* arrived here from a notice: pulse the rows it named, then settle */
+  .cert-row.cert-focus{animation:certfocus 1s ease-in-out 3}
+  .cert-row.soon.cert-focus{animation-name:certfocus-soon}
+  .cert-row.expired.cert-focus{animation-name:certfocus-exp}
+  @keyframes certfocus{50%{background:rgba(26,47,87,.14)}}
+  @keyframes certfocus-soon{50%{background:rgba(201,147,58,.38)}}
+  @keyframes certfocus-exp{50%{background:rgba(200,32,46,.26)}}
   .cert-row.ok{border-left-color:#2f9e44}
   .cert-row.na,.cert-row.none{border-left-color:#c3ccda}
   .cert-main{flex:1;min-width:0}
@@ -1450,7 +1457,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 20.2</div>
+  <div class="ver-line">Version 20.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1569,7 +1576,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.2</div>
+  <div class="ver-line">Version 20.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -6126,15 +6133,15 @@
       if(i.expiredBlocking.length){
         out.push({pri:1, cls:"bad", ic:"blocked", title:"You are not cleared to respond",
           sub:names(i.expiredBlocking)+(i.expiredBlocking.length===1?" has expired.":" have expired.")+" Renew and update it in the app.",
-          go:function(){ openCerts(); }});
+          go:function(){ openCerts(i.expiredBlocking); }});
       } else if(i.expiredOther.length){
         out.push({pri:4, cls:"warn", ic:"clock", title:"Something needs renewing",
           sub:names(i.expiredOther)+(i.expiredOther.length===1?" has expired.":" have expired.")+" You can still respond to patients.",
-          go:function(){ openCerts(); }});
+          go:function(){ openCerts(i.expiredOther); }});
       } else if(i.soon.length){
         out.push({pri:4, cls:"soft", ic:"clock", title:"Expiring soon",
           sub:names(i.soon)+(i.soon.length===1?" expires":" expire")+" in the next 30 days.",
-          go:function(){ openCerts(); }});
+          go:function(){ openCerts(i.soon); }});
       }
     }
     (ANN.rows||[]).forEach(function(a){
@@ -7030,19 +7037,52 @@
     });
   });
 
-  function openCerts(){
+  /* focusNames: the certifications a home-screen notice was about. Arriving
+     from a notice should land on the thing it named, not on a list of 48
+     collapsed members with the reader left to go looking. */
+  function openCerts(focusNames){
+    CERT.focus=(focusNames&&focusNames.length)?focusNames.slice():null;
     if(!$("certScreen").classList.contains("open")) navOpen(closeCerts);
     $("certScreen").classList.add("open");
     $("certSearchWrap").style.display=isAdmin()?"":"none";
+    /* a leftover search could hide the very card we are about to open */
+    if(CERT.focus && $("certSearch")) $("certSearch").value="";
     if(!CERT.loaded){
       $("certBody").innerHTML='<div class="empty">Loading\u2026</div>';
       fetchTab("Certifications").then(function(rows){
         if(!rows||!rows.length){ $("certBody").innerHTML='<div class="empty">No certifications tab found yet. Add a <b>Certifications</b> tab to your sheet.</div>'; return; }
-        CERT.rows=rows; CERT.certCols=computeCertCols(rows[0]); CERT.loaded=true; renderCerts("");
+        CERT.rows=rows; CERT.certCols=computeCertCols(rows[0]); CERT.loaded=true; renderCerts(""); certApplyFocus();
       }).catch(function(){ $("certBody").innerHTML='<div class="empty">Couldn\'t load. Check your internet and open this again.</div>'; });
       return;
     }
     renderCerts($("certSearch").value||"");
+    certApplyFocus();
+  }
+  /* Open the reader's own card (admin view), light up the named rows, and
+     scroll the first one into the middle of the screen. One-shot: a normal
+     open from the tile is untouched. */
+  function certApplyFocus(){
+    var want=CERT.focus; CERT.focus=null;
+    if(!want || !want.length) return;
+    var body=$("certBody"); if(!body) return;
+    var scope=body;
+    if(isAdmin()){
+      var key=normUnit(STATE.me&&STATE.me.unit);
+      var mem=null, cards=body.querySelectorAll(".cert-mem");
+      for(var i=0;i<cards.length;i++){ if(cards[i].getAttribute("data-k")===key){ mem=cards[i]; break; } }
+      if(mem){ mem.classList.remove("collapsed"); CERT.collapsed[key]=false; scope=mem; }
+    }
+    var low=want.map(function(n){ return String(n).toLowerCase(); });
+    var rows=scope.querySelectorAll(".cert-row[data-name]"), first=null;
+    for(var j=0;j<rows.length;j++){
+      var nm=String(rows[j].getAttribute("data-name")||"").toLowerCase();
+      if(low.indexOf(nm)<0) continue;
+      rows[j].classList.add("cert-focus");
+      if(!first) first=rows[j];
+    }
+    if(first){
+      setTimeout(function(){ try{ first.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ first.scrollIntoView(); } },60);
+    }
   }
   function certRowHTML(row,c,editable){
     var exp=certExpVal(row,c), num=(c.numKey?String(row[c.numKey]||"").trim():"");
@@ -7051,7 +7091,7 @@
     var edit = (editable && (c.expKey||c.singleKey)) ? '<button class="cert-edit" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey)+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Edit date</button>' : '';
     var up = editable ? ('<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey||"")+
       '" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Upload</button>') : '';
-    return '<div class="cert-row '+st.k+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
+    return '<div class="cert-row '+st.k+'" data-name="'+esc(c.name)+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
       '<div class="cert-st">'+esc(st.label)+'</div></div><div class="cert-btns">'+cal+edit+up+'</div></div>';
   }
@@ -7702,7 +7742,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7744,7 +7784,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8500,7 +8540,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.2".replace("Version ","");
+  var APP_VERSION="Version 20.3".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
