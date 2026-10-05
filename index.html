@@ -1447,7 +1447,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 20.0</div>
+  <div class="ver-line">Version 20.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1566,7 +1566,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.0</div>
+  <div class="ver-line">Version 20.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2732,6 +2732,60 @@
       if(downloadAs) u+=(u.indexOf("?")>-1?"&":"?")+"download="+encodeURIComponent(downloadAs);
       return u;
     });
+  }
+  /* ---- Resource documents, kept for offline ----
+     SOPs and rules sit in a private bucket behind signed links, and a signed
+     link is a different address every time, so the service worker rightly
+     refuses to save them. Instead the page fetches the bytes itself and files
+     them under one fixed, made-up address per document, in the same long-lived
+     cache the service worker uses. Online, a tap still fetches a fresh copy
+     (and refreshes the saved one); with no signal, the saved copy is used. */
+  var OFF_CACHE="hoh-data";               /* must match DATA in sw.js */
+  function docKey(ref){
+    var path=String(ref||"").replace(/^doc:/,"");
+    return location.origin+"/__doc/"+encodeURIComponent(path);
+  }
+  function docCached(ref){
+    if(!("caches" in window)) return Promise.resolve(null);
+    return caches.open(OFF_CACHE).then(function(c){ return c.match(docKey(ref)); })
+      ["catch"](function(){ return null; });
+  }
+  /* Fetch through a fresh signed link and file the bytes. Resolves true when a
+     copy is now on the phone. */
+  function docSave(ref){
+    if(!("caches" in window)) return Promise.resolve(false);
+    return sbSignedUrl(ref).then(function(u){ return fetch(u); }).then(function(r){
+      if(!r || !r.ok) return false;
+      return caches.open(OFF_CACHE).then(function(c){ return c.put(docKey(ref), r); })
+        .then(function(){ return true; });
+    })["catch"](function(){ return false; });
+  }
+  /* Open a resource the right way for the moment: with a signal, through a
+     fresh signed link as always (filing a copy on the side); without one,
+     from the copy the automatic save left on the phone. */
+  function openDocRef(ref,title){
+    var isPdf=(docExt(docFileName(ref))==="pdf"), isImg=docIsImage(ref);
+    if(!isPdf && !isImg) return false;    /* caller hands anything else to the browser */
+    function fromCache(hit){
+      if(isPdf) return hit.arrayBuffer().then(function(buf){ openPdfView({data:buf},title,ref); });
+      return hit.blob().then(function(b){ openPhoto(URL.createObjectURL(b),title); });
+    }
+    function fromNet(){
+      return sbSignedUrl(ref).then(function(u){
+        if(isPdf) openPdfView(u,title,ref); else openPhoto(u,title);
+        docSave(ref);                      /* quietly keep this one current */
+      });
+    }
+    toast("Opening…");
+    var p = navigator.onLine
+      ? fromNet()["catch"](function(){ return docCached(ref).then(function(h){ if(!h) throw "offline-miss"; return fromCache(h); }); })
+      : docCached(ref).then(function(h){ if(!h) throw "offline-miss"; return fromCache(h); });
+    p["catch"](function(err){
+      toast(navigator.onLine ? "Couldn’t open that document."
+                             : "No signal, and this document hasn’t been saved on this phone yet.");
+      try{ console.error("resource open:",err); }catch(e){}
+    });
+    return true;
   }
   function docFileName(ref){
     var p=String(ref||"").replace(/^doc:/,"").split("/").pop()||"";
@@ -6825,16 +6879,20 @@
       if(PDFV.url) window.open(PDFV.url,"_blank","noopener");
     });
   }
-  function openPdfView(url,title,ref){
-    PDFV.url=url; PDFV.name=title||"Document"; PDFV.ref=ref||""; PDFV.zoom=1;
+  /* src is a url, or {data:ArrayBuffer} when the bytes came off the phone's
+     own saved copy with no signal. */
+  function openPdfView(src,title,ref){
+    var isBytes=!!(src && typeof src==="object" && src.data);
+    PDFV.url=isBytes?"":src; PDFV.name=title||"Document"; PDFV.ref=ref||""; PDFV.zoom=1;
     if(!$("pdfScreen").classList.contains("open")) navOpen(closePdfView);
     $("pdfScreen").classList.add("open");
     $("pdfTitle").textContent=PDFV.name;
     $("pdfPg").textContent="";
     $("pdfBody").innerHTML='<div class="pdf-msg">Loading document\u2026</div>';
     loadPdfLib().then(function(lib){
-      return lib.getDocument({url:url, standardFontDataUrl:PDFJS_FONTS,
-        cMapUrl:PDFJS_CMAPS, cMapPacked:true}).promise;
+      var opts={standardFontDataUrl:PDFJS_FONTS, cMapUrl:PDFJS_CMAPS, cMapPacked:true};
+      if(isBytes) opts.data=src.data; else opts.url=src;
+      return lib.getDocument(opts).promise;
     }).then(function(doc){
       PDFV.doc=doc; renderPdf();
     })["catch"](function(err){
@@ -6954,23 +7012,10 @@
     var row=e.target.closest?e.target.closest(".res-row"):null; if(!row) return;
     var ref=row.getAttribute("data-ref"), title=row.getAttribute("data-t")||"";
     if(!ref) return;   // a note-only entry has nothing to open
-    var isImg=docIsImage(ref);
-    var isPdf=(docExt(docFileName(ref))==="pdf");
-    toast("Opening\u2026");
-    if(isPdf){
-      sbSignedUrl(ref).then(function(u){ openPdfView(u,title,ref); })
-        ["catch"](function(err){ toast("Couldn\u2019t open that document.");
-          try{ console.error("resource open:",err); }catch(e){} });
-      return;
-    }
-    if(isImg){
-      sbSignedUrl(ref).then(function(u){ openPhoto(u,title); })
-        ["catch"](function(err){ toast("Couldn\u2019t open that document.");
-          try{ console.error("resource open:",err); }catch(e){} });
-      return;
-    }
+    if(openDocRef(ref,title)) return;     /* PDFs and photos, online or off */
     // Word and anything else: hand off to the browser. The tab is opened up
     // front because iOS blocks popups created inside an async callback.
+    toast("Opening\u2026");
     var win=window.open("","_blank");
     sbSignedUrl(ref).then(function(u){
       if(win && !win.closed){ win.location.href=u; }
@@ -7654,7 +7699,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7696,7 +7741,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7759,15 +7804,23 @@
          "?select=*&order=sort_order.asc".
      So the tables go through fetchTab, the same call the screens use, and the
      handful of raw urls are written out character for character. */
+  var OFF_LAST_KEY="hoh_off_last";
   var OFF_TABS=["Tiles","Roster","Settings","apartments","Apartment Markers",
                 "Hospitals","Resources","Vitals","Uploads","CPR Buttons",
                 "Task List","Task Progress","Certifications"];
   var OFF_RAW=["/rest/v1/cabinets?select=*&order=sort_order.asc",
                "/rest/v1/cabinet_bins?select=*&order=sort_order.asc",
                "/rest/v1/equipment_items?select=*&order=sort_order.asc",
-               "/rest/v1/equipment_meta?select=*"];
+               "/rest/v1/equipment_meta?select=*",
+               "/rest/v1/announcements?select=*&order=order_col.asc",
+               "/rest/v1/announcement_reads?select=*",
+               "/rest/v1/poll_tallies?select=*"];
+  /* Our own files that are loaded on demand rather than at start-up. The
+     protocol index is requested with "?v=1" on the end, so that is what gets
+     saved -- the plain name is a different address to the cache. */
+  var OFF_FILES=["proto_index.js?v=1","erg_index.js","offline-check.html"];
   function offCollect(){
-    var urls=[];
+    var urls=[], docs=[];
     function push(u){ if(u && urls.indexOf(u)<0) urls.push(u); }
     function img(v){ var u=sbImgUrl(v); if(u) push(u); }
     function raw(path){
@@ -7781,10 +7834,22 @@
     var rawd=Promise.all(OFF_RAW.map(raw));
     return Promise.all([tables,rawd]).then(function(got){
       var t=got[0], rw=got[1];
-      var tiles=t[0]||[], roster=t[1]||[], apts=t[3]||[];
+      /* positions follow OFF_TABS above -- look them up by name so a reorder
+         can't silently point at the wrong table */
+      function byName(n){ return t[OFF_TABS.indexOf(n)]||[]; }
+      var tiles=byName("Tiles"), roster=byName("Roster"), settings=byName("Settings"),
+          apts=byName("apartments"), res=byName("Resources");
       var cabs=rw[0]||[], items=rw[2]||[];
+      OFF_FILES.forEach(push);
+      /* the document viewer itself, or a saved PDF is just bytes with nothing
+         to show them */
+      push(PDFJS_SRC); push(PDFJS_WORKER);
       tiles.forEach(function(x){ img(r_(x,"Image")); });
       roster.forEach(function(m){ img(r_(m,"Photo")); });
+      settings.forEach(function(s){
+        var k=r_(s,"Setting");
+        if(k==="Rule Of 9 Image" || k==="Logo URL") img(r_(s,"Value"));
+      });
       apts.forEach(function(a){
         var f=r_(a,"File");
         if(!f) return;
@@ -7797,82 +7862,144 @@
       });
       cabs.forEach(function(c){ img(c.img); });
       items.forEach(function(i){ img(i.image); });
-      // protocol pages live in the repo alongside the app
+      /* resource documents go through their own path (see docSave) */
+      res.forEach(function(r){
+        if(!admBoolOn(r_(r,"Active"),"Active")) return;
+        var ref=r_(r,"File");
+        if(ref && (docIsImage(ref) || docExt(docFileName(ref))==="pdf")) docs.push(ref);
+      });
+      /* both page books live in the repo alongside the app */
       return loadProtocols().then(function(d){
         var n=(d&&d.pages&&d.pages.length)||0;
         for(var i=1;i<=n;i++) push("protocols/p"+("00"+i).slice(-3)+".webp");
-        return urls;
-      })["catch"](function(){ return urls; });
+      })["catch"](function(){}).then(function(){
+        return loadErg().then(function(d){ return (d&&d.pages)||392; })["catch"](function(){ return 392; });
+      }).then(function(n){
+        for(var i=1;i<=n;i++) push("erg/p"+("00"+i).slice(-3)+".webp");
+        return {urls:urls, docs:docs};
+      });
     });
   }
   function renderOfflineRow(msg, pct, disabled){
     var w=$("profOffWrap"); if(!w) return;
+    var last=null; try{ last=JSON.parse(localStorage.getItem(OFF_LAST_KEY)||"null"); }catch(e){}
+    var lastTxt="";
+    if(last && last.t){
+      var d=new Date(last.t), today=new Date();
+      var when=(d.toDateString()===today.toDateString()?"today":d.toLocaleDateString())+" "+
+               d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+      lastTxt="Last saved automatically "+when+" — "+last.all+" items on this phone"+
+              (last.failed?(", "+last.failed+" still missing"):"")+".";
+    }
     w.innerHTML=
       '<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>Use without a signal</div>'+
-      '<div class="prof-hint">Your phone only keeps screens you have already opened. Tap this once on '+
-      'Wi\u2011Fi and everything \u2014 apartment maps, cabinet photos, the directory and protocols \u2014 '+
-      'is saved for when you have no signal.</div>'+
+      '<div class="prof-hint">Every time you open the app with a signal, everything — apartment maps, '+
+      'protocols, the ERG, resources, cabinet photos and the directory — is saved on this phone '+
+      'automatically. You can run it now to make sure.</div>'+
+      (lastTxt?'<div class="prof-note">'+esc(lastTxt)+'</div>':'')+
       (pct!=null?'<div class="off-bar"><i style="width:'+pct+'%"></i></div>':'')+
       '<button class="ebtn" id="offDlBtn"'+(disabled?" disabled":"")+'>'+
-        (OFFDL.running?"Saving\u2026":"Save everything for offline")+'</button>'+
+        (OFFDL.running?"Saving…":"Save everything for offline now")+'</button>'+
       '<div class="prof-note" id="offNote">'+(msg?esc(msg):"")+'</div>';
     var b=$("offDlBtn");
     if(b && !disabled) b.addEventListener("click",offDownload);
   }
-  function offDownload(){
-    if(OFFDL.running) return;
-    if(!navigator.onLine){ renderOfflineRow("You need a signal to do this."); return; }
-    OFFDL.running=true;
-    renderOfflineRow("Working out what to save\u2026", 0, true);
-    Promise.all([offCollect(), offCachedSet()]).then(function(r){
-      var all=r[0]||[], have=r[1]||{};
+  /* The one routine both the button and the automatic save use. Works out
+     what is missing, fetches it, and resolves with the tally. Nothing here
+     touches the screen; the callers decide what to show. */
+  function offRun(onProgress, conc){
+    conc=conc||2;
+    function say(msg,pct){ if(onProgress) try{ onProgress(msg,pct); }catch(e){} }
+    say("Working out what to save…", 0);
+    return Promise.all([offCollect(), offCachedSet()]).then(function(r){
+      var all=(r[0]&&r[0].urls)||[], docs=(r[0]&&r[0].docs)||[], have=r[1]||{};
       var todo=all.filter(function(u){
         var abs=u; try{ abs=new URL(u, location.href).href; }catch(e){}
         return !have[abs];
       });
-      if(!todo.length){
-        OFFDL.running=false;
-        renderOfflineRow("Already saved \u2014 nothing new to fetch. ("+all.length+" items)");
-        return;
-      }
-      var done=0, failed=0, i=0, CONC=4;
+      docs.forEach(function(ref){ if(!have[docKey(ref)]) todo.push({doc:ref}); });
+      var total=all.length+docs.length;
+      if(!todo.length) return {all:total, todo:0, done:0, failed:0};
+      var done=0, failed=0, i=0;
       /* A no-cors fetch RESOLVES on a 404 -- it just hands back an opaque
          response -- so the old loop counted every missing file as saved and
          reported "all set" over maps it had never fetched. Our own files can be
-         checked properly, so they are; only the cross-origin photos have to
-         stay no-cors, and those the service worker verifies for us. */
+         checked properly, so they are, and so can the viewer scripts, whose
+         host allows it. Only the photos have to stay no-cors, and those the
+         service worker verifies for us. */
+      /* One stalled request on a dying connection must not pin the whole
+         save open; give each file half a minute, then count it as missing
+         and move on. It is retried on the next open. */
+      function timed(p){
+        return new Promise(function(res){
+          var t=setTimeout(function(){ res(false); },30000);
+          p.then(function(v){ clearTimeout(t); res(v); }, function(){ clearTimeout(t); res(false); });
+        });
+      }
       function grab(u){
+        if(u && u.doc) return timed(docSave(u.doc));
         var ours = u.indexOf("http")!==0 || u.indexOf(location.origin)===0;
-        if(ours){
-          return fetch(u,{cache:"no-store"}).then(function(r){ return !!(r && r.ok); },
-                                                  function(){ return false; });
+        var checkable = ours || u.indexOf(PDFJS_BASE)===0;
+        if(checkable){
+          return timed(fetch(u,{cache:"no-store"}).then(function(r){ return !!(r && r.ok); }));
         }
-        return fetch(u,{mode:"no-cors"}).then(function(){ return true; },
-                                              function(){ return false; });
+        return timed(fetch(u,{mode:"no-cors"}).then(function(){ return true; }));
       }
       function next(){
         if(i>=todo.length) return Promise.resolve();
         var u=todo[i++];
         return grab(u).then(function(ok){ if(ok) done++; else failed++; })
           .then(function(){
-            renderOfflineRow("Saved "+done+" of "+todo.length+"\u2026",
-                             Math.round(((done+failed)/todo.length)*100), true);
+            say("Saved "+done+" of "+todo.length+"…", Math.round(((done+failed)/todo.length)*100));
             return next();
           });
       }
-      var lanes=[]; for(var k=0;k<CONC;k++) lanes.push(next());
-      return Promise.all(lanes).then(function(){
-        OFFDL.running=false;
-        renderOfflineRow(failed
-          ? ("Saved "+done+" items. "+failed+" couldn\u2019t be fetched \u2014 try again on a stronger connection.")
-          : ("All set \u2014 "+done+" items saved. The app will work without a signal."), 100);
-      });
-    })["catch"](function(){
-      OFFDL.running=false;
-      renderOfflineRow("Couldn\u2019t save right now. Try again on Wi\u2011Fi.");
+      var lanes=[]; for(var k=0;k<conc;k++) lanes.push(next());
+      return Promise.all(lanes).then(function(){ return {all:total, todo:todo.length, done:done, failed:failed}; });
+    }).then(function(t){
+      try{ localStorage.setItem(OFF_LAST_KEY, JSON.stringify({t:Date.now(), all:t.all, done:t.done, failed:t.failed})); }catch(e){}
+      return t;
     });
   }
-
+  /* The button on the profile screen: same job, with a progress bar. */
+  function offDownload(){
+    if(OFFDL.running){ renderOfflineRow("Already saving in the background…", null, true); return; }
+    if(!navigator.onLine){ renderOfflineRow("You need a signal to do this."); return; }
+    OFFDL.running=true;
+    renderOfflineRow("Working out what to save…", 0, true);
+    offRun(function(msg,pct){ renderOfflineRow(msg, pct, true); }, 4).then(function(t){
+      OFFDL.running=false;
+      if(!t.todo){ renderOfflineRow("Already saved — nothing new to fetch. ("+t.all+" items)"); return; }
+      renderOfflineRow(t.failed
+        ? ("Saved "+t.done+" items. "+t.failed+" couldn’t be fetched — try again on a stronger connection.")
+        : ("All set — "+t.done+" items saved. The app will work without a signal."), 100);
+    })["catch"](function(){
+      OFFDL.running=false;
+      renderOfflineRow("Couldn’t save right now. Try again on Wi‑Fi.");
+    });
+  }
+  /* The automatic save. Runs on every open with a signal, says nothing, and
+     only fetches what the phone doesn't have yet, so after the first time it
+     is a quick "anything new?" pass. Nobody has to remember a button, and
+     nobody finds out at the kerb that they never pressed it. */
+  var OFF_AUTO_GAP=30*60*1000;   /* a foregrounded app re-checks at most this often */
+  var offAutoLast=0;
+  function offAuto(force){
+    try{
+      if(OFFDL.running) return;
+      if((STATE&&STATE.demo) || !(STATE.me&&STATE.me.unit)) return;
+      if(!navigator.onLine) return;
+      if(!force && Date.now()-offAutoLast < OFF_AUTO_GAP) return;
+      offAutoLast=Date.now();
+      OFFDL.running=true;
+      offRun(null, 2).then(function(t){
+        OFFDL.running=false;
+        try{ console.log("offline save:", t.done, "fetched,", t.failed, "failed,", t.all, "items total"); }catch(e){}
+        /* if the profile screen happens to be open, let its note catch up */
+        if($("profOffWrap") && $("profOffWrap").innerHTML) renderOfflineRow();
+      })["catch"](function(){ OFFDL.running=false; });
+    }catch(e){ OFFDL.running=false; }
+  }
   // Collapsible group. Everything past the personal details is folded away by
   // default so the screen opens short instead of needing a long scroll.
   function pfold(title, icon, inner){
@@ -8334,14 +8461,19 @@
     var hadCache=bootFromCache();
     boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
     setTimeout(function(){ pingSeen(true); },1200);
+    /* Save everything for offline, quietly, once the home screen has had a
+       few seconds to itself. Every open with a signal, no button required. */
+    setTimeout(function(){ try{ offAuto(true); }catch(e){} },6000);
     try{ navRestore(); }catch(e){}}
 
   // Reopening an installed app doesn't reload the page, so this is the only
   // moment we can tell someone came back to it.
   document.addEventListener("visibilitychange",function(){
-    if(document.visibilityState==="visible") pingSeen();
+    if(document.visibilityState==="visible"){ pingSeen(); try{ offAuto(); }catch(e){} }
   });
   window.addEventListener("focus",function(){ pingSeen(); });
+  /* A signal coming back is the best moment to top up the offline copy. */
+  window.addEventListener("online",function(){ setTimeout(function(){ try{ offAuto(); }catch(e){} },3000); });
 
   // The service worker serves the saved copy instantly, then checks for a new
   // build behind the scenes. When there is one, offer the reload rather than
@@ -8365,7 +8497,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.0".replace("Version ","");
+  var APP_VERSION="Version 20.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -8996,14 +9128,7 @@
     if(t==="res"){
       var rf=it.getAttribute("data-ref")||"", rt=it.getAttribute("data-title")||"";
       if(!rf){ openResources(); return; }          // a note has nothing to open
-      if(docIsImage(rf)){
-        sbSignedUrl(rf).then(function(u){ openPhoto(u,rt); })["catch"](function(){ toast("Couldn\u2019t open that."); });
-        return;
-      }
-      if(docExt(docFileName(rf))==="pdf"){
-        sbSignedUrl(rf).then(function(u){ openPdfView(u,rt,rf); })["catch"](function(){ toast("Couldn\u2019t open that."); });
-        return;
-      }
+      if(openDocRef(rf,rt)) return;                // PDFs and photos, online or off
       openResources(); return;
     }
     if(t==="apt"){ openAptByKey(it.getAttribute("data-slug")); return; }

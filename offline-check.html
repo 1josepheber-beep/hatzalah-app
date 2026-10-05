@@ -69,18 +69,22 @@
     if(u.indexOf("/storage/v1/object/public/") > -1) return "images";
     if(u.indexOf("/rest/v1/") > -1) return "data";
     if(u.indexOf("/apartments/") > -1) return "maps";
-    if(/\/(protocols|erg|cabinets)\//.test(u)) return "pages";
+    if(u.indexOf("/__doc/") > -1) return "docs";
+    if(u.indexOf("/erg/") > -1) return "erg";
+    if(/\/(protocols|cabinets)\//.test(u)) return "pages";
+    if(u.indexOf("pdfjs-dist") > -1) return "viewer";
     return "app";
   }
   var LABEL = {data:"Database records", images:"Photos and icons",
-               maps:"Apartment maps", pages:"Protocol / ERG pages",
-               app:"App files"};
+               maps:"Apartment maps", docs:"Resources (SOPs, rules)",
+               pages:"Protocol pages", erg:"ERG pages",
+               viewer:"PDF viewer", app:"App files"};
 
   function run(){
     out.innerHTML = '<div class="card">Checking&hellip;</div>';
     steps = [];
     var info = { sw:false, ctrl:false, names:[], usage:null,
-                 buckets:{images:[],data:[],maps:[],pages:[],app:[]}, total:0 };
+                 buckets:{images:[],data:[],maps:[],docs:[],pages:[],erg:[],viewer:[],app:[]}, total:0 };
 
     if(!("caches" in window)){
       fail("start", "This browser has no offline storage. If the address starts with http:// try https:// instead.");
@@ -138,7 +142,7 @@
     var v, cls;
     if(!info.sw){ v = "No service worker installed \u2014 nothing can work offline yet."; cls="bad"; }
     else if(!info.ctrl){ v = "Installed, but not in control of this page yet. Close every tab and the app, then reopen."; cls="warn"; }
-    else if(info.total < 20){ v = "Only " + info.total + " items saved. Browse the app with a signal first."; cls="warn"; }
+    else if(info.total < 20){ v = "Only " + info.total + " items saved. Open the app with a signal and give it a minute."; cls="warn"; }
     else { v = "Looks healthy \u2014 " + info.total + " items saved."; cls="good"; }
     add('<div class="verdict '+cls+'">'+esc(v)+'</div>');
 
@@ -173,7 +177,7 @@
                : "This phone cannot use the apartment finder with no signal. Open the app on Wi‑Fi, go to Profile and tap “Save everything for offline”, then check again.")+
       '</p></div>');
 
-    ["data","images","maps","pages","app"].forEach(function(k){
+    ["data","images","maps","docs","pages","erg","viewer","app"].forEach(function(k){
       var list = info.buckets[k];
       var c = '<div class="card"><h2>'+LABEL[k]+'</h2>'+
         '<div class="row"><b>Saved</b><span class="n '+(list.length?"ok":"bad")+'">'+list.length+'</span></div>';

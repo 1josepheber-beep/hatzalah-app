@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "20.0";
+var VERSION = "20.1";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -21,7 +21,10 @@ var DATA    = "hoh-data";          /* deliberately has no version in the name */
    catch below swallowed the error without a word. The shell was never really
    saved on install -- the app only limped along on whatever the fetch handler
    happened to keep afterwards. */
-var SHELL_FILES = ["./","./index.html","./proto_index.js","./manifest.webmanifest",
+/* The app asks for the protocol index as "proto_index.js?v=1". To the cache
+   that is a different address from "proto_index.js", so the plain name was
+   being saved and the real request was missing it. */
+var SHELL_FILES = ["./","./index.html","./proto_index.js?v=1","./manifest.webmanifest",
                    "./icon-192.png","./icon-512.png","./logo.png"];
 
 /* A dead-slow connection is worse than no connection: fetch() will sit there
@@ -218,6 +221,27 @@ self.addEventListener("fetch",function(e){
             return res || caches.match("./index.html", {ignoreVary:true});
           });
         });
+      })
+    );
+    return;
+  }
+
+  /* The PDF viewer's own scripts come from a CDN. Without them a saved SOP is
+     just bytes with nothing to display them, so these two files (and the
+     fonts the viewer fetches on demand) are kept, cache-first, pinned to one
+     version so an upgrade is a new address rather than a stale script. This
+     is the ONLY cross-origin host touched; see the note below for why. */
+  if(url.hostname === "cdn.jsdelivr.net" && url.pathname.indexOf("/npm/pdfjs-dist@") === 0){
+    e.respondWith(
+      caches.match(req.url, {ignoreVary:true}).then(function(hit){
+        if(hit) return hit;
+        return fetch(req).then(function(res){
+          if(res && (res.ok || res.type === "opaque")){
+            var copy = res.clone();
+            caches.open(DATA).then(function(c){ c.put(req.url, copy); });
+          }
+          return res;
+        }).catch(function(){ return hit; });
       })
     );
     return;
