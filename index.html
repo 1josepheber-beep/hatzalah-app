@@ -179,9 +179,12 @@
   .cert-banner.ann .cb-i{background:var(--navy)}
   .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
   .cert-banner.poll .cb-i{background:#5b3aa8}
-  .upd-bar{display:flex;align-items:center;gap:10px;margin:0 12px 12px;padding:11px 13px;
+  .upd-bar{display:flex;align-items:center;gap:10px;margin:8px 12px 0;padding:11px 13px;
     border-radius:12px;background:var(--navy);color:#fff;box-shadow:var(--shadow)}
   .upd-bar.hidden{display:none}
+  /* A notice above it gets the same 12px breathing room notices give each
+     other; the grid's own padding supplies the gap below. */
+  #certBanner:not(.hidden) ~ .upd-bar, #noticeStack:not(:empty) ~ .upd-bar{margin-top:12px}
   .upd-bar span{flex:1;min-width:0;font-size:13px;font-weight:700}
   .upd-bar button{flex:0 0 auto;border:0;border-radius:9px;background:#fff;color:var(--navy);
     font-weight:800;font-size:12.5px;padding:8px 14px;cursor:pointer;font-family:inherit}
@@ -1447,7 +1450,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 20.1</div>
+  <div class="ver-line">Version 20.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1566,7 +1569,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.1</div>
+  <div class="ver-line">Version 20.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -7699,7 +7702,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7741,7 +7744,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8481,7 +8484,7 @@
   try{
     if(navigator.serviceWorker){
       navigator.serviceWorker.addEventListener("message",function(e){
-        if(e.data && e.data.type==="UPDATE_READY") onUpdateReady();
+        if(e.data && e.data.type==="UPDATE_READY") onUpdateReady(e.data);
         if(e.data && e.data.type==="SW_VERSION" && e.data.version &&
            String(e.data.version)!==String(APP_VERSION)) onUpdateReady();
       });
@@ -8497,7 +8500,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.1".replace("Version ","");
+  var APP_VERSION="Version 20.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -8510,7 +8513,12 @@
       if(typeof CPR!=="undefined" && CPR && CPR.running) return "CPR timer running";
       var scr=document.querySelector(".screen.open, .preader.open");
       if(scr) return "on "+(scr.id||"another screen");
-      var modal=document.querySelector(".cert-modal:not(.hidden), .nx-modal:not(.hidden), .rsp-modal:not(.hidden), .adm-modal");
+      /* The install-help dialog (#insModal) sits in the page from the start,
+         hidden. Matching ".adm-modal" without ":not(.hidden)" counted it as
+         open on every single visit, so this returned "a dialog is open"
+         every time and the automatic reload never once fired -- every update
+         fell through to the bar. */
+      var modal=document.querySelector(".cert-modal:not(.hidden), .nx-modal:not(.hidden), .rsp-modal:not(.hidden), .adm-modal:not(.hidden)");
       if(modal) return "a dialog is open";
       var ae=document.activeElement;
       if(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return "typing";
@@ -8519,15 +8527,31 @@
     }catch(e){}
     return "";
   }
-  function onUpdateReady(){
+  function onUpdateReady(msg){
+    /* When a new worker takes over it tells every open page, including a page
+       that was already served the new build moments earlier. That showed a
+       "new version is ready" bar on a page that was already current, and
+       reloading it changed nothing. If the message names a version and it is
+       the one on screen, there is nothing to do. */
+    if(msg && msg.version && String(msg.version)===String(APP_VERSION)){
+      try{ console.log("worker",msg.version,"matches this page - nothing to do"); }catch(e){}
+      return;
+    }
     var why=updateBusy();
-    var fresh=(Date.now()-APP_OPENED_AT) < 15000;
+    /* A reload from cache takes well under a second and the app returns to
+       the same screen, so within the first minute of opening it is painless.
+       Fifteen seconds was too tight: a bigger install on a slow connection
+       took longer than that to announce itself and always fell to the bar. */
+    var fresh=(Date.now()-APP_OPENED_AT) < 60000;
     if(!why && fresh){
       try{ console.log("new version ready - reloading"); }catch(e){}
       location.reload();
       return;
     }
     try{ if(why) console.log("new version ready, holding back:",why); }catch(e){}
+    /* Otherwise show the bar, and also reload by itself the next time the app
+       is brought back to the front with nothing in progress. */
+    try{ UPD_READY=true; }catch(e){}
     var b=$("updBar"); if(b) b.classList.remove("hidden");
   }
 
@@ -9878,7 +9902,7 @@
     document.addEventListener("visibilitychange",function(){
       if(document.hidden){ HIDDEN_AT=Date.now(); return; }
       if(SWREG) SWREG.update().catch(function(){});
-      if(UPD_READY && (Date.now()-HIDDEN_AT>2000) && !cprBusy() && !typingNow()){ location.reload(); }
+      if(UPD_READY && (Date.now()-HIDDEN_AT>2000) && !updateBusy()){ location.reload(); }
     });
   }
 })();
