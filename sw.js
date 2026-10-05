@@ -11,12 +11,18 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "19.9";
+var VERSION = "20.0";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
+/* ruleof9.webp used to live here and now comes from Supabase, but it was left
+   on this list long after the file was gone. That mattered more than it looks:
+   addAll() is all or nothing, so one 404 threw away the WHOLE precache and the
+   catch below swallowed the error without a word. The shell was never really
+   saved on install -- the app only limped along on whatever the fetch handler
+   happened to keep afterwards. */
 var SHELL_FILES = ["./","./index.html","./proto_index.js","./manifest.webmanifest",
-                   "./icon-192.png","./icon-512.png","./ruleof9.webp","./logo.png"];
+                   "./icon-192.png","./icon-512.png","./logo.png"];
 
 /* A dead-slow connection is worse than no connection: fetch() will sit there
    for 30 seconds or more instead of failing, so the screen just hangs. Give the
@@ -54,7 +60,15 @@ self.addEventListener("notificationclick",function(e){
 
 self.addEventListener("install",function(e){
   self.skipWaiting();
-  e.waitUntil(caches.open(SHELL).then(function(c){ return c.addAll(SHELL_FILES); }).catch(function(){}));
+  /* One file at a time, each with its own catch, so a single missing or renamed
+     file can never again take the whole shell down with it. */
+  e.waitUntil(caches.open(SHELL).then(function(c){
+    return Promise.all(SHELL_FILES.map(function(f){
+      return c.add(new Request(f,{cache:"reload"})).catch(function(){
+        try{ console.warn("sw: could not precache", f); }catch(e){}
+      });
+    }));
+  }).catch(function(){}));
 });
 
 self.addEventListener("activate",function(e){

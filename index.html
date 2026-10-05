@@ -1447,7 +1447,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 19.9</div>
+  <div class="ver-line">Version 20.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1566,7 +1566,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 19.9</div>
+  <div class="ver-line">Version 20.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -7654,7 +7654,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7696,7 +7696,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 19.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -7746,29 +7746,57 @@
     })["catch"](function(){ return null; });
   }
   // Everything worth having on a call, gathered from what the app already knows.
+  /* Warming a screen only works if we ask for the EXACT url that screen asks
+     for later. The service worker files every saved copy under its full url,
+     query string and all, so "?select=*" and "?select=*&order=sort_order.asc"
+     are two different things to it and warming one does nothing for the other.
+     Three separate misses came from that:
+       - apartment maps were saved as "apartments/<slug>" while the screen asks
+         for "apartments/<slug>.webp", so not one map was ever really saved;
+       - apartment pins, hospitals, resources, vitals, the task list and the
+         cert list were never warmed at all;
+       - the equipment finder was warmed on "?select=*" but reads
+         "?select=*&order=sort_order.asc".
+     So the tables go through fetchTab, the same call the screens use, and the
+     handful of raw urls are written out character for character. */
+  var OFF_TABS=["Tiles","Roster","Settings","apartments","Apartment Markers",
+                "Hospitals","Resources","Vitals","Uploads","CPR Buttons",
+                "Task List","Task Progress","Certifications"];
+  var OFF_RAW=["/rest/v1/cabinets?select=*&order=sort_order.asc",
+               "/rest/v1/cabinet_bins?select=*&order=sort_order.asc",
+               "/rest/v1/equipment_items?select=*&order=sort_order.asc",
+               "/rest/v1/equipment_meta?select=*"];
   function offCollect(){
     var urls=[];
     function push(u){ if(u && urls.indexOf(u)<0) urls.push(u); }
     function img(v){ var u=sbImgUrl(v); if(u) push(u); }
-    function rest(tbl){
-      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*",{headers:sbAuthHeaders()})
+    function raw(path){
+      return fetch(SB_URL+path,{headers:sbAuthHeaders(),cache:"no-store"})
         .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; });
     }
-    return Promise.all([
-      fetchTab("Tiles")["catch"](function(){return [];}),
-      fetchTab("Roster")["catch"](function(){return [];}),
-      fetchTab("apartments")["catch"](function(){return [];}),
-      rest("cabinets"),
-      rest("equipment_items")
-    ]).then(function(res){
-      (res[0]||[]).forEach(function(t){ img(r_(t,"Image")); });
-      (res[1]||[]).forEach(function(m){ img(r_(m,"Photo")); });
-      (res[2]||[]).forEach(function(a){
+    function tab(n){ return fetchTab(n)["catch"](function(){ return []; }); }
+    /* Every table the app reads, pulled once so the service worker holds a copy
+       of each. These are small, so they ride along outside the progress bar. */
+    var tables=Promise.all(OFF_TABS.map(tab));
+    var rawd=Promise.all(OFF_RAW.map(raw));
+    return Promise.all([tables,rawd]).then(function(got){
+      var t=got[0], rw=got[1];
+      var tiles=t[0]||[], roster=t[1]||[], apts=t[3]||[];
+      var cabs=rw[0]||[], items=rw[2]||[];
+      tiles.forEach(function(x){ img(r_(x,"Image")); });
+      roster.forEach(function(m){ img(r_(m,"Photo")); });
+      apts.forEach(function(a){
         var f=r_(a,"File");
-        if(f){ if(/^(sb:|https?:|storage\/)/i.test(f)) img(f); else push("apartments/"+f); }
+        if(!f) return;
+        if(/^(sb:|https?:|storage\/)/i.test(f)){ img(f); return; }
+        /* strip any .webp already on the value, then add it back exactly the
+           way openAptMap() builds the src -- otherwise we save a url nothing
+           ever asks for. */
+        var slug=String(f).trim().replace(/\.webp$/i,"");
+        if(slug) push("apartments/"+encodeURIComponent(slug)+".webp");
       });
-      (res[3]||[]).forEach(function(c){ img(c.img); });
-      (res[4]||[]).forEach(function(i){ img(i.image); });
+      cabs.forEach(function(c){ img(c.img); });
+      items.forEach(function(i){ img(i.image); });
       // protocol pages live in the repo alongside the app
       return loadProtocols().then(function(d){
         var n=(d&&d.pages&&d.pages.length)||0;
@@ -7808,10 +7836,24 @@
         return;
       }
       var done=0, failed=0, i=0, CONC=4;
+      /* A no-cors fetch RESOLVES on a 404 -- it just hands back an opaque
+         response -- so the old loop counted every missing file as saved and
+         reported "all set" over maps it had never fetched. Our own files can be
+         checked properly, so they are; only the cross-origin photos have to
+         stay no-cors, and those the service worker verifies for us. */
+      function grab(u){
+        var ours = u.indexOf("http")!==0 || u.indexOf(location.origin)===0;
+        if(ours){
+          return fetch(u,{cache:"no-store"}).then(function(r){ return !!(r && r.ok); },
+                                                  function(){ return false; });
+        }
+        return fetch(u,{mode:"no-cors"}).then(function(){ return true; },
+                                              function(){ return false; });
+      }
       function next(){
         if(i>=todo.length) return Promise.resolve();
         var u=todo[i++];
-        return fetch(u,{mode:"no-cors"}).then(function(){ done++; },function(){ failed++; })
+        return grab(u).then(function(ok){ if(ok) done++; else failed++; })
           .then(function(){
             renderOfflineRow("Saved "+done+" of "+todo.length+"\u2026",
                              Math.round(((done+failed)/todo.length)*100), true);
@@ -8323,7 +8365,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 19.9".replace("Version ","");
+  var APP_VERSION="Version 20.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
