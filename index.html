@@ -962,6 +962,12 @@
   .cl-s{flex:0 0 auto;color:var(--mut);font-variant-numeric:tabular-nums}
   .cl-more{padding:9px 0;font-size:12px;color:var(--mut);text-align:center}
   .adm-mbtns .pri.danger{background:var(--red)}
+  .au-clean.au-bk{margin-top:4px}
+  .au-cleanmsg.au-bkmsg{margin-top:2px}
+  .au-cleanmsg:empty{display:none}   /* an empty message must not hold a blank row open */
+  .au-cleanmsg a{color:var(--navy);font-weight:700}
+  .au-bklink{display:block;width:100%;margin-top:2px;border:0;background:none;color:var(--mut);
+    font-size:12px;font-weight:600;text-decoration:underline;cursor:pointer;font-family:inherit;padding:4px}
   .au-clean{display:block;width:100%;margin-top:10px;border:1px solid var(--line);background:#fff;
     color:var(--navy);border-radius:10px;padding:10px;font-size:12.5px;font-weight:800;
     cursor:pointer;font-family:inherit}
@@ -1457,7 +1463,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 20.3</div>
+  <div class="ver-line">Version 20.4</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1576,7 +1582,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.3</div>
+  <div class="ver-line">Version 20.4</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3980,9 +3986,11 @@
       .catch(function(){ btn.disabled=false; btn.textContent="Add member"; err.textContent="Couldn\u2019t add \u2014 check your connection."; });
   }
   $("admBack").addEventListener("click",function(){
-    if(!admConfirmLeave()) return;
-    if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
-    navBack();
+    admConfirmLeave().then(function(ok){
+      if(!ok) return;
+      if(document.body.classList.contains("admdetail") && window.innerWidth<=820){ document.body.classList.remove("admdetail"); ADM.sel=null; admRender(); return; }
+      navBack();
+    });
   });
   $("admSearch").addEventListener("input",function(){ ADM.q=this.value; admRender(); });
   $("admChips").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-chip"):null; if(!b) return; ADM.filter=b.getAttribute("data-f"); admRender(); });
@@ -4115,7 +4123,9 @@
     tasklist:[["ID","ID","text"],["Category","Category","text"],["Task","Task","text"],["Type","Type (check or count)","text"],["Target","Target (for count)","text"]]
   };
   function admSecSwitch(k){
-    if(!admConfirmLeave()) return;
+    admConfirmLeave().then(function(ok){ if(ok) admSecSwitchNow(k); });
+  }
+  function admSecSwitchNow(k){
     ADM2.sec=k; ADM2.dirty=false; ADM.sel=null; document.body.classList.remove("admdetail");
     $("admTitle").textContent = (ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label || "Admin";
     admPaintSecs();
@@ -4128,6 +4138,27 @@
     var h=document.getElementById("admModalHost");
     if(!h){ h=document.createElement("div"); h.id="admModalHost"; document.body.appendChild(h); }
     return h;
+  }
+  /* The app's own "are you sure?" box, in place of the browser's grey one.
+     Resolves true or false. It is added beside whatever else is open rather
+     than replacing it, so asking from inside another dialog is safe. */
+  function uiConfirm(o){
+    o=o||{};
+    return new Promise(function(res){
+      var box=document.createElement("div"), id="cf"+Date.now();
+      box.className="adm-modal"; box.id=id;
+      box.innerHTML='<div class="adm-mbox">'+
+        '<h3>'+esc(o.title||"Are you sure?")+'</h3>'+
+        (o.text?'<p class="adm-msub">'+esc(o.text)+'</p>':'')+
+        '<div class="adm-mbtns"><button class="ghost" id="'+id+'_no">'+esc(o.cancel||"Cancel")+'</button>'+
+        '<button class="pri'+(o.danger?" danger":"")+'" id="'+id+'_ok">'+esc(o.ok||"OK")+'</button></div></div>';
+      admHost().appendChild(box);
+      var settled=false;
+      function done(v){ if(settled) return; settled=true; try{ box.parentNode.removeChild(box); }catch(e){} res(!!v); }
+      box.querySelector("#"+id+"_no").addEventListener("click",function(){ done(false); });
+      box.querySelector("#"+id+"_ok").addEventListener("click",function(){ done(true); });
+      box.addEventListener("click",function(e){ if(e.target===box) done(false); });
+    });
   }
   function admBytes(n){
     n=Number(n)||0;
@@ -4164,6 +4195,9 @@
           warn+
           '<button class="au-clean" id="auClean">Clean up unused images</button>'+
           '<div class="au-cleanmsg" id="auCleanMsg"></div>'+
+          '<button class="au-clean au-bk" id="auBackup">Back up to Google Sheets now</button>'+
+          '<div class="au-cleanmsg au-bkmsg">'+backupStatusHtml()+'</div>'+
+          '<button class="au-bklink" id="auBackupDl">or download a copy to this device</button>'+
           '</div>';
         box.innerHTML=inner;
         // GitHub repository size (public API, no key needed)
@@ -4854,8 +4888,9 @@
     var b=$("admGenSave"); if(b){ b.classList.add("hot"); b.textContent="Save changes \u2022"; }
   }
   function admConfirmLeave(){
-    if(!ADM2.dirty) return true;
-    return confirm("You have unsaved changes. Leave without saving?");
+    if(!ADM2.dirty) return Promise.resolve(true);
+    return uiConfirm({title:"Unsaved changes", text:"Leave without saving? What you typed here will be lost.",
+                      ok:"Leave", danger:true, cancel:"Stay"});
   }
   function admGenSave(){
     if(ADM2.sec==="certtypes"){ admSaveCertTypes(); return; }
@@ -5202,9 +5237,12 @@
   }
   function delCabinet(id){
     var c=cabById(id); if(!c) return;
-    if(!confirm("Delete cabinet \u201C"+c.name+"\u201D and all its items?")) return;
-    PLACE.cabs=PLACE.cabs.filter(function(x){return x.id!==id;});
-    renderCabGrid();
+    uiConfirm({title:"Delete this cabinet?", text:"\u201C"+c.name+"\u201D and every item in it will be removed.",
+               ok:"Delete", danger:true}).then(function(ok){
+      if(!ok) return;
+      PLACE.cabs=PLACE.cabs.filter(function(x){return x.id!==id;});
+      renderCabGrid();
+    });
   }
   function moveCab(id,dir){
     var i=-1; for(var k=0;k<PLACE.cabs.length;k++){ if(PLACE.cabs[k].id===id){ i=k; break; } }
@@ -6090,7 +6128,179 @@
   document.addEventListener("click",function(e){
     var b=e.target.closest?e.target.closest("#auClean"):null;
     if(b) admCleanImages(b);
+    var bk=e.target.closest?e.target.closest("#auBackup"):null;
+    if(bk) admBackup(bk);
+    var dl=e.target.closest?e.target.closest("#auBackupDl"):null;
+    if(dl) admBackupDownload(dl);
   });
+
+  /* ---------- Backup of the whole database ----------
+     The free plan keeps no backups, and the settings wipe showed what that
+     costs: hours of piecing rows back together from old spreadsheets.
+
+     The real backup lives in the Apps Script: every night it copies every
+     table into a Google Sheet in Drive > "Hatzalah App Backups", and the
+     button below asks it to do one right now through the same webhook the
+     instant renewal emails use. A download-to-this-device copy is kept as a
+     fallback for the day the script is unreachable. Either way every cell is
+     written as text so nothing is turned into a date or has its leading zero
+     eaten, and the tables are read off the database's own listing, so a
+     table added next month is in the next backup without a code change. */
+  var BK_LAST_KEY="hoh_last_backup";
+  function backupStatusHtml(){
+    var last=null; try{ last=JSON.parse(localStorage.getItem(BK_LAST_KEY)||"null"); }catch(e){}
+    var out='Runs by itself every night into Google Drive \u203a Hatzalah App Backups.';
+    if(last && last.t && last.url){
+      var d=new Date(last.t), days=Math.floor((Date.now()-last.t)/864e5);
+      var when=days===0?"today":(days===1?"yesterday":days+" days ago");
+      out+=' Last run from here: '+esc(when)+' \u2014 <a href="'+esc(last.url)+'" target="_blank" rel="noopener">open it</a>';
+      if(last.folderUrl) out+=' \u00b7 <a href="'+esc(last.folderUrl)+'" target="_blank" rel="noopener">all backups</a>';
+      out+='.';
+    }
+    return out;
+  }
+  function admBackup(btn){
+    if(!btn || btn.disabled) return;
+    if(!navigator.onLine){ toast("You need a signal to make a backup."); return; }
+    var url=String(getSetting("Renewal Webhook URL","")||"").trim();
+    var key=String(getSetting("Renewal Webhook Secret","")||"").trim();
+    var wrap=btn.closest?btn.closest(".au-wrap"):null;
+    var msg=(wrap&&wrap.querySelector(".au-bkmsg")) || btn.nextElementSibling;
+    function say(html,cls){ if(msg){ msg.className="au-cleanmsg au-bkmsg"+(cls?" "+cls:""); msg.innerHTML=html; } }
+    if(!url || !key){ say("The backup runs through the reminder script. Fill in Settings \u203a Instant renewal emails first.","err"); return; }
+    var orig=btn.textContent, started=Date.now();
+    btn.disabled=true; btn.textContent="Backing up\u2026";
+    say("Copying every table into a Google Sheet \u2014 this takes about half a minute\u2026");
+    var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },150000); }catch(e){}
+    Promise.resolve().then(function(){
+      return fetch(url,{ method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},   // a simple request: no preflight, and the reply is readable
+        body:JSON.stringify({secret:key, action:"backup"}),
+        signal:ctl?ctl.signal:undefined });
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      btn.disabled=false; btn.textContent=orig;
+      if(!j || !j.ok || !j.backup){
+        var err=String((j&&j.error)||"no reply");
+        /* an older deployment of the script doesn't know the backup action
+           and answers "no unit" -- say what to do rather than echo that */
+        if(/no unit/i.test(err)) err="The reminder script is an older version. Paste in the new one and re-deploy it.";
+        say("Couldn\u2019t back up: "+esc(err),"err"); return;
+      }
+      var b=j.backup;
+      try{ localStorage.setItem(BK_LAST_KEY, JSON.stringify({t:Date.now(), url:b.url, folderUrl:b.folderUrl})); }catch(e){}
+      say("Done \u2014 "+b.tables+" tables, "+Number(b.rows||0).toLocaleString()+" rows, in "+
+          Math.round((Date.now()-started)/1000)+"s. <a href=\""+esc(b.url)+"\" target=\"_blank\" rel=\"noopener\">Open the sheet</a>"+
+          (b.folderUrl?' \u00b7 <a href="'+esc(b.folderUrl)+'" target="_blank" rel="noopener">All backups</a>':"")+
+          ((b.problems&&b.problems.length)?" Couldn\u2019t read: "+esc(b.problems.join(", "))+".":""),
+          (b.problems&&b.problems.length)?"err":"ok");
+      toast("Backed up to Google Sheets.");
+    })["catch"](function(err){
+      btn.disabled=false; btn.textContent=orig;
+      say(String(err&&err.name)==="AbortError" ? "The script didn\u2019t answer in time. Check Drive \u2014 the backup may still have been made."
+                                                : "Couldn\u2019t reach the backup script. Try again in a moment.","err");
+      try{ console.error("backup:",err); }catch(e){}
+    });
+  }
+  /* The fallback: the same backup built on this device and downloaded. */
+  var XLSX_SRC="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  var xlsxLibP=null;
+  function loadXlsxLib(){
+    if(window.XLSX) return Promise.resolve(window.XLSX);
+    if(xlsxLibP) return xlsxLibP;
+    xlsxLibP=new Promise(function(res,rej){
+      var sc=document.createElement("script"); sc.src=XLSX_SRC; sc.async=true;
+      var to=setTimeout(function(){ rej("xlsx-timeout"); },25000);
+      sc.onload=function(){ clearTimeout(to); window.XLSX?res(window.XLSX):rej("xlsx-missing"); };
+      sc.onerror=function(){ clearTimeout(to); rej("xlsx-blocked"); };
+      document.head.appendChild(sc);
+    });
+    xlsxLibP["catch"](function(){ xlsxLibP=null; });
+    return xlsxLibP;
+  }
+  /* Every table the API exposes. Falls back to the ones the app knows about
+     if the listing can't be read. */
+  function bkTableNames(){
+    var known={};
+    for(var k in SB_TAB2TBL) known[SB_TAB2TBL[k]]=1;
+    ["cabinets","cabinet_bins","equipment_items","equipment_meta","announcement_reads","poll_tallies"].forEach(function(t){ known[t]=1; });
+    return fetch(SB_URL+"/rest/v1/",{headers:sbAuthHeaders({"Accept":"application/openapi+json, application/json"})})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(spec){
+        var defs=(spec&&spec.definitions)||{};
+        Object.keys(defs).forEach(function(t){ known[t]=1; });
+        return Object.keys(known).sort();
+      })["catch"](function(){ return Object.keys(known).sort(); });
+  }
+  function bkReadTable(tbl){
+    var out=[], page=0;
+    function next(){
+      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),
+                   {headers:sbAuthHeaders(),cache:"no-store"})
+        .then(function(r){
+          if(r.status===401||r.status===403) return {denied:true};
+          if(!r.ok) return {error:r.status};
+          return r.json();
+        }).then(function(rows){
+          if(!Array.isArray(rows)) return {rows:out, note:(rows&&rows.denied)?"not readable with this login":("read failed ("+(rows&&rows.error)+")")};
+          out=out.concat(rows);
+          if(rows.length===1000){ page++; return next(); }
+          return {rows:out, note:""};
+        });
+    }
+    return next()["catch"](function(){ return {rows:out, note:"read failed"}; });
+  }
+  function admBackupDownload(btn){
+    if(!btn || btn.disabled) return;
+    if(!navigator.onLine){ toast("You need a signal to make a backup."); return; }
+    var wrap=btn.closest?btn.closest(".au-wrap"):null;
+    var msg=(wrap&&wrap.querySelector(".au-bkmsg")) || btn.previousElementSibling;
+    var orig=btn.textContent;
+    function say(t,cls){ if(msg){ msg.className="au-cleanmsg au-bkmsg"+(cls?" "+cls:""); msg.textContent=t; } }
+    btn.disabled=true; btn.textContent="Backing up\u2026"; say("Loading\u2026");
+    var started=Date.now();
+    Promise.all([loadXlsxLib(), bkTableNames()]).then(function(r){
+      var X=r[0], names=r[1], results={}, i=0;
+      function step(){
+        if(i>=names.length) return Promise.resolve();
+        var t=names[i++]; say("Reading "+t+" ("+i+" of "+names.length+")\u2026");
+        return bkReadTable(t).then(function(res){ results[t]=res; return step(); });
+      }
+      return step().then(function(){
+        var wb=X.utils.book_new(), about=[["Hatzalah of Houston \u2014 database backup"],[""],
+          ["Taken",new Date().toLocaleString()],["By",(STATE.me&&STATE.me.unit)||""],["App version",APP_VERSION],[""],
+          ["Table","Rows","Note"]];
+        var total=0;
+        names.forEach(function(t){
+          var rows=results[t].rows||[], cols=[], seen={};
+          rows.forEach(function(row){ for(var k in row){ if(!seen[k]){ seen[k]=1; cols.push(k); } } });
+          /* every cell as text, on purpose */
+          var aoa=[cols].concat(rows.map(function(row){ return cols.map(function(c){ var v=row[c]; return v==null?"":(typeof v==="object"?JSON.stringify(v):String(v)); }); }));
+          var ws=X.utils.aoa_to_sheet(aoa.length?aoa:[["(empty)"]]);
+          for(var cell in ws){ if(cell[0]!=="!" && ws[cell] && ws[cell].t!=="s"){ ws[cell].t="s"; ws[cell].v=String(ws[cell].v); } }
+          X.utils.book_append_sheet(wb, ws, t.slice(0,31));
+          about.push([t, rows.length, results[t].note||""]); total+=rows.length;
+        });
+        var wsA=X.utils.aoa_to_sheet(about);
+        X.utils.book_append_sheet(wb, wsA, "_about");
+        /* the about sheet goes first so it's what opens */
+        wb.SheetNames.unshift(wb.SheetNames.pop());
+        var d=new Date(), stamp=d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+        var out=X.write(wb,{bookType:"xlsx",type:"array"});
+        dlBlob("hatzalah-backup-"+stamp+".xlsx", new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+        var bad=names.filter(function(t){ return results[t].note; });
+        btn.disabled=false; btn.textContent=orig;
+        say("Saved "+names.length+" tables, "+total+" rows, in "+Math.round((Date.now()-started)/1000)+"s."+
+            (bad.length?" Couldn\u2019t read: "+bad.join(", ")+".":""), bad.length?"err":"ok");
+        toast("Backup downloaded.");
+      });
+    })["catch"](function(err){
+      btn.disabled=false; btn.textContent=orig;
+      say(String(err).indexOf("xlsx")===0 ? "Couldn\u2019t load the spreadsheet tool on this network." : "Couldn\u2019t finish the backup. Try again.", "err");
+      try{ console.error("backup:",err); }catch(e){}
+    });
+  }
 
   function annOptions(a){
     // one per line is the intended way, but commas are accepted so a list typed
@@ -6772,7 +6982,10 @@
     var p=e.target.closest?e.target.closest(".apt-pin"):null; if(!p) return;
     var i=+p.getAttribute("data-i"), list=APTM.by[APTCUR.slug]||[];
     if(!APTCUR.editing){ p.classList.toggle("show-lab"); return; }
-    if(confirm("Delete pin \u201C"+(list[i]?list[i].label:"")+"\u201D?")){ list.splice(i,1); saveAptMarkers(APTCUR.slug); renderAptPins(); }
+    uiConfirm({title:"Delete this pin?", text:"\u201C"+(list[i]?list[i].label:"")+"\u201D will be removed from the map.",
+               ok:"Delete", danger:true}).then(function(ok){
+      if(ok){ list.splice(i,1); saveAptMarkers(APTCUR.slug); renderAptPins(); }
+    });
   });
   $("aptMapWrap").addEventListener("click",function(e){
     if(!APTCUR.editing) return;
@@ -7742,7 +7955,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.3</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.4</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -7784,7 +7997,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.3</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.4</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8234,7 +8447,10 @@
   $("ntCopy").addEventListener("click",ntCopyAll);
   $("ntClear").addEventListener("click",function(){
     if(!NOTES.entries.length){ return; }
-    if(confirm("Delete all saved entries on this device?")){ NOTES={entries:[]}; notesSave(); renderNtEntries(); }
+    uiConfirm({title:"Delete all saved entries?", text:"Everything saved on this device will be cleared.",
+               ok:"Delete all", danger:true}).then(function(ok){
+      if(ok){ NOTES={entries:[]}; notesSave(); renderNtEntries(); }
+    });
   });
   $("notesBack").addEventListener("click",navBack);
 
@@ -8401,7 +8617,14 @@
     $("cprScreen").classList.add("open"); ensureTick(); cprTick(); renderCprLog(); loadCprBtns();
   }
   function cprReset(){
-    if(CPR.total>0 && !confirm("Reset this code? The timers and log will clear.")) return;
+    if(CPR.total>0){
+      uiConfirm({title:"Reset this code?", text:"The timers and the log will clear.", ok:"Reset", danger:true})
+        .then(function(ok){ if(ok) cprResetNow(); });
+      return;
+    }
+    cprResetNow();
+  }
+  function cprResetNow(){
     if(CPR.metro) cprSetMetro(false);
     CPR.running=false; CPR.total=0; CPR.cycle=0; CPR.epi=0; CPR.cycNum=1; CPR.epis=0; CPR.shocks=0; CPR.hadEpi=false; CPR.log=[];
     var b=$("cprStart"); b.classList.remove("on"); b.textContent="Start";
@@ -8492,10 +8715,16 @@
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
   function doSignout(){
-    try{ sbaClear(); }catch(e){}
-    if(confirm("Sign out on this device? You'll need to sign in with your Google account to get back in.")){
+    /* The session used to be cleared BEFORE the question was asked, so tapping
+       Cancel still left the person half signed out. Nothing happens now until
+       they say yes. */
+    uiConfirm({title:"Sign out on this device?", text:"You\u2019ll need to sign in with your Google account to get back in.",
+               ok:"Sign out", danger:true}).then(function(ok){
+      if(!ok) return;
+      try{ sbaClear(); }catch(e){}
       try{localStorage.setItem("hoh_signedout","1");}catch(e){}
-      localStorage.removeItem(LS);localStorage.removeItem("hoh_demo");bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();}
+      localStorage.removeItem(LS);localStorage.removeItem("hoh_demo");bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();
+    });
   }
   $("signout").addEventListener("click",doSignout);
 
@@ -8540,7 +8769,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.3".replace("Version ","");
+  var APP_VERSION="Version 20.4".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
