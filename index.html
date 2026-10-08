@@ -1058,6 +1058,9 @@
   .rp-text{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:15px;
     line-height:1.4;resize:vertical;min-height:96px;margin-bottom:8px;color:var(--ink);background:#fff}
   .rp-text:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,87,.15)}
+  .rp-who{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;margin-bottom:8px;color:var(--ink);background:#fff}
+  .rp-who:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,87,.15)}
+  .rp-whohint{font-size:12px;color:var(--mut);margin:-2px 0 10px 2px}
   .adm-merr{font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px}
   .adm-mbtns{display:flex;gap:10px}
   .adm-mbtns button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
@@ -1143,6 +1146,8 @@
   .gate .ghint b{color:#fff}
   .gate .linkbtn{background:none;border:0;color:rgba(255,255,255,.8);font-size:13.5px;text-decoration:underline;cursor:pointer;margin-top:14px;padding:8px;font-weight:600;width:auto}
 
+  .signout.home-report{margin-bottom:4px}
+  .signout.home-report + .signout{margin-top:0}
   .signout{display:block;margin:6px auto 26px;background:none;border:0;
     color:var(--mut);font-size:13px;text-decoration:underline;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
@@ -1465,8 +1470,9 @@
     <div class="load hidden" id="gLoad">Signing in&hellip;</div>
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
+    <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 20.7</div>
+  <div class="ver-line">Version 20.8</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1585,8 +1591,9 @@
   <div class="nx-more hidden" id="noticeMore"></div>
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
+  <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.7</div>
+  <div class="ver-line">Version 20.8</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2607,6 +2614,7 @@
           STATE.me.dispatcher=isX(h["Dispatcher"]);
           STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
           STATE.me.first=r_(h,"First Name")||STATE.me.first;
+          try{ setTimeout(rememberWho,0); }catch(e){}
           STATE.me.last=r_(h,"Last Name")||STATE.me.last;
           STATE.me.textHome=r_(h,"Text Home");
           STATE.me.textHomeMethod=r_(h,"Text Home Method");
@@ -8001,7 +8009,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.7</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.8</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8043,7 +8051,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.7</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.8</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8765,10 +8773,22 @@
      The member writes one line; the app attaches the facts and its own log and
      hands it to the reminder script, which mails the admins. Works from the
      unlock screen too, where today's complaints were stuck. */
+  /* Who this phone belongs to, for reports. Sign-out clears the sign-in but
+     not this note, so someone who got signed out can still be recognised. */
+  var LASTWHO_KEY="hoh_last_member";
+  function rememberWho(){
+    try{
+      var me=STATE.me; if(!me || !(me.unit||me.email)) return;
+      localStorage.setItem(LASTWHO_KEY, JSON.stringify({unit:me.unit||"", email:me.email||"",
+        name:((me.first||"")+" "+(me.last||"")).trim(), t:Date.now()}));
+    }catch(e){}
+  }
   function diagWho(){
-    var me=STATE.me||null;
-    if(!me){ try{ me=JSON.parse(localStorage.getItem(LS)||"null"); }catch(e){} }
-    return { unit:(me&&me.unit)||"", email:(me&&me.email)||"", name:me?(((me.first||"")+" "+(me.last||"")).trim()):"" };
+    var me=STATE.me||null, source="live";
+    if(!me){ try{ me=JSON.parse(localStorage.getItem(LS)||"null"); source="saved"; }catch(e){} }
+    if(!me){ try{ me=JSON.parse(localStorage.getItem(LASTWHO_KEY)||"null"); source="last"; }catch(e){} }
+    if(!me) return { unit:"", email:"", name:"", source:"none" };
+    return { unit:me.unit||"", email:me.email||"", name:(me.name||((me.first||"")+" "+(me.last||"")).trim()), source:source };
   }
   function diagSettings(){
     var url=String(getSetting("Renewal Webhook URL","")||"").trim(), key=String(getSetting("Renewal Webhook Secret","")||"").trim();
@@ -8820,6 +8840,13 @@
     box.innerHTML='<div class="adm-mbox">'+
       '<h3>Report a problem</h3>'+
       '<p class="adm-msub">Say what happened in your own words. The technical details \u2014 app version, phone type and what the app was doing \u2014 are attached automatically and go to the admins.</p>'+
+      (function(){
+        var w=diagWho();
+        if(w.source==="live"||w.source==="saved") return '';
+        var guess=w.name?(w.name+(w.unit?" ("+w.unit+")":"")):w.unit;
+        return '<input class="rp-who" id="'+id+'_w" type="text" value="'+esc(guess)+'" placeholder="Your name or unit number" autocomplete="name">'+
+               (guess?'<div class="rp-whohint">This phone was last used by '+esc(guess)+'. Not you? Change it above.</div>':'');
+      })()+
       '<textarea class="rp-text" id="'+id+'_t" rows="4" placeholder="What happened? One line is fine."></textarea>'+
       '<div class="adm-merr" id="'+id+'_e"></div>'+
       '<div class="adm-mbtns"><button class="ghost" id="'+id+'_no">Cancel</button>'+
@@ -8832,12 +8859,15 @@
     setTimeout(function(){ try{ ta.focus(); }catch(e){} },50);
     ok.addEventListener("click",function(){
       var note=String(ta.value||"").trim();
+      var whoEl=box.querySelector("#"+id+"_w"), whoTyped=whoEl?String(whoEl.value||"").trim():"";
+      if(whoEl && !whoTyped){ err.textContent="Please add your name or unit so we know who to help."; return; }
       if(!note){ err.textContent="Tell us what happened first."; return; }
       var cfg=diagSettings();
       if(!cfg.url || !cfg.key){ err.textContent="Reports aren\u2019t set up yet \u2014 please text an admin instead."; return; }
       ok.disabled=true; no.disabled=true; ok.textContent="Sending\u2026"; err.textContent="";
       diagLog("report", "sent from "+(where||"app"));
       diagFacts(where).then(function(facts){
+        if(whoTyped){ facts.name=whoTyped; facts.unit=facts.unit||""; facts.saidTheyAre=whoTyped; }
         var payload={secret:cfg.key, action:"report", report:{note:note, facts:facts, log:diagRead()}};
         var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },45000); }catch(e){}
         return fetch(cfg.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
@@ -8877,6 +8907,7 @@
     try{scRestore();}catch(e){}
     var hadCache=bootFromCache();
     diagLog("open", "v"+APP_VERSION+(navigator.onLine?"":" offline")+(hadCache?"":" no-cache"));
+    rememberWho();
     boot().catch(function(){ diagLog("boot-failed", navigator.onLine?"online":"offline"); if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
     setTimeout(function(){ pingSeen(true); },1200);
     /* Save everything for offline, quietly, once the home screen has had a
@@ -8916,7 +8947,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.7".replace("Version ","");
+  var APP_VERSION="Version 20.8".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -9032,9 +9063,12 @@
   });
   $("bioPw").addEventListener("click",function(){ doSignout(); });
   $("bioReport").addEventListener("click",function(){ openReport("unlock screen"); });
+  $("gReport").addEventListener("click",function(){ openReport("sign-in screen"); });
   document.addEventListener("click",function(e){
     var b=e.target.closest?e.target.closest("#profReport"):null;
     if(b) openReport("profile");
+    var h=e.target.closest?e.target.closest("#homeReport"):null;
+    if(h) openReport("home screen");
   });
 
   function startAfterGoogle(){
