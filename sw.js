@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "21.0";
+var VERSION = "21.1";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -121,6 +121,29 @@ self.addEventListener("fetch",function(e){
        image away and nothing was ever saved. Accept opaque here, and serve
        cache-first since an uploaded file never changes under the same name. */
     if(url.pathname.indexOf("/object/public/") > -1){
+      /* A deliberate re-check from the page (cache:"no-store" -- the problem
+         report's probe of a photo that failed to load) goes to the network for
+         the real answer. A good copy replaces whatever was saved; a 404 clears
+         the saved entry. That matters because an <img> load is no-cors, so a
+         404 comes back opaque and indistinguishable from a success, gets saved
+         like one, and would otherwise block the same file for ever -- even
+         after it was uploaded. */
+      if(req.cache === "no-store"){
+        e.respondWith(
+          fetch(req).then(function(res){
+            if(res && res.ok){
+              var copy = res.clone();
+              caches.open(DATA).then(function(c){ c.put(req.url, copy); });
+            } else if(res && res.type !== "opaque"){
+              caches.open(DATA).then(function(c){ c.delete(req.url, {ignoreVary:true}); });
+            }
+            return res;
+          }).catch(function(){
+            return caches.match(req.url, {ignoreVary:true}).then(function(hit){ return hit || Response.error(); });
+          })
+        );
+        return;
+      }
       e.respondWith(
         caches.match(req.url, {ignoreVary:true}).then(function(hit){
           if(hit) return hit;
