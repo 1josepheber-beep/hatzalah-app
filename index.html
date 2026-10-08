@@ -1061,6 +1061,9 @@
   .rp-who{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;margin-bottom:8px;color:var(--ink);background:#fff}
   .rp-who:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,87,.15)}
   .rp-whohint{font-size:12px;color:var(--mut);margin:-2px 0 10px 2px}
+  .rp-shot{display:flex;align-items:center;gap:10px;margin:2px 0 10px;cursor:pointer}
+  .rp-shotbtn{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:var(--navy);background:#fff}
+  .rp-shotname{font-size:12px;color:var(--mut)}
   .adm-merr{font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px}
   .adm-mbtns{display:flex;gap:10px}
   .adm-mbtns button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
@@ -1472,7 +1475,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 20.9</div>
+  <div class="ver-line">Version 21.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1593,7 +1596,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.9</div>
+  <div class="ver-line">Version 21.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2164,8 +2167,8 @@
      personal, nothing sent anywhere, until the member taps "Send a report",
      which mails it to the admins with a line of their own. It exists because
      "it kicked me out" took two hours to understand without it. */
-  var DIAG_KEY="hoh_diag_v1", DIAG_MAX=200;
-  var DIAG={swVersion:""};
+  var DIAG_KEY="hoh_diag_v1", DIAG_MAX=300;
+  var DIAG={swVersion:"", probes:0, seenImg:{}};
   function diagLog(kind, detail){
     try{
       var arr=[]; try{ arr=JSON.parse(localStorage.getItem(DIAG_KEY)||"[]"); }catch(e){ arr=[]; }
@@ -2185,6 +2188,52 @@
   window.addEventListener("unhandledrejection",function(e){
     try{ var r=e.reason; diagLog("promise-error", (r&&(r.message||r.toString&&r.toString()))||String(r)); }catch(x){}
   });
+  /* A photo that fails to load never reached any log; the cabinet photos
+     going missing left no trace at all. Capture-phase, because an image's
+     error event does not bubble. The first few are probed for a status so
+     the entry says 404 (gone) rather than guessing. */
+  window.addEventListener("error",function(e){
+    try{
+      var el=e.target; if(!el || !el.tagName) return;
+      var tag=el.tagName.toUpperCase(); if(tag!=="IMG" && tag!=="SOURCE" && tag!=="SCRIPT") return;
+      var src=el.currentSrc||el.src||""; if(!src || src.indexOf("data:")===0) return;
+      var short=src.replace(location.origin+"/","").replace(/^https:\/\/[^/]+\/storage\/v1\/object\/public\//,"storage:").split("?")[0];
+      if(DIAG.seenImg[short]) return; DIAG.seenImg[short]=1;
+      var kind=(tag==="SCRIPT")?"script-failed":"image-failed";
+      if(DIAG.probes<6){
+        DIAG.probes++;
+        fetch(src,{method:"GET",cache:"no-store"}).then(function(r){ diagLog(kind, short+" ("+(r.type==="opaque"?"no answer":r.status)+")"); },
+                                                      function(){ diagLog(kind, short+" (no connection)"); });
+      } else diagLog(kind, short);
+    }catch(x){}
+  },true);
+  /* Every call to the database and to the reminder script goes through
+     here: failures, time taken, and whether the worker had to serve a saved
+     copy because the network was too slow or absent. */
+  (function(){
+    var real=window.fetch; if(!real) return;
+    function tableOf(u){ var m=String(u).match(/\/rest\/v1\/(rpc\/)?([a-z_]+)/); if(m) return (m[1]?"rpc ":"")+m[2]; if(/\/auth\/v1\//.test(u)) return "sign-in"; if(/\/storage\/v1\//.test(u)) return "storage"; return ""; }
+    window.fetch=function(input,init){
+      var u=(typeof input==="string")?input:((input&&input.url)||"");
+      var watch = u.indexOf("supabase.co")>-1 || u.indexOf("script.google.com")>-1;
+      if(!watch) return real.apply(window,arguments);
+      var what = u.indexOf("script.google.com")>-1 ? "script" : tableOf(u);
+      var t0=Date.now();
+      return real.apply(window,arguments).then(function(r){
+        var ms=Date.now()-t0;
+        try{
+          var src=r.headers&&r.headers.get("X-HoH-Source");
+          if(src==="cache"||src==="empty") diagLog("served-from-"+(src==="cache"?"saved-copy":"nothing"), what+" ("+(r.headers.get("X-HoH-Reason")||"?")+", "+ms+"ms)");
+          else if(!r.ok && r.status!==401 && r.status!==403 && r.type!=="opaque") diagLog("request-failed", what+" "+r.status+" ("+ms+"ms)");
+          else if(ms>4000) diagLog("slow-request", what+" "+ms+"ms");
+        }catch(e){}
+        return r;
+      },function(err){
+        diagLog("request-failed", what+" no connection ("+(Date.now()-t0)+"ms)"+(err&&err.name==="AbortError"?" aborted":""));
+        throw err;
+      });
+    };
+  })();
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
   // (Apps Script URL removed - the app talks to Supabase directly now)
@@ -2327,7 +2376,7 @@
   function $(id){return document.getElementById(id);}
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(m){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
-  function toast(m){var t=$("toast");t.textContent=m;t.className="toast show";
+  function toast(m){try{ diagLog("toast", m); }catch(e){} var t=$("toast");t.textContent=m;t.className="toast show";
     setTimeout(function(){t.className="toast";},1600);}
   function r_(o,k){return String(o[k]==null?"":o[k]).trim();}
   function isX(v){v=String(v==null?"":v).trim().toLowerCase();return v==="x"||v==="yes"||v==="true"||v==="1";}
@@ -3295,7 +3344,8 @@
   }
   // ---- Hardware/Back-button navigation: Back closes the top screen, exits only at home ----
   var navStack=[];
-  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} navRemember(); }
+  function navOpen(closeFn){ navStack.push(closeFn); try{ history.pushState({hoh:navStack.length},""); }catch(e){} navRemember();
+    setTimeout(function(){ try{ var sc=document.querySelector(".screen.open, .preader.open"); diagLog("screen", sc?sc.id.replace(/Screen$/,""):"?"); }catch(e){} },0); }
   function navBack(){ if(navStack.length){ try{ history.back(); }catch(e){ var f=navStack.pop(); if(f) f(); } } setTimeout(navRemember,60); }
   window.addEventListener("popstate",function(){ if(navStack.length){ var f=navStack.pop(); if(f) f(); } setTimeout(navRemember,60); });
 
@@ -3448,6 +3498,7 @@
 
   function openTile(t){
     var type=r_(t,"Type").toLowerCase();
+    try{ diagLog("tile", (r_(t,"Label")||type)); }catch(e){}
     try{
       if(window.gtag){
         var lbl=r_(t,"Label")||"", unit=(STATE.me&&STATE.me.unit)||"";
@@ -8012,7 +8063,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.9</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 21.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8054,7 +8105,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.9</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 21.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8819,6 +8870,61 @@
       return c.data+" data, "+c.images+" images, "+c.maps+" maps, "+c.docs+" documents, "+c.pages+" protocol pages, "+c.erg+" ERG pages, "+c.app+" app files";
     })["catch"](function(){ return "could not read"; });
   }
+  /* Live checks at the moment of sending: is the database answering, is the
+     app's own site answering, and how fast. Answers "is it them or is it
+     Supabase" without a second message. */
+  function diagPing(label, url, headers){
+    var t0=Date.now(), ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },6000); }catch(e){}
+    return fetch(url,{headers:headers||{}, cache:"no-store", signal:ctl?ctl.signal:undefined}).then(function(r){
+      var ms=Date.now()-t0, src=r.headers&&r.headers.get("X-HoH-Source");
+      if(src) return "no live answer (worker served the saved copy, "+(r.headers.get("X-HoH-Reason")||"?")+")";
+      return (r.ok?"reachable":"answered with error "+r.status)+", "+ms+" ms";
+    })["catch"](function(err){ return (err&&err.name==="AbortError")?"no answer in 6 s":"no connection"; });
+  }
+  function diagConnection(){
+    var c=navigator.connection||navigator.mozConnection||navigator.webkitConnection;
+    if(!c) return "not reported by this phone";
+    var parts=[];
+    if(c.effectiveType) parts.push(c.effectiveType);
+    if(c.downlink!=null) parts.push("~"+c.downlink+" Mbps");
+    if(c.rtt!=null) parts.push(c.rtt+" ms latency");
+    if(c.saveData) parts.push("data saver on");
+    return parts.join(", ")||"unknown";
+  }
+  function diagStorage(){
+    if(!(navigator.storage&&navigator.storage.estimate)) return Promise.resolve("not reported");
+    return navigator.storage.estimate().then(function(e){
+      var u=(e.usage||0)/1048576, q=(e.quota||0)/1048576;
+      return u.toFixed(0)+" MB used of "+(q>=1024?(q/1024).toFixed(1)+" GB":q.toFixed(0)+" MB")+" allowed"+(q&&u/q>0.9?" \u2014 nearly full":"");
+    })["catch"](function(){ return "could not read"; });
+  }
+  function diagBattery(){
+    if(!navigator.getBattery) return Promise.resolve("not reported");
+    return navigator.getBattery().then(function(b){ return Math.round(b.level*100)+"%"+(b.charging?", charging":""); })["catch"](function(){ return "not reported"; });
+  }
+  function diagWorker(){
+    if(!("serviceWorker" in navigator) || !navigator.serviceWorker || !navigator.serviceWorker.getRegistration) return Promise.resolve("not supported");
+    var p; try{ p=navigator.serviceWorker.getRegistration(); }catch(e){ return Promise.resolve("could not read"); }
+    return Promise.resolve(p).then(function(reg){
+      if(!reg) return "not installed";
+      var st=[]; if(reg.active) st.push("active"); if(reg.waiting) st.push("one waiting"); if(reg.installing) st.push("one installing");
+      return (DIAG.swVersion?"v"+DIAG.swVersion+", ":"")+(navigator.serviceWorker.controller?"in control":"NOT in control")+(st.length?" ("+st.join(", ")+")":"");
+    })["catch"](function(){ return "could not read"; });
+  }
+  function diagPermissions(){
+    var out=[]; try{ out.push("notifications: "+(window.Notification?Notification.permission:"n/a")); }catch(e){}
+    if(!(navigator.permissions&&navigator.permissions.query)) return Promise.resolve(out.join(", "));
+    try{ return navigator.permissions.query({name:"geolocation"}).then(function(p){ out.push("location: "+p.state); return out.join(", "); })["catch"](function(){ return out.join(", "); }); }
+    catch(e){ return Promise.resolve(out.join(", ")); }
+  }
+  function diagScreenState(){
+    var sc=document.querySelector(".screen.open, .preader.open");
+    var gate=document.querySelector(".gate:not(.hidden)");
+    var modal=document.querySelector(".adm-modal, .cert-modal:not(.hidden), .nx-modal:not(.hidden)");
+    var open=Math.round((Date.now()-APP_OPENED_AT)/1000);
+    return (gate?("on "+gate.id):(sc?("on "+sc.id.replace(/Screen$/,"")):"home screen"))+(modal?", a dialog open":"")+
+           ", app open "+(open<120?open+" s":Math.round(open/60)+" min")+", page "+document.visibilityState;
+  }
   function diagFacts(where){
     var who=diagWho(), bio=null; try{ bio=bioGet(); }catch(e){}
     var unlockedUntil=0; try{ unlockedUntil=parseInt(localStorage.getItem("hoh_unlock_until")||"0",10)||0; }catch(e){}
@@ -8833,9 +8939,21 @@
       screen: (screen&&screen.width||0)+"x"+(screen&&screen.height||0)+" @"+(window.devicePixelRatio||1)+"x",
       fingerprint: (bio&&bio.enabled)?("on, "+(Date.now()<unlockedUntil?"unlocked":"locked")):"off",
       lastOfflineSave: last&&last.t ? (new Date(last.t).toLocaleString()+" ("+last.done+" saved, "+last.failed+" failed, "+last.all+" total)") : "never",
+      connection: diagConnection(), state: diagScreenState(),
+      memory: (navigator.deviceMemory?navigator.deviceMemory+" GB":"not reported")+(navigator.hardwareConcurrency?", "+navigator.hardwareConcurrency+" cores":""),
       time: new Date().toString()
     };
-    return diagCacheSummary().then(function(cs){ f.cached=cs; return f; });
+    var sbHeaders={ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON) };
+    function safe(fn){ try{ return Promise.resolve(fn())["catch"](function(){ return "could not read"; }); }catch(e){ return Promise.resolve("could not read"); } }
+    return Promise.all([
+      safe(diagCacheSummary),
+      safe(function(){ return diagPing("database", SB_URL+"/rest/v1/settings?select=setting&limit=1", sbHeaders); }),
+      safe(function(){ return diagPing("site", location.origin+"/manifest.webmanifest?ping="+Date.now()); }),
+      safe(diagStorage), safe(diagBattery), safe(diagWorker), safe(diagPermissions)
+    ]).then(function(r){
+      f.cached=r[0]; f.database=r[1]; f.site=r[2]; f.storage=r[3]; f.battery=r[4]; f.workerState=r[5]; f.permissions=r[6];
+      return f;
+    });
   }
   function openReport(where){
     var box=document.createElement("div"), id="rp"+Date.now();
@@ -8851,11 +8969,29 @@
                (guess?'<div class="rp-whohint">This phone was last used by '+esc(guess)+'. Not you? Change it above.</div>':'');
       })()+
       '<textarea class="rp-text" id="'+id+'_t" rows="4" placeholder="What happened? One line is fine."></textarea>'+
+      (sbaValid() ? '<label class="rp-shot" id="'+id+'_sl"><input type="file" id="'+id+'_f" accept="image/*" style="display:none">'+
+        '<span class="rp-shotbtn">\u{1F4F7} Add a screenshot</span><span class="rp-shotname" id="'+id+'_fn">optional</span></label>' : '')+
       '<div class="adm-merr" id="'+id+'_e"></div>'+
       '<div class="adm-mbtns"><button class="ghost" id="'+id+'_no">Cancel</button>'+
       '<button class="pri" id="'+id+'_ok">Send</button></div></div>';
     admHost().appendChild(box);
     var ta=box.querySelector("#"+id+"_t"), err=box.querySelector("#"+id+"_e"), ok=box.querySelector("#"+id+"_ok"), no=box.querySelector("#"+id+"_no");
+    var fileEl=box.querySelector("#"+id+"_f"), shot=null;
+    if(fileEl) fileEl.addEventListener("change",function(){
+      shot=(fileEl.files&&fileEl.files[0])||null;
+      box.querySelector("#"+id+"_fn").textContent=shot?(shot.name||"screenshot")+" \u2713":"optional";
+    });
+    /* the screenshot goes to the private documents bucket under reports/;
+       the email carries a 7-day link the script signs */
+    function uploadShot(){
+      if(!shot) return Promise.resolve("");
+      var who=diagWho(), base="reports/"+Date.now().toString(36)+"-"+(who.unit||"unknown").replace(/[^A-Za-z0-9-]/g,"")+".jpg";
+      return sbResize(shot, 1400, 0.82).then(function(blob){
+        return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
+          headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON), "Content-Type":"image/jpeg", "x-upsert":"true" },
+          body:blob }).then(function(r){ return r.ok?base:""; });
+      })["catch"](function(){ return ""; });
+    }
     function close(){ try{ box.parentNode.removeChild(box); }catch(e){} }
     no.addEventListener("click",close);
     box.addEventListener("click",function(e){ if(e.target===box) close(); });
@@ -8869,7 +9005,8 @@
       if(!cfg.url || !cfg.key){ err.textContent="Reports aren\u2019t set up yet \u2014 please text an admin instead."; return; }
       ok.disabled=true; no.disabled=true; ok.textContent="Sending\u2026"; err.textContent="";
       diagLog("report", "sent from "+(where||"app"));
-      diagFacts(where).then(function(facts){
+      Promise.all([diagFacts(where), uploadShot()]).then(function(r){
+        var facts=r[0]; if(r[1]) facts.screenshot=r[1]; else if(shot) facts.screenshot="(could not be uploaded)";
         if(whoTyped){ facts.name=whoTyped; facts.unit=facts.unit||""; facts.saidTheyAre=whoTyped; }
         var payload={secret:cfg.key, action:"report", report:{note:note, facts:facts, log:diagRead()}};
         var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },45000); }catch(e){}
@@ -8950,7 +9087,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.9".replace("Version ","");
+  var APP_VERSION="Version 21.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

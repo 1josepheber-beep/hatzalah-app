@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "20.9";
+var VERSION = "21.0";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -149,14 +149,25 @@ self.addEventListener("fetch",function(e){
           caches.open(DATA).then(function(c){ c.put(req.url, copy); });
         }
         return res;
-      }).catch(function(){
+      }).catch(function(err){
+        /* Say so when a saved copy is served instead of a live answer, and
+           why. The page logs it, so a report can show "served from the saved
+           copy (slow)" rather than looking like a healthy load. */
+        var reason = (err && err.message === "slow") ? "slow" : "offline";
+        function marked(res, source){
+          try{
+            var h = new Headers(res.headers);
+            h.set("X-HoH-Source", source); h.set("X-HoH-Reason", reason);
+            return res.blob().then(function(b){ return new Response(b, {status:res.status, statusText:res.statusText, headers:h}); });
+          }catch(e){ return Promise.resolve(res); }
+        }
         return caches.match(req.url, {cacheName:DATA, ignoreVary:true}).then(function(hit){
-          if(hit) return hit;
+          if(hit) return marked(hit, "cache");
           return caches.match(req.url, {ignoreVary:true}).then(function(any){
-            if(any) return any;
+            if(any) return marked(any, "cache");
             /* Nothing saved yet. Hand back an empty list so the screen shows its
                "nothing here" state instead of spinning forever. */
-            return new Response("[]",{status:200,headers:{"Content-Type":"application/json"}});
+            return new Response("[]",{status:200,headers:{"Content-Type":"application/json","X-HoH-Source":"empty","X-HoH-Reason":reason}});
           });
         });
       })
