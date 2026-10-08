@@ -1055,6 +1055,9 @@
   .adm-mbox{background:#fff;border-radius:18px;padding:24px;width:100%;max-width:520px;box-shadow:0 24px 60px rgba(9,26,52,.3);max-height:90vh;overflow:auto}
   .adm-mbox h3{margin:0 0 4px;font-size:20px;font-weight:800}
   .adm-msub{margin:0 0 18px;font-size:13px;color:var(--mut);line-height:1.45}
+  .rp-text{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;font-size:15px;
+    line-height:1.4;resize:vertical;min-height:96px;margin-bottom:8px;color:var(--ink);background:#fff}
+  .rp-text:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,47,87,.15)}
   .adm-merr{font-size:13px;font-weight:700;color:var(--red);min-height:18px;margin-bottom:6px}
   .adm-mbtns{display:flex;gap:10px}
   .adm-mbtns button{flex:1;border:0;border-radius:12px;padding:13px;font-size:15px;font-weight:800;cursor:pointer}
@@ -1463,7 +1466,7 @@
     <div class="ghint">Use your <b>@houstonhatzalah.org</b> account</div>
     <button id="viewDemo" class="demolink hidden">View demo</button>
   </div>
-  <div class="ver-line">Version 20.6</div>
+  <div class="ver-line">Version 20.7</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1531,6 +1534,7 @@
     <button id="bioBtn" class="gsign"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#3c4043" stroke-width="1.7" stroke-linecap="round"><path d="M12 11v3M8.5 10a3.5 3.5 0 017 0v2M6 12a6 6 0 0112 0v1M6.5 15a10 10 0 00.5 3M17.5 13v2a9 9 0 01-.6 3M10 20.5c-.5-1-.8-2-.8-3.5M14 21c.6-1.2 1-2.6 1-4"/></svg>Unlock with fingerprint</button>
     <div class="err" id="bioErr"></div>
     <button id="bioPw" class="linkbtn">Sign out instead</button>
+    <button id="bioReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
 </div>
 
@@ -1582,7 +1586,7 @@
   <div class="upd-bar hidden" id="updBar"><span>A new version is ready.</span><button id="updGo">Reload</button></div>
   <div class="grid" id="grid"></div>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 20.6</div>
+  <div class="ver-line">Version 20.7</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2147,6 +2151,33 @@
   var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
+  /* ---------- Diagnostics ----------
+     A quiet log of what the app did on this phone -- opens, updates,
+     restarts, the unlock screen, sign-outs, errors, failed requests. Nothing
+     personal, nothing sent anywhere, until the member taps "Send a report",
+     which mails it to the admins with a line of their own. It exists because
+     "it kicked me out" took two hours to understand without it. */
+  var DIAG_KEY="hoh_diag_v1", DIAG_MAX=200;
+  var DIAG={swVersion:""};
+  function diagLog(kind, detail){
+    try{
+      var arr=[]; try{ arr=JSON.parse(localStorage.getItem(DIAG_KEY)||"[]"); }catch(e){ arr=[]; }
+      if(!Array.isArray(arr)) arr=[];
+      var d=detail==null?"":String(detail);
+      if(d.length>160) d=d.slice(0,160)+"\u2026";
+      arr.push({t:new Date().toISOString(), k:String(kind), d:d});
+      if(arr.length>DIAG_MAX) arr=arr.slice(arr.length-DIAG_MAX);
+      localStorage.setItem(DIAG_KEY, JSON.stringify(arr));
+    }catch(e){}
+  }
+  function diagRead(){ try{ var a=JSON.parse(localStorage.getItem(DIAG_KEY)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  /* page errors used to vanish; now they are the most useful line in a report */
+  window.addEventListener("error",function(e){
+    try{ diagLog("error", (e.message||"")+" @"+((e.filename||"").split("/").pop())+":"+(e.lineno||"")); }catch(x){}
+  });
+  window.addEventListener("unhandledrejection",function(e){
+    try{ var r=e.reason; diagLog("promise-error", (r&&(r.message||r.toString&&r.toString()))||String(r)); }catch(x){}
+  });
   var GIS_CLIENT_ID="687013718221-o3v640qv75gohuqcqkmuj0durkva01ru.apps.googleusercontent.com";
   var GMAPS_KEY="AIzaSyB41nZnWZKtx6dcCKhiKhZgcIksNnuciMw";
   // (Apps Script URL removed - the app talks to Supabase directly now)
@@ -2202,7 +2233,7 @@
                 SBA.exp=Date.now()+((j2.expires_in||3600)*1000);
                 if(j2.user&&j2.user.email) SBA.email=j2.user.email;
                 sbaSave(); res(true);
-              }).catch(function(){ rej(e); });
+              }).catch(function(){ diagLog("session-refresh-failed", String(e)); rej(e); });
           }, 1200);
         });
       });
@@ -2326,6 +2357,7 @@
           // token expired mid-request: refresh once and try again rather than
           // returning nothing (which used to look like "member not found")
           if(r.status===401||r.status===403){
+            diagLog("request-"+r.status, tbl);
             return sbaEnsure().then(function(){
               return fetch(qurl,{headers:sbAuthHeaders(),cache:"no-store"});
             });
@@ -2560,6 +2592,7 @@
           var act=found?String(found["Active"]||"").trim().toLowerCase():"";
           var stillActive=found&&(act===""||act==="x"||act==="yes"||act==="true");
           if(!stillActive){
+            diagLog("signed-out", found?"deactivated in roster":"not found in roster ("+rows.length+" rows)");
             try{localStorage.removeItem(LS);}catch(e){}
             STATE.me=null;
             $("app").classList.add("hidden");
@@ -7968,7 +8001,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.6</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.7</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8008,9 +8041,9 @@
       '<div class="prof-hint">Used by the \u201CText Home\u201D button in Quick Actions \u2014 it opens your SMS or WhatsApp so this number knows you\u2019ve been called out. You still tap send.</div>')+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
-      '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div></div></details>'+
+      '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.6</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 20.7</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8264,6 +8297,7 @@
       offRun(null, 2).then(function(t){
         OFFDL.running=false;
         try{ console.log("offline save:", t.done, "fetched,", t.failed, "failed,", t.all, "items total"); }catch(e){}
+        if(t.done||t.failed) diagLog("offline-save", t.done+" saved, "+t.failed+" failed, "+t.all+" total");
         /* if the profile screen happens to be open, let its note catch up */
         if($("profOffWrap") && $("profOffWrap").innerHTML) renderOfflineRow();
       })["catch"](function(){ OFFDL.running=false; });
@@ -8727,6 +8761,103 @@
       .catch(function(){ $("bioOfferErr").textContent="Couldn\u2019t set up \u2014 you can enable it later in your profile."; });
   });
   $("bioOfferNo").addEventListener("click",function(){ $("biooffer").classList.add("hidden"); enter(); });
+  /* ---------- "Send a report" ----------
+     The member writes one line; the app attaches the facts and its own log and
+     hands it to the reminder script, which mails the admins. Works from the
+     unlock screen too, where today's complaints were stuck. */
+  function diagWho(){
+    var me=STATE.me||null;
+    if(!me){ try{ me=JSON.parse(localStorage.getItem(LS)||"null"); }catch(e){} }
+    return { unit:(me&&me.unit)||"", email:(me&&me.email)||"", name:me?(((me.first||"")+" "+(me.last||"")).trim()):"" };
+  }
+  function diagSettings(){
+    var url=String(getSetting("Renewal Webhook URL","")||"").trim(), key=String(getSetting("Renewal Webhook Secret","")||"").trim();
+    if(!url || !key){
+      /* on the unlock screen the settings haven't loaded yet; use the last saved copy */
+      try{ var c=JSON.parse(localStorage.getItem(DCACHE)||"null"); (c&&c.s||[]).forEach(function(r){
+        var k=String(r_(r,"Setting")||"").trim(), v=String(r["Value"]==null?"":r["Value"]).trim();
+        if(k==="Renewal Webhook URL" && !url) url=v; if(k==="Renewal Webhook Secret" && !key) key=v; }); }catch(e){}
+    }
+    return {url:url, key:key};
+  }
+  function diagCacheSummary(){
+    if(!("caches" in window)) return Promise.resolve("not available");
+    return offCachedSet().then(function(have){
+      var c={data:0,images:0,maps:0,docs:0,pages:0,erg:0,app:0};
+      Object.keys(have||{}).forEach(function(u){
+        if(u.indexOf("/storage/v1/object/public/")>-1) c.images++;
+        else if(u.indexOf("/rest/v1/")>-1) c.data++;
+        else if(u.indexOf("/apartments/")>-1) c.maps++;
+        else if(u.indexOf("/__doc/")>-1) c.docs++;
+        else if(u.indexOf("/erg/")>-1) c.erg++;
+        else if(u.indexOf("/protocols/")>-1) c.pages++;
+        else c.app++;
+      });
+      return c.data+" data, "+c.images+" images, "+c.maps+" maps, "+c.docs+" documents, "+c.pages+" protocol pages, "+c.erg+" ERG pages, "+c.app+" app files";
+    })["catch"](function(){ return "could not read"; });
+  }
+  function diagFacts(where){
+    var who=diagWho(), bio=null; try{ bio=bioGet(); }catch(e){}
+    var unlockedUntil=0; try{ unlockedUntil=parseInt(localStorage.getItem("hoh_unlock_until")||"0",10)||0; }catch(e){}
+    var last=null; try{ last=JSON.parse(localStorage.getItem(OFF_LAST_KEY)||"null"); }catch(e){}
+    var standalone=false; try{ standalone=!!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone; }catch(e){}
+    var f={
+      from: where||"", app: APP_VERSION, worker: DIAG.swVersion||"unknown",
+      unit: who.unit, email: who.email, name: who.name,
+      device: navigator.userAgent, installed: standalone?"yes (home screen)":"no (browser tab)",
+      online: navigator.onLine?"yes":"no", language: navigator.language||"",
+      timezone: (function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){ return ""; } })(),
+      screen: (screen&&screen.width||0)+"x"+(screen&&screen.height||0)+" @"+(window.devicePixelRatio||1)+"x",
+      fingerprint: (bio&&bio.enabled)?("on, "+(Date.now()<unlockedUntil?"unlocked":"locked")):"off",
+      lastOfflineSave: last&&last.t ? (new Date(last.t).toLocaleString()+" ("+last.done+" saved, "+last.failed+" failed, "+last.all+" total)") : "never",
+      time: new Date().toString()
+    };
+    return diagCacheSummary().then(function(cs){ f.cached=cs; return f; });
+  }
+  function openReport(where){
+    var box=document.createElement("div"), id="rp"+Date.now();
+    box.className="adm-modal"; box.id=id;
+    box.innerHTML='<div class="adm-mbox">'+
+      '<h3>Report a problem</h3>'+
+      '<p class="adm-msub">Say what happened in your own words. The technical details \u2014 app version, phone type and what the app was doing \u2014 are attached automatically and go to the admins.</p>'+
+      '<textarea class="rp-text" id="'+id+'_t" rows="4" placeholder="What happened? One line is fine."></textarea>'+
+      '<div class="adm-merr" id="'+id+'_e"></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="'+id+'_no">Cancel</button>'+
+      '<button class="pri" id="'+id+'_ok">Send</button></div></div>';
+    admHost().appendChild(box);
+    var ta=box.querySelector("#"+id+"_t"), err=box.querySelector("#"+id+"_e"), ok=box.querySelector("#"+id+"_ok"), no=box.querySelector("#"+id+"_no");
+    function close(){ try{ box.parentNode.removeChild(box); }catch(e){} }
+    no.addEventListener("click",close);
+    box.addEventListener("click",function(e){ if(e.target===box) close(); });
+    setTimeout(function(){ try{ ta.focus(); }catch(e){} },50);
+    ok.addEventListener("click",function(){
+      var note=String(ta.value||"").trim();
+      if(!note){ err.textContent="Tell us what happened first."; return; }
+      var cfg=diagSettings();
+      if(!cfg.url || !cfg.key){ err.textContent="Reports aren\u2019t set up yet \u2014 please text an admin instead."; return; }
+      ok.disabled=true; no.disabled=true; ok.textContent="Sending\u2026"; err.textContent="";
+      diagLog("report", "sent from "+(where||"app"));
+      diagFacts(where).then(function(facts){
+        var payload={secret:cfg.key, action:"report", report:{note:note, facts:facts, log:diagRead()}};
+        var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },45000); }catch(e){}
+        return fetch(cfg.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+                               body:JSON.stringify(payload), signal:ctl?ctl.signal:undefined })
+          .then(function(r){ return r.json(); });
+      }).then(function(j){
+        if(!j || !j.ok) throw new Error((j&&j.error)||"no reply");
+        box.querySelector(".adm-mbox").innerHTML='<h3>Sent \u2014 thank you</h3>'+
+          '<p class="adm-msub">The admins have your report and everything they need to look into it.</p>'+
+          '<div class="adm-mbtns"><button class="pri" id="'+id+'_done">Done</button></div>';
+        box.querySelector("#"+id+"_done").addEventListener("click",close);
+      })["catch"](function(e){
+        ok.disabled=false; no.disabled=false; ok.textContent="Send";
+        var m=String(e&&e.message||e);
+        err.textContent = /no unit|older/i.test(m) ? "The admin side isn\u2019t updated for reports yet. Please text an admin instead."
+                        : (navigator.onLine ? "Couldn\u2019t send. Try again in a moment." : "No signal \u2014 try again when you\u2019re back online.");
+        diagLog("report-failed", m);
+      });
+    });
+  }
   function doSignout(){
     /* The session used to be cleared BEFORE the question was asked, so tapping
        Cancel still left the person half signed out. Nothing happens now until
@@ -8734,6 +8865,7 @@
     uiConfirm({title:"Sign out on this device?", text:"You\u2019ll need to sign in with your Google account to get back in.",
                ok:"Sign out", danger:true}).then(function(ok){
       if(!ok) return;
+      diagLog("signed-out", "by the member");
       try{ sbaClear(); }catch(e){}
       try{localStorage.setItem("hoh_signedout","1");}catch(e){}
       localStorage.removeItem(LS);localStorage.removeItem("hoh_demo");bioClear();localStorage.removeItem("hoh_unlock_until");clearGTok();location.reload();
@@ -8744,7 +8876,8 @@
   function enter(){$("gate").classList.add("hidden");$("ggate").classList.add("hidden");$("guestgate").classList.add("hidden");$("app").classList.remove("hidden");
     try{scRestore();}catch(e){}
     var hadCache=bootFromCache();
-    boot().catch(function(){ if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
+    diagLog("open", "v"+APP_VERSION+(navigator.onLine?"":" offline")+(hadCache?"":" no-cache"));
+    boot().catch(function(){ diagLog("boot-failed", navigator.onLine?"online":"offline"); if(!hadCache) toast("Couldn't load the app. Check your internet."); gRenewQuiet(); });
     setTimeout(function(){ pingSeen(true); },1200);
     /* Save everything for offline, quietly, once the home screen has had a
        few seconds to itself. Every open with a signal, no button required. */
@@ -8767,6 +8900,7 @@
     if(navigator.serviceWorker){
       navigator.serviceWorker.addEventListener("message",function(e){
         if(e.data && e.data.type==="UPDATE_READY") onUpdateReady(e.data);
+        if(e.data && e.data.type==="SW_VERSION" && e.data.version) DIAG.swVersion=String(e.data.version);
         if(e.data && e.data.type==="SW_VERSION" && e.data.version &&
            String(e.data.version)!==String(APP_VERSION)) onUpdateReady();
       });
@@ -8782,7 +8916,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 20.6".replace("Version ","");
+  var APP_VERSION="Version 20.7".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -8818,6 +8952,7 @@
      fingerprint users back to the unlock screen. */
   function selfReload(){
     try{ if(STATE&&STATE.me && !$("app").classList.contains("hidden")) markUnlocked(); }catch(e){}
+    diagLog("restart", "for update");
     location.reload();
   }
   function onUpdateReady(msg){
@@ -8831,6 +8966,7 @@
       return;
     }
     var why=updateBusy();
+    diagLog("update", (msg&&msg.version?"v"+msg.version+" ":"")+(why?"held: "+why:"ready"));
     /* A reload from cache takes well under a second and the app returns to
        the same screen, so within the first minute of opening it is painless.
        Fifteen seconds was too tight: a bigger install on a slow connection
@@ -8884,14 +9020,22 @@
   function showBioGate(){
     try{ var bl=$("bioBtn"); if(bl){ var tn=null; for(var i=0;i<bl.childNodes.length;i++){ if(bl.childNodes[i].nodeType===3 && bl.childNodes[i].textContent.trim()) tn=bl.childNodes[i]; } if(tn) tn.textContent=" "+bioLabel(); } }catch(e){}
     $("biogate").classList.remove("hidden"); $("bioErr").textContent="";
-    bioUnlock().then(function(){ markUnlocked(); $("biogate").classList.add("hidden"); enter(); }).catch(function(){});
+    diagLog("unlock-screen", "shown");
+    bioUnlock().then(function(){ diagLog("unlock","ok"); markUnlocked(); $("biogate").classList.add("hidden"); enter(); })
+      .catch(function(err){ diagLog("unlock-failed", (err&&err.name?err.name+": ":"")+(err&&err.message||err)); });
   }
   $("bioBtn").addEventListener("click",function(){
     $("bioErr").textContent="";
-    bioUnlock().then(function(){ markUnlocked(); $("biogate").classList.add("hidden"); enter(); })
+    diagLog("unlock", "tapped");
+    bioUnlock().then(function(){ diagLog("unlock","ok"); markUnlocked(); $("biogate").classList.add("hidden"); enter(); })
       .catch(function(){ $("bioErr").textContent="Couldn\u2019t verify. Try again."; });
   });
   $("bioPw").addEventListener("click",function(){ doSignout(); });
+  $("bioReport").addEventListener("click",function(){ openReport("unlock screen"); });
+  document.addEventListener("click",function(e){
+    var b=e.target.closest?e.target.closest("#profReport"):null;
+    if(b) openReport("profile");
+  });
 
   function startAfterGoogle(){
     $("ggate").classList.add("hidden");
