@@ -912,6 +912,9 @@
     border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;font-size:26px;line-height:1;cursor:pointer;font-family:inherit}
   .pv-close:active{background:rgba(255,255,255,.3)}
   .pv-name{color:#fff;font-weight:800;font-size:16px;margin-top:16px;text-align:center}
+  .pv-dl{margin-top:14px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.14);color:#fff;border-radius:11px;
+    padding:11px 22px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit}
+  .pv-dl:active{background:rgba(255,255,255,.3)}
   .dir-photo.ph svg{width:24px;height:24px;stroke:#9aa7b8;fill:none;stroke-width:1.8}
   .eq-imgrow{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
   .eq-imgpv{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
@@ -1480,7 +1483,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.0.0</div>
+  <div class="ver-line">Version 1.0.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1601,7 +1604,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.0.0</div>
+  <div class="ver-line">Version 1.0.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2882,11 +2885,11 @@
     if(!isPdf && !isImg) return false;    /* caller hands anything else to the browser */
     function fromCache(hit){
       if(isPdf) return hit.arrayBuffer().then(function(buf){ openPdfView({data:buf},title,ref); });
-      return hit.blob().then(function(b){ openPhoto(URL.createObjectURL(b),title); });
+      return hit.blob().then(function(b){ openPhoto(URL.createObjectURL(b),title,ref); });
     }
     function fromNet(){
       return sbSignedUrl(ref).then(function(u){
-        if(isPdf) openPdfView(u,title,ref); else openPhoto(u,title);
+        if(isPdf) openPdfView(u,title,ref); else openPhoto(u,title,ref);
         docSave(ref);                      /* quietly keep this one current */
       });
     }
@@ -8086,17 +8089,48 @@
     });
     return order.map(function(k){return map[k];});
   }
-  function openPhoto(src, who){
+  /* The PDF viewer has had a Download button all along; the picture viewer
+     had only a close button, so a certification card uploaded as a photo
+     could be looked at but not saved. Same button now, for everything that
+     opens here -- a member photo, a resource image, a certification card. */
+  function openPhoto(src, who, ref){
     var w=document.createElement("div");
     w.className="photoview";
     w.innerHTML='<button class="pv-close" aria-label="Close">\u00D7</button>'+
       '<img src="'+esc(src)+'" alt="">'+
-      (who?'<div class="pv-name">'+esc(who)+'</div>':'');
+      (who?'<div class="pv-name">'+esc(who)+'</div>':'')+
+      '<button class="pv-dl">Download</button>';
     function close(){ try{ w.remove(); }catch(e){} document.removeEventListener("keydown",esc2); }
     function esc2(e){ if(e.key==="Escape") close(); }
     w.addEventListener("click",function(e){ if(e.target===w||e.target.className==="pv-close") close(); });
+    w.querySelector(".pv-dl").addEventListener("click",function(e){ e.stopPropagation(); photoDownload(src, who, ref); });
     document.addEventListener("keydown",esc2);
     document.body.appendChild(w);
+  }
+  function photoDownload(src, who, ref){
+    var base=String(who||"photo").replace(/[\\/:*?"<>|]+/g,"-").trim()||"photo";
+    /* a file in the private bucket: a fresh signed link that asks the browser
+       to save rather than show, exactly like the PDF viewer does */
+    if(ref){
+      var ext=docExt(docFileName(ref))||"jpg", nm=base+"."+ext;
+      var win=window.open("","_blank");
+      sbSignedUrl(ref,nm).then(function(u){
+        if(win && !win.closed) win.location.href=u; else window.open(u,"_blank","noopener");
+      })["catch"](function(){
+        if(win && !win.closed) try{ win.close(); }catch(e){}
+        toast("Couldn\u2019t start the download.");
+      });
+      return;
+    }
+    /* anything else (a member photo, say): pull the bytes and hand them over */
+    fetch(src).then(function(r){ if(!r||!r.ok) throw new Error("fetch"); return r.blob(); }).then(function(b){
+      var t=String(b.type||""), ext=/png/.test(t)?"png":(/webp/.test(t)?"webp":(/gif/.test(t)?"gif":"jpg"));
+      var u=URL.createObjectURL(b), a=document.createElement("a");
+      a.href=u; a.download=base+"."+ext; document.body.appendChild(a); a.click();
+      setTimeout(function(){ try{ document.body.removeChild(a); URL.revokeObjectURL(u); }catch(e){} },2000);
+    })["catch"](function(){
+      try{ window.open(src,"_blank","noopener"); }catch(e){ toast("Couldn\u2019t start the download."); }
+    });
   }
   function renderDir(){
     var body=$("dirBody"), q=DIR.q.toLowerCase().trim();
@@ -8199,7 +8233,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8241,7 +8275,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -9249,7 +9283,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.0.0".replace("Version ","");
+  var APP_VERSION="Version 1.0.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
