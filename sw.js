@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "1.0.2";
+var VERSION = "1.1.0";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -53,10 +53,29 @@ self.addEventListener("message",function(e){
   }
 });
 
+/* A push from the sender (announcement or a personal message). The payload is
+   encrypted to this phone only; by the time it reaches here it is plain JSON. */
+self.addEventListener("push",function(e){
+  var data={};
+  try{ data=e.data ? e.data.json() : {}; }
+  catch(x){ try{ data={title:"Hatzalah of Houston", body:e.data?e.data.text():""}; }catch(y){ data={}; } }
+  var title=String(data.title||"Hatzalah of Houston");
+  var opts={ body:String(data.body||""), icon:"./icon-192.png", badge:"./icon-192.png",
+             tag:String(data.tag||"hoh-"+Date.now()), renotify:true,
+             data:{ url:String(data.url||"./"), kind:String(data.kind||""), title:title } };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+
+/* Tapping a notification brings the app forward (or opens it) and tells the
+   page what was tapped, so it can show the message straight away. */
 self.addEventListener("notificationclick",function(e){
   e.notification.close();
+  var d=(e.notification && e.notification.data) || {};
+  var msg={type:"PUSH_OPEN", kind:String(d.kind||""), title:String(d.title||"")};
   e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(function(cs){
-    for(var i=0;i<cs.length;i++){ if("focus" in cs[i]) return cs[i].focus(); }
+    for(var i=0;i<cs.length;i++){
+      if("focus" in cs[i]){ try{ cs[i].postMessage(msg); }catch(x){} return cs[i].focus(); }
+    }
     if(clients.openWindow) return clients.openWindow("./");
   }));
 });

@@ -179,6 +179,8 @@
   .cert-banner.ann .cb-i{background:var(--navy)}
   .cert-banner.poll{background:#f2ecfd;border-color:#d8c9f3;color:#5b3aa8}
   .cert-banner.poll .cb-i{background:#5b3aa8}
+  .cert-banner.msg{background:#e9f7ee;border-color:#bfe3c9;color:#1e7a3d}
+  .cert-banner.msg .cb-i{background:#2f9e44}
   .upd-bar{display:flex;align-items:center;gap:10px;margin:8px 12px 0;padding:11px 13px;
     border-radius:12px;background:var(--navy);color:#fff;box-shadow:var(--shadow)}
   .upd-bar.hidden{display:none}
@@ -203,6 +205,7 @@
   .nx-pill.feature{background:#e7f0fb;color:var(--navy)}
   .nx-pill.confirm{background:#fff3d6;color:#8a6d00}
   .nx-pill.poll{background:#f2ecfd;color:#5b3aa8}
+  .nx-pill.message{background:#e4f6e9;color:#1e7a3d}
   .nx-chk{display:flex;gap:10px;align-items:flex-start;background:#f6f8fc;border:1px solid var(--line);
     border-radius:11px;padding:11px;font-size:13px;line-height:1.45;cursor:pointer;margin-bottom:10px}
   .nx-box2{width:20px;height:20px;border:2px solid var(--navy);border-radius:5px;flex:0 0 auto;
@@ -575,6 +578,9 @@
   .cert-filename{font-size:12px;color:var(--mut);min-width:0;word-break:break-word;line-height:1.3}
   .cert-doc{display:block;border:0;background:none;padding:0;margin-top:4px;font:inherit;font-size:12px;font-weight:700;color:var(--navy);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
   .cert-nodoc{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#a35a00}
+  .adm-msgbtn{display:block;width:100%;margin:14px 0 0;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:11px;padding:12px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit}
+  .adm-push{display:block;width:100%;border:1px solid var(--navy);background:var(--navy);color:#fff;border-radius:11px;padding:11px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;margin-top:8px}
+  .adm-push:disabled{opacity:.6}
   .up-done{background:#e4f6e9;color:#1e7a3d;font-weight:800;font-size:14px;border-radius:11px;padding:11px 13px;margin-bottom:10px}
   .up-why{margin:0 0 14px}
   .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
@@ -1485,7 +1491,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.0.2</div>
+  <div class="ver-line">Version 1.1.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1606,7 +1612,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.0.2</div>
+  <div class="ver-line">Version 1.1.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3807,7 +3813,8 @@
       }
     }
     var save='<div class="adm-save"><button class="pri" id="admSave">Save changes</button></div><div class="adm-msg" id="admMsg"></div>';
-    var danger = (t==="info") ? ('<button class="adm-danger" id="admDeact" data-armed="0">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
+    var msgBtn = (t==="info" && admIsActive(r)) ? '<button class="adm-msgbtn" id="admMsg2">\u2709 Message this member</button>' : "";
+    var danger = (t==="info") ? (msgBtn+'<button class="adm-danger" id="admDeact" data-armed="0">'+(admIsActive(r)?"Deactivate this member":"Reactivate this member")+'</button>'+
       '<div class="adm-note">Deactivating keeps all their records and certifications on file \u2014 it only blocks sign-in and hides them from the directory. You can turn them back on anytime.</div>') : "";
     $("admRight").innerHTML='<div class="adm-body">'+head+tabs+body+save+danger+'</div>';
   }
@@ -4202,6 +4209,7 @@
     if(tb){ ADM.tab=tb.getAttribute("data-tab"); admRenderDetail(); return; }
     if(e.target.id==="admSave"){ admSave(); return; }
     if(e.target.id==="admDeact"){ admDeactivate(); return; }
+    if(e.target.id==="admMsg2"){ var mr=admRow(ADM.sel); if(mr) openMessageMember(r_(mr,"Unit")||ADM.sel, ((r_(mr,"First Name")||"")+" "+(r_(mr,"Last Name")||"")).trim()||admName(mr)); return; }
   });
 
   // ---------- Admin Portal: other sections ----------
@@ -4242,7 +4250,7 @@
             ["Value3","Third value (optional)","text"]],
     resources:[["Title","Title","text"],["Description","Description (optional)","text"],["File","File","file"],["Active","Active","bool"]],
     announce:[["Title","Title","text"],
-              ["Kind","Type","sel:feature=New feature (shows once)|confirm=Needs confirming|poll=Poll"],
+              ["Kind","Type","sel:feature=New feature (shows once)|confirm=Needs confirming|poll=Poll|message=Personal message (audience unit:H-xx)"],
               ["Body","Message","area"],
               ["Target","Takes them to","sel:=Nowhere|certifications=Certifications|protocols=Protocols|hospitals=Hospitals|apartments=Apartments Finder|placement=Equipment Finder|resources=Resources|directory=Members Directory|board=Scheduler|taskbook=Task Book|profile=Their profile"],
               ["Options","Poll choices (one per line)","area"],
@@ -4646,6 +4654,7 @@
     {name:"Storage limits",        keys:["Storage Limit DB MB","Storage Limit Files MB","Storage Limit Repo MB"]},
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
+    {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
     {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]}
   ];
   function settingGroupOf(name){
@@ -4896,7 +4905,8 @@
         '</div>'+
         '<div class="adm-itemb">'+
           '<div class="adm-grid">'+fields+'</div>'+specs+
-          (k==="announce"?('<button class="adm-resp" data-resp="'+i+'">See who responded</button>'):"")+
+          (k==="announce"?('<button class="adm-resp" data-resp="'+i+'">See who responded</button>'+
+                           (pushConfigured()?'<button class="adm-push" data-push="'+i+'">Send as notification</button>':'')):"")+
           (k==="settings"?"":'<button class="adm-del" data-del="'+i+'">Delete this row</button>')+
         '</div></div>';
     }).join("");
@@ -5245,6 +5255,13 @@
       var ri=+rsp.getAttribute("data-resp");
       var arow=(ADM2.data["announce"]||[])[ri];
       if(arow) openResponses(arow);
+      return;
+    }
+    var pb=e.target.closest?e.target.closest(".adm-push"):null;
+    if(pb){
+      var pi=+pb.getAttribute("data-push");
+      var prow=(ADM2.data["announce"]||[])[pi];
+      if(prow) admPushAnnouncement(prow, pb);
       return;
     }
     var del=e.target.closest?e.target.closest(".adm-del"):null;
@@ -6038,7 +6055,9 @@
     confirm:'<path d="M5 3h9l5 5v13a1 1 0 01-1 1H5a1 1 0 01-1-1V4a1 1 0 011-1zm8 1.5V9h4.5zM7.5 12h9v1.6h-9zm0 3.4h6V17h-6z"/>',
     poll:'<path d="M4 19h3v-8H4zm6.5 0h3V5h-3zm6.5 0h3v-6h-3z"/>',
     clock:'<path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 10.6l3.5 2.1-.9 1.5L11 13.4V6.5h2z"/>',
-    star:'<path d="M12 3l2 5.2 5.2 2-5.2 2L12 17.4 10 12.2 4.8 10.2 10 8.2z"/>'
+    star:'<path d="M12 3l2 5.2 5.2 2-5.2 2L12 17.4 10 12.2 4.8 10.2 10 8.2z"/>',
+    mail:'<path d="M3 5h18a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1zm1.4 2L12 12.2 19.6 7zM4 9.3V17h16V9.3l-8 5.3z"/>',
+    bell:'<path d="M12 2a6 6 0 00-6 6v3.6L4 15v1h16v-1l-2-3.4V8a6 6 0 00-6-6zm-2 16a2 2 0 004 0z"/>'
   };
   function nxIcon(k){ return NX_ICON[k]||NX_ICON.star; }
   var ANN={loaded:false, rows:[], reads:[], cur:null, pick:"", ticked:false};
@@ -6049,11 +6068,138 @@
   function annSetLocalChoice(id, c){ try{ localStorage.setItem(annLocalKey(id), c||""); }catch(e){} }
   function annMyUnit(){ return (STATE.me&&STATE.me.unit)?String(STATE.me.unit):""; }
   function annOn(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="x"||v==="yes"||v==="true"; }
+  // ---------- Push notifications ----------
+  /* Each phone that allows notifications gets a row in push_subs (its
+     address at Apple/Google plus the keys the sender encrypts with). The
+     sender itself is a Cloudflare worker; the app only ever asks it to send,
+     with the admin's own sign-in as proof. Nothing here runs unless both
+     settings are filled in, so the feature is invisible until it is set up. */
+  var PUSH={subscribed:false, synced:false};
+  var PUSH_ASKED_KEY="hoh_push_asked";
+  function pushKey(){ return String(getSetting("Push Public Key","")||"").trim(); }
+  function pushUrl(){ return String(getSetting("Push Worker URL","")||"").trim(); }
+  function pushConfigured(){ return !!(pushKey() && pushUrl()); }
+  function pushSupported(){ return !!(("serviceWorker" in navigator) && navigator.serviceWorker && ("PushManager" in window) && ("Notification" in window)); }
+  function isIOS(){ return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1); }
+  function isStandalone(){ try{ return !!(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches) || !!navigator.standalone; }catch(e){ return false; } }
+  /* "hidden" (not set up) | "unsupported" | "needs-install" | "blocked" | "off" | "on" */
+  function pushStatus(){
+    if(!pushConfigured() || STATE.demo) return "hidden";
+    if(isIOS() && !isStandalone()) return "needs-install";
+    if(!pushSupported()) return "unsupported";
+    var p=Notification.permission;
+    if(p==="denied") return "blocked";
+    if(p!=="granted") return "off";
+    return PUSH.subscribed ? "on" : "off";
+  }
+  function pushStatusText(st){
+    return st==="on" ? "On \u2014 announcements and messages from admins reach this phone, even with the app closed."
+         : st==="off" ? "Off. Turn it on to get announcements and messages on your lock screen."
+         : st==="blocked" ? "Blocked in your phone\u2019s settings. Open Settings \u2192 Notifications \u2192 Hatzalah and allow them, then come back here."
+         : st==="needs-install" ? "Add the app to your Home Screen first (Share \u2192 Add to Home Screen), then turn this on from there."
+         : st==="unsupported" ? "This browser can\u2019t receive notifications." : "";
+  }
+  function urlB64ToU8(s){
+    s=String(s||"").replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s+="=";
+    var bin=atob(s), out=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+    return out;
+  }
+  /* Keep this phone's row fresh on every open, and re-subscribe if the phone
+     quietly dropped the subscription (iOS does that after a while). */
+  function pushSync(){
+    PUSH.synced=true;
+    if(pushStatus()==="hidden" || !pushSupported() || !(STATE.me&&STATE.me.unit)) return Promise.resolve();
+    if(Notification.permission!=="granted"){ PUSH.subscribed=false; return Promise.resolve(); }
+    return navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(s){
+        return s || reg.pushManager.subscribe({userVisibleOnly:true, applicationServerKey:urlB64ToU8(pushKey())});
+      });
+    }).then(function(s){ PUSH.subscribed=!!s; return s ? pushSave(s) : null; })
+      ["catch"](function(e){ PUSH.subscribed=false; diagLog("push-sync-failed", String((e&&e.message)||e)); });
+  }
+  function pushSave(s){
+    var j=(s&&s.toJSON)?s.toJSON():{endpoint:s&&s.endpoint, keys:{}};
+    var row={ unit:String(STATE.me.unit), endpoint:String(j.endpoint||""), p256dh:String((j.keys&&j.keys.p256dh)||""),
+              auth:String((j.keys&&j.keys.auth)||""), ua:String(navigator.userAgent||"").slice(0,200), last_seen:new Date().toISOString() };
+    if(!row.endpoint || !row.p256dh || !row.auth) return Promise.resolve();
+    return fetch(SB_URL+"/rest/v1/push_subs?on_conflict=endpoint",{ method:"POST",
+      headers:sbAuthHeaders({"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}),
+      body:JSON.stringify(row) }).then(function(r){ if(!r.ok) throw new Error("save-"+r.status); });
+  }
+  function pushEnable(){
+    var st=pushStatus();
+    if(st==="hidden" || st==="unsupported" || st==="needs-install" || st==="blocked") return Promise.resolve(st);
+    return Promise.resolve(Notification.requestPermission()).then(function(p){
+      if(p!=="granted"){ PUSH.subscribed=false; diagLog("push", "permission "+p); return p==="denied"?"blocked":"off"; }
+      return pushSync().then(function(){ diagLog("push", PUSH.subscribed?"on":"subscribe failed"); return PUSH.subscribed?"on":"off"; });
+    });
+  }
+  function pushDisable(){
+    PUSH.subscribed=false; diagLog("push", "turned off");
+    if(!pushSupported()) return Promise.resolve();
+    return navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(s){
+      if(!s) return;
+      var ep=s.endpoint;
+      return s.unsubscribe().then(function(){
+        return fetch(SB_URL+"/rest/v1/push_subs?endpoint=eq."+encodeURIComponent(ep),{method:"DELETE",headers:sbAuthHeaders({Prefer:"return=minimal"})});
+      });
+    })["catch"](function(){});
+  }
+  function pushPromptDue(){
+    if(pushStatus()!=="off") return false;
+    try{ if(localStorage.getItem(PUSH_ASKED_KEY)) return false; }catch(e){}
+    return Notification.permission==="default";
+  }
+  function pushPromptGo(){
+    try{ localStorage.setItem(PUSH_ASKED_KEY, "1"); }catch(e){}
+    uiConfirm({ title:"Turn on notifications?",
+      text:"You\u2019ll get announcements and messages from the admins on your lock screen, even when the app is closed. You can turn it off any time in Profile.",
+      ok:"Turn on", cancel:"Not now" }).then(function(ok){
+      if(!ok){ paintNotices(); return; }
+      pushEnable().then(function(st){
+        toast(st==="on" ? "Notifications are on." : (st==="blocked" ? "Notifications are blocked in your phone\u2019s settings." : "Couldn\u2019t turn notifications on."));
+        paintNotices(); try{ renderPushRow(); }catch(e){}
+      });
+    });
+  }
+  /* The Profile row: status and an on/off button. */
+  function renderPushRow(){
+    var w=$("profPushWrap"); if(!w) return;
+    var st=pushStatus();
+    if(st==="hidden"){ w.innerHTML=""; return; }
+    var btn = (st==="on") ? '<button class="ebtn" id="pushBtn" data-act="off">Turn off</button>'
+            : (st==="off") ? '<button class="ebtn" id="pushBtn" data-act="on">Turn on</button>' : '';
+    w.innerHTML='<div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 00-5 5v3.5L5 15v1h14v-1l-2-3.5V8a5 5 0 00-5-5zm-2 15a2 2 0 004 0"/></svg>Notifications</div>'+
+      '<div class="prof-hint" id="pushHint">'+esc(pushStatusText(st))+'</div>'+btn;
+    var b=$("pushBtn");
+    if(b) b.addEventListener("click",function(){
+      b.disabled=true;
+      var p = b.getAttribute("data-act")==="on" ? pushEnable() : pushDisable().then(function(){ return "off"; });
+      p.then(function(st2){ try{ localStorage.setItem(PUSH_ASKED_KEY,"1"); }catch(e){} renderPushRow(); if(st2==="on") toast("Notifications are on."); if(st2==="blocked") toast("Blocked in your phone\u2019s settings."); paintNotices(); });
+    });
+  }
+  /* Ask the worker to send. The admin's own token is the credential. */
+  function pushSend(msg){
+    var url=pushUrl();
+    if(!url) return Promise.reject(new Error("not-set-up"));
+    if(!(SBA.token&&sbaValid())) return Promise.reject(new Error("sign-in"));
+    return fetch(url,{ method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+SBA.token},
+                       body:JSON.stringify(msg) })
+      .then(function(r){ return r.json().then(function(j){ if(!r.ok||!j||!j.ok) throw new Error((j&&j.error)||("send-"+r.status)); return j; }); });
+  }
+  function pushResultText(j){
+    if(!j.phones) return "Nobody in that group has notifications turned on yet.";
+    return "Sent to "+j.sent+" phone"+(j.sent===1?"":"s")+(j.failed?(", "+j.failed+" didn\u2019t go through"):"")+".";
+  }
   function annLive(a){
     if(!annOn(r_(a,"Active"))) return false;
     var until=r_(a,"Show Until");
     if(until){ var d=parseCertDate(until); if(d){ d.setHours(23,59,59,999); if(new Date()>d) return false; } }
-    if(String(r_(a,"Audience")||"everyone").toLowerCase()==="admins" && !isAdmin()) return false;
+    var aud=String(r_(a,"Audience")||"everyone").trim().toLowerCase();
+    if(aud==="admins" && !isAdmin()) return false;
+    /* a personal message: only the member it was sent to sees it */
+    if(aud.indexOf("unit:")===0 && normUnit(aud.slice(5))!==normUnit(annMyUnit())) return false;
     return true;
   }
   function annId(a){ return (a && (a.__id!=null?a.__id:a.id)); }
@@ -6515,12 +6661,21 @@
         out.push({pri: didVote?6:3, cls:"poll", ic:"poll", title:r_(a,"Title"),
           sub: didVote ? "You voted \u2014 tap to see the results" : "Tap to vote",
           go:function(){ openNotice(a); }});
+      } else if(kind==="message"){
+        if(mine) return;                            // read = gone, like a feature notice
+        out.push({pri:2, cls:"msg", ic:"mail", title:r_(a,"Title"), sub:r_(a,"Body").slice(0,70),
+          go:function(){ openNotice(a); }});
       } else {
         if(mine) return;                            // features show once only
         out.push({pri:5, cls:"ann", ic:"star", title:r_(a,"Title"), sub:r_(a,"Body").slice(0,70),
           go:function(){ openNotice(a); }});
       }
     });
+    /* Asked once, on the first open after notifications became possible. */
+    if(pushPromptDue()){
+      out.push({pri:5, cls:"ann", ic:"bell", title:"Get announcements on your lock screen?",
+        sub:"One tap. You can change it later in Profile.", go:pushPromptGo});
+    }
     out.sort(function(x,y){ return x.pri-y.pri; });
     // A blocking certification stands alone; nothing competes with it.
     if(out.length && out[0].pri===1) return {show:[out[0]], hidden:out.slice(1)};
@@ -6578,7 +6733,7 @@
     var kind=String(r_(a,"Kind")||"feature").toLowerCase();
     var mine=annMine(annId(a));
     $("nxPill").className="nx-pill "+kind;
-    $("nxPill").textContent = kind==="poll" ? "Poll" : (kind==="confirm" ? "Please read" : "New");
+    $("nxPill").textContent = kind==="poll" ? "Poll" : (kind==="confirm" ? "Please read" : (kind==="message" ? "Message" : "New"));
     $("nxTitle").textContent=r_(a,"Title");
     $("nxBody").textContent=r_(a,"Body");
     $("nxErr").textContent="";
@@ -6719,7 +6874,7 @@
     // A new-feature popup is just a signpost. Take them there whether or not
     // the "they have seen it" note saved - failing to record it is no reason
     // to leave someone staring at a dead button.
-    if(kind==="feature"){
+    if(kind==="feature" || kind==="message"){
       closeNotice();
       annRespond(annId(a), action, "").then(function(){ paintNotices(); });
       if(target) setTimeout(function(){ openTileByType(target); },120);
@@ -6782,6 +6937,78 @@
   function closeResp(){ $("rspModal").classList.add("hidden"); }
   $("rspClose").addEventListener("click",closeResp);
   $("rspModal").addEventListener("click",function(e){ if(e.target===this) closeResp(); });
+  /* "Send as notification": the announcement as saved, to everyone it is
+     addressed to who has notifications on. Nothing is sent until they
+     confirm, and unsaved edits in the form are deliberately not included. */
+  function admPushAnnouncement(a, btn){
+    if(demoNo()) return;
+    var title=String(r_(a,"Title")||"").trim(), body=String(r_(a,"Body")||"").trim();
+    var aud=String(r_(a,"Audience")||"everyone").trim().toLowerCase()||"everyone";
+    if(!title){ toast("Give it a title first, and save."); return; }
+    if(!annOn(r_(a,"Active"))){ toast("This announcement is switched off. Turn it on and save first."); return; }
+    if(ADM2.dirty){ toast("Save your changes first, then send."); return; }
+    var who = aud==="admins" ? "every admin" : (aud.indexOf("unit:")===0 ? aud.slice(5).toUpperCase() : "everyone");
+    uiConfirm({ title:"Send as a notification?", text:"\u201C"+title+"\u201D goes to "+who+" who has notifications turned on. It will pop up on their lock screens.", ok:"Send" })
+      .then(function(ok){
+        if(!ok) return;
+        if(btn){ btn.disabled=true; btn.textContent="Sending\u2026"; }
+        pushSend({ kind:"announcement", title:title, body:body.slice(0,180), audience:aud, url:"./", tag:"ann-"+(annId(a)||Date.now()) })
+          .then(function(j){ diagLog("push-sent", "announcement "+j.sent+"/"+j.phones); toast(pushResultText(j)); })
+          ["catch"](function(e){ diagLog("push-send-failed", String((e&&e.message)||e)); toast(pushFailText(e)); })
+          .then(function(){ if(btn){ btn.disabled=false; btn.textContent="Send as notification"; } });
+      });
+  }
+  function pushFailText(e){
+    var m=String((e&&e.message)||e||"");
+    if(m==="not-set-up") return "Notifications aren\u2019t set up yet (Push Worker URL in Settings).";
+    if(m==="sign-in") return "Sign in again to send notifications.";
+    if(/not an admin/.test(m)) return "Only admins can send notifications.";
+    return navigator.onLine ? "Couldn\u2019t send. Try again in a moment." : "No signal \u2014 try again when you\u2019re back online.";
+  }
+  /* "Message this member": saved as a personal announcement (so it waits on
+     their home screen until read) and pushed to their phone(s) right away. */
+  function openMessageMember(unit, name){
+    if(demoNo()) return;
+    var box=document.createElement("div"), id="mm"+Date.now();
+    box.className="adm-modal"; box.id=id;
+    box.innerHTML='<div class="adm-mbox">'+
+      '<h3>Message '+esc(name||unit)+'</h3>'+
+      '<p class="adm-msub">It shows on their home screen until they read it'+(pushConfigured()?', and pops up on their phone if they have notifications on':'')+'. Only they can see it.</p>'+
+      '<textarea class="rp-text" id="'+id+'_t" rows="4" placeholder="Your message" maxlength="500"></textarea>'+
+      '<div class="adm-merr" id="'+id+'_e"></div>'+
+      '<div class="adm-mbtns"><button class="ghost" id="'+id+'_no">Cancel</button>'+
+      '<button class="pri" id="'+id+'_ok">Send</button></div></div>';
+    admHost().appendChild(box);
+    var ta=box.querySelector("#"+id+"_t"), err=box.querySelector("#"+id+"_e"), ok=box.querySelector("#"+id+"_ok"), no=box.querySelector("#"+id+"_no");
+    function close(){ try{ box.parentNode.removeChild(box); }catch(e){} }
+    no.addEventListener("click",close);
+    box.addEventListener("click",function(e){ if(e.target===box && !ok.disabled) close(); });
+    setTimeout(function(){ try{ ta.focus(); }catch(e){} },50);
+    ok.addEventListener("click",function(){
+      var text=String(ta.value||"").trim();
+      if(!text){ err.textContent="Write the message first."; return; }
+      ok.disabled=true; no.disabled=true; ok.textContent="Sending\u2026"; err.textContent="";
+      var from=(STATE.me&&STATE.me.first)?("Message from "+STATE.me.first):"Message from an admin";
+      var until=new Date(Date.now()+30*864e5), untilTxt=(until.getMonth()+1)+"/"+until.getDate()+"/"+until.getFullYear();
+      var row={ kind:"message", title:from, body:text, audience:"unit:"+String(unit), active:"X", show_until:untilTxt, order_col:"999" };
+      sbWrite("POST","announcements",row).then(function(r){
+        if(!r.ok) throw new Error("save-"+r.status);
+        ADM2.loaded["announce"]=false;
+        if(!pushConfigured()) return {phones:0, sent:0, failed:0, skipped:true};
+        return pushSend({ kind:"message", title:from, body:text.slice(0,180), audience:"unit:"+String(unit), url:"./", tag:"msg-"+unit })
+          ["catch"](function(e){ diagLog("push-send-failed", String((e&&e.message)||e)); return {phones:0, sent:0, failed:0, pushErr:e}; });
+      }).then(function(j){
+        close();
+        if(j.skipped) toast("Saved \u2014 it\u2019s waiting on their home screen.");
+        else if(j.pushErr) toast("Saved on their home screen, but the notification didn\u2019t go: "+pushFailText(j.pushErr));
+        else toast(j.sent ? "Sent \u2014 and it\u2019s waiting on their home screen." : "Saved on their home screen. They don\u2019t have notifications on.");
+        diagLog("message-sent", unit+" "+(j.sent||0)+"/"+(j.phones||0));
+      })["catch"](function(e){
+        ok.disabled=false; no.disabled=false; ok.textContent="Send";
+        err.textContent = navigator.onLine ? "Couldn\u2019t save the message. Try again." : "No signal \u2014 try again when you\u2019re back online.";
+      });
+    });
+  }
   function openResponses(a){
     var id=annId(a), kind=String(r_(a,"Kind")||"feature").toLowerCase();
     var anon=annOn(r_(a,"Anonymous")) && kind==="poll";
@@ -8247,7 +8474,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.1.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8287,9 +8514,9 @@
       '<div class="prof-hint">Used by the \u201CText Home\u201D button in Quick Actions \u2014 it opens your SMS or WhatsApp so this number knows you\u2019ve been called out. You still tap send.</div>')+
       '<button class="ebtn primary prof-save" id="profSave">Save changes</button>'+
       '<div class="prof-note" id="profNote"></div>'+
-      '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
+      '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.1.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8319,6 +8546,7 @@
     });
     renderBioRow();
     renderOfflineRow();
+    try{ renderPushRow(); }catch(e){}
   }
   // (legacy password change removed — sign-in is Google-only)
   // ---------- Save for offline ----------
@@ -9147,6 +9375,7 @@
       timezone: (function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){ return ""; } })(),
       screen: (screen&&screen.width||0)+"x"+(screen&&screen.height||0)+" @"+(window.devicePixelRatio||1)+"x",
       fingerprint: (bio&&bio.enabled)?("on, "+(Date.now()<unlockedUntil?"unlocked":"locked")):"off",
+      notifications: (function(){ try{ var st=pushStatus(); return st==="hidden"?"not set up":st+(("Notification" in window)?" (permission "+Notification.permission+")":""); }catch(e){ return "could not read"; } })(),
       lastOfflineSave: last&&last.t ? (new Date(last.t).toLocaleString()+" ("+last.done+" saved, "+last.failed+" failed, "+last.all+" total)"+
         ((last.notKept&&last.notKept.length)?(" — "+last.notKept.length+" hosted elsewhere, not kept on the phone: "+last.notKept.join(", ")):"")) : "never",
       connection: diagConnection(), state: diagScreenState(),
@@ -9263,6 +9492,7 @@
     /* Save everything for offline, quietly, once the home screen has had a
        few seconds to itself. Every open with a signal, no button required. */
     setTimeout(function(){ try{ offAuto(true); }catch(e){} },6000);
+    setTimeout(function(){ try{ pushSync().then(function(){ try{ renderPushRow(); }catch(e){} }); }catch(e){} },4000);
     try{ navRestore(); }catch(e){}}
 
   // Reopening an installed app doesn't reload the page, so this is the only
@@ -9281,6 +9511,16 @@
     if(navigator.serviceWorker){
       navigator.serviceWorker.addEventListener("message",function(e){
         if(e.data && e.data.type==="UPDATE_READY") onUpdateReady(e.data);
+        if(e.data && e.data.type==="PUSH_OPEN"){
+          diagLog("push-open", String(e.data.kind||"")+" "+String(e.data.title||"").slice(0,40));
+          try{ loadAnnouncements().then(function(){
+            paintNotices();
+            if(String(e.data.kind||"")==="message"){
+              var hit=(ANN.rows||[]).filter(function(a){ return annLive(a) && String(r_(a,"Kind")||"").toLowerCase()==="message" && !annMine(annId(a)); })[0];
+              if(hit) openNotice(hit);
+            }
+          }); }catch(x){}
+        }
         if(e.data && e.data.type==="SW_VERSION" && e.data.version) DIAG.swVersion=String(e.data.version);
         if(e.data && e.data.type==="SW_VERSION" && e.data.version &&
            String(e.data.version)!==String(APP_VERSION)) onUpdateReady();
@@ -9297,7 +9537,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.0.2".replace("Version ","");
+  var APP_VERSION="Version 1.1.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
