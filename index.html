@@ -575,6 +575,8 @@
   .cert-filename{font-size:12px;color:var(--mut);min-width:0;word-break:break-word;line-height:1.3}
   .cert-doc{display:block;border:0;background:none;padding:0;margin-top:4px;font:inherit;font-size:12px;font-weight:700;color:var(--navy);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
   .cert-nodoc{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#a35a00}
+  .up-done{background:#e4f6e9;color:#1e7a3d;font-weight:800;font-size:14px;border-radius:11px;padding:11px 13px;margin-bottom:10px}
+  .up-why{margin:0 0 14px}
   .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
   .rem-body{font-size:13.5px;color:var(--ink);line-height:1.55}
   .rem-body p{margin:0 0 10px}
@@ -1483,7 +1485,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.0.1</div>
+  <div class="ver-line">Version 1.0.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1604,7 +1606,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.0.1</div>
+  <div class="ver-line">Version 1.0.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4643,6 +4645,7 @@
                                           "Cert Email Subject (renewed)","Cert Email Body (renewed)"]},
     {name:"Storage limits",        keys:["Storage Limit DB MB","Storage Limit Files MB","Storage Limit Repo MB"]},
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
+    {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]}
   ];
   function settingGroupOf(name){
@@ -5871,8 +5874,9 @@
   var UP_DEFAULT_LINK="https://houstonhatzalah.egnyte.com/ul/s21HNn96UH";
   var UP_DEFAULT_TYPES=["Good Will Agreement","Resignation","Immunizations","License Plate","Driver's License","EMT/Paramedic TX License","Car Insurance","American Heart BLS","ACLS","PALS","COH E-Permit","HFD Waiver","HIPAA","HIPAA Awareness","Jurisprudence less than 4 years old","Epi Training Yearly","Evoc Course","Hazmat","BBP","SOP's","L&S Policy"];
   function closeUpload(){ $("uploadScreen").classList.remove("open"); }
-  function openUpload(target, preset){
+  function openUpload(target, preset, afterRenew){
     if(demoNo()) return;
+    UP.afterRenew=!!afterRenew;
     UP.link=(target&&target.trim())||UP_DEFAULT_LINK;
     if(!$("uploadScreen").classList.contains("open")) navOpen(closeUpload);
     $("uploadScreen").classList.add("open");
@@ -5900,9 +5904,17 @@
     UP.cur=t;
     var unit=(STATE.me&&STATE.me.unit)?STATE.me.unit:"";
     var fname=t+(unit?" "+unit:"");
+    /* Until the copy to Egnyte is automatic, a renewal ends here: the date
+       and document are already safe in the app, and the member is asked to
+       drop the same file into Egnyte the way they always did. Switched off
+       with the setting "Renew Egnyte Step" = off, no release needed. */
+    var lead = UP.afterRenew
+      ? '<div class="up-done">\u2713 Saved in the app \u2014 date and document are on file.</div>'+
+        '<div class="up-note up-why">One more step: Hatzalah\u2019s records also live in Egnyte. Please drop the <b>same file</b> there too.</div>'
+      : '';
     $("upBody").innerHTML=
-      '<button class="ebtn" id="upBackList">\u2039 Back to list</button>'+
-      '<div class="up-step">'+
+      (UP.afterRenew ? '<button class="ebtn" id="upDone">\u2039 Back to certifications</button>' : '<button class="ebtn" id="upBackList">\u2039 Back to list</button>')+
+      '<div class="up-step">'+lead+
         '<div class="up-step-h">Uploading: <b>'+esc(t)+'</b></div>'+
         '<div class="up-name">Please name your file:<br><span class="up-fname" id="upFname">'+esc(fname)+'</span>'+
           '<button class="up-copy" id="upCopy">Copy</button></div>'+
@@ -5914,6 +5926,7 @@
     var tb=e.target.closest?e.target.closest(".up-type"):null;
     if(tb){ showUploadStep(tb.getAttribute("data-t")); return; }
     if(e.target.id==="upBackList"){ renderUploadPicker(); return; }
+    if(e.target.id==="upDone"){ navBack(); return; }
     if(e.target.id==="upCopy"){
       var fn=$("upFname")?$("upFname").textContent:"";
       if(navigator.clipboard){ navigator.clipboard.writeText(fn).then(function(){ toast("Copied: "+fn); },function(){ toast(fn); }); }
@@ -7755,9 +7768,10 @@
       closeUpBefore();
       logCertUpdate(unit, cert, oldVal, mdy);
       CERT.loaded=false; CERT.docsLoaded=false; try{ ADM.docsBy={}; }catch(e){}
-      toast("Saved \u2014 date and document are on file.");
       pokeCertMailer(unit);
       openCerts();
+      var egStep=!/^(off|no|false|0)$/i.test(String(getSetting("Renew Egnyte Step","on")||"on").trim());
+      if(egStep) openUpload("", cert, true); else toast("Saved \u2014 date and document are on file.");
     })["catch"](function(e){
       var m=String((e&&e.message)||e||"");
       diagLog("renew-failed", cert+" "+m);
@@ -8233,7 +8247,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8275,7 +8289,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -9283,7 +9297,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.0.1".replace("Version ","");
+  var APP_VERSION="Version 1.0.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
