@@ -570,6 +570,11 @@
   .cert-modal-l{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--mut)}
   .cert-modal-l input{border:1px solid var(--line);border-radius:10px;padding:11px;font-size:16px;color:var(--ink)}
   .cert-modal-note{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.4}
+  .cert-file{display:flex;align-items:center;gap:10px;margin:12px 0 0;cursor:pointer}
+  .cert-filebtn{border:1px solid var(--navy);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;color:var(--navy);background:#fff;flex:0 0 auto;white-space:nowrap}
+  .cert-filename{font-size:12px;color:var(--mut);min-width:0;word-break:break-word;line-height:1.3}
+  .cert-doc{display:block;border:0;background:none;padding:0;margin-top:4px;font:inherit;font-size:12px;font-weight:700;color:var(--navy);text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:left}
+  .cert-nodoc{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#a35a00}
   .cert-modal-err{font-size:13px;color:var(--red);font-weight:700;margin-top:8px;min-height:16px}
   .rem-body{font-size:13.5px;color:var(--ink);line-height:1.55}
   .rem-body p{margin:0 0 10px}
@@ -1475,7 +1480,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 21.1</div>
+  <div class="ver-line">Version 1.0.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1596,7 +1601,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 21.1</div>
+  <div class="ver-line">Version 1.0.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1840,13 +1845,16 @@
   </div>
   <div class="cert-modal hidden" id="certUpModal">
     <div class="cert-modal-box">
-      <div class="cert-modal-h" id="certUpH">Before you upload</div>
+      <div class="cert-modal-h" id="certUpH">Renew</div>
       <div class="rem-body"><p id="certUpSub"></p></div>
       <label class="cert-modal-l">New expiration date<input type="date" id="certUpDate"></label>
+      <label class="cert-file" id="certUpFileL"><input type="file" id="certUpFile" accept="image/*,application/pdf,.pdf,.heic" style="display:none">
+        <span class="cert-filebtn">&#128247; Choose the document</span><span class="cert-filename" id="certUpFn">a photo of the card, or a PDF</span></label>
+      <div class="cert-modal-note">Both are needed. The date is saved only once the document is in.</div>
       <div class="cert-modal-err" id="certUpErr"></div>
       <div class="cert-modal-btns">
-        <button class="cert-modal-cancel" id="certUpSkip">I don&rsquo;t have it yet</button>
-        <button class="cert-modal-save" id="certUpGo">Save and upload</button>
+        <button class="cert-modal-cancel" id="certUpSkip">Cancel</button>
+        <button class="cert-modal-save primary" id="certUpGo">Save</button>
       </div>
     </div>
   </div>
@@ -1854,7 +1862,7 @@
     <div class="cert-modal-box">
       <div class="cert-modal-h" id="certModalH">Update certification</div>
       <label class="cert-modal-l">New expiration date<input type="date" id="certModalDate"></label>
-      <div class="cert-modal-note">Saves this date to your record, then opens the uploader for the document.</div>
+      <div class="cert-modal-note">Admin only: saves the date without a document. Members use Renew, which needs both.</div>
       <div class="cert-modal-err" id="certModalErr"></div>
       <div class="cert-modal-btns">
         <button id="certModalCancel">Cancel</button>
@@ -3574,7 +3582,17 @@
   $("standBack").addEventListener("click",navBack);
 
   // ---------- Admin Portal ----------
-  var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false};
+  var ADM={loaded:false,rows:[],certs:[],q:"",filter:"active",sel:null,tab:"info",dirty:false,docsBy:{}};
+  /* The documents behind one member's certifications, fetched the first
+     time their Certifications tab opens and kept until something changes. */
+  function admLoadDocs(unit){
+    var k=normUnit(unit); if(!k || ADM.docsBy[k]) return;
+    ADM.docsBy[k]="loading";
+    certDocsFetch(unit, false).then(function(rows){
+      ADM.docsBy[k]=rows||[];
+      if(normUnit(ADM.sel)===k && ADM.tab==="certs") admRenderDetail();
+    });
+  }
   function admLvClass(l){ l=String(l||"").toLowerCase();
     if(l==="als") return "als";
     if(l.indexOf("medic")>=0) return "medic";
@@ -3748,6 +3766,8 @@
       if(!cr){ body='<div class="adm-sec"><div class="adm-empty">No certification record for this unit yet.</div></div>'; }
       else {
         var rows="";
+        var docs=ADM.docsBy[normUnit(ADM.sel)]; if(!docs) admLoadDocs(ADM.sel);
+        var docsReady=Array.isArray(docs);
         CERT.certCols.forEach(function(c){
           var isna=(function(){ function na(v){v=String(v==null?"":v).trim().toLowerCase();return v==="na"||v==="n/a";}
             return (c.singleKey&&na(cr[c.singleKey]))||(c.numKey&&na(cr[c.numKey]))||(c.expKey&&na(cr[c.expKey])); })();
@@ -3757,10 +3777,16 @@
           var key=c.expKey||c.singleKey||c.numKey;
           var nk=(c.numKey && c.numKey!==key) ? c.numKey : "";
           var pk=certKeyOf(c), paused=certIsPaused(cr,c);
+          /* what is on file behind this date: the member's upload, or nothing */
+          var doc=docsReady?certDocLatest(docs, ADM.sel, c.name):null, docLine="";
+          if(!isna){
+            if(doc) docLine='<button class="cert-doc" data-doc="'+esc(doc.path)+'" data-name="'+esc(c.name)+'">View document \u00b7 '+esc(certDocWhen(doc))+'</button>';
+            else if(docsReady && v) docLine='<span class="cert-nodoc">No document on file</span>';
+          }
           rows+='<div class="adm-cert '+(isna?"na":(st.k||"none"))+'">'+
             '<div class="ctop"><span class="cn">'+esc(c.name)+
               (isna?'<div class="cd">Not required \u2014 hidden from this member</div>'
-                   :(paused?'<div class="cd">Reminder emails paused</div>':''))+'</span>'+pill+
+                   :(paused?'<div class="cd">Reminder emails paused</div>':''))+docLine+'</span>'+pill+
               (paused?'<span class="pill pause">Paused</span>':'')+'</div>'+
             '<div class="cbot">'+
               (nk?'<input class="adm-cnum" data-col="'+esc(nk)+'" value="'+esc(cr[nk]==null?"":cr[nk])+'" placeholder="Certificate #"'+(isna?' style="display:none"':'')+'>':'')+
@@ -3830,10 +3856,24 @@
       return;
     }
     var oldUnit=ADM.sel;
+    /* The certifications row keeps its own copy of the name and the unit.
+       Until now a roster edit left it behind, so the certification card and
+       the reminder emails went on using the old spelling -- and a changed
+       unit number would have orphaned the member's certifications entirely.
+       Whatever changed here is written there as well, keyed on the OLD unit. */
+    var certSync={};
+    if(local["First Name"]!=null && local["First Name"]!==String(r_(r,"First Name")||"").trim()) certSync.first_name=local["First Name"];
+    if(local["Last Name"]!=null && local["Last Name"]!==String(r_(r,"Last Name")||"").trim()) certSync.last_name=local["Last Name"];
+    if(local["Unit"] && normUnit(local["Unit"])!==normUnit(oldUnit)) certSync.unit=local["Unit"];
     sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(oldUnit),upd)
       .then(function(res){
         btn.disabled=false; btn.textContent="Save changes";
         if(!res.ok){ msg.className="adm-msg err"; msg.textContent="Couldn\u2019t save. Try again."; return; }
+        if(Object.keys(certSync).length){
+          sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(oldUnit),certSync)
+            .then(function(cr){ if(cr&&cr.ok) CERT.loaded=false; else diagLog("cert-sync-failed", oldUnit+" "+(cr&&cr.status)); })
+            ["catch"](function(){ diagLog("cert-sync-failed", oldUnit+" no connection"); });
+        }
         for(var k in local) r[k]=local[k];
         if(local["Unit"] && normUnit(local["Unit"])!==normUnit(oldUnit)) ADM.sel=local["Unit"];
         msg.className="adm-msg ok"; msg.textContent="Saved.";
@@ -5882,7 +5922,7 @@
   $("upBack").addEventListener("click",navBack);
 
   // ---------- Certifications ----------
-  var CERT={loaded:false,rows:[],certCols:[],collapsed:{},myWorst:"ok"};
+  var CERT={loaded:false,rows:[],certCols:[],collapsed:{},myWorst:"ok",docs:[],docsLoaded:false};
   var CERT_NAMECOLS={"Last Name":1,"First Name":1,"Unit #":1,"Unit":1,"Paused":1};
   function normUnit(u){ return String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
   function parseCertDate(s){
@@ -7355,6 +7395,19 @@
     $("certSearchWrap").style.display=isAdmin()?"":"none";
     /* a leftover search could hide the very card we are about to open */
     if(CERT.focus && $("certSearch")) $("certSearch").value="";
+    /* The documents behind the dates come in on the side: the list is drawn
+       as soon as the certifications are here, and redrawn once the document
+       index arrives (keeping any lit-up row lit). */
+    if(!CERT.docsLoaded && !STATE.demo){
+      certDocsFetch(STATE.me&&STATE.me.unit, isAdmin()).then(function(rows){
+        CERT.docs=rows||[]; CERT.docsLoaded=true;
+        if(CERT.loaded && $("certScreen").classList.contains("open")){
+          var lit=Array.prototype.map.call($("certBody").querySelectorAll(".cert-row.cert-focus"), function(r){ return r.getAttribute("data-name"); });
+          renderCerts($("certSearch").value||"");
+          if(lit.length){ CERT.focus=lit; certApplyFocus(); }
+        }
+      });
+    }
     if(!CERT.loaded){
       $("certBody").innerHTML='<div class="empty">Loading\u2026</div>';
       fetchTab("Certifications").then(function(rows){
@@ -7392,16 +7445,46 @@
       setTimeout(function(){ try{ first.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ first.scrollIntoView(); } },60);
     }
   }
+  /* "Edit date" and "Upload" used to be two separate buttons, and members
+     did one or the other: a date with no document behind it, or a document
+     on Egnyte with the old date still on file. One button now -- Renew --
+     takes both in one go and saves nothing until it has both. Admins keep
+     "Edit date" for the times they hold the card themselves. */
   function certRowHTML(row,c,editable){
     var exp=certExpVal(row,c), num=(c.numKey?String(row[c.numKey]||"").trim():"");
-    var st=certStatus(exp);
+    var st=certStatus(exp), unit=r_(row,"Unit #")||r_(row,"Unit"), dcol=c.expKey||c.singleKey||"";
     var cal= st.date? '<button class="cert-cal" data-cal="'+encodeURIComponent(c.name)+'" data-d="'+st.date.getTime()+'">Remind</button>':'';
-    var edit = (editable && (c.expKey||c.singleKey)) ? '<button class="cert-edit" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey)+'" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Edit date</button>' : '';
-    var up = editable ? ('<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(c.expKey||c.singleKey||"")+
-      '" data-unit="'+esc(r_(row,"Unit #")||r_(row,"Unit"))+'">Upload</button>') : '';
+    var edit = (editable && isAdmin() && dcol) ? '<button class="cert-edit" data-cert="'+esc(c.name)+'" data-col="'+esc(dcol)+'" data-unit="'+esc(unit)+'" data-old="'+esc(exp)+'">Edit date</button>' : '';
+    var up = editable ? ('<button class="cert-up" data-cert="'+esc(c.name)+'" data-col="'+esc(dcol)+
+      '" data-unit="'+esc(unit)+'" data-old="'+esc(exp)+'">'+(dcol?"Renew":"Upload")+'</button>') : '';
+    var doc=certDocLatest(CERT.docs, unit, c.name), docLine="";
+    if(doc) docLine='<button class="cert-doc" data-doc="'+esc(doc.path)+'" data-name="'+esc(c.name)+'">View document · '+esc(certDocWhen(doc))+'</button>';
+    else if(isAdmin() && exp && CERT.docsLoaded) docLine='<span class="cert-nodoc">No document on file</span>';
     return '<div class="cert-row '+st.k+'" data-name="'+esc(c.name)+'"><div class="cert-main"><div class="cert-nm">'+esc(c.name)+'</div>'+
       (num?'<div class="cert-num">#'+esc(num)+'</div>':'')+
-      '<div class="cert-st">'+esc(st.label)+'</div></div><div class="cert-btns">'+cal+edit+up+'</div></div>';
+      '<div class="cert-st">'+esc(st.label)+'</div>'+docLine+'</div><div class="cert-btns">'+cal+edit+up+'</div></div>';
+  }
+  /* ---- the documents behind each certification (cert_docs table) ----
+     The file goes to the private docs bucket under certs/<unit>/; this
+     table is the index of what is there. Newest first, so the first match
+     for a unit and certification is the current one. */
+  function certDocsFetch(unit, all){
+    var q = all ? "cert_docs?select=*&order=uploaded_at.desc&limit=5000"
+                : "cert_docs?select=*&unit=eq."+encodeURIComponent(unit||"")+"&order=uploaded_at.desc";
+    return fetch(SB_URL+"/rest/v1/"+q,{headers:sbAuthHeaders(),cache:"no-store"})
+      .then(function(r){ return r.ok?r.json():[]; }).then(function(j){ return Array.isArray(j)?j:[]; })["catch"](function(){ return []; });
+  }
+  function certDocLatest(rows, unit, certName){
+    if(!rows||!rows.length) return null;
+    var u=normUnit(unit), n=String(certName||"").trim().toLowerCase();
+    for(var i=0;i<rows.length;i++){ var d=rows[i]; if(normUnit(d.unit)===u && String(d.certification||"").trim().toLowerCase()===n) return d; }
+    return null;
+  }
+  function certDocWhen(doc){
+    var d=doc&&doc.uploaded_at?new Date(doc.uploaded_at):null;
+    var when=(d&&!isNaN(d))?fmtDate(d):"";
+    var by=String((doc&&doc.uploaded_by)||"").trim();
+    return (when?"uploaded "+when:"on file")+(by&&normUnit(by)!==normUnit(doc.unit)?" by "+by:"");
   }
   function certIsNA(row, c){
     function isNA(v){ v=String(v==null?"":v).trim().toLowerCase(); return v==="na"||v==="n/a"; }
@@ -7417,6 +7500,19 @@
       '<span><i style="background:var(--gold)"></i>Within 30 days</span>'+
       '<span><i style="background:#2f9e44"></i>Valid</span></div>';
   }
+  /* The certifications table carries its own copy of each name, written when
+     the row was first created. Names get edited on the roster, and that edit
+     never reached here -- "Thestrup MD" stayed on the certification card
+     after the directory had moved on. The roster is the one place a name is
+     maintained, so show its spelling whenever the unit is on it; the row's
+     own copy is only a fallback for someone no longer listed. */
+  function certMemberName(r){
+    var key=normUnit(r["Unit #"]||r["Unit"]), m=null;
+    if(key){ var ros=STATE.roster||[]; for(var i=0;i<ros.length;i++){ if(normUnit(r_(ros[i],"Unit"))===key){ m=ros[i]; break; } } }
+    var fn=String((m&&r_(m,"First Name"))||r["First Name"]||"").trim();
+    var ln=String((m&&r_(m,"Last Name"))||r["Last Name"]||"").trim();
+    return {first:fn, last:ln};
+  }
   function renderCerts(q){
     var body=$("certBody");
     if(!isAdmin()){
@@ -7430,14 +7526,15 @@
     q=(q||"").toLowerCase().trim();
     var rows=CERT.rows.filter(function(r){
       if(!q) return true;
-      return ((r["First Name"]||"")+" "+(r["Last Name"]||"")+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
+      var nm=certMemberName(r);
+      return (nm.first+" "+nm.last+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
     });
     if(!rows.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
     var html=(STATE.demo?'<div class="cert-adminnote">Admin view \u2014 showing all responders\u2019 certifications</div>':'')+certLegend();
     rows.forEach(function(r){
       var key=normUnit(r["Unit #"]||r["Unit"])||(r["Last Name"]||"");
       var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
-      var _ln=(r["Last Name"]||"").trim(), _fn=(r["First Name"]||"").trim();
+      var _nm=certMemberName(r), _ln=_nm.last, _fn=_nm.first;
       var name=(_ln?(_ln+(_fn?", "+_fn:"")):_fn).trim()+" \u00B7 "+(r["Unit #"]||r["Unit"]||"");
       var col=CERT.collapsed[key]!==false;
       html+='<div class="cert-mem'+(col?" collapsed":"")+'" data-k="'+esc(key)+'">'+
@@ -7572,62 +7669,101 @@
       $("certModal").classList.remove("hidden"); return;
     }
     var u=ev.target.closest?ev.target.closest(".cert-up"):null;
-    if(u){ openUpBeforeDate(u.getAttribute("data-cert"), u.getAttribute("data-col"), u.getAttribute("data-unit")); return; }
+    if(u){ openRenew(u.getAttribute("data-cert"), u.getAttribute("data-col"), u.getAttribute("data-unit"), u.getAttribute("data-old")||""); return; }
+    var dl=ev.target.closest?ev.target.closest(".cert-doc"):null;
+    if(dl){ openDocRef(dl.getAttribute("data-doc"), dl.getAttribute("data-name")||"Document"); return; }
   });
-  // Asks for the expiration date at the moment they are holding the card,
-  // then hands them to the upload form. Catching it here is the only reliable
-  // point -- once they leave for the form, they are gone.
-  var CERTUPD=null;
-  function openUpBeforeDate(cert, col, unit){
+  /* ---- Renew: the new date and the document, saved together ----
+     Order matters. The file is stored first, then recorded in cert_docs,
+     and only then is the date written to the certifications row. If any
+     step fails the date is not touched, so a member can no longer end up
+     with a fresh date and nothing behind it. An admin typing a date by
+     hand in the admin portal is the deliberate exception. */
+  var CERTUPD=null, CERT_DOC_MAX=10*1024*1024;
+  function openRenew(cert, col, unit, oldVal){
     if(demoNo()) return;
-    if(!col){ openUpload("", cert); return; }   // nothing to date, e.g. a one-time item
-    CERTUPD={cert:cert, col:col, unit:unit};
-    $("certUpH").textContent="Before you upload \u2014 "+cert;
-    $("certUpSub").textContent="Enter the new expiration date from the card you\u2019re about to upload. "+
-      "It saves straight away, so nobody has to chase you for it.";
+    if(!col){ openUpload("", cert); return; }   // nothing to date, e.g. a one-time item: the general uploader
+    if(!navigator.onLine){ toast("You need a signal to renew a certification."); return; }
+    CERTUPD={cert:cert, col:col, unit:unit, oldVal:oldVal||"", file:null, recorded:""};
+    $("certUpH").textContent="Renew \u2014 "+cert;
+    $("certUpSub").textContent="Enter the new expiration date and attach the card or certificate that shows it.";
     $("certUpErr").textContent="";
     $("certUpDate").value="";
-    $("certUpGo").disabled=true;
+    try{ $("certUpFile").value=""; }catch(e){}
+    $("certUpFn").textContent="a photo of the card, or a PDF";
+    $("certUpGo").disabled=false; $("certUpGo").textContent="Save"; $("certUpSkip").disabled=false;
     $("certUpModal").classList.remove("hidden");
   }
   function closeUpBefore(){ $("certUpModal").classList.add("hidden"); CERTUPD=null; }
-  $("certUpDate").addEventListener("input",function(){
-    $("certUpErr").textContent="";
-    $("certUpGo").disabled=!this.value;
+  function certFileOk(f){
+    if(!f) return false;
+    var n=String(f.name||""), t=String(f.type||"");
+    return /^image\//.test(t) || t==="application/pdf" || /\.(pdf|jpe?g|png|webp|heic|heif|gif)$/i.test(n);
+  }
+  function certFileIsPdf(f){ return !!f && (String(f.type||"")==="application/pdf" || /\.pdf$/i.test(String(f.name||""))); }
+  $("certUpDate").addEventListener("input",function(){ $("certUpErr").textContent=""; });
+  $("certUpFile").addEventListener("change",function(){
+    var f=(this.files&&this.files[0])||null;
+    if(f && !certFileOk(f)){ $("certUpErr").textContent="Please choose a photo or a PDF."; f=null; }
+    else if(f && certFileIsPdf(f) && f.size>CERT_DOC_MAX){ $("certUpErr").textContent="That PDF is over 10 MB. A photo of the card is fine."; f=null; }
+    else $("certUpErr").textContent="";
+    if(!f){ try{ this.value=""; }catch(e){} }
+    if(CERTUPD){ CERTUPD.file=f; CERTUPD.recorded=""; }
+    $("certUpFn").textContent=f?((f.name||"document")+" \u2713"):"a photo of the card, or a PDF";
   });
-  $("certUpSkip").addEventListener("click",function(){
-    var c=CERTUPD?CERTUPD.cert:"";
-    closeUpBefore();
-    toast("No problem \u2014 add the date when you have it.");
-    openUpload("", c);
-  });
+  $("certUpSkip").addEventListener("click",function(){ if(!this.disabled) closeUpBefore(); });
   $("certUpModal").addEventListener("click",function(e){
-    if(e.target===$("certUpModal")) closeUpBefore();
+    if(e.target===$("certUpModal") && !$("certUpGo").disabled) closeUpBefore();
   });
+  function certDocSlug(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"cert"; }
   $("certUpGo").addEventListener("click",function(){
     if(!CERTUPD) return;
-    var v=$("certUpDate").value;
-    if(!v){ $("certUpErr").textContent="Pick the new expiration date."; return; }
+    var v=$("certUpDate").value, f=CERTUPD.file;
+    if(!v && !f){ $("certUpErr").textContent="Pick the new expiration date and choose the document."; return; }
+    if(!v){ $("certUpErr").textContent="Pick the new expiration date too."; return; }
+    if(!f){ $("certUpErr").textContent="Choose the document too \u2014 a photo of the card is fine."; return; }
     var p=v.split("-"), mdy=(+p[1])+"/"+(+p[2])+"/"+p[0];
     var dbcol=sbCol("certifications", CERTUPD.col);
     if(!dbcol){ $("certUpErr").textContent="Couldn\u2019t find that field."; return; }
-    var btn=this; btn.disabled=true; btn.textContent="Saving\u2026";
-    var upd={}; upd[dbcol]=mdy;
-    var cert=CERTUPD.cert, unit=CERTUPD.unit;
-    sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(unit),upd)
-      .then(function(r){
-        btn.disabled=false; btn.textContent="Save and upload";
-        if(!r.ok){ $("certUpErr").textContent="Couldn\u2019t save. Try again."; return; }
-        closeUpBefore();
-        CERT.loaded=false;
-        toast("Date saved. Now upload the document.");
-        pokeCertMailer(unit);
-        openUpload("", cert);
-      })
-      .catch(function(){
-        btn.disabled=false; btn.textContent="Save and upload";
-        $("certUpErr").textContent="Couldn\u2019t save \u2014 check your connection.";
+    var btn=this, cancel=$("certUpSkip"), st=CERTUPD;
+    btn.disabled=true; cancel.disabled=true; btn.textContent="Uploading\u2026"; $("certUpErr").textContent="";
+    var cert=st.cert, unit=st.unit, oldVal=st.oldVal||"", isPdf=certFileIsPdf(f);
+    var base=st.recorded || ("certs/"+String(unit||"unit").replace(/[^A-Za-z0-9-]/g,"")+"/"+certDocSlug(cert)+"-"+p[0]+p[1]+p[2]+"-"+Date.now().toString(36)+(isPdf?".pdf":".jpg"));
+    function fail(m){ btn.disabled=false; cancel.disabled=false; btn.textContent="Save"; $("certUpErr").textContent=m; }
+    /* a retry after the date step failed must not upload the same file twice */
+    var stored = st.recorded ? Promise.resolve() :
+      (isPdf ? Promise.resolve(f) : sbResize(f, 1600, 0.85)).then(function(blob){
+        return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
+          headers:sbAuthHeaders({"Content-Type":(isPdf?"application/pdf":"image/jpeg"), "x-upsert":"true"}),
+          body:blob }).then(function(r){ if(!r.ok) throw new Error("upload-"+r.status); return blob.size||f.size||0; });
+      }).then(function(size){
+        btn.textContent="Saving\u2026";
+        return sbWrite("POST","cert_docs",{ unit:String(unit||""), certification:String(cert||""), path:base, expires:mdy,
+                                            file_name:String(f.name||"").slice(0,120), size_bytes:size,
+                                            uploaded_by:(STATE.me&&STATE.me.unit)?String(STATE.me.unit):"" })
+          .then(function(r){ if(!r.ok) throw new Error("record-"+r.status); st.recorded=base; });
       });
+    stored.then(function(){
+      var upd={}; upd[dbcol]=mdy;
+      return sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(unit),upd)
+        .then(function(r){ if(!r.ok) throw new Error("date-"+r.status); });
+    }).then(function(){
+      btn.disabled=false; cancel.disabled=false; btn.textContent="Save";
+      closeUpBefore();
+      logCertUpdate(unit, cert, oldVal, mdy);
+      CERT.loaded=false; CERT.docsLoaded=false; try{ ADM.docsBy={}; }catch(e){}
+      toast("Saved \u2014 date and document are on file.");
+      pokeCertMailer(unit);
+      openCerts();
+    })["catch"](function(e){
+      var m=String((e&&e.message)||e||"");
+      diagLog("renew-failed", cert+" "+m);
+      if(/^upload-/.test(m)) fail(navigator.onLine?"The document didn\u2019t upload. Try again, or try a smaller photo.":"No signal \u2014 try again when you\u2019re back online.");
+      else if(/^record-/.test(m)) fail("The document went up but couldn\u2019t be recorded. Please tell an admin.");
+      else if(/^date-/.test(m)) fail("The document is in, but the date didn\u2019t save. Tap Save again.");
+      else if(m==="bad-image"||m==="resize-failed") fail("That photo couldn\u2019t be read. Try another one, or a PDF.");
+      else fail(navigator.onLine?"Couldn\u2019t save. Try again in a moment.":"No signal \u2014 try again when you\u2019re back online.");
+    });
   });
 
   $("certModalCancel").addEventListener("click",function(){ $("certModal").classList.add("hidden"); CERTUP=null; });
@@ -8063,7 +8199,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 21.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8105,7 +8241,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 21.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.0.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8309,21 +8445,42 @@
         }
         return timed(fetch(u,{mode:"no-cors"}).then(function(){ return true; }));
       }
+      var okUrls=[];
       function next(){
         if(i>=todo.length) return Promise.resolve();
         var u=todo[i++];
-        return grab(u).then(function(ok){ if(ok) done++; else failed++; })
+        return grab(u).then(function(ok){ if(ok){ done++; if(!(u&&u.doc)) okUrls.push(u); } else failed++; })
           .then(function(){
             say("Saved "+done+" of "+todo.length+"…", Math.round(((done+failed)/todo.length)*100));
             return next();
           });
       }
       var lanes=[]; for(var k=0;k<conc;k++) lanes.push(next());
-      return Promise.all(lanes).then(function(){ return {all:total, todo:todo.length, done:done, failed:failed}; });
+      return Promise.all(lanes).then(function(){
+        var t={all:total, todo:todo.length, done:done, failed:failed, notKept:[]};
+        if(!okUrls.length) return t;
+        /* "Fetched" is not "kept". A picture hosted on some other site goes
+           through the fetch fine, but the worker only files what comes from
+           our own site, the database or the viewer's CDN -- so it is fetched
+           again on every open and is still missing when the signal is gone.
+           The same 6 items turning up as "saved" in every report is how that
+           showed. Look again after the dust settles and name the strays. */
+        return new Promise(function(res){ setTimeout(res,1500); }).then(offCachedSet).then(function(have2){
+          t.notKept=okUrls.filter(function(u){
+            var abs=u; try{ abs=new URL(u, location.href).href; }catch(e){}
+            return !(have2 && have2[abs]);
+          }).map(offShort);
+          return t;
+        });
+      });
     }).then(function(t){
-      try{ localStorage.setItem(OFF_LAST_KEY, JSON.stringify({t:Date.now(), all:t.all, done:t.done, failed:t.failed})); }catch(e){}
+      try{ localStorage.setItem(OFF_LAST_KEY, JSON.stringify({t:Date.now(), all:t.all, done:t.done, failed:t.failed, notKept:(t.notKept||[]).slice(0,12)})); }catch(e){}
       return t;
     });
+  }
+  function offShort(u){
+    try{ var x=new URL(u, location.href); return (x.origin===location.origin?"":x.hostname+" ")+decodeURIComponent(x.pathname.split("/").slice(-2).join("/"))+(x.search?x.search.slice(0,40):""); }
+    catch(e){ return String(u||"").slice(-60); }
   }
   /* The button on the profile screen: same job, with a progress bar. */
   function offDownload(){
@@ -8359,7 +8516,8 @@
       offRun(null, 2).then(function(t){
         OFFDL.running=false;
         try{ console.log("offline save:", t.done, "fetched,", t.failed, "failed,", t.all, "items total"); }catch(e){}
-        if(t.done||t.failed) diagLog("offline-save", t.done+" saved, "+t.failed+" failed, "+t.all+" total");
+        if(t.done||t.failed) diagLog("offline-save", t.done+" saved, "+t.failed+" failed, "+t.all+" total"+
+          ((t.notKept&&t.notKept.length)?("; "+t.notKept.length+" not kept: "+t.notKept.slice(0,6).join(", ")):""));
         /* if the profile screen happens to be open, let its note catch up */
         if($("profOffWrap") && $("profOffWrap").innerHTML) renderOfflineRow();
       })["catch"](function(){ OFFDL.running=false; });
@@ -8941,7 +9099,8 @@
       timezone: (function(){ try{ return Intl.DateTimeFormat().resolvedOptions().timeZone; }catch(e){ return ""; } })(),
       screen: (screen&&screen.width||0)+"x"+(screen&&screen.height||0)+" @"+(window.devicePixelRatio||1)+"x",
       fingerprint: (bio&&bio.enabled)?("on, "+(Date.now()<unlockedUntil?"unlocked":"locked")):"off",
-      lastOfflineSave: last&&last.t ? (new Date(last.t).toLocaleString()+" ("+last.done+" saved, "+last.failed+" failed, "+last.all+" total)") : "never",
+      lastOfflineSave: last&&last.t ? (new Date(last.t).toLocaleString()+" ("+last.done+" saved, "+last.failed+" failed, "+last.all+" total)"+
+        ((last.notKept&&last.notKept.length)?(" — "+last.notKept.length+" hosted elsewhere, not kept on the phone: "+last.notKept.join(", ")):"")) : "never",
       connection: diagConnection(), state: diagScreenState(),
       memory: (navigator.deviceMemory?navigator.deviceMemory+" GB":"not reported")+(navigator.hardwareConcurrency?", "+navigator.hardwareConcurrency+" cores":""),
       time: new Date().toString()
@@ -9090,7 +9249,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 21.1".replace("Version ","");
+  var APP_VERSION="Version 1.0.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
