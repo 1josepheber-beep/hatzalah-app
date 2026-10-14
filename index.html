@@ -1503,7 +1503,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.2.2</div>
+  <div class="ver-line">Version 1.2.3</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1624,7 +1624,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.2.2</div>
+  <div class="ver-line">Version 1.2.3</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2283,48 +2283,116 @@
     if(extra) for(var k in extra) h[k]=extra[k];
     return h;
   }
+  // Another copy of the app on this device - a second browser tab, or the
+  // installed app next to the browser tab (on Android they share storage) -
+  // may already have renewed the session. Use its newer token rather than
+  // spending our old one: Supabase treats a reused refresh token as suspicious
+  // and can end the whole session, which showed up as random sign-outs.
+  function sbaAdoptNewer(){
+    try{
+      var o=JSON.parse(localStorage.getItem(SBA_KEY)||"null");
+      if(o && o.token && (o.exp||0) > (SBA.exp||0)){ SBA=o; return true; }
+    }catch(e){}
+    return false;
+  }
+  try{ window.addEventListener("storage", function(e){ if(e && e.key===SBA_KEY) sbaAdoptNewer(); }); }catch(e){}
   // Supabase ROTATES refresh tokens: each refresh invalidates the previous one.
   // Several parts of the app can ask for a refresh at once on open, so we must
   // only ever have ONE refresh in flight - otherwise the second call uses a dead
   // token, fails, and the person gets kicked out to the sign-in screen.
-  var SBA_INFLIGHT=null;
+  var SBA_INFLIGHT=null, SBA_HOLD_UNTIL=0;
+  function sbaApply(j){
+    SBA.token=j.access_token; SBA.refresh=j.refresh_token||SBA.refresh;
+    SBA.exp=Date.now()+((j.expires_in||3600)*1000);
+    if(j.user&&j.user.email) SBA.email=j.user.email;
+    if(j.user&&j.user.id) SBA.sub=j.user.id;
+    sbaSave();
+  }
+  function sbaRefreshOnce(){
+    return fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
+      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
+      body:JSON.stringify({refresh_token:SBA.refresh})
+    }).then(function(r){
+      return r.json()["catch"](function(){ return {}; }).then(function(j){
+        if(r.ok && j && j.access_token){ sbaApply(j); return true; }
+        // A 4xx means the server rejected this refresh token for good; a retry
+        // with the same token is pointless (429 "slow down" is the exception).
+        var err=new Error("refresh-"+r.status);
+        err.final=(r.status>=400 && r.status<500 && r.status!==429);
+        throw err;
+      });
+    });
+  }
   function sbaRefresh(){
     if(SBA_INFLIGHT) return SBA_INFLIGHT;
+    if(sbaAdoptNewer() && sbaValid()) return Promise.resolve(true);
     if(!SBA.refresh) return Promise.reject("no-refresh");
-    var tok=SBA.refresh;
-    SBA_INFLIGHT = fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
-      method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
-      body:JSON.stringify({refresh_token:tok})
-    }).then(function(r){ if(!r.ok) throw "refresh-failed"; return r.json(); })
-      .then(function(j){
-        if(!j.access_token) throw "refresh-failed";
-        SBA.token=j.access_token; SBA.refresh=j.refresh_token||SBA.refresh;
-        SBA.exp=Date.now()+((j.expires_in||3600)*1000);
-        if(j.user&&j.user.email) SBA.email=j.user.email;
-        if(j.user&&j.user.id) SBA.sub=j.user.id;
-        sbaSave(); SBA_INFLIGHT=null; return true;
-      })
-      .catch(function(e){
-        SBA_INFLIGHT=null;
+    if(Date.now() < SBA_HOLD_UNTIL) return Promise.reject("refresh-hold");
+    SBA_INFLIGHT = sbaRefreshOnce()
+      ["catch"](function(e){
+        if(e && e.final) throw e;
         // One retry: a transient network blip shouldn't sign anyone out.
-        return new Promise(function(res,rej){
-          setTimeout(function(){
-            if(!SBA.refresh){ rej(e); return; }
-            fetch(SB_URL+"/auth/v1/token?grant_type=refresh_token",{
-              method:"POST", headers:{apikey:SB_ANON,"Content-Type":"application/json"},
-              body:JSON.stringify({refresh_token:SBA.refresh})
-            }).then(function(r){ if(!r.ok) throw e; return r.json(); })
-              .then(function(j2){
-                if(!j2.access_token) throw e;
-                SBA.token=j2.access_token; SBA.refresh=j2.refresh_token||SBA.refresh;
-                SBA.exp=Date.now()+((j2.expires_in||3600)*1000);
-                if(j2.user&&j2.user.email) SBA.email=j2.user.email;
-                sbaSave(); res(true);
-              }).catch(function(){ diagLog("session-refresh-failed", String(e)); rej(e); });
-          }, 1200);
+        return new Promise(function(res){ setTimeout(res,1200); }).then(function(){
+          if(sbaAdoptNewer() && sbaValid()) return true;
+          if(!SBA.refresh) throw e;
+          return sbaRefreshOnce();
         });
-      });
+      })
+      .then(function(ok){ SBA_INFLIGHT=null; return ok; },
+            function(e){
+              SBA_INFLIGHT=null;
+              // Don't hammer the sign-in server: wait a minute before trying again.
+              SBA_HOLD_UNTIL=Date.now()+60000;
+              diagLog("session-refresh-failed", String((e&&e.message)||e));
+              throw e;
+            });
     return SBA_INFLIGHT;
+  }
+  // Called before every request: make sure the token is fresh, renewing it when
+  // it has expired or is about to. Always resolves - being offline, or a renewal
+  // that fails, must not block the cached-data paths.
+  function sbReady(){
+    if(sbaValid()) return Promise.resolve(true);
+    if(sbaAdoptNewer() && sbaValid()) return Promise.resolve(true);
+    if(!SBA.refresh || navigator.onLine===false) return Promise.resolve(false);
+    return sbaRefresh().then(function(){ return true; })["catch"](function(){ return false; });
+  }
+  function sbShortPath(u){
+    var m=String(u||"").match(/\/(?:rest|storage)\/v1\/(?:rpc\/|object\/(?:sign\/|list\/)?)?([^?\/]+)/);
+    return m?m[1]:"request";
+  }
+  // Every request that carries the sign-in goes through here. The token is
+  // checked (and renewed) BEFORE the request goes out, and the sign-in headers
+  // are built at send time so a renewal is actually used. If the server still
+  // answers 401, renew once and send again - safe, because a 401 means nothing
+  // was read or written. Before this, a save made an hour after the last renewal
+  // silently went out as "anonymous" and was refused.
+  function sbFetch(url, opts){
+    opts=opts||{};
+    function go(){
+      var o={}, h={}, src=opts.headers||{}, k;
+      for(k in opts) o[k]=opts[k];
+      for(k in src){ if(/^(apikey|authorization)$/i.test(k)) continue; h[k]=src[k]; }
+      o.headers=sbAuthHeaders(h);
+      return fetch(url,o);
+    }
+    return sbReady().then(go).then(function(r){
+      if(r && r.status===401 && SBA.refresh && navigator.onLine!==false){
+        diagLog("request-401", sbShortPath(url));
+        return sbaRefresh().then(go, function(){ return r; });
+      }
+      return r;
+    });
+  }
+  // Renew ahead of time - when the app comes back to the foreground and every
+  // few minutes while it is open - so a save never has to wait for it.
+  var SBA_EARLY=10*60000;
+  function sbaTopUp(){
+    try{
+      if(!SBA.refresh || navigator.onLine===false || SBA_INFLIGHT) return;
+      if(sbaAdoptNewer() && Date.now() < SBA.exp-SBA_EARLY) return;
+      if(Date.now() > SBA.exp-SBA_EARLY) sbaRefresh()["catch"](function(){});
+    }catch(e){}
   }
   function sbaEnsure(){
     if(sbaValid()){
@@ -2439,19 +2507,11 @@
     var out=[],page=0;
     function fetchPage(){
       var qurl=SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000);
-      return fetch(qurl,{headers:sbAuthHeaders(),cache:"no-store"})
-        .then(function(r){
-          // token expired mid-request: refresh once and try again rather than
-          // returning nothing (which used to look like "member not found")
-          if(r.status===401||r.status===403){
-            diagLog("request-"+r.status, tbl);
-            return sbaEnsure().then(function(){
-              return fetch(qurl,{headers:sbAuthHeaders(),cache:"no-store"});
-            });
-          }
-          return r;
-        })
-        .then(function(r){ return r.json(); })
+      // sbFetch renews the token first, and once more on a 401, so an expiry
+      // mid-request no longer returns nothing (which used to look like
+      // "member not found" and sign people out)
+      return sbFetch(qurl,{cache:"no-store"})
+        .then(function(r){ if(r.status===403) diagLog("request-403", tbl); return r.json(); })
         .then(function(rows){
           if(!Array.isArray(rows)) return out;
           for(var i=0;i<rows.length;i++){
@@ -2762,7 +2822,7 @@
   function sbWrite(method, path, body){
     var opts={method:method, headers:sbAuthHeaders({"Content-Type":"application/json", Prefer:"return=minimal"})};
     if(body!==undefined) opts.body=JSON.stringify(body);
-    return fetch(SB_URL+"/rest/v1/"+path, opts);
+    return sbFetch(SB_URL+"/rest/v1/"+path, opts);
   }
   // ---------- Supabase Storage: image uploads ----------
   var SB_BUCKET="image";
@@ -2799,7 +2859,7 @@
     var ext="jpg";
     var name=(folder||"misc")+"/"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)+"."+ext;
     return sbResize(file, opts.maxDim||1200, opts.quality||0.82).then(function(blob){
-      return fetch(SB_URL+"/storage/v1/object/"+SB_BUCKET+"/"+name,{
+      return sbFetch(SB_URL+"/storage/v1/object/"+SB_BUCKET+"/"+name,{
         method:"POST",
         headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON), "Content-Type":"image/jpeg", "x-upsert":"true" },
         body:blob
@@ -2815,6 +2875,15 @@
     });
   }
   // ---- Documents (Resources) -------------------------------------------
+  // Turn a storage error into a sentence a person can act on.
+  function uploadWhy(err){
+    var s=String((err&&err.message)||err||"");
+    if(/row-level security|\(40[13]\)|^upload-40[13]$|^sign-in/i.test(s) || !sbaValid())
+      return "your sign-in needs renewing. Close and reopen the app and try again; if it still fails, sign out and back in.";
+    if(/\(413\)|too large|exceeded the maximum/i.test(s)) return "the picture is too large.";
+    if(/Failed to fetch|NetworkError|Load failed/i.test(s) || navigator.onLine===false) return "no connection right now.";
+    return s ? s.slice(0,80) : "please try again.";
+  }
   // These live in a PRIVATE bucket. Nothing here can be opened with a plain
   // link: the app asks Supabase for a signed link that expires after an hour,
   // so a document cannot be read by anyone who is not signed in.
@@ -2835,7 +2904,7 @@
     var ext=docExt(file.name), mime=DOC_TYPES[ext]||file.type||"application/octet-stream";
     // the original name is kept in the path so the admin list stays readable
     var name="resources/"+Date.now().toString(36)+"-"+docSafeName(file.name)+"."+ext;
-    return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(name),{
+    return sbFetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(name),{
       method:"POST",
       headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON),
                 "Content-Type":mime, "x-upsert":"true" },
@@ -2854,7 +2923,7 @@
   function sbSignedUrl(ref, downloadAs){
     var path=String(ref||"").replace(/^doc:/,"");
     if(!path) return Promise.reject("no-file");
-    return fetch(SB_URL+"/storage/v1/object/sign/"+SB_DOCS+"/"+encodeURI(path),{
+    return sbFetch(SB_URL+"/storage/v1/object/sign/"+SB_DOCS+"/"+encodeURI(path),{
       method:"POST",
       headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON),
                 "Content-Type":"application/json" },
@@ -2996,7 +3065,7 @@
         if(Date.now()-last < SEEN_GAP) return;
       }
       try{ localStorage.setItem(SEEN_KEY,String(Date.now())); }catch(e){}
-      fetch(SB_URL+"/rest/v1/rpc/ping_seen",{
+      sbFetch(SB_URL+"/rest/v1/rpc/ping_seen",{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify({p_unit:String(STATE.me.unit), p_version:String(APP_VERSION)})
       }).then(function(r){ return r.json(); }).then(function(j){
@@ -3650,7 +3719,7 @@
      Admins can read all of them; members only their own. */
   function admLoadPush(){
     if(!pushConfigured() || STATE.demo){ ADM.push=null; return; }
-    fetch(SB_URL+"/rest/v1/push_subs?select=unit,last_seen&order=last_seen.desc&limit=5000",{headers:sbAuthHeaders(),cache:"no-store"})
+    sbFetch(SB_URL+"/rest/v1/push_subs?select=unit,last_seen&order=last_seen.desc&limit=5000",{headers:sbAuthHeaders(),cache:"no-store"})
       .then(function(r){ return r.ok?r.json():[]; }).then(function(rows){
         var by={};
         (rows||[]).forEach(function(x){ var k=normUnit(x.unit); if(!k) return; by[k]=by[k]||{n:0,last:""}; by[k].n++; if(!by[k].last||String(x.last_seen)>by[k].last) by[k].last=String(x.last_seen||""); });
@@ -3989,7 +4058,7 @@
     }
     function call(fn, body, el, label){
       var err=$("rc_err"); err.textContent=""; el.style.opacity=".5";
-      fetch(SB_URL+"/rest/v1/rpc/"+fn,{
+      sbFetch(SB_URL+"/rest/v1/rpc/"+fn,{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify(body)
       }).then(function(r){ return r.json(); })
@@ -4034,7 +4103,7 @@
     $("rc_ok").addEventListener("click",function(){
       var btn=this, err=$("rc_err");
       btn.disabled=true; btn.textContent="Removing\u2026"; err.textContent="";
-      fetch(SB_URL+"/rest/v1/rpc/remove_certification",{
+      sbFetch(SB_URL+"/rest/v1/rpc/remove_certification",{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify({exp_column:expCol})
       }).then(function(r){ return r.json(); })
@@ -4084,7 +4153,7 @@
       var name=inp.value.trim(), err=$("ac_err"), btn=this;
       if(!name){ err.textContent="Enter a name."; return; }
       btn.disabled=true; btn.textContent="Adding\u2026"; err.textContent="";
-      fetch(SB_URL+"/rest/v1/rpc/add_certification",{
+      sbFetch(SB_URL+"/rest/v1/rpc/add_certification",{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify({cert_name:name, only_unit:($("ac_who").value==="one" ? (ADM.sel||"") : "")})
       }).then(function(r){ return r.json(); })
@@ -4251,7 +4320,7 @@
             r0["Photo"]=ref; DIR.loaded=false; toast("Photo updated."); admRenderDetail();
             dropOldImage(prev, ref);
           });
-        }).catch(function(err){ toast("Couldn\u2019t upload."); try{console.error("photo:",err);}catch(e){} });
+        }).catch(function(err){ toast("Couldn\u2019t upload \u2014 "+uploadWhy(err)); try{console.error("photo:",err);}catch(e){} });
       });
       return;
     }
@@ -4365,7 +4434,7 @@
   }
   function admLoadUsage(){
     var box=$("admUsage"); if(!box) return;
-    fetch(SB_URL+"/rest/v1/rpc/usage_stats",{method:"POST",headers:sbAuthHeaders({"Content-Type":"application/json"}),body:"{}"})
+    sbFetch(SB_URL+"/rest/v1/rpc/usage_stats",{method:"POST",headers:sbAuthHeaders({"Content-Type":"application/json"}),body:"{}"})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if(!j||!j.ok){ box.innerHTML=""; return; }
@@ -5343,8 +5412,8 @@
   function canTaskBook(){ return isObserver()||isAdmin()||isFTO(); }
   function loadPlacement(){
     return Promise.all([
-      fetch(SB_URL+"/rest/v1/cabinets?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
-      fetch(SB_URL+"/rest/v1/cabinet_bins?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+      sbFetch(SB_URL+"/rest/v1/cabinets?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      sbFetch(SB_URL+"/rest/v1/cabinet_bins?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
     ]).then(function(res){
       var cabs=Array.isArray(res[0])?res[0]:[], bins=Array.isArray(res[1])?res[1]:[];
       var byCab={};
@@ -5694,8 +5763,8 @@
   var EQ={loaded:false,d:null,tier:"all",q:"",edit:false,collapsed:{},editId:null};
   function loadEquip(){
     return Promise.all([
-      fetch(SB_URL+"/rest/v1/equipment_items?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
-      fetch(SB_URL+"/rest/v1/equipment_meta?select=*",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
+      sbFetch(SB_URL+"/rest/v1/equipment_items?select=*&order=sort_order.asc",{headers:sbAuthHeaders()}).then(function(r){return r.json();}),
+      sbFetch(SB_URL+"/rest/v1/equipment_meta?select=*",{headers:sbAuthHeaders()}).then(function(r){return r.json();})
     ]).then(function(res){
       var rows=Array.isArray(res[0])?res[0]:[], meta=Array.isArray(res[1])?res[1]:[];
       var M={}; meta.forEach(function(m){ M[m.mkey]=m.mvalue||""; });
@@ -6175,7 +6244,7 @@
     var row={ unit:String(STATE.me.unit), endpoint:String(j.endpoint||""), p256dh:String((j.keys&&j.keys.p256dh)||""),
               auth:String((j.keys&&j.keys.auth)||""), ua:String(navigator.userAgent||"").slice(0,200), last_seen:new Date().toISOString() };
     if(!row.endpoint || !row.p256dh || !row.auth) return Promise.resolve();
-    return fetch(SB_URL+"/rest/v1/push_subs?on_conflict=endpoint",{ method:"POST",
+    return sbFetch(SB_URL+"/rest/v1/push_subs?on_conflict=endpoint",{ method:"POST",
       headers:sbAuthHeaders({"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}),
       body:JSON.stringify(row) }).then(function(r){ if(!r.ok) throw new Error("save-"+r.status); });
   }
@@ -6194,7 +6263,7 @@
       if(!s) return;
       var ep=s.endpoint;
       return s.unsubscribe().then(function(){
-        return fetch(SB_URL+"/rest/v1/push_subs?endpoint=eq."+encodeURIComponent(ep),{method:"DELETE",headers:sbAuthHeaders({Prefer:"return=minimal"})});
+        return sbFetch(SB_URL+"/rest/v1/push_subs?endpoint=eq."+encodeURIComponent(ep),{method:"DELETE",headers:sbAuthHeaders({Prefer:"return=minimal"})});
       });
     })["catch"](function(){});
   }
@@ -6235,10 +6304,11 @@
   function pushSend(msg){
     var url=pushUrl();
     if(!url) return Promise.reject(new Error("not-set-up"));
-    if(!(SBA.token&&sbaValid())) return Promise.reject(new Error("sign-in"));
-    return fetch(url,{ method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+SBA.token},
-                       body:JSON.stringify(msg) })
-      .then(function(r){ return r.json().then(function(j){ if(!r.ok||!j||!j.ok) throw new Error((j&&j.error)||("send-"+r.status)); return j; }); });
+    return sbReady().then(function(){
+      if(!(SBA.token&&sbaValid())) throw new Error("sign-in");
+      return fetch(url,{ method:"POST", headers:{"Content-Type":"application/json", Authorization:"Bearer "+SBA.token},
+                         body:JSON.stringify(msg) });
+    }).then(function(r){ return r.json().then(function(j){ if(!r.ok||!j||!j.ok) throw new Error((j&&j.error)||("send-"+r.status)); return j; }); });
   }
   function pushResultText(j){
     if(!j.phones) return "Nobody in that group has notifications turned on yet.";
@@ -6265,7 +6335,7 @@
   }
   // Loaded on demand, the first time a poll is opened.
   function loadTallies(){
-    return fetch(SB_URL+"/rest/v1/poll_tallies?select=*",{headers:sbAuthHeaders()})
+    return sbFetch(SB_URL+"/rest/v1/poll_tallies?select=*",{headers:sbAuthHeaders()})
       .then(function(r){ return r.ok?r.json():[]; })
       .then(function(rows){ ANN.tallies=rows||[]; return ANN.tallies; })
       ["catch"](function(){ return ANN.tallies||[]; });
@@ -6297,9 +6367,9 @@
       fetchTab("Tiles")["catch"](function(){return [];}),
       fetchTab("Roster")["catch"](function(){return [];}),
       fetchTab("apartments")["catch"](function(){return [];}),
-      fetch(SB_URL+"/rest/v1/cabinets?select=img",{headers:sbAuthHeaders()})
+      sbFetch(SB_URL+"/rest/v1/cabinets?select=img",{headers:sbAuthHeaders()})
         .then(function(r){return r.ok?r.json():[];})["catch"](function(){return [];}),
-      fetch(SB_URL+"/rest/v1/equipment_items?select=image",{headers:sbAuthHeaders()})
+      sbFetch(SB_URL+"/rest/v1/equipment_items?select=image",{headers:sbAuthHeaders()})
         .then(function(r){return r.ok?r.json():[];})["catch"](function(){return [];}),
       // Settings hold images too - the Rule of 9 diagram lives here. Missing
       // this meant the cleanup offered to delete it.
@@ -6326,7 +6396,7 @@
     var folders=["tiles","photos","cabinets","apartments","equipment","misc",""];
     var out=[];
     function one(prefix){
-      return fetch(SB_URL+"/storage/v1/object/list/"+SB_BUCKET,{
+      return sbFetch(SB_URL+"/storage/v1/object/list/"+SB_BUCKET,{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify({prefix:prefix, limit:1000, offset:0,
                              sortBy:{column:"name",order:"asc"}})
@@ -6350,7 +6420,7 @@
     });
   }
   function imgDelete(names){
-    return fetch(SB_URL+"/storage/v1/object/"+SB_BUCKET,{
+    return sbFetch(SB_URL+"/storage/v1/object/"+SB_BUCKET,{
       method:"DELETE", headers:sbAuthHeaders({"Content-Type":"application/json"}),
       body:JSON.stringify({prefixes:names})
     }).then(function(r){ return r.ok; })["catch"](function(){ return false; });
@@ -6571,7 +6641,7 @@
     var known={};
     for(var k in SB_TAB2TBL) known[SB_TAB2TBL[k]]=1;
     ["cabinets","cabinet_bins","equipment_items","equipment_meta","announcement_reads","poll_tallies"].forEach(function(t){ known[t]=1; });
-    return fetch(SB_URL+"/rest/v1/",{headers:sbAuthHeaders({"Accept":"application/openapi+json, application/json"})})
+    return sbFetch(SB_URL+"/rest/v1/",{headers:sbAuthHeaders({"Accept":"application/openapi+json, application/json"})})
       .then(function(r){ return r.ok?r.json():null; })
       .then(function(spec){
         var defs=(spec&&spec.definitions)||{};
@@ -6582,7 +6652,7 @@
   function bkReadTable(tbl){
     var out=[], page=0;
     function next(){
-      return fetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),
+      return sbFetch(SB_URL+"/rest/v1/"+tbl+"?select=*&order=id.asc&limit=1000&offset="+(page*1000),
                    {headers:sbAuthHeaders(),cache:"no-store"})
         .then(function(r){
           if(r.status===401||r.status===403) return {denied:true};
@@ -6658,7 +6728,7 @@
   function loadAnnouncements(){
     if(STATE.demo){ ANN.loaded=true; ANN.rows=[]; ANN.reads=[]; return Promise.resolve(); }
     function annRest(){
-      return fetch(SB_URL+"/rest/v1/announcements?select=*&order=order_col.asc",
+      return sbFetch(SB_URL+"/rest/v1/announcements?select=*&order=order_col.asc",
                    {headers:sbAuthHeaders()})
         .then(function(r){ return r.ok?r.json():[]; })
         .then(function(rows){
@@ -6673,7 +6743,7 @@
     }
     return Promise.all([
       annRest(),
-      fetch(SB_URL+"/rest/v1/announcement_reads?select=*",{headers:sbAuthHeaders()})
+      sbFetch(SB_URL+"/rest/v1/announcement_reads?select=*",{headers:sbAuthHeaders()})
         .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
       Promise.resolve([])
     ]).then(function(res){
@@ -6906,7 +6976,7 @@
       if(!oldc){ $("nxErr").textContent="This phone doesn\u2019t have a record of your vote, so it can\u2019t be changed."; return; }
       if(oldc===ANN.pick){ closeNotice(); return; }
       var b2=$("nxGo"); b2.disabled=true; var w2=b2.textContent; b2.textContent="Saving\u2026";
-      fetch(SB_URL+"/rest/v1/rpc/announcement_change_vote",{
+      sbFetch(SB_URL+"/rest/v1/rpc/announcement_change_vote",{
         method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
         body:JSON.stringify({p_ann_id:annId(a), p_unit:annMyUnit(), p_old:oldc, p_new:ANN.pick})
       }).then(function(r){ return r.json(); }).then(function(j){
@@ -6950,7 +7020,7 @@
   function annRespond(id, action, choice){
     var unit=annMyUnit();
     if(!unit || STATE.demo) return Promise.resolve(false);
-    return fetch(SB_URL+"/rest/v1/rpc/announcement_respond",{
+    return sbFetch(SB_URL+"/rest/v1/rpc/announcement_respond",{
       method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
       body:JSON.stringify({p_ann_id:id, p_unit:unit, p_action:action, p_choice:choice||""})
     }).then(function(r){
@@ -7112,9 +7182,9 @@
 
     Promise.all([
       fetchTab("Roster")["catch"](function(){return [];}),
-      fetch(SB_URL+"/rest/v1/announcement_reads?select=*&ann_id=eq."+encodeURIComponent(id),
+      sbFetch(SB_URL+"/rest/v1/announcement_reads?select=*&ann_id=eq."+encodeURIComponent(id),
             {headers:sbAuthHeaders()}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
-      fetch(SB_URL+"/rest/v1/poll_tallies?select=*&ann_id=eq."+encodeURIComponent(id),
+      sbFetch(SB_URL+"/rest/v1/poll_tallies?select=*&ann_id=eq."+encodeURIComponent(id),
             {headers:sbAuthHeaders()}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
     ]).then(function(res){
       var adminsOnly=String(r_(a,"Audience")||"everyone").toLowerCase()==="admins";
@@ -7805,7 +7875,7 @@
   function certDocsFetch(unit, all){
     var q = all ? "cert_docs?select=*&order=uploaded_at.desc&limit=5000"
                 : "cert_docs?select=*&unit=eq."+encodeURIComponent(unit||"")+"&order=uploaded_at.desc";
-    return fetch(SB_URL+"/rest/v1/"+q,{headers:sbAuthHeaders(),cache:"no-store"})
+    return sbFetch(SB_URL+"/rest/v1/"+q,{headers:sbAuthHeaders(),cache:"no-store"})
       .then(function(r){ return r.ok?r.json():[]; }).then(function(j){ return Array.isArray(j)?j:[]; })["catch"](function(){ return []; });
   }
   function certDocLatest(rows, unit, certName){
@@ -8067,7 +8137,7 @@
     /* a retry after the date step failed must not upload the same file twice */
     var stored = st.recorded ? Promise.resolve() :
       (isPdf ? Promise.resolve(f) : sbResize(f, 1600, 0.85)).then(function(blob){
-        return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
+        return sbFetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
           headers:sbAuthHeaders({"Content-Type":(isPdf?"application/pdf":"image/jpeg"), "x-upsert":"true"}),
           body:blob }).then(function(r){ if(!r.ok) throw new Error("upload-"+r.status); return blob.size||f.size||0; });
       }).then(function(size){
@@ -8338,7 +8408,7 @@
     if(TB.view==="book") tbRenderBook(TB.unit); else tbRouteView();
     var row={ unit:unit, task_id:id, self_marked:p["Self Marked"]||"", self_date:p["Self Date"]||"",
       confirmed:p["Confirmed"]||"", confirmed_by:p["Confirmed By"]||"", confirmed_date:p["Confirmed Date"]||"", count:String(p["Count"]||"") };
-    fetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:sbAuthHeaders()})
+    sbFetch(SB_URL+"/rest/v1/task_progress?unit=eq."+encodeURIComponent(unit)+"&task_id=eq."+encodeURIComponent(id)+"&select=id",{headers:sbAuthHeaders()})
       .then(function(r){ return r.json(); })
       .then(function(existing){
         if(Array.isArray(existing) && existing.length){
@@ -8565,7 +8635,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.3</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8607,7 +8677,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.3</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -8632,7 +8702,7 @@
             else { _pb.innerHTML='<img src="'+esc(sbImgUrl(ref))+'" alt=""><span class="prof-photo-edit">Change</span>'; }
             toast("Photo updated.");
           });
-        }).catch(function(err){ toast("Photo upload failed: "+String(err).slice(0,90)); try{console.error("photo:",err);}catch(e){} });
+        }).catch(function(err){ toast("Couldn\u2019t upload \u2014 "+uploadWhy(err)); try{console.error("photo:",err);}catch(e){} });
       });
     });
     renderBioRow();
@@ -8691,7 +8761,7 @@
     function push(u){ if(u && urls.indexOf(u)<0) urls.push(u); }
     function img(v){ var u=sbImgUrl(v); if(u) push(u); }
     function raw(path){
-      return fetch(SB_URL+path,{headers:sbAuthHeaders(),cache:"no-store"})
+      return sbFetch(SB_URL+path,{headers:sbAuthHeaders(),cache:"no-store"})
         .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; });
     }
     function tab(n){ return fetchTab(n)["catch"](function(){ return []; }); }
@@ -9520,7 +9590,7 @@
       if(!shot) return Promise.resolve("");
       var who=diagWho(), base="reports/"+Date.now().toString(36)+"-"+(who.unit||"unknown").replace(/[^A-Za-z0-9-]/g,"")+".jpg";
       return sbResize(shot, 1400, 0.82).then(function(blob){
-        return fetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
+        return sbFetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST",
           headers:{ apikey:SB_ANON, Authorization:"Bearer "+((SBA.token&&sbaValid())?SBA.token:SB_ANON), "Content-Type":"image/jpeg", "x-upsert":"true" },
           body:blob }).then(function(r){ return r.ok?base:""; });
       })["catch"](function(){ return ""; });
@@ -9592,9 +9662,13 @@
   // Reopening an installed app doesn't reload the page, so this is the only
   // moment we can tell someone came back to it.
   document.addEventListener("visibilitychange",function(){
-    if(document.visibilityState==="visible"){ pingSeen(); try{ offAuto(); }catch(e){} }
+    if(document.visibilityState==="visible"){ sbaTopUp(); pingSeen(); try{ offAuto(); }catch(e){} }
   });
-  window.addEventListener("focus",function(){ pingSeen(); });
+  window.addEventListener("focus",function(){ sbaTopUp(); pingSeen(); });
+  /* The sign-in token lasts an hour. Renew it a few minutes early while the app
+     sits open (a scheduler board left on a desk, an admin page mid-edit), so a
+     save made after that hour is never refused. */
+  setInterval(sbaTopUp, 5*60000);
   /* A signal coming back is the best moment to top up the offline copy. */
   window.addEventListener("online",function(){ setTimeout(function(){ try{ offAuto(); }catch(e){} },3000); });
 
@@ -9631,7 +9705,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.2.2".replace("Version ","");
+  var APP_VERSION="Version 1.2.3".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -10587,7 +10661,7 @@
   function closeReader(){ $("protoReader").classList.remove("open"); }
   function zoomBtn(){ if(PZ.scale>PZ.min+0.02) pzReset(); else pzZoomTo(PZ.cw/2,PZ.ch*0.32,2.6); }
 
-  window.addEventListener("resize",function(){ if($("protoReader").classList.contains("open")){ pzMeasure(); pzApply(); } });
+  window.addEventListener("resize",function(){ var pr=$("protoReader"); if(pr && pr.classList.contains("open")){ pzMeasure(); pzApply(); } });
 
   $("protoBody").addEventListener("click",function(e){
     var it=e.target.closest?e.target.closest(".pitem"):null;
