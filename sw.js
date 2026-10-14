@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "1.2.3";
+var VERSION = "1.2.4";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -25,7 +25,7 @@ var DATA    = "hoh-data";          /* deliberately has no version in the name */
    that is a different address from "proto_index.js", so the plain name was
    being saved and the real request was missing it. */
 var SHELL_FILES = ["./","./index.html","./proto_index.js?v=1","./manifest.webmanifest",
-                   "./icon-192.png","./icon-512.png","./logo.png"];
+                   "./icon-192.png","./icon-512.png","./logo.png","./badge-96.png"];
 
 /* A dead-slow connection is worse than no connection: fetch() will sit there
    for 30 seconds or more instead of failing, so the screen just hangs. Give the
@@ -65,12 +65,16 @@ self.addEventListener("message",function(e){
 
 /* A push from the sender (announcement or a personal message). The payload is
    encrypted to this phone only; by the time it reaches here it is plain JSON. */
+/* Two pictures on a notification: "icon" is the full-colour logo on the card,
+   "badge" is the tiny status-bar icon. Android flattens the badge to a single
+   colour mask, so it must be a white silhouette on a transparent background -
+   the colour logo there shows up as a solid white square. */
 self.addEventListener("push",function(e){
   var data={};
   try{ data=e.data ? e.data.json() : {}; }
   catch(x){ try{ data={title:"Hatzalah of Houston", body:e.data?e.data.text():""}; }catch(y){ data={}; } }
   var title=String(data.title||"Hatzalah of Houston");
-  var opts={ body:String(data.body||""), icon:"./icon-192.png", badge:"./icon-192.png",
+  var opts={ body:String(data.body||""), icon:"./icon-192.png", badge:"./badge-96.png",
              tag:String(data.tag||"hoh-"+Date.now()), renotify:true,
              data:{ url:String(data.url||"./"), kind:String(data.kind||""), title:title } };
   e.waitUntil(self.registration.showNotification(title, opts));
