@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "1.2.0";
+var VERSION = "1.2.1";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -31,6 +31,16 @@ var SHELL_FILES = ["./","./index.html","./proto_index.js?v=1","./manifest.webman
    for 30 seconds or more instead of failing, so the screen just hangs. Give the
    network a short window, then serve what we already have. */
 var NET_TIMEOUT_MS = 4000;
+
+/* Age of a saved copy, from the Date header the host sent with it. */
+function isStale(res, ms){
+  try{
+    var d = res && res.headers && res.headers.get("date");
+    if(!d) return true;
+    var t = Date.parse(d);
+    return isNaN(t) ? true : (Date.now() - t) > ms;
+  }catch(e){ return true; }
+}
 
 function timedFetch(req, ms){
   return new Promise(function(resolve, reject){
@@ -80,6 +90,38 @@ self.addEventListener("notificationclick",function(e){
   }));
 });
 
+/* The page itself: "/" and "/index.html". It is the one thing that must
+   always come fresh with a new version. */
+function isPageUrl(u){
+  try{ var p=new URL(u, location.href).pathname; return p==="/" || /\/index\.html$/.test(p); }catch(e){ return false; }
+}
+
+/* Hand-over. Every release used to start with an empty box and throw the old
+   one away, so the first open after an update re-downloaded every picture
+   and script while the old page was still drawing -- and if one of those
+   downloads failed, the page got HTML back instead of the file. Tiles
+   flickered, the page jammed, and only a hard refresh got out of it.
+   Now the previous version's files are copied into the new box first. The
+   page is the exception: it is always re-fetched, so the update still lands. */
+function handOver(newCache){
+  return caches.keys().then(function(keys){
+    var olds=keys.filter(function(k){ return k.indexOf("hoh-shell-")===0 && k!==SHELL; });
+    return Promise.all(olds.map(function(k){
+      return caches.open(k).then(function(oc){
+        return oc.keys().then(function(reqs){
+          return Promise.all(reqs.map(function(r){
+            if(isPageUrl(r.url)) return null;
+            return newCache.match(r.url, {ignoreVary:true}).then(function(have){
+              if(have) return null;
+              return oc.match(r).then(function(res){ return res ? newCache.put(r.url, res) : null; });
+            }).catch(function(){});
+          }));
+        });
+      }).catch(function(){});
+    }));
+  }).catch(function(){});
+}
+
 self.addEventListener("install",function(e){
   self.skipWaiting();
   /* One file at a time, each with its own catch, so a single missing or renamed
@@ -89,23 +131,25 @@ self.addEventListener("install",function(e){
       return c.add(new Request(f,{cache:"reload"})).catch(function(){
         try{ console.warn("sw: could not precache", f); }catch(e){}
       });
-    }));
+    })).then(function(){ return handOver(c); });
   }).catch(function(){}));
 });
 
 self.addEventListener("activate",function(e){
   e.waitUntil(
-    caches.keys().then(function(keys){
-      return Promise.all(keys.map(function(k){
-        if(k === SHELL || k === DATA) return null;   /* keep the current shell and ALL saved content */
-        return caches.delete(k);                     /* only older shells go */
-      }));
-    }).then(function(){
-      /* Re-pull the page itself so an update always takes effect immediately. */
-      return caches.open(SHELL).then(function(c){
+    caches.open(SHELL).then(function(c){ return handOver(c).then(function(){ return c; }); }).then(function(c){
+      return caches.keys().then(function(keys){
+        return Promise.all(keys.map(function(k){
+          if(k === SHELL || k === DATA) return null;   /* keep the current shell and ALL saved content */
+          return caches.delete(k);                     /* older shells go, now that their files are carried over */
+        }));
+      }).then(function(){
+        /* Re-pull the page itself so an update always takes effect immediately.
+           Saved under both of its names: the installed app opens "/", a link
+           opens "/index.html", and only one of them used to be refreshed. */
         return Promise.all([c.delete("./index.html"), c.delete("./")]).then(function(){
           return fetch("./index.html",{cache:"reload"}).then(function(res){
-            if(res && res.ok) return c.put("./index.html", res.clone());
+            if(res && res.ok) return Promise.all([c.put("./index.html", res.clone()), c.put("./", res.clone())]);
           }).catch(function(){});
         });
       });
@@ -218,20 +262,31 @@ self.addEventListener("fetch",function(e){
   }
 
   /* Protocol, ERG, cabinet and apartment images never change once published, so
-     serve them from disk the moment we have them. */
+     serve them from disk the moment we have them. Tile icons live here too
+     now -- they used to sit in the per-version box and vanish on every
+     update. They are re-checked quietly once a day in case one is replaced. */
   if(url.origin === location.origin &&
      (url.pathname.indexOf("/protocols/") > -1 || url.pathname.indexOf("/cabinets/") > -1 ||
-      url.pathname.indexOf("/erg/") > -1 || url.pathname.indexOf("/apartments/") > -1)){
+      url.pathname.indexOf("/erg/") > -1 || url.pathname.indexOf("/apartments/") > -1 ||
+      url.pathname.indexOf("/tile-icons/") > -1)){
+    var icon = url.pathname.indexOf("/tile-icons/") > -1;
     e.respondWith(
       caches.match(req.url, {ignoreVary:true}).then(function(hit){
-        if(hit && hit.ok) return hit;
+        if(hit && hit.ok){
+          if(icon && isStale(hit, 86400000)){
+            fetch(new Request(req, {cache:"no-store"})).then(function(res){
+              if(res && res.ok){ var copy=res.clone(); caches.open(DATA).then(function(c){ c.put(req.url, copy); }); }
+            }).catch(function(){});
+          }
+          return hit;
+        }
         return fetch(req).then(function(res){
           if(res && (res.ok || res.type === "opaque")){
             var copy = res.clone();
             caches.open(DATA).then(function(c){ c.put(req.url, copy); });
           }
           return res;
-        }).catch(function(){ return hit; });
+        }).catch(function(){ return hit || Response.error(); });
       })
     );
     return;
@@ -249,29 +304,42 @@ self.addEventListener("fetch",function(e){
      page is told, and it offers a reload. Fast every time, and never silently
      out of date. */
   if(url.origin === location.origin){
+    var page = isPageUrl(req.url) || req.mode === "navigate";
     e.respondWith(
       caches.open(SHELL).then(function(cache){
         return cache.match(req.url, {ignoreVary:true}).then(function(hit){
 
-          var fresh = fetch(new Request(req, {cache:"no-store"})).then(function(res){
-            if(res && res.ok){
-              var tag = res.headers.get("etag") || res.headers.get("last-modified") || "";
-              var oldTag = hit ? (hit.headers.get("etag") || hit.headers.get("last-modified") || "") : "";
-              cache.put(req.url, res.clone());
-              /* Only shout about the page itself, not every asset. */
-              if(hit && tag && oldTag && tag !== oldTag && /\/(index\.html)?$/.test(url.pathname)){
-                self.clients.matchAll({type:"window"}).then(function(cs){
-                  cs.forEach(function(c){ c.postMessage({type:"UPDATE_READY"}); });
-                });
+          /* The page is always re-checked (that is how an update is noticed).
+             Other files are re-checked once a day: re-downloading every
+             script and picture on every open was pure load, and on a weak
+             signal it was the load that broke the first open after an update. */
+          var recheck = !hit || page || isStale(hit, 86400000);
+          var fresh = !recheck ? Promise.resolve(null) :
+            fetch(new Request(req, {cache:"no-store"})).then(function(res){
+              if(res && res.ok){
+                var tag = res.headers.get("etag") || res.headers.get("last-modified") || "";
+                var oldTag = hit ? (hit.headers.get("etag") || hit.headers.get("last-modified") || "") : "";
+                cache.put(req.url, res.clone());
+                /* Only shout about the page itself, not every asset. */
+                if(hit && tag && oldTag && tag !== oldTag && page){
+                  self.clients.matchAll({type:"window"}).then(function(cs){
+                    cs.forEach(function(c){ c.postMessage({type:"UPDATE_READY"}); });
+                  });
+                }
               }
-            }
-            return res;
-          }).catch(function(){ return null; });
+              return res;
+            }).catch(function(){ return null; });
 
           /* Serve what we have; fall back to the network only if we have nothing. */
           if(hit) return hit;
           return fresh.then(function(res){
-            return res || caches.match("./index.html", {ignoreVary:true});
+            if(res) return res;
+            /* Nothing saved and no network. A page request gets the saved page.
+               A picture or script must NOT -- handing HTML to an <img> or a
+               <script> is what jammed the page -- so look in the other box,
+               and otherwise fail honestly so the browser can retry. */
+            if(page) return caches.match("./index.html", {ignoreVary:true}).then(function(p){ return p || Response.error(); });
+            return caches.match(req.url, {cacheName:DATA, ignoreVary:true}).then(function(d){ return d || Response.error(); });
           });
         });
       })
