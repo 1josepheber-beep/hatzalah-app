@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "1.2.5";
+var VERSION = "1.3.0";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -74,9 +74,23 @@ self.addEventListener("push",function(e){
   try{ data=e.data ? e.data.json() : {}; }
   catch(x){ try{ data={title:"Hatzalah of Houston", body:e.data?e.data.text():""}; }catch(y){ data={}; } }
   var title=String(data.title||"Hatzalah of Houston");
+  var kind=String(data.kind||"");
   var opts={ body:String(data.body||""), icon:"./icon-192.png", badge:"./badge-96.png",
              tag:String(data.tag||"hoh-"+Date.now()), renotify:true,
-             data:{ url:String(data.url||"./"), kind:String(data.kind||""), title:title } };
+             data:{ url:String(data.url||"./"), kind:kind, title:title } };
+  if(kind==="scene-timer"){
+    /* The Scene Timer alarm: buzz hard and stay on screen until it is tapped.
+       The notification is always shown (iPhones drop a site's push rights
+       after a few pushes that show nothing); it shares its tag with the
+       in-app alarm so the two never stack. If the app is in front, the page
+       is nudged as well so it rings on the spot. */
+    opts.requireInteraction=true;
+    opts.vibrate=[300,150,300,150,300,150,300];
+    e.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(function(cs){
+      for(var i=0;i<cs.length;i++){ if(cs[i].visibilityState==="visible"){ try{ cs[i].postMessage({type:"PUSH_SCENE"}); }catch(x){} } }
+    })["catch"](function(){}).then(function(){ return self.registration.showNotification(title, opts); }));
+    return;
+  }
   e.waitUntil(self.registration.showNotification(title, opts));
 });
 

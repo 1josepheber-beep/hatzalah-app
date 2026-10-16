@@ -1459,6 +1459,10 @@
   .sc-sub{min-height:20px;font-size:14px;font-weight:700;color:#9fb0cc;margin-bottom:24px}
   .sc-on{font-size:13px;color:#8ea3c8;font-weight:700;margin-top:-12px;margin-bottom:22px}
   .sc-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:380px}
+  .sc-bg{min-height:18px;margin-top:16px;font-size:13px;font-weight:700;color:#8ea3c8;line-height:1.4}
+  .sc-bg.warn{color:#f0c468}
+  .sc-bg button{display:block;margin:8px auto 0;background:#e8a33d;color:#231a00;border:0;border-radius:10px;padding:9px 14px;font-weight:800;font-size:13px}
+  .sc-bg button:disabled{opacity:.6}
   .sc-row{display:flex;gap:12px}
   .sc-btn{flex:1;border:0;border-radius:16px;padding:19px;font-size:18px;font-weight:800;color:#fff;letter-spacing:.3px}
   .sc-btn:active{transform:scale(.98)}
@@ -1503,7 +1507,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.2.5</div>
+  <div class="ver-line">Version 1.3.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1525,6 +1529,7 @@
       <div class="sc-row hidden" id="scRun"><button class="sc-btn snz" id="scAdd">+5 min</button><button class="sc-btn stop" id="scEnd">End</button></div>
       <div class="sc-row hidden" id="scAlarm"><button class="sc-btn snz" id="scSnooze">Snooze +5</button><button class="sc-btn stop" id="scEnd2">End</button></div>
     </div>
+    <div class="sc-bg" id="scBg"></div>
   </div>
 </div>
 
@@ -1624,7 +1629,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.2.5</div>
+  <div class="ver-line">Version 1.3.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3552,8 +3557,82 @@
   function scNotifyNow(){ if(!("Notification" in window)||Notification.permission!=="granted"||!("serviceWorker" in navigator)) return;
     navigator.serviceWorker.ready.then(function(reg){ try{ reg.showNotification("Scene Timer",{body:scAlarmMsg(),tag:"scene-timer",renotify:true,requireInteraction:true,vibrate:[300,150,300,150,300]}); }catch(e){} }); }
   function scCancelNotifs(){ if(!("serviceWorker" in navigator)) return; try{ navigator.serviceWorker.ready.then(function(r){ if(r.getNotifications) r.getNotifications({includeTriggered:true}).then(function(ns){ ns.forEach(function(n){ if(n.tag==="scene-timer") n.close(); }); }); }); }catch(e){} }
-  function scSchedule(){ if(!("Notification" in window)||Notification.permission!=="granted"||!("serviceWorker" in navigator)||!("TimestampTrigger" in window)) return;
-    navigator.serviceWorker.ready.then(function(reg){ scCancelNotifs(); try{ reg.showNotification("Scene Timer",{body:scAlarmMsg(),tag:"scene-timer",requireInteraction:true,showTrigger:new TimestampTrigger(SCT.startAt+SCT.alarmAt*1000)}); }catch(e){} }); }
+  /* ---- Ringing with the app closed ----
+     A phone freezes the app's clock the moment it is closed or locked, so the
+     alarm is also registered on the server: "ring THIS phone at this time".
+     The push worker checks once a minute, waits for the exact second and
+     sends a push (see push_worker.js). Snooze moves the time; End removes it.
+     Without signal the row cannot be written, so it is retried when the
+     connection comes back, and the timer rings only while the app is open. */
+  var SCA={due:0, ok:false, busy:false, pending:false, offPending:false};
+  function scEndpoint(){
+    if(!pushSupported() || Notification.permission!=="granted" || pushStatus()==="hidden") return Promise.resolve("");
+    function current(){ return navigator.serviceWorker.ready.then(function(reg){ return reg.pushManager.getSubscription(); }).then(function(s){ return (s&&s.endpoint)||""; }); }
+    /* allowed but not subscribed yet (the open-time sync hasn't run, or failed): subscribe now */
+    return current().then(function(ep){ return ep || pushSync().then(current); })["catch"](function(){ return ""; });
+  }
+  function scDueMs(){ return SCT.startAt+SCT.alarmAt*1000; }
+  function scArm(){
+    if(scIsDemo() || !SCT.active || SCT.alarmed || !(STATE.me&&STATE.me.unit)) return Promise.resolve();
+    SCA.offPending=false;
+    var dueMs=scDueMs();
+    return scEndpoint().then(function(ep){
+      if(!ep){ SCA.ok=false; SCA.busy=false; SCA.pending=false; scRenderBg(); return; }
+      SCA.busy=true; SCA.pending=false; scRenderBg();
+      return sbFetch(SB_URL+"/rest/v1/scene_alarms?on_conflict=endpoint",{ method:"POST",
+        headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"},
+        body:JSON.stringify({ unit:String(STATE.me.unit), endpoint:ep, due_at:new Date(dueMs).toISOString(),
+                              title:"Scene Timer", body:scAlarmMsg(), sent_at:null })
+      }).then(function(r){
+        SCA.busy=false;
+        if(!r.ok){ SCA.ok=false; SCA.pending=true; diagLog("scene-arm-failed", String(r.status)); }
+        else { SCA.ok=true; SCA.due=dueMs; diagLog("scene-armed", new Date(dueMs).toLocaleTimeString()); }
+        scRenderBg();
+      })["catch"](function(){ SCA.busy=false; SCA.ok=false; SCA.pending=true; diagLog("scene-arm-failed", "no connection"); scRenderBg(); });
+    });
+  }
+  function scDisarm(){
+    SCA.ok=false; SCA.busy=false; SCA.pending=false; SCA.due=0;
+    if(scIsDemo()) return Promise.resolve();
+    return scEndpoint().then(function(ep){
+      if(!ep) return;
+      return sbFetch(SB_URL+"/rest/v1/scene_alarms?endpoint=eq."+encodeURIComponent(ep),{ method:"DELETE", headers:{Prefer:"return=minimal"} })
+        .then(function(r){ SCA.offPending=!r.ok; if(!r.ok) diagLog("scene-disarm-failed", String(r.status)); })
+        ["catch"](function(){ SCA.offPending=true; diagLog("scene-disarm-failed", "no connection"); });
+    });
+  }
+  /* A signal coming back: finish whatever the last tap couldn't do. */
+  window.addEventListener("online", function(){ setTimeout(function(){
+    try{ if(SCT.active && !SCT.alarmed && SCA.pending) scArm(); else if(!SCT.active && SCA.offPending) scDisarm(); }catch(e){}
+  }, 1500); });
+  /* The line under the buttons: will it ring with the app closed? */
+  function scRenderBg(){
+    var el=$("scBg"); if(!el) return;
+    var st=pushStatus(), html="", cls="";
+    if(st==="hidden" || st==="unsupported"){ el.innerHTML=""; el.className="sc-bg"; return; }
+    var granted=("Notification" in window) && Notification.permission==="granted";
+    if(st==="on" || (st==="off" && granted)){
+      if(SCT.active && !SCT.alarmed){
+        if(SCA.ok) html="\uD83D\uDD14 Rings even if the app is closed or the phone is locked.";
+        else if(SCA.busy) html="Registering the alarm\u2026";
+        else if(SCA.pending){ html="No signal \u2014 rings only while the app is open."; cls="warn"; }
+        else { html="Couldn\u2019t register the alarm \u2014 rings only while the app is open."; cls="warn"; }
+      } else html="\uD83D\uDD14 Rings even if the app is closed or the phone is locked.";
+    }
+    else if(st==="off"){ html="Rings only while the app is open. <button id=\"scBgOn\">Turn on notifications</button>"; cls="warn"; }
+    else if(st==="blocked"){ html="Notifications are blocked in your phone\u2019s settings \u2014 rings only while the app is open."; cls="warn"; }
+    else if(st==="needs-install"){ html="Add the app to your Home Screen so it can ring when closed."; cls="warn"; }
+    el.innerHTML=html; el.className="sc-bg"+(cls?" "+cls:"");
+    var b=$("scBgOn");
+    if(b) b.addEventListener("click", function(){
+      b.disabled=true;
+      pushEnable().then(function(st2){
+        try{ localStorage.setItem(PUSH_ASKED_KEY,"1"); }catch(e){}
+        if(st2==="on"){ toast("Notifications are on."); if(SCT.active && !SCT.alarmed) scArm(); else scRenderBg(); }
+        else scRenderBg();
+      });
+    });
+  }
   function scRender(){
     var el=scEl(), remain=SCT.alarmAt-el;
     $("scene").classList.toggle("alarm", SCT.active&&SCT.alarmed);
@@ -3573,16 +3652,20 @@
     if(!scIsDemo() && !SCT.reminded && scEl()>=SC_REMIND){ SCT.reminded=true; scWakeOff(); if(!document.hidden) scSixBeeps(); var m=$("scRemind"); if(m) m.classList.add("show"); }
     scRender(); }
   function scStartTick(){ if(SCT.id) clearInterval(SCT.id); SCT.id=setInterval(scTick,300); }
-  function scStart(){ scAudio(); scWakeOn(); if(!scIsDemo() && "Notification" in window && Notification.permission==="default"){ try{Notification.requestPermission();}catch(e){} }
-    SCT.active=true; SCT.alarmed=false; SCT.reminded=false; SCT.startAt=Date.now(); SCT.alarmAt=SC_COUNT; scSave(); if(!scIsDemo()) scSchedule(); scStartTick(); scRender(); }
-  function scSnooze(){ SCT.alarmAt=Math.round(scEl())+SC_ADD; SCT.alarmed=false; $("scene").classList.remove("alarm"); $("scw").classList.remove("alarm"); scSave(); scSchedule(); scRender(); }
-  function scAddTime(){ SCT.alarmAt+=SC_ADD; scSave(); scSchedule(); scRender(); }
-  function scEnd(){ SCT.active=false; SCT.alarmed=false; SCT.reminded=false; clearInterval(SCT.id); SCT.id=0; scClearSave(); scCancelNotifs(); scWakeOff(); if(navigator.vibrate)navigator.vibrate(0);
+  function scStart(){ scAudio(); scWakeOn();
+    SCT.active=true; SCT.alarmed=false; SCT.reminded=false; SCT.startAt=Date.now(); SCT.alarmAt=SC_COUNT; scSave(); scStartTick(); scRender();
+    if(!scIsDemo() && pushStatus()==="off" && "Notification" in window && Notification.permission==="default"){
+      /* first timer on this phone: ask now, because the alarm needs it to ring with the app closed */
+      pushEnable().then(function(st){ try{ localStorage.setItem(PUSH_ASKED_KEY,"1"); }catch(e){} if(st==="on") scArm(); else scRenderBg(); })["catch"](function(){ scRenderBg(); });
+    } else scArm(); }
+  function scSnooze(){ SCT.alarmAt=Math.round(scEl())+SC_ADD; SCT.alarmed=false; $("scene").classList.remove("alarm"); $("scw").classList.remove("alarm"); scSave(); scRender(); scArm(); }
+  function scAddTime(){ SCT.alarmAt+=SC_ADD; scSave(); scRender(); scArm(); }
+  function scEnd(){ SCT.active=false; SCT.alarmed=false; SCT.reminded=false; clearInterval(SCT.id); SCT.id=0; scClearSave(); scCancelNotifs(); scWakeOff(); scDisarm(); if(navigator.vibrate)navigator.vibrate(0);
     var rm=$("scRemind"); if(rm) rm.classList.remove("show");
     $("scene").classList.remove("alarm"); $("scw").classList.remove("show","alarm","shake"); if(SCT.page){ SCT.page=false; navBack(); } scRender(); }
-  function scOpen(){ SCT.page=true; $("scene").classList.add("open"); $("scw").classList.remove("show");
+  function scOpen(){ SCT.page=true; $("scene").classList.add("open"); $("scw").classList.remove("show"); try{ scRenderBg(); }catch(e){}
     navOpen(function(){ SCT.page=false; $("scene").classList.remove("open"); if(SCT.active){ $("scw").classList.add("show"); } }); scRender(); }
-  function scRestore(){ if(SCT.active) return; try{ var s=JSON.parse(localStorage.getItem("hoh_scene")||"null"); if(s&&s.a){ SCT.active=true; SCT.startAt=s.s; SCT.alarmAt=s.al; SCT.alarmed=!!s.ar; if(scEl()>=SCT.alarmAt) SCT.alarmed=true; if(scEl()>=SC_REMIND) SCT.reminded=true; scWakeOn(); scStartTick(); $("scw").classList.add("show"); scRender(); } }catch(e){} }
+  function scRestore(){ if(SCT.active) return; try{ var s=JSON.parse(localStorage.getItem("hoh_scene")||"null"); if(s&&s.a){ SCT.active=true; SCT.startAt=s.s; SCT.alarmAt=s.al; SCT.alarmed=!!s.ar; if(scEl()>=SCT.alarmAt) SCT.alarmed=true; if(scEl()>=SC_REMIND) SCT.reminded=true; scWakeOn(); scStartTick(); $("scw").classList.add("show"); scRender(); if(!SCT.alarmed) setTimeout(function(){ try{ scArm(); }catch(e){} }, 2500); } }catch(e){} }
   if($("scRemindOk")) $("scRemindOk").addEventListener("click", function(){ var m=$("scRemind"); if(m) m.classList.remove("show"); });
   document.addEventListener("visibilitychange", function(){ if(!document.hidden && SCT.active) scWakeOn(); });
   if($("hdrLogo")) $("hdrLogo").addEventListener("click", scOpen);
@@ -8650,7 +8733,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.5</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8692,7 +8775,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.2.5</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
@@ -9694,7 +9777,15 @@
     if(navigator.serviceWorker){
       navigator.serviceWorker.addEventListener("message",function(e){
         if(e.data && e.data.type==="UPDATE_READY") onUpdateReady(e.data);
-        if(e.data && e.data.type==="PUSH_OPEN"){
+        if(e.data && e.data.type==="PUSH_SCENE"){
+          /* the alarm push arrived while the app is in front: the app rings itself */
+          try{ if(SCT.active) scTick(); }catch(x){}
+        }
+        if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="scene-timer"){
+          diagLog("push-open", "scene-timer");
+          try{ if(SCT.active) scTick(); scOpen(); }catch(x){}
+        }
+        else if(e.data && e.data.type==="PUSH_OPEN"){
           diagLog("push-open", String(e.data.kind||"")+" "+String(e.data.title||"").slice(0,40));
           try{ loadAnnouncements().then(function(){
             paintNotices();
@@ -9720,7 +9811,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.2.5".replace("Version ","");
+  var APP_VERSION="Version 1.3.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
