@@ -1507,7 +1507,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.3.1</div>
+  <div class="ver-line">Version 1.3.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1629,7 +1629,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.3.1</div>
+  <div class="ver-line">Version 1.3.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2194,7 +2194,7 @@
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
   var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements"};
-  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
+  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   /* ---------- Diagnostics ----------
@@ -3978,7 +3978,7 @@
         admFld("adPe","Personal email (cert reminders)",r_(r,"Personal Email"),"","email")+'</div>'+
         '<div class="adm-sec"><div class="adm-sech">Sizing<span class="bdg">member usually sets this</span></div>'+
         '<div class="adm-3">'+admSel("adTs","T-Shirt",r_(r,"T-Shirt Size"),SZ_OPTS)+admSel("adDs","Dress shirt",r_(r,"Dress Shirt Size"),SZ_OPTS)+admSel("adPo","Polo",r_(r,"Polo Shirt Size"),SZ_OPTS)+'</div>'+
-        '<div class="adm-2">'+admSel("adHt","Hat",r_(r,"Hat Size"),SZ_OPTS)+admSel("adCt","Coat",r_(r,"Coat Size"),SZ_OPTS)+'</div></div>'+
+        '<div class="adm-3">'+admSel("adHt","Hat",r_(r,"Hat Size"),SZ_OPTS)+admSel("adCt","Coat",r_(r,"Coat Size"),SZ_OPTS)+admSel("adGl","Gloves",r_(r,"Glove Size"),GL_OPTS)+'</div></div>'+
         '<div class="adm-sec"><div class="adm-sech">Emergency &amp; home<span class="bdg">member usually sets this</span></div>'+
         admFld("adEc","Emergency contact",r_(r,"Emergency Contact"))+
         '<div class="adm-2">'+admFld("adEcp","Their phone",r_(r,"Emergency Phone"),"","tel")+admSel("adEcr","Relationship",r_(r,"Emergency Relationship"),["Spouse","Friend","Parent","Sibling","Other"])+'</div>'+
@@ -4053,7 +4053,7 @@
     } else if(ADM.tab==="contact"){
       put("phone","Phone",admVal("adPh")); put("address","Address",admVal("adAddr")); put("personal_email","Personal Email",admVal("adPe"));
       put("t_shirt_size","T-Shirt Size",admVal("adTs")); put("dress_shirt_size","Dress Shirt Size",admVal("adDs"));
-      put("polo_shirt_size","Polo Shirt Size",admVal("adPo")); put("hat_size","Hat Size",admVal("adHt")); put("coat_size","Coat Size",admVal("adCt"));
+      put("polo_shirt_size","Polo Shirt Size",admVal("adPo")); put("hat_size","Hat Size",admVal("adHt")); put("coat_size","Coat Size",admVal("adCt")); put("glove_size","Glove Size",admVal("adGl"));
       put("emergency_contact","Emergency Contact",admVal("adEc")); put("emergency_phone","Emergency Phone",admVal("adEcp"));
       put("emergency_relationship","Emergency Relationship",admVal("adEcr"));
       put("text_home","Text Home",admVal("adTh")); put("text_home_method","Text Home Method",admVal("adThm"));
@@ -4287,7 +4287,7 @@
     }
     var rosterCols=["Unit","Last Name","First Name","Email","Personal Email","Phone","Address","DOB",
       "Type","Level","Status","FTO","Admin","Dispatcher","Active","Last Active","Last Version",
-      "T-Shirt Size","Dress Shirt Size","Polo Shirt Size","Hat Size","Coat Size",
+      "T-Shirt Size","Dress Shirt Size","Polo Shirt Size","Hat Size","Coat Size","Glove Size",
       "Emergency Contact","Emergency Phone","Emergency Relationship","Text Home","Text Home Method"];
 
     var certByUnit={};
@@ -8569,7 +8569,7 @@
       var first=r_(r,"First Name"), last=r_(r,"Last Name");
       var key=(last+"|"+first).toLowerCase().replace(/\s+/g,"");
       if(!map[key]){ map[key]={first:first,last:last,unit:r_(r,"Unit"),phone:r_(r,"Phone"),address:r_(r,"Address"),dob:r_(r,"DOB"),level:r_(r,"Level"),
-        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),photo:r_(r,"Photo"),types:[]}; order.push(key); }
+        tshirt:r_(r,"T-Shirt Size"),dress:r_(r,"Dress Shirt Size"),polo:r_(r,"Polo Shirt Size"),hat:r_(r,"Hat Size"),coat:r_(r,"Coat Size"),glove:r_(r,"Glove Size"),ecName:r_(r,"Emergency Contact"),ecPhone:r_(r,"Emergency Phone"),ecRel:r_(r,"Emergency Relationship"),photo:r_(r,"Photo"),types:[]}; order.push(key); }
       var m=map[key], t=r_(r,"Type");
       if(t && m.types.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0) m.types.push(t);
       if(!m.unit) m.unit=r_(r,"Unit");
@@ -8583,6 +8583,7 @@
       if(!m.polo) m.polo=r_(r,"Polo Shirt Size");
       if(!m.hat) m.hat=r_(r,"Hat Size");
       if(!m.coat) m.coat=r_(r,"Coat Size");
+      if(!m.glove) m.glove=r_(r,"Glove Size");
       if(!m.ecName) m.ecName=r_(r,"Emergency Contact");
       if(!m.ecPhone) m.ecPhone=r_(r,"Emergency Phone");
       if(!m.ecRel) m.ecRel=r_(r,"Emergency Relationship");
@@ -8654,7 +8655,7 @@
         var SHIRT='<svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10a1 1 0 001 1h10a1 1 0 001-1V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"/></svg>';
         var PHN='<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg>';
         function chip(lbl,v){ return v?'<span class="sz-chip">'+lbl+' <b>'+esc(v)+'</b></span>':''; }
-        var chips=chip('T-Shirt',p.tshirt)+chip('Dress',p.dress)+chip('Polo',p.polo)+chip('Hat',p.hat)+chip('Coat',p.coat);
+        var chips=chip('T-Shirt',p.tshirt)+chip('Dress',p.dress)+chip('Polo',p.polo)+chip('Hat',p.hat)+chip('Coat',p.coat)+chip('Gloves',p.glove);
         var ecTel=(p.ecPhone||"").replace(/[^0-9+]/g,""), ecHtml="";
         if(p.ecName||p.ecRel) ecHtml+='<div class="ec-line">'+esc(p.ecName||"")+(p.ecRel?' <span class="rel">\u00b7 '+esc(p.ecRel)+'</span>':'')+'</div>';
         if(p.ecPhone) ecHtml+='<a class="ec-tel" href="tel:'+esc(ecTel)+'">'+PHN+esc(p.ecPhone)+'</a>';
@@ -8701,6 +8702,7 @@
     }).catch(function(){ renderProfile(null); });
   }
   var SZ_OPTS=["XS","S","M","L","XL","2XL","3XL","4XL","5XL"];
+  var GL_OPTS=["XS","S","M","L","XL","2XL"];   /* exam gloves come in these */
   function selField(id,label,val,opts,otherPh){
     val=String(val==null?"":val).trim();
     var isStd = val && opts.indexOf(val)>=0;
@@ -8733,7 +8735,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8763,7 +8765,8 @@
       selField("profDress","Dress Shirt size",r_(row,"Dress Shirt Size"),SZ_OPTS,"Enter dress shirt size")+
       selField("profPolo","Polo Shirt size",r_(row,"Polo Shirt Size"),SZ_OPTS,"Enter polo shirt size")+
       selField("profHat","Hat size",r_(row,"Hat Size"),SZ_OPTS,"Enter hat size")+
-      selField("profCoat","Coat size",r_(row,"Coat Size"),SZ_OPTS,"Enter coat size"))+
+      selField("profCoat","Coat size",r_(row,"Coat Size"),SZ_OPTS,"Enter coat size")+
+      selField("profGlove","Glove size",r_(row,"Glove Size"),GL_OPTS,"Enter glove size"))+
             pfold("Text home",'<svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>',
         '<label class="prof-l">Home number<input id="profTextHome" type="tel" value="'+esc(r_(row,"Text Home"))+'" placeholder="Spouse or home number"></label>'+
       '<label class="prof-l">Send via<select id="profTextMethod">'+
@@ -8775,10 +8778,10 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
-    wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profRel");
+    wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
     var _de=$("profDobEdit");
     if(_de) _de.addEventListener("click",function(){
       $("profDobRow").classList.add("hidden");
@@ -9088,11 +9091,11 @@
     if(demoNo()) return;
     var note=$("profNote");
     var phone=$("profPhone").value.trim(), addr=$("profAddr").value.trim();
-    var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"),
+    var extra={ tshirt:szRead("profTshirt"), dress:szRead("profDress"), polo:szRead("profPolo"), hat:szRead("profHat"), coat:szRead("profCoat"), glove:szRead("profGlove"),
       ecName:$("profEcName").value.trim(), ecPhone:$("profEcPhone").value.trim(), ecRel:szRead("profRel"), altEmail:$("profAltEmail").value.trim(), textHome:$("profTextHome").value.trim(), textMethod:($("profTextMethod")?$("profTextMethod").value:"sms"),
       dob:($("profDob")?dobMdy($("profDob").value):undefined) };
     var btn=$("profSave"); btn.disabled=true; btn.textContent="Saving\u2026"; note.className="prof-note"; note.textContent="";
-    var upd={ phone:phone, address:addr, t_shirt_size:extra.tshirt, dress_shirt_size:extra.dress, polo_shirt_size:extra.polo, hat_size:extra.hat, coat_size:extra.coat, emergency_contact:extra.ecName, emergency_phone:extra.ecPhone, emergency_relationship:extra.ecRel, personal_email:extra.altEmail, text_home:extra.textHome, text_home_method:extra.textMethod };
+    var upd={ phone:phone, address:addr, t_shirt_size:extra.tshirt, dress_shirt_size:extra.dress, polo_shirt_size:extra.polo, hat_size:extra.hat, coat_size:extra.coat, glove_size:extra.glove, emergency_contact:extra.ecName, emergency_phone:extra.ecPhone, emergency_relationship:extra.ecRel, personal_email:extra.altEmail, text_home:extra.textHome, text_home_method:extra.textMethod };
     if(extra.dob!==undefined && extra.dob!=="") upd.dob=extra.dob;
     sbWrite("PATCH","roster?unit=eq."+encodeURIComponent(STATE.me.unit),upd)
       .then(function(r){ finishProfile(r.ok, phone, addr, extra); })
@@ -9108,7 +9111,7 @@
         if("Phone" in r)r["Phone"]=phone; if("Address" in r)r["Address"]=addr;
         if(extra){
           if("T-Shirt Size" in r)r["T-Shirt Size"]=extra.tshirt; if("Dress Shirt Size" in r)r["Dress Shirt Size"]=extra.dress; if("Polo Shirt Size" in r)r["Polo Shirt Size"]=extra.polo;
-          if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat;
+          if("Hat Size" in r)r["Hat Size"]=extra.hat; if("Coat Size" in r)r["Coat Size"]=extra.coat; if("Glove Size" in r)r["Glove Size"]=extra.glove;
           if("Emergency Contact" in r)r["Emergency Contact"]=extra.ecName; if("Emergency Phone" in r)r["Emergency Phone"]=extra.ecPhone; if("Emergency Relationship" in r)r["Emergency Relationship"]=extra.ecRel;
           if("Personal Email" in r)r["Personal Email"]=extra.altEmail;
           if("Text Home" in r)r["Text Home"]=extra.textHome;
@@ -9811,7 +9814,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.3.1".replace("Version ","");
+  var APP_VERSION="Version 1.3.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
