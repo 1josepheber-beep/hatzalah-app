@@ -801,7 +801,23 @@
   .amb-inv.issue{background:#fff7f7;margin:0 -14px;padding-left:14px;padding-right:14px}
   .amb-invc{flex:1 1 100%;margin-top:2px;font-size:14px;padding:8px 11px}
   .amb-allok{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;font-weight:800;font-size:11px;letter-spacing:.3px;cursor:pointer;text-transform:none}
-  .amb-sech{display:flex;align-items:center}
+  .amb-sech{display:flex;align-items:center;gap:7px}
+  .amb-tog{cursor:pointer;user-select:none;-webkit-user-select:none;padding:12px 0}
+  .amb-chev{display:inline-block;font-size:18px;line-height:1;color:#9aa8bd;transform:rotate(0deg);transition:transform .15s;width:12px}
+  .amb-tog.open .amb-chev{transform:rotate(90deg)}
+  .amb-sect{flex:0 1 auto}
+  .amb-left{font-style:normal;margin-left:2px;color:#b26d00;font-size:11.5px;letter-spacing:0;text-transform:none;background:#fff3d6;border-radius:6px;padding:2px 7px}
+  .amb-left.done{color:#1f6b3a;background:#e5f3ea}
+  .amb-sec.closed .amb-secb{display:none}
+  .amb-sec.closed{padding-bottom:4px}
+  .jb-secbad{font-style:normal;color:#b26d00}
+  .jb-bag{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+  .jb-bag.due{background:#fff7e3;border-color:#f1d28a}
+  .jb-bagl{flex:1 1 170px;min-width:0} .jb-bagl b{display:block;font-size:14.5px;color:var(--ink)} .jb-baghint{display:block;font-size:12px;font-weight:700;color:#7a4f00;margin-top:2px}
+  .jb-bagbtn{flex:0 0 auto;padding:10px 14px !important;font-size:13.5px !important;border-radius:11px !important}
+  .jb-remind{flex:1 1 100%;font-size:12.5px;font-weight:700;color:var(--mut);display:flex;align-items:center;gap:8px}
+  .jb-remind select{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-size:13px;font-weight:700;color:var(--ink);font-family:inherit;background:#fff}
+  .jb-bagline b{color:var(--ink)}
   /* ---- My Jump Bag ---- */
   .jb-sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
   .jb-sumtop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
@@ -1620,7 +1636,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.5.0</div>
+  <div class="ver-line">Version 1.5.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1742,7 +1758,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.5.0</div>
+  <div class="ver-line">Version 1.5.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3854,7 +3870,7 @@
       /* a draft for a different ambulance or log type is not this check */
       var dr=null; try{ dr=JSON.parse(localStorage.getItem(AMB_KEY)||"null"); }catch(e){}
       if(!(dr && dr.amb===AMB.amb && dr.type===AMB.type)){ AMB.ans={}; AMB.photos={}; }
-      AMB.step="check"; ambSaveDraft(); ambRenderCheck(); $("ambBody").scrollTop=0;
+      AMB.open={}; AMB.step="check"; ambSaveDraft(); ambRenderCheck(); $("ambBody").scrollTop=0;
     });
   }
   function ambItemHTML(it){
@@ -3884,14 +3900,26 @@
     }
     return h+'</div>';
   }
+  /* Sections start closed so a crew can jump straight to the one they want;
+     a header shows how many of its items are still unanswered. A checklist
+     with a single section is simply open. */
+  function ambSecOpen(title){ return !!(AMB.open && AMB.open[title]); }
+  function ambSecLeft(sec){ return sec.items.filter(function(it){ return !it.opt && !ambHas(it) && (it.kind!=="photo" || it.req); }).length; }
+  function ambSecHead(sec){
+    var left=ambSecLeft(sec), open=ambSecOpen(sec.title);
+    return '<div class="amb-sech amb-tog'+(open?" open":"")+'" data-sec="'+esc(sec.title)+'"><span class="amb-chev">›</span><span class="amb-sect">'+esc(sec.title)+'</span>'+
+      '<em class="amb-left'+(left?"":" done")+'">'+(left?left+" left":"✓ done")+'</em>'+(sec.inv?'<button class="amb-allok" data-sec="'+esc(sec.title)+'">All OK</button>':'')+'</div>';
+  }
   function ambRenderCheck(){
     var b=$("ambBody"), spec=ambSpec(AMB.type), items=ambItems(AMB.type);
+    if(!AMB.open) AMB.open={};
+    if(spec.length===1) AMB.open[spec[0].title]=true;
     var done=items.filter(function(it){ return ambHas(it); }).length, need=items.filter(function(it){ return !it.opt&&(it.kind!=="photo"||it.req); }).length;
     $("ambTitle").textContent=ambTypeLabel(AMB.type);
     var h='<div class="amb-top"><div><b>'+esc(AMB.amb)+'</b><span>'+esc(ambPrettyDate(AMB.date))+' · '+esc((STATE.me&&STATE.me.first)||"")+'</span></div><button class="amb-change" id="ambChange">Change</button></div>';
     h+='<div class="amb-prog"><div class="amb-bar"><i style="width:'+Math.round(100*Math.min(done,need)/Math.max(need,1))+'%"></i></div><span id="ambProgT">'+done+' of '+items.length+' answered</span></div>';
     spec.forEach(function(sec){
-      h+='<div class="amb-sec"><div class="amb-sech">'+esc(sec.title)+(sec.inv?'<button class="amb-allok" data-sec="'+esc(sec.title)+'">All OK</button>':'')+'</div>'+(sec.note?'<div class="amb-note">'+esc(sec.note)+'</div>':'')+sec.items.map(ambItemHTML).join("")+'</div>';
+      h+='<div class="amb-sec'+(ambSecOpen(sec.title)?"":" closed")+'" data-sec="'+esc(sec.title)+'">'+ambSecHead(sec)+'<div class="amb-secb">'+(sec.note?'<div class="amb-note">'+esc(sec.note)+'</div>':'')+sec.items.map(ambItemHTML).join("")+'</div></div>';
     });
     var miss=ambMissing();
     h+='<div class="amb-submit"><button class="ebtn primary" id="ambSubmit">'+(miss.length?("Submit — "+miss.length+" left"):"Submit")+'</button><div class="amb-foot">Your answers are kept on this phone until you submit. Short on time? You can submit without finishing — skipped items are saved as not checked.</div></div>';
@@ -3905,6 +3933,7 @@
     if(it && old && it.kind!=="num" && it.kind!=="text" && it.kind!=="long"){ var tmp=document.createElement("div"); tmp.innerHTML=ambItemHTML(it); old.parentNode.replaceChild(tmp.firstChild, old); ambWireIn($("ambBody").querySelector('.amb-q[data-k="'+k+'"]')); ambPaintPhotos(); }
     else if(old){ old.classList.toggle("done", ambHas(it)); if(it.kind==="num"&&it.target){ var w=old.querySelector(".amb-num"); var v=parseFloat(AMB.ans[k]); if(w) w.classList.toggle("bad", isFinite(v)&&v<it.target-5); } }
     var done=items.filter(function(x){ return ambHas(x); }).length, need=items.filter(function(x){ return !x.opt&&(x.kind!=="photo"||x.req); }).length;
+    ambSpec(AMB.type).forEach(function(sec){ if(!sec.items.some(function(x){ return x.k===k; })) return; var left=ambSecLeft(sec), em=$("ambBody").querySelector('.amb-sec[data-sec="'+sec.title.replace(/"/g,'\\"')+'"] .amb-left'); if(em){ em.textContent=left?left+" left":"✓ done"; em.classList.toggle("done",!left); } });
     var bar=$("ambBody").querySelector(".amb-bar i"); if(bar) bar.style.width=Math.round(100*Math.min(done,need)/Math.max(need,1))+"%";
     var pt=$("ambProgT"); if(pt) pt.textContent=done+" of "+items.length+" answered";
     var miss=ambMissing(), sb=$("ambSubmit"); if(sb) sb.textContent=miss.length?("Submit — "+miss.length+" left"):"Submit";
@@ -3921,8 +3950,15 @@
   function ambWire(){
     ambWireIn($("ambBody"));
     var ch=$("ambChange"); if(ch) ch.addEventListener("click",function(){ AMB.step="setup"; ambSaveDraft(); ambRenderSetup(); });
+    $("ambBody").querySelectorAll(".amb-tog").forEach(function(el){ el.addEventListener("click",function(e){
+      if(e.target && e.target.closest && e.target.closest(".amb-allok")) return;
+      var title=el.getAttribute("data-sec"); AMB.open=AMB.open||{}; AMB.open[title]=!AMB.open[title];
+      var sec=el.parentNode; sec.classList.toggle("closed", !AMB.open[title]); el.classList.toggle("open", !!AMB.open[title]);
+      if(AMB.open[title]){ try{ el.scrollIntoView({block:"start",behavior:"smooth"}); }catch(err){} }
+    }); });
     /* "All OK" fills in the blanks of one inventory section - anything already marked Issue stays */
-    $("ambBody").querySelectorAll(".amb-allok").forEach(function(el){ el.addEventListener("click",function(){
+    $("ambBody").querySelectorAll(".amb-allok").forEach(function(el){ el.addEventListener("click",function(e){
+      e.stopPropagation();
       var title=el.getAttribute("data-sec"); ambSpec(AMB.type).forEach(function(sec){ if(sec.title!==title) return; sec.items.forEach(function(it){ if(!AMB.ans[it.k]) AMB.ans[it.k]="OK"; }); });
       ambSaveDraft(); var top=$("ambBody").scrollTop; ambRenderCheck(); $("ambBody").scrollTop=top;
     }); });
@@ -4003,6 +4039,8 @@
     $("ambFinish").addEventListener("click",function(){
       box.innerHTML='<button class="ebtn primary" id="ambSubmit">Submit — '+miss.length+' left</button><div class="amb-foot">Your answers are kept on this phone until you submit.</div>';
       $("ambSubmit").addEventListener("click",ambSubmit);
+      AMB.open=AMB.open||{};
+      ambSpec(AMB.type).forEach(function(sec){ if(sec.items.some(function(it){ return miss.some(function(m){ return m.k===it.k; }); })){ AMB.open[sec.title]=true; var secEl=$("ambBody").querySelector('.amb-sec[data-sec="'+sec.title.replace(/"/g,'\\"')+'"]'); if(secEl){ secEl.classList.remove("closed"); var hd=secEl.querySelector(".amb-tog"); if(hd) hd.classList.add("open"); } } });
       $("ambBody").querySelectorAll(".amb-q.miss").forEach(function(el){ el.classList.remove("miss"); });
       miss.forEach(function(it){ var el=$("ambBody").querySelector('.amb-q[data-k="'+it.k+'"]'); if(el) el.classList.add("miss"); });
       var first=$("ambBody").querySelector('.amb-q[data-k="'+miss[0].k+'"]');
@@ -4105,7 +4143,8 @@
   // Every member's own bag, checked against the item list the admins keep
   // (Admin -> Jump bag items). One row per item the member has marked; the
   // nightly script reads the expiration dates and sends the reminders.
-  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0};
+  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false};
+  var JB_REMIND_OPTS=[[0,"Off"],[30,"Every 30 days"],[60,"Every 60 days"],[90,"Every 90 days"],[180,"Every 180 days"]];
   var JB_SOON=30;
   function jbUnit(){ return String((STATE.me&&STATE.me.unit)||""); }
   function jbToday(){ var d=new Date(); d.setHours(0,0,0,0); return d; }
@@ -4142,10 +4181,12 @@
     if(JB.loaded){ jbRender(); jbFlush(); return; }
     $("jbBody").innerHTML='<div class="empty">Loading…</div>';
     Promise.all([ fetchTab("Jump Bag Items"),
-                  sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&unit=eq."+encodeURIComponent(jbUnit()),{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
+                  sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&unit=eq."+encodeURIComponent(jbUnit()),{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
+                  sbFetch(SB_URL+"/rest/v1/jumpbag_bags?select=*&unit=eq."+encodeURIComponent(jbUnit())+"&limit=1",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
       .then(function(res){
         JB.items=res[0]||[]; JB.st={};
         (Array.isArray(res[1])?res[1]:[]).forEach(function(s){ JB.st[s.item_id]=s; });
+        JB.bag=(Array.isArray(res[2])&&res[2][0])?res[2][0]:{unit:jbUnit(), checked_at:null, remind_days:0};
         JB.loaded=true; jbRender(); jbFlush();
       })["catch"](function(){ $("jbBody").innerHTML='<div class="empty">Couldn’t load. Check your internet and open this again.</div>'; });
   }
@@ -4154,18 +4195,37 @@
   function jbRender(){
     var b=$("jbBody"), pouches=jbPouches();
     if(!pouches.length){ b.innerHTML='<div class="empty">The jump bag list is empty. An admin can fill it in under Admin → Jump bag items.</div>'; return; }
-    var c=jbCounts(), last=jbLastUpdated();
-    var h='<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+
-      (last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
-      '<div class="jb-pills">'+(c.expired?'<i class="bad">'+c.expired+' expired</i>':'')+(c.soon?'<i class="warn">'+c.soon+' expiring soon</i>':'')+(c.short+c.missing?'<i class="warn">'+(c.short+c.missing)+' short/missing</i>':'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
-      '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
-      '<div class="jb-hint">Tap what you have. Items with a date are checked nightly — you get an email and a notification '+esc(jbReminderText())+'.</div></div>';
-    pouches.forEach(function(p){
-      var pc=jbCounts(p.items);
-      h+='<div class="amb-sec jb-sec"><div class="amb-sech"><span>'+esc(p.name)+'</span><em>'+pc.have+'/'+pc.total+'</em>'+(pc.unchecked?'<button class="amb-allok" data-pouch="'+esc(p.name)+'">All stocked</button>':'')+'</div>'+
-        p.items.map(jbRowHTML).join("")+'</div>';
-    });
+    var c=jbCounts();
+    var h=jbSumHTML(c)+jbBagHTML();
+    pouches.forEach(function(p){ h+=jbPouchHTML(p); });
     b.innerHTML=h; jbWire();
+  }
+  function jbPouchHTML(p){
+    var pc=jbCounts(p.items), open=!!JB.open[p.name], bad=pc.expired+pc.missing+pc.short;
+    return '<div class="amb-sec jb-sec'+(open?"":" closed")+'" data-pouch="'+esc(p.name)+'"><div class="amb-sech amb-tog'+(open?" open":"")+'" data-pouch="'+esc(p.name)+'"><span class="amb-chev">›</span><span class="amb-sect">'+esc(p.name)+'</span><em>'+pc.have+'/'+pc.total+(bad?' · <i class="jb-secbad">'+bad+' to fix</i>':'')+'</em>'+(pc.unchecked?'<button class="amb-allok" data-pouch="'+esc(p.name)+'">All stocked</button>':'')+'</div>'+
+      '<div class="amb-secb">'+p.items.map(jbRowHTML).join("")+'</div></div>';
+  }
+  /* the bag itself: when it was last gone through, and how often to be reminded */
+  function jbBagHTML(){
+    var bag=JB.bag||{}, ch=bag.checked_at?new Date(bag.checked_at):null, rd=parseInt(bag.remind_days,10)||0;
+    var days=ch?Math.round((jbToday().getTime()-new Date(ch.getFullYear(),ch.getMonth(),ch.getDate()).getTime())/864e5):null;
+    var when=ch?ambAgo(ch.getFullYear()+"-"+("0"+(ch.getMonth()+1)).slice(-2)+"-"+("0"+ch.getDate()).slice(-2)):"never";
+    var due=rd>0 && (days===null || days>=rd);
+    return '<div class="jb-bag'+(due?" due":"")+'"><div class="jb-bagl"><b>Last checked: '+esc(when)+'</b>'+(due?'<span class="jb-baghint">Time to go through your bag'+(days!==null?" — "+days+" days since you last did":"")+'</span>':'')+'</div>'+
+      '<button class="ebtn primary jb-bagbtn" id="jbChecked"'+(JB.bagPending?" disabled":"")+'>'+(days===0?"✓ Checked today":"I checked my bag today")+'</button>'+
+      '<label class="jb-remind">Remind me to check it <select id="jbRemind">'+JB_REMIND_OPTS.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===rd?" selected":"")+'>'+o[1]+'</option>'; }).join("")+'</select></label></div>';
+  }
+  function jbSaveBag(patch){
+    var row=Object.assign({unit:jbUnit(), checked_at:null, remind_days:0}, JB.bag||{}, patch); delete row.id; delete row.reminded_at;
+    JB.bag=Object.assign({}, JB.bag||{}, patch); JB.bagPending=true; jbRepaintBag();
+    return sbFetch(SB_URL+"/rest/v1/jumpbag_bags?on_conflict=unit",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify(row) })
+      .then(function(r){ JB.bagPending=false; if(!r.ok) throw new Error("bag-"+r.status); jbRepaintBag(); })
+      ["catch"](function(err){ JB.bagPending=false; jbRepaintBag(); toast(navigator.onLine===false?"No signal — try again when you’re back online.":"Couldn’t save that — try again."); diagLog("jumpbag-bag-failed", String((err&&err.message)||err)); });
+  }
+  function jbRepaintBag(){ var old=$("jbBody").querySelector(".jb-bag"); if(!old) return; var tmp=document.createElement("div"); tmp.innerHTML=jbBagHTML(); old.parentNode.replaceChild(tmp.firstChild, old); jbWireBag(); }
+  function jbWireBag(){
+    var btn=$("jbChecked"); if(btn) btn.addEventListener("click",function(){ jbSaveBag({checked_at:new Date().toISOString()}); });
+    var sel=$("jbRemind"); if(sel) sel.addEventListener("change",function(){ jbSaveBag({remind_days:parseInt(sel.value,10)||0}); });
   }
   function jbRowHTML(r){
     var id=r.__id, s=JB.st[id]||{}, exp=s.exp_date||"", es=jbExpState(exp);
@@ -4178,12 +4238,21 @@
   }
   function jbWire(root){
     var b=root||$("jbBody");
+    if(!root){ jbWireBag();
+      b.querySelectorAll(".amb-tog[data-pouch]").forEach(function(el){ el.addEventListener("click",function(e){
+        if(e.target && e.target.closest && e.target.closest(".amb-allok")) return;
+        var p=el.getAttribute("data-pouch"); JB.open[p]=!JB.open[p];
+        el.parentNode.classList.toggle("closed", !JB.open[p]); el.classList.toggle("open", !!JB.open[p]);
+        if(JB.open[p]){ try{ el.scrollIntoView({block:"start",behavior:"smooth"}); }catch(err){} }
+      }); });
+    }
     b.querySelectorAll(".jb-b[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), v=el.getAttribute("data-s"); var s=JB.st[id]||{}; jbSet(id, (s.status===v)?"":v, s.exp_date||null); }); });
     b.querySelectorAll(".jb-exp input[data-id]").forEach(function(el){ el.addEventListener("change",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", el.value||null); }); });
     b.querySelectorAll(".jb-addexp[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"); JB.expOpen[id]=true; jbRepaint(id); var inp=b.querySelector('.jb-row[data-id="'+id+'"] input[type=date]'); if(inp){ try{ inp.focus(); if(inp.showPicker) inp.showPicker(); }catch(e){} } }); });
-    b.querySelectorAll(".amb-allok[data-pouch]").forEach(function(el){ el.addEventListener("click",function(){
+    b.querySelectorAll(".amb-allok[data-pouch]").forEach(function(el){ el.addEventListener("click",function(e){
+      e.stopPropagation();
       var p=el.getAttribute("data-pouch"); jbPouches().forEach(function(pp){ if(pp.name!==p) return; pp.items.forEach(function(r){ var s=JB.st[r.__id]||{}; if(!s.status) jbSet(r.__id,"have",s.exp_date||null,true); }); });
-      jbRender();
+      var top=$("jbBody").scrollTop; jbRender(); $("jbBody").scrollTop=top;
     }); });
   }
   function jbRepaint(id){
@@ -4194,7 +4263,7 @@
     /* the summary line and pouch counts */
     var c=jbCounts(), top=$("jbBody").querySelector(".jb-sum");
     if(top){ var tmp2=document.createElement("div"); tmp2.innerHTML=jbSumHTML(c); top.parentNode.replaceChild(tmp2.firstChild, top); }
-    jbPouches().forEach(function(p){ var pc=jbCounts(p.items); $("jbBody").querySelectorAll(".jb-sec").forEach(function(sec){ var sp=sec.querySelector(".amb-sech span"); if(sp && sp.textContent===p.name){ var em=sec.querySelector(".amb-sech em"); if(em) em.textContent=pc.have+"/"+pc.total; } }); });
+    jbPouches().forEach(function(p){ var pc=jbCounts(p.items), bad=pc.expired+pc.missing+pc.short; $("jbBody").querySelectorAll(".jb-sec").forEach(function(sec){ if(sec.getAttribute("data-pouch")===p.name){ var em=sec.querySelector(".amb-sech em"); if(em) em.innerHTML=pc.have+"/"+pc.total+(bad?' · <i class="jb-secbad">'+bad+' to fix</i>':''); } }); });
   }
   function jbSumHTML(c){
     var last=jbLastUpdated();
@@ -4225,18 +4294,20 @@
   if($("jbBack")) $("jbBack").addEventListener("click",navBack);
 
   /* ===================== Admin: Jump bags (everyone's status) ===================== */
-  var ADMJB={rows:[], items:[], roster:[], loaded:false, sel:null};
+  var ADMJB={rows:[], items:[], roster:[], bags:{}, loaded:false, sel:null};
   function admJbLoad(){
     $("admGenPane").innerHTML='<div class="adm-empty">Loading…</div>';
     return Promise.all([ fetchTab("Jump Bag Items"), fetchTab("Roster"),
-                         sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&limit=10000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; }) ])
-      .then(function(res){ ADMJB.items=res[0]||[]; ADMJB.roster=res[1]||[]; ADMJB.rows=Array.isArray(res[2])?res[2]:[]; ADMJB.loaded=true; admJbRender(); })
+                         sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&limit=10000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; }),
+                         sbFetch(SB_URL+"/rest/v1/jumpbag_bags?select=*&limit=5000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
+      .then(function(res){ ADMJB.items=res[0]||[]; ADMJB.roster=res[1]||[]; ADMJB.rows=Array.isArray(res[2])?res[2]:[]; ADMJB.bags={}; (Array.isArray(res[3])?res[3]:[]).forEach(function(b){ ADMJB.bags[normUnit(b.unit)]=b; }); ADMJB.loaded=true; admJbRender(); })
       ["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_jump_bag.sql if this is the first time.</div>'; });
   }
   function admJbItems(){ return ADMJB.items.filter(function(r){ return admBoolOn(r_(r,"Active"),"Active") && String(r_(r,"Item")||"").trim(); }).sort(function(a,b){ return (parseFloat(r_(a,"Order"))||9999)-(parseFloat(r_(b,"Order"))||9999); }); }
   function admJbSummary(unit){
     var items=admJbItems(), st={}; ADMJB.rows.forEach(function(s){ if(normUnit(s.unit)===normUnit(unit)) st[s.item_id]=s; });
-    var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, last:0, st:st};
+    var bag=ADMJB.bags[normUnit(unit)]||{};
+    var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, last:0, st:st, checked:bag.checked_at?Date.parse(bag.checked_at):0, remind:parseInt(bag.remind_days,10)||0};
     items.forEach(function(r){ var s=st[r.__id]||{}; if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
       var e=jbExpState(s.exp_date); if(e==="expired") c.expired++; else if(e==="soon") c.soon++; var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
     return c;
@@ -4254,7 +4325,7 @@
       '<div class="amb-list">'+ms.map(function(m){ var c=m.c, tags="";
         if(c.expired) tags+='<span class="amb-flagn">'+c.expired+' expired</span>'; if(c.soon) tags+='<span class="jb-tag warn">'+c.soon+' expiring</span>'; if(c.missing+c.short) tags+='<span class="jb-tag warn">'+(c.missing+c.short)+' short/missing</span>';
         if(!c.last) tags+='<span class="jb-tag">not checked</span>'; else if(c.unchecked) tags+='<span class="jb-tag">'+c.unchecked+' not checked</span>'; else if(!tags) tags='<span class="amb-okn">All set</span>';
-        return '<button class="amb-row" data-u="'+esc(m.unit)+'"><div class="amb-rl"><b>'+esc(m.name)+'</b><span>'+esc(m.unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambAgo(new Date(c.last).toISOString().slice(0,10))):'')+'</span></div><span class="jb-tags">'+tags+'</span><span class="chev">›</span></button>'; }).join("")+'</div></div>';
+        return '<button class="amb-row" data-u="'+esc(m.unit)+'"><div class="amb-rl"><b>'+esc(m.name)+'</b><span>'+esc(m.unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambAgo(new Date(c.last).toISOString().slice(0,10))):'')+' · bag checked '+(c.checked?esc(ambAgo(new Date(c.checked).toISOString().slice(0,10))):'never')+'</span></div><span class="jb-tags">'+tags+'</span><span class="chev">›</span></button>'; }).join("")+'</div></div>';
     $("admGenPane").innerHTML=h;
     $("admGenPane").querySelectorAll(".amb-row[data-u]").forEach(function(el){ el.addEventListener("click",function(){ ADMJB.sel=el.getAttribute("data-u"); admJbRender(); }); });
     var ex=$("admJbExport"); if(ex) ex.addEventListener("click",admJbExport);
@@ -4263,7 +4334,8 @@
     var m=admJbMembers().filter(function(x){ return normUnit(x.unit)===normUnit(unit); })[0]; var c=m?m.c:admJbSummary(unit);
     var items=admJbItems(), by={}, order=[];
     items.forEach(function(r){ var p=String(r_(r,"Pouch")||"Other"); if(!by[p]){ by[p]=[]; order.push(p); } by[p].push(r); });
-    var h='<div class="adm-body"><button class="adm-backlink" id="admJbBack">‹ All members</button><div class="adm-mh"><div class="t"><h3>'+esc(m?m.name:unit)+'</h3><div class="u">'+esc(unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambPrettyDate(new Date(c.last).toISOString().slice(0,10))):' · not checked yet')+'</div></div></div>';
+    var h='<div class="adm-body"><button class="adm-backlink" id="admJbBack">‹ All members</button><div class="adm-mh"><div class="t"><h3>'+esc(m?m.name:unit)+'</h3><div class="u">'+esc(unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambPrettyDate(new Date(c.last).toISOString().slice(0,10))):' · not checked yet')+'</div></div></div>'+
+      '<div class="amb-okline jb-bagline">Bag last checked: <b>'+(c.checked?esc(ambPrettyDate(new Date(c.checked).toISOString().slice(0,10)))+' ('+esc(ambAgo(new Date(c.checked).toISOString().slice(0,10)))+')':'never')+'</b> · reminder: '+(c.remind?'every '+c.remind+' days':'off')+'</div>';
     order.forEach(function(p){
       h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, e=jbExpState(s.exp_date);
         var val=s.status==="have"?"✓ Have":s.status==="short"?"Short":s.status==="missing"?"Missing":"—";
@@ -4275,8 +4347,8 @@
   function admJbExport(){
     var ms=admJbMembers(), items=admJbItems();
     if(!ms.length){ toast("Nothing to export yet."); return; }
-    var head=["Member","Unit","Stocked","Short","Missing","Not checked","Expired","Expiring soon","Last updated"].concat(items.map(function(r){ return r_(r,"Item"); }));
-    var data=[head].concat(ms.map(function(m){ var c=m.c; return [m.name, m.unit, c.have, c.short, c.missing, c.unchecked, c.expired, c.soon, c.last?new Date(c.last).toISOString().slice(0,10):""]
+    var head=["Member","Unit","Stocked","Short","Missing","Not checked","Expired","Expiring soon","Last updated","Bag last checked","Reminder every (days)"].concat(items.map(function(r){ return r_(r,"Item"); }));
+    var data=[head].concat(ms.map(function(m){ var c=m.c; return [m.name, m.unit, c.have, c.short, c.missing, c.unchecked, c.expired, c.soon, c.last?new Date(c.last).toISOString().slice(0,10):"", c.checked?new Date(c.checked).toISOString().slice(0,10):"", c.remind||""]
       .concat(items.map(function(r){ var s=c.st[r.__id]||{}; var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(s.exp_date?" (exp "+s.exp_date+")":""); })); }));
     toast("Preparing the spreadsheet…");
     loadXlsxLib().then(function(X){ var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Jump bags"); X.writeFile(wb, "jump-bags-"+ambToday()+".xlsx"); })
@@ -9517,7 +9589,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9560,7 +9632,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10599,7 +10671,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.5.0".replace("Version ","");
+  var APP_VERSION="Version 1.5.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
