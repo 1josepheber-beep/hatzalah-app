@@ -838,6 +838,22 @@
   .amb-leftbtn{margin-left:auto;font:inherit;font-size:12px;font-weight:800;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap}
   .amb-leftbtn.on{border-color:var(--navy)} .amb-leftbtn[hidden]{display:none}
   .amb-jump{border:1px solid var(--line);border-radius:11px;background:#f7f9fc;padding:4px 0;margin:0 0 10px;max-height:300px;overflow-y:auto} .amb-jump[hidden]{display:none}
+  .jb-reqbtn{width:100%;margin-top:10px;padding:11px !important;font-size:14px !important;border-radius:11px !important;background:#fff !important;color:var(--navy) !important;border:1.5px solid var(--navy) !important}
+  .jb-reqnote{font-size:12px;font-weight:700;color:var(--mut);margin-top:5px}
+  .jb-req{margin-top:10px;border:1px solid #f1d28a;background:#fff7e3;border-radius:12px;padding:10px 12px} .jb-req > b{display:block;font-size:13.5px;color:#7a4f00;margin-bottom:6px}
+  .jb-reqit{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px solid #f1d28a;font-size:13.5px;color:var(--ink)} .jb-reqit input{margin-top:3px;width:18px;height:18px} .jb-reqit i{font-style:normal;color:#8a5a00;font-size:12px;font-weight:700}
+  .jb-reqnote-in{width:100%;margin-top:8px;font-size:14px;padding:8px 11px;box-sizing:border-box}
+  .sr-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px} .sr-btns .ebtn{flex:1 1 140px;padding:11px;font-size:14px;border-radius:11px}
+  .jb-reqline{font-size:11.5px;font-weight:800;color:#8a5a00;margin-top:3px} .jb-reqline.ordered{color:#1f6b3a}
+  .amb-ord{flex:0 0 auto;margin-top:6px;border:1.5px solid #e8a33d;background:#fff;color:#8a5a00;border-radius:9px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer}
+  .amb-ord.on{background:#e8a33d;color:#231a00}
+  .amb-restock{text-align:left;border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:13.5px;font-weight:700;background:#eef2f7;color:var(--navy)}
+  .amb-restock.sent{background:#e5f3ea;color:#1f6b3a} .amb-restock.failed{background:#fdecec;color:#8a1f1f}
+  .amb-srcard{width:100%;text-align:left;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 10px;cursor:pointer;box-shadow:var(--shadow);font:inherit}
+  .amb-srcard b{font-size:14.5px;color:var(--ink)} .amb-srcard span{flex:1;font-size:12.5px;font-weight:700;color:var(--mut)} .amb-srcard .chev{font-style:normal;color:#9aa8bd;font-size:20px;font-weight:700}
+  .sr-st{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-radius:6px;padding:3px 7px;white-space:nowrap;background:#fff3d6;color:#8a5a00}
+  .sr-st.ordered{background:#e3edfb;color:#1d4e9a} .sr-st.done{background:#e5f3ea;color:#1f6b3a} .sr-st.big{font-size:12px;padding:5px 10px;margin-left:auto}
+  .sr-note{font-size:14px;color:var(--ink);white-space:pre-wrap;padding:6px 0}
   @keyframes hohflash{0%{background:#fff3b0}100%{background:transparent}}
   .jb-row.flash, .amb-q.flash{animation:hohflash 1.8s ease-out;border-radius:8px}
   /* Tablets (touch, 700px and up): the phone layout stretched edge to edge cropped every tile.
@@ -1664,7 +1680,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.5.2</div>
+  <div class="ver-line">Version 1.6.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1786,7 +1802,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.5.2</div>
+  <div class="ver-line">Version 1.6.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1995,6 +2011,13 @@
   <div class="scr-body" id="ambBody"></div>
 </div>
 
+<div class="screen" id="srScreen">
+  <div class="scr-head">
+    <button class="back" id="srBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>Supply requests</h2>
+  </div>
+  <div class="scr-body" id="srBody"></div>
+</div>
 <div class="screen" id="jbScreen">
   <div class="scr-head">
     <button class="back" id="jbBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -3854,6 +3877,7 @@
     if(!AMB.date) AMB.date=ambToday();
     ambRender();
     if(!AMB.recentLoaded) ambLoadRecent();
+    if(srCanHandle() && !SR.loaded) srLoad().then(function(){ if(AMB.step==="setup" && $("ambScreen").classList.contains("open")) ambRenderSetup(); })["catch"](function(){});
   }
   function closeAmbCheck(){ $("ambScreen").classList.remove("open"); if(AMB.step==="check") ambSaveDraft(); }
   function ambLoadRecent(){
@@ -3887,8 +3911,10 @@
     h+='<div class="amb-card"><div class="amb-h">Date</div><input type="date" id="ambDate" class="amb-date" value="'+esc(AMB.date||ambToday())+'" max="'+ambToday()+'"></div>';
     var ready=!!(AMB.amb && AMB.type);
     h+='<button class="ebtn primary amb-go" id="ambStart"'+(ready?"":" disabled")+'>'+(ready?"Start the "+ambTypeLabel(AMB.type).toLowerCase():"Pick an ambulance and a log type")+'</button>';
+    if(srCanHandle()) h+='<button class="amb-srcard" id="ambSupply"><b>\uD83D\uDED2 Supply requests</b><span>'+(SR.loaded?(srOpenCount()?srOpenCount()+" open":"nothing open"):"what members and the inventory checks asked to have restocked")+'</span><i class="chev">\u203A</i></button>';
     h+='<div class="amb-foot">Logged as '+esc(((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||""))+' · '+esc((STATE.me&&STATE.me.unit)||"")+'</div>';
     b.innerHTML=h;
+    var sc=$("ambSupply"); if(sc) sc.addEventListener("click",srOpen);
     b.querySelectorAll("[data-amb]").forEach(function(el){ el.addEventListener("click",function(){ AMB.amb=el.getAttribute("data-amb"); ambRenderSetup(); }); });
     b.querySelectorAll("[data-type]").forEach(function(el){ el.addEventListener("click",function(){ AMB.type=el.getAttribute("data-type"); ambRenderSetup(); }); });
     var d=$("ambDate"); if(d) d.addEventListener("change",function(){ AMB.date=d.value||ambToday(); });
@@ -3919,7 +3945,8 @@
     } else if(it.kind==="inv"){
       h='<div class="amb-q amb-inv'+(has?" done":"")+(v==="Issue"?" issue":"")+' req" data-k="'+it.k+'"><div class="amb-invl"><div class="amb-qt">'+esc(it.q)+'</div><div class="amb-invm">'+(it.qty?'<b>'+esc(it.qty)+'</b>':'')+'<span class="amb-code" title="'+(it.code==="SC"?"State and City":it.code==="S"?"State":"City")+' requirement">'+esc(it.code)+'</span></div></div>'+
          '<div class="amb-opts amb-sm"><button class="amb-opt'+(v==="OK"?" on":"")+'" data-k="'+it.k+'" data-v="OK">\u2713 OK</button><button class="amb-opt'+(v==="Issue"?" on warn":"")+'" data-k="'+it.k+'" data-v="Issue">Issue</button></div>'+
-         (v==="Issue"?'<input type="text" class="amb-text amb-invc" data-k="'+it.k+'_c" value="'+esc(AMB.ans[it.k+"_c"]||"")+'" placeholder="What\u2019s wrong \u2014 missing, short, expired\u2026">':'');
+         (v==="Issue"?'<input type="text" class="amb-text amb-invc" data-k="'+it.k+'_c" value="'+esc(AMB.ans[it.k+"_c"]||"")+'" placeholder="What\u2019s wrong \u2014 missing, short, expired\u2026">'+
+                      '<button class="amb-ord'+(AMB.ans[it.k+"_o"]?" on":"")+'" data-ok="'+it.k+'">'+(AMB.ans[it.k+"_o"]?"\u2713 Order needed":"\uD83D\uDED2 Order needed?")+'</button>':'');
       return h+'</div>';
     } else if(it.kind==="photo"){
       var refs=AMB.photos[it.k]||[];
@@ -4003,6 +4030,7 @@
     root.querySelectorAll(".amb-opt[data-k]").forEach(function(el){ el.addEventListener("click",function(){ var k=el.getAttribute("data-k"), v=el.getAttribute("data-v"); AMB.ans[k]=(AMB.ans[k]===v)?"":v; ambRefresh(k); }); });
     root.querySelectorAll("input[type=number][data-k], input[type=text][data-k], textarea[data-k]").forEach(function(el){ el.addEventListener("input",function(){ AMB.ans[el.getAttribute("data-k")]=el.value; ambRefresh(el.getAttribute("data-k")); }); });
     root.querySelectorAll(".amb-add[data-k]").forEach(function(el){ el.addEventListener("click",function(){ ambPick(el.getAttribute("data-k"), el); }); });
+    root.querySelectorAll(".amb-ord[data-ok]").forEach(function(el){ el.addEventListener("click",function(){ var k=el.getAttribute("data-ok"); AMB.ans[k+"_o"]=AMB.ans[k+"_o"]?"":"X"; ambRefresh(k); }); });
     root.querySelectorAll(".amb-phx").forEach(function(el){ el.addEventListener("click",function(){ ambRemovePhoto(el.getAttribute("data-k"), parseInt(el.getAttribute("data-i"),10)); }); });
     root.querySelectorAll(".amb-ph img").forEach(function(im){ im.addEventListener("click",function(){ openDocRef(im.getAttribute("data-ref"), "Photo"); }); });
   }
@@ -4079,7 +4107,9 @@
     if(miss.length && force!==true){ ambAskPartial(miss); return; }   /* a click event is not "force" */
     var btn=$("ambSubmit"); AMB.busy=true; if(btn){ btn.disabled=true; btn.textContent="Submitting…"; }
     var photos=[]; Object.keys(AMB.photos).forEach(function(k){ (AMB.photos[k]||[]).forEach(function(ref){ photos.push({key:k, ref:ref}); }); });
-    var answers={}; ambItems(AMB.type).forEach(function(it){ if(it.kind!=="photo" && AMB.ans[it.k]!==undefined && String(AMB.ans[it.k]).trim()!=="") answers[it.k]=AMB.ans[it.k]; if(it.kind==="inv" && AMB.ans[it.k]==="Issue" && AMB.ans[it.k+"_c"]) answers[it.k+"_c"]=AMB.ans[it.k+"_c"]; });
+    var answers={}; ambItems(AMB.type).forEach(function(it){ if(it.kind!=="photo" && AMB.ans[it.k]!==undefined && String(AMB.ans[it.k]).trim()!=="") answers[it.k]=AMB.ans[it.k]; if(it.kind==="inv" && AMB.ans[it.k]==="Issue"){ if(AMB.ans[it.k+"_c"]) answers[it.k+"_c"]=AMB.ans[it.k+"_c"]; if(AMB.ans[it.k+"_o"]) answers[it.k+"_o"]="X"; } });
+    var order=ambItems(AMB.type).filter(function(it){ return it.kind==="inv" && AMB.ans[it.k]==="Issue" && AMB.ans[it.k+"_o"]; })
+      .map(function(it){ return {item_id:null, name:it.q, qty:it.qty||"", why:String(AMB.ans[it.k+"_c"]||"").trim()||"Issue"}; });
     var skipped=miss.map(function(it){ return it.k; }); if(skipped.length) answers._skipped=skipped;
     var flags=ambFlags();
     var row={ unit:String((STATE.me&&STATE.me.unit)||""), name:(((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim(),
@@ -4088,7 +4118,13 @@
     sbWrite("POST","ambulance_checks",row).then(function(r){
       if(!r.ok) throw new Error("save-"+r.status);
       diagLog("ambcheck", AMB.type+" "+AMB.amb+(flags.length?" ("+flags.length+" flags)":"")+(skipped.length?" ("+skipped.length+" not checked)":""));
-      AMB.busy=false; AMB.lastFlags=flags; AMB.lastSkipped=miss.map(function(it){ return it.q; }); AMB.step="done"; ambClearDraft(); AMB.recentLoaded=false; ambRenderDone();
+      AMB.busy=false; AMB.lastFlags=flags; AMB.lastSkipped=miss.map(function(it){ return it.q; }); AMB.lastRestock=null; AMB.step="done"; ambClearDraft(); AMB.recentLoaded=false;
+      if(order.length){
+        AMB.lastRestock={n:order.length, state:"sending"}; ambRenderDone();
+        return srCreate({source:"inventory", ambulance:AMB.amb, items:order, note:""}).then(function(){ AMB.lastRestock={n:order.length, state:"sent"}; if(AMB.step==="done") ambRenderDone(); },
+          function(err){ AMB.lastRestock={n:order.length, state:"failed"}; if(AMB.step==="done") ambRenderDone(); diagLog("restock-failed", String((err&&err.message)||err)); });
+      }
+      ambRenderDone();
     })["catch"](function(err){
       AMB.busy=false; if(btn){ btn.disabled=false; btn.textContent="Submit"; }
       toast(navigator.onLine===false ? "No signal — your answers are saved on this phone. Submit again when you have service." : "Couldn’t submit. Your answers are still here — try again in a moment.");
@@ -4120,6 +4156,7 @@
     b.innerHTML='<div class="amb-done"><div class="amb-done-ic">✓</div><h3>Saved. Thank you!</h3><p>'+esc(ambTypeLabel(AMB.type))+' for '+esc(AMB.amb)+' on '+esc(ambPrettyDate(AMB.date))+'.</p>'+
       (flags.length?'<div class="amb-flaglist"><b>Flagged for the admins:</b><ul>'+flags.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<p class="amb-ok">Nothing flagged'+(skipped.length?'':' — all good')+'.</p>')+
       (skipped.length?'<div class="amb-flaglist skip"><b>Not checked ('+skipped.length+'):</b><ul>'+skipped.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul><div class="amb-skipnote">Saved as not checked — the admins can see these were skipped.</div></div>':'')+
+      (AMB.lastRestock?'<div class="amb-restock '+esc(AMB.lastRestock.state)+'">\uD83D\uDED2 '+(AMB.lastRestock.state==="sending"?"Sending the restock request\u2026":AMB.lastRestock.state==="sent"?"Restock request sent for "+AMB.lastRestock.n+" item"+(AMB.lastRestock.n===1?"":"s")+" \u2014 the admins and service units have been told.":"Couldn\u2019t send the restock request for "+AMB.lastRestock.n+" item"+(AMB.lastRestock.n===1?"":"s")+" \u2014 please tell a service unit.")+'</div>':'')+
       '<button class="ebtn primary" id="ambAnother">Log another</button><button class="ebtn" id="ambDone">Done</button></div>';
     $("ambAnother").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); ambRender(); ambLoadRecent(); });
     $("ambDone").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); navBack(); });
@@ -4210,7 +4247,7 @@
   // Every member's own bag, checked against the item list the admins keep
   // (Admin -> Jump bag items). One row per item the member has marked; the
   // nightly script reads the expiration dates and sends the reminders.
-  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false, jumpOpen:null};
+  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false, jumpOpen:null, reqs:[], reqOpen:false, reqBusy:false};
   var JB_REMIND_OPTS=[[0,"Off"],[30,"Every 30 days"],[60,"Every 60 days"],[90,"Every 90 days"],[180,"Every 180 days"]];
   var JB_SOON=30;
   function jbUnit(){ return String((STATE.me&&STATE.me.unit)||""); }
@@ -4249,11 +4286,13 @@
     $("jbBody").innerHTML='<div class="empty">Loading…</div>';
     Promise.all([ fetchTab("Jump Bag Items"),
                   sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&unit=eq."+encodeURIComponent(jbUnit()),{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
-                  sbFetch(SB_URL+"/rest/v1/jumpbag_bags?select=*&unit=eq."+encodeURIComponent(jbUnit())+"&limit=1",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
+                  sbFetch(SB_URL+"/rest/v1/jumpbag_bags?select=*&unit=eq."+encodeURIComponent(jbUnit())+"&limit=1",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
+                  sbFetch(SB_URL+"/rest/v1/supply_requests?select=*&unit=eq."+encodeURIComponent(jbUnit())+"&source=eq.jumpbag&order=created_at.desc&limit=30",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
       .then(function(res){
         JB.items=res[0]||[]; JB.st={};
         (Array.isArray(res[1])?res[1]:[]).forEach(function(s){ JB.st[s.item_id]=s; });
         JB.bag=(Array.isArray(res[2])&&res[2][0])?res[2][0]:{unit:jbUnit(), checked_at:null, remind_days:0};
+        JB.reqs=Array.isArray(res[3])?res[3]:[];
         JB.loaded=true; jbRender(); jbFlush();
       })["catch"](function(){ $("jbBody").innerHTML='<div class="empty">Couldn’t load. Check your internet and open this again.</div>'; });
   }
@@ -4298,7 +4337,9 @@
     var id=r.__id, s=JB.st[id]||{}, exp=s.exp_date||"", es=jbExpState(exp);
     var showDate=admBoolOn(r_(r,"Expires"),"Expires") || !!exp || !!JB.expOpen[id];
     var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+(JB.pending[id]?" pend":"");
+    var rq=(s.status==="short"||s.status==="missing")?jbReqFor(id):null;
     return '<div class="'+cls+'" data-id="'+id+'"><div class="jb-l"><div class="jb-n">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <b>×'+esc(r_(r,"Qty"))+'</b>':'')+'</div>'+
+      (rq?'<div class="jb-reqline '+esc(rq.status)+'">'+(rq.status==="ordered"?"\uD83D\uDED2 Ordered"+(rq.status_at?" "+esc(srWhen(rq.status_at)):""):"\uD83D\uDED2 Requested "+esc(srWhen(rq.created_at)))+'</div>':'')+
       (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span>':'')+'</div>'
                :'<button class="jb-addexp" data-id="'+id+'">+ expiration date</button>')+'</div>'+
       '<div class="jb-st"><button class="jb-b have'+(s.status==="have"?" on":"")+'" data-id="'+id+'" data-s="have">✓ Have</button><button class="jb-b short'+(s.status==="short"?" on":"")+'" data-id="'+id+'" data-s="short">Short</button><button class="jb-b missing'+(s.status==="missing"?" on":"")+'" data-id="'+id+'" data-s="missing">Missing</button></div></div>';
@@ -4346,16 +4387,47 @@
   function jbPill(kind, cls, label){
     return '<button class="jb-pill '+cls+(JB.jumpOpen===kind?" on":"")+'" data-jump="'+kind+'">'+label+' <span class="jb-caret">\u25BE</span></button>';
   }
+  /* the latest request that still covers this item (open or ordered) */
+  function jbReqFor(id){
+    for(var i=0;i<JB.reqs.length;i++){ var r=JB.reqs[i]; if(r.status==="done") continue;
+      var items=Array.isArray(r.items)?r.items:[]; if(items.some(function(x){ return String(x.item_id)===String(id); })) return r; }
+    return null;
+  }
+  function jbReqHTML(c){
+    var need=jbListFor("fix"); if(!need.length) return "";
+    var waiting=need.filter(function(x){ return !!jbReqFor(x.r.__id); }).length;
+    if(!JB.reqOpen) return '<button class="ebtn jb-reqbtn" id="jbReqBtn">\uD83D\uDED2 '+(waiting===need.length?"Request again":"Request restock")+' ('+need.length+')</button>'+(waiting?'<div class="jb-reqnote">'+waiting+' of these '+(waiting===1?"is":"are")+' already requested \u2014 see each item.</div>':'');
+    return '<div class="jb-req"><b>Ask the admins and service units to restock:</b>'+
+      need.map(function(x){ var rq=jbReqFor(x.r.__id); return '<label class="jb-reqit"><input type="checkbox" data-rid="'+x.r.__id+'"'+(rq?'':' checked')+'> <span><b>'+esc(r_(x.r,"Item"))+'</b> '+esc(x.why)+(rq?' <i>\u00b7 requested '+esc(srWhen(rq.created_at))+(rq.status==="ordered"?", ordered":"")+'</i>':'')+'</span></label>'; }).join("")+
+      '<textarea class="amb-text jb-reqnote-in" id="jbReqNote" rows="2" placeholder="Anything they should know? (optional)"></textarea>'+
+      '<div class="sr-btns"><button class="ebtn primary" id="jbReqSend"'+(JB.reqBusy?" disabled":"")+'>'+(JB.reqBusy?"Sending\u2026":"Send request")+'</button><button class="ebtn" id="jbReqCancel">Cancel</button></div></div>';
+  }
+  function jbSendReq(){
+    if(JB.reqBusy) return;
+    var need=jbListFor("fix"), picked=[];
+    $("jbBody").querySelectorAll(".jb-req input[data-rid]:checked").forEach(function(cb){ var id=cb.getAttribute("data-rid"); need.forEach(function(x){ if(String(x.r.__id)===id) picked.push({item_id:x.r.__id, name:r_(x.r,"Item"), qty:r_(x.r,"Qty"), why:x.why}); }); });
+    if(!picked.length){ toast("Tick at least one item."); return; }
+    var note=String(($("jbReqNote")||{}).value||"");
+    JB.reqBusy=true; jbRepaintSum();
+    srCreate({source:"jumpbag", items:picked, note:note}).then(function(saved){
+      JB.reqBusy=false; JB.reqOpen=false; JB.reqs.unshift(saved); jbRender();
+      toast("Request sent to the admins and service units.");
+    })["catch"](function(err){ JB.reqBusy=false; jbRepaintSum(); toast(navigator.onLine===false?"No signal \u2014 try again when you\u2019re back online.":"Couldn\u2019t send the request \u2014 try again."); diagLog("restock-failed", String((err&&err.message)||err)); });
+  }
   function jbSumHTML(c){
     var last=jbLastUpdated(), open=JB.jumpOpen, list=open?jbListFor(open):[];
     return '<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+(last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
       '<div class="jb-pills">'+(c.expired?jbPill("expired","bad",c.expired+' expired'):'')+(c.soon?jbPill("soon","warn",c.soon+' expiring soon'):'')+(c.short+c.missing?jbPill("fix","warn",(c.short+c.missing)+' short/missing'):'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
       '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
       (open?'<div class="jb-jump">'+(list.length?list.map(function(x){ return '<button class="jb-jumpit" data-id="'+x.r.__id+'"><b>'+esc(r_(x.r,"Item"))+'</b><span>'+esc(x.p.name)+' \u00b7 '+esc(x.why)+'</span></button>'; }).join(""):'<div class="jb-jumpnone">Nothing here any more.</div>')+'</div>':'')+
+      jbReqHTML(c)+
       '<div class="jb-hint">Tap what you have. Items with a date are checked nightly — you get an email and a notification '+esc(jbReminderText())+'.</div></div>';
   }
   function jbWireSum(){
     var b=$("jbBody");
+    var rb=$("jbReqBtn"); if(rb) rb.addEventListener("click",function(){ JB.reqOpen=true; jbRepaintSum(); });
+    var rc=$("jbReqCancel"); if(rc) rc.addEventListener("click",function(){ JB.reqOpen=false; jbRepaintSum(); });
+    var rs=$("jbReqSend"); if(rs) rs.addEventListener("click",jbSendReq);
     b.querySelectorAll(".jb-pill[data-jump]").forEach(function(el){ el.addEventListener("click",function(){
       var k=el.getAttribute("data-jump"); JB.jumpOpen=(JB.jumpOpen===k)?null:k; jbRepaintSum();
     }); });
@@ -4456,6 +4528,99 @@
     loadXlsxLib().then(function(X){ var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Jump bags"); X.writeFile(wb, "jump-bags-"+ambToday()+".xlsx"); })
       ["catch"](function(){ var csv=data.map(function(row){ return row.map(function(x){ x=String(x==null?"":x); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(","); }).join("\n");
         var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="jump-bags-"+ambToday()+".csv"; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },500); });
+  }
+
+  /* ===================== Restock requests ===================== */
+  // "Request restock" in My Jump Bag and "Order needed" on an inventory issue
+  // both save a supply_requests row; the Apps Script then emails and pushes
+  // every active admin and service unit. Those people mark it Ordered / Done
+  // here (admins under Admin -> Supply requests, service units from the
+  // Ambulance Checkoff screen), and the member sees the status on the item.
+  var SR={rows:[], loaded:false, sel:null, filter:"open", busy:false};
+  function srCanHandle(){ return !!(STATE.me && (STATE.me.admin || STATE.me.serviceUnit)); }
+  function srMeName(){ return ((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()); }
+  /* the script that sends the emails: same address + secret as "Send a report" */
+  function srNotify(action, id){
+    var cfg=diagSettings(); if(!cfg.url || !cfg.key){ diagLog("restock-notify", "not set up"); return Promise.resolve(false); }
+    var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },30000); }catch(e){}
+    return fetch(cfg.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({secret:cfg.key, action:action, id:id}), signal:ctl?ctl.signal:undefined })
+      .then(function(r){ return r.json(); }).then(function(j){ if(!(j&&j.ok)) diagLog("restock-notify-failed", String((j&&j.error)||"no reply")); return !!(j&&j.ok); })
+      ["catch"](function(e){ diagLog("restock-notify-failed", String((e&&e.message)||e)); return false; });
+  }
+  function srCreate(req){
+    var row={ unit:String((STATE.me&&STATE.me.unit)||""), name:srMeName(), source:String(req.source||"jumpbag"), ambulance:String(req.ambulance||""),
+              items:(req.items||[]).map(function(x){ return {item_id:x.item_id||null, name:String(x.name||""), qty:String(x.qty||""), why:String(x.why||"")}; }),
+              note:String(req.note||"").trim().slice(0,1000), status:"open" };
+    return sbFetch(SB_URL+"/rest/v1/supply_requests",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"return=representation"}, body:JSON.stringify(row) })
+      .then(function(r){ if(!r.ok) throw new Error("request-"+r.status); return r.json(); })
+      .then(function(rows){ var saved=(Array.isArray(rows)&&rows[0])||row; diagLog("restock", row.source+" "+row.items.length+" item(s)"); if(saved.id) srNotify("restock", saved.id); return saved; });
+  }
+  function srWhen(iso){ var d=new Date(iso); return isNaN(d)?"":ambAgo(d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)); }
+  function srStatusLabel(st){ return st==="ordered"?"Ordered":st==="done"?"Done":"Open"; }
+  function srTitle(r){ return r.source==="inventory" ? (String(r.ambulance||"Ambulance").replace(/ Ambulance - \d+$/,"")+" inventory") : "Jump bag"; }
+
+  /* ---- the list for admins and service units ---- */
+  function srLoad(){
+    return sbFetch(SB_URL+"/rest/v1/supply_requests?select=*&order=created_at.desc&limit=500",{cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); })
+      .then(function(rows){ SR.rows=Array.isArray(rows)?rows:[]; SR.loaded=true; return SR.rows; });
+  }
+  function srOpenCount(){ return SR.rows.filter(function(r){ return r.status==="open"; }).length; }
+  function srRenderInto(host, backFn){
+    if(!host) return;
+    if(SR.sel){ var selRow=SR.rows.filter(function(r){ return r.id===SR.sel; })[0]; if(selRow){ srRenderDetail(host, selRow, backFn); return; } SR.sel=null; }
+    var open=SR.rows.filter(function(r){ return r.status==="open"; }).length, ordered=SR.rows.filter(function(r){ return r.status==="ordered"; }).length;
+    var rows=SR.rows.filter(function(r){ return SR.filter==="all" || r.status===SR.filter; });
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Supply requests</h3><div class="u">'+open+' open · '+ordered+' ordered</div></div></div>'+
+      '<div class="adm-help">What members asked to have restocked (from My Jump Bag) and what the ambulance inventory checks flagged for ordering. Tap one, then mark it Ordered when it is on the way and Done when it is in the bag or on the truck.</div>'+
+      '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","Done"],["all","All"]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
+    if(!rows.length) h+='<div class="adm-empty">'+(SR.rows.length?"Nothing here.":"No requests yet.")+'</div>';
+    else h+='<div class="amb-list">'+rows.map(function(r){
+      var items=Array.isArray(r.items)?r.items:[];
+      return '<button class="amb-row" data-srid="'+r.id+'"><div class="amb-rl"><b>'+esc(srTitle(r))+' · '+esc(r.name||r.unit)+'</b><span>'+esc(r.unit)+' · '+items.length+' item'+(items.length===1?"":"s")+' · '+esc(srWhen(r.created_at))+(items.length?' · '+esc(items.slice(0,3).map(function(x){ return x.name; }).join(", "))+(items.length>3?'…':''):'')+'</span></div>'+
+        '<span class="sr-st '+esc(r.status)+'">'+srStatusLabel(r.status)+'</span><span class="chev">›</span></button>';
+    }).join("")+'</div>';
+    host.innerHTML=h+'</div>';
+    host.querySelectorAll("[data-srf]").forEach(function(el){ el.addEventListener("click",function(){ SR.filter=el.getAttribute("data-srf"); srRenderInto(host, backFn); }); });
+    host.querySelectorAll("[data-srid]").forEach(function(el){ el.addEventListener("click",function(){ SR.sel=parseInt(el.getAttribute("data-srid"),10); srRenderInto(host, backFn); }); });
+  }
+  function srRenderDetail(host, r, backFn){
+    var items=Array.isArray(r.items)?r.items:[];
+    var h='<div class="adm-body"><button class="adm-backlink" id="srBackLink">‹ All requests</button>'+
+      '<div class="adm-mh"><div class="t"><h3>'+esc(srTitle(r))+'</h3><div class="u">'+esc(r.name||"")+' ('+esc(r.unit)+') · '+esc(new Date(r.created_at).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</div></div><span class="sr-st big '+esc(r.status)+'">'+srStatusLabel(r.status)+'</span></div>'+
+      '<div class="adm-sec"><div class="adm-sech">Needed</div>'+items.map(function(x){ return '<div class="amb-dq"><div class="amb-dqt">'+esc(x.name)+(x.qty?' <small>(×'+esc(x.qty)+')</small>':'')+'</div><div class="amb-dqa'+(/missing/i.test(x.why)?" warn":"")+'">'+esc(x.why||"")+'</div></div>'; }).join("")+'</div>'+
+      (r.note?'<div class="adm-sec"><div class="adm-sech">Note</div><div class="sr-note">'+esc(r.note)+'</div></div>':'')+
+      (r.status_by?'<div class="adm-help">Marked '+esc(srStatusLabel(r.status).toLowerCase())+' by '+esc(r.status_by)+(r.status_at?' · '+esc(srWhen(r.status_at)):'')+'</div>':'')+
+      '<div class="sr-btns">'+(r.status==="open"?'<button class="ebtn primary" data-srset="ordered">Mark ordered</button>':'')+(r.status!=="done"?'<button class="ebtn'+(r.status==="ordered"?" primary":"")+'" data-srset="done">Mark done</button>':'')+(r.status!=="open"?'<button class="ebtn" data-srset="open">Reopen</button>':'')+'</div></div>';
+    host.innerHTML=h;
+    $("srBackLink").addEventListener("click",function(){ SR.sel=null; srRenderInto(host, backFn); });
+    host.querySelectorAll("[data-srset]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srset"), host, backFn); }); });
+  }
+  function srSetStatus(r, status, host, backFn){
+    if(SR.busy) return; SR.busy=true;
+    var patch={ status:status, status_by:(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")", status_at:new Date().toISOString() };
+    sbWrite("PATCH","supply_requests?id=eq."+encodeURIComponent(r.id),patch).then(function(res){
+      SR.busy=false; if(!res.ok) throw new Error("status-"+res.status);
+      Object.assign(r, patch); diagLog("restock-status", r.id+" "+status);
+      if(status!=="open") srNotify("restock_status", r.id);      /* tells the member */
+      toast(status==="ordered"?"Marked ordered — the member has been told.":status==="done"?"Marked done.":"Reopened.");
+      srRenderInto(host, backFn);
+    })["catch"](function(err){ SR.busy=false; toast(navigator.onLine===false?"No signal — try again when you’re back online.":"Couldn’t save that — try again."); diagLog("restock-status-failed", String((err&&err.message)||err)); });
+  }
+  /* the stand-alone screen (service units reach it from Ambulance Checkoff; admins too) */
+  function srOpen(){
+    if(demoNo()) return;
+    if(!$("srScreen").classList.contains("open")) navOpen(srClose);
+    $("srScreen").classList.add("open"); SR.sel=null;
+    $("srBody").innerHTML='<div class="empty">Loading…</div>';
+    srLoad().then(function(){ srRenderInto($("srBody")); })["catch"](function(){ $("srBody").innerHTML='<div class="empty">Couldn’t load. Check your internet and open this again.</div>'; });
+  }
+  function srClose(){ $("srScreen").classList.remove("open"); }
+  if($("srBack")) $("srBack").addEventListener("click",navBack);
+  /* admin section */
+  function srAdminLoad(){
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading…</div>'; SR.sel=null;
+    srLoad().then(function(){ srRenderInto($("admGenPane")); })["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_supply_requests.sql if this is the first time.</div>'; });
   }
 
   /* ===================== Scene Timer ===================== */
@@ -5389,6 +5554,7 @@
     {k:"resources",label:"Resources"},
     {k:"ambchecks",label:"Ambulance checks"},
     {k:"jumpbags",label:"Jump bags"},
+    {k:"supply",label:"Supply requests"},
     {k:"jumpbag",label:"Jump bag items"},
     {k:"announce",label:"Announcements"},
     {k:"uploads",label:"Upload Types"},
@@ -5556,6 +5722,7 @@
   function admLoadSec(k){
     if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
     if(k==="jumpbags"){ ADMJB.sel=null; admJbLoad(); return; }
+    if(k==="supply"){ srAdminLoad(); return; }
     if(k==="certtypes"){
       if(CERT.certCols&&CERT.certCols.length){ admRenderCertTypes(); return; }
       $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
@@ -9691,7 +9858,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.6.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9734,7 +9901,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.6.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10743,6 +10910,9 @@
         if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="jumpbag"){
           diagLog("push-open", "jumpbag"); try{ openJumpBag(); }catch(x){}
         }
+        else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="restock"){
+          diagLog("push-open", "restock"); try{ if(srCanHandle()) srOpen(); else openJumpBag(); }catch(x){}
+        }
         else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="scene-timer"){
           diagLog("push-open", "scene-timer");
           try{ if(SCT.active) scTick(); scOpen(); }catch(x){}
@@ -10773,7 +10943,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.5.2".replace("Version ","");
+  var APP_VERSION="Version 1.6.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
