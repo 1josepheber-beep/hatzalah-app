@@ -714,6 +714,87 @@
   .adm-tag{font-size:9.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#eef2f7;color:var(--mut)}
   .adm-tag.lvl{background:#e7f0ff;color:var(--navy)}
   .adm-tag.adm{background:#fff3d6;color:#8a6d00}
+  .adm-tag.svc{background:#e5f3ea;color:#1f6b3a}
+  /* ---- Ambulance Checkoff ---- */
+  .amb-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .amb-h{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+  .amb-opts{display:flex;flex-wrap:wrap;gap:8px}
+  .amb-opt{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:9px 14px;font-weight:800;font-size:14px;cursor:pointer;min-width:64px}
+  .amb-opt.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .amb-opt.on.warn{background:var(--red);border-color:var(--red)}
+  .amb-big .amb-opt{flex:1 1 40%;padding:14px 12px;font-size:15px}
+  .amb-types{display:flex;flex-direction:column;gap:8px}
+  .amb-type{text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:11px 13px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+  .amb-type.on{border-color:var(--navy);box-shadow:inset 0 0 0 1px var(--navy);background:#f3f6fb}
+  .amb-type b{font-size:15px;color:var(--ink)}
+  .amb-type span{font-size:12.5px;color:var(--mut);font-weight:600}
+  .amb-type em{font-style:normal;font-size:12px;color:var(--navy);font-weight:800;margin-top:3px}
+  .amb-date{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;font-size:15px;font-weight:700;color:var(--ink);background:#fff;font-family:inherit}
+  .amb-go{width:100%;padding:15px;font-size:16px;border-radius:13px;margin-top:4px}
+  .amb-go:disabled{opacity:.55}
+  .amb-foot{text-align:center;color:var(--mut);font-size:12px;font-weight:600;margin:12px 0 4px}
+  .amb-top{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+  .amb-top b{display:block;font-size:15px;color:var(--ink)}
+  .amb-top span{font-size:12.5px;color:var(--mut);font-weight:700}
+  .amb-change{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:9px;padding:7px 11px;font-weight:800;font-size:12.5px;cursor:pointer}
+  .amb-prog{display:flex;align-items:center;gap:10px;margin:0 2px 12px;font-size:12px;font-weight:800;color:var(--mut)}
+  .amb-bar{flex:1;height:7px;border-radius:99px;background:#dde3ec;overflow:hidden}
+  .amb-bar i{display:block;height:100%;background:var(--navy);border-radius:99px;transition:width .25s}
+  .amb-sec{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 14px 6px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .amb-sech{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--navy);padding:10px 0 6px}
+  .amb-note{font-size:12.5px;color:var(--mut);font-weight:600;line-height:1.4;padding:0 0 6px}
+  .amb-q{padding:11px 0;border-top:1px solid var(--line)}
+  .amb-q.miss{box-shadow:inset 3px 0 0 var(--red);padding-left:9px;margin-left:-12px;padding-right:0}
+  .amb-qt{font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.35}
+  .amb-q.done .amb-qt::before{content:"\2713";display:inline-block;width:16px;color:#1f7a37;font-weight:900}
+  .amb-q.req:not(.done) .amb-qt::before{content:"";display:inline-block;width:16px}
+  .amb-optl{font-size:11px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-left:7px}
+  .amb-num{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:11px;background:#fff;overflow:hidden}
+  .amb-num input{width:112px;border:0;padding:10px 12px;font-size:16px;font-weight:800;color:var(--ink);font-family:inherit;background:transparent}
+  .amb-num .amb-unit{padding:0 11px;font-size:12.5px;font-weight:800;color:var(--mut);background:#f3f5f9;align-self:stretch;display:flex;align-items:center}
+  .amb-num.bad{border-color:var(--red)} .amb-num.bad input{color:var(--red)}
+  .amb-hint{font-size:11.5px;color:var(--mut);font-weight:600;margin-top:5px}
+  .amb-text{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:10px 12px;font-size:15px;color:var(--ink);font-family:inherit;background:#fff;resize:vertical}
+  .amb-photos{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .amb-ph{position:relative;width:74px;height:74px;border-radius:10px;overflow:hidden;background:#e6eaf1;border:1px solid var(--line)}
+  .amb-ph img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+  .amb-phx{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:22px;cursor:pointer;padding:0}
+  .amb-add{border:1.5px dashed #9fb0cc;background:#f7f9fc;color:var(--navy);border-radius:11px;padding:11px 14px;font-weight:800;font-size:13.5px;cursor:pointer}
+  .amb-add:disabled{opacity:.6}
+  .amb-submit{margin:6px 0 10px}
+  .amb-submit .ebtn{width:100%;padding:15px;font-size:16px;border-radius:13px}
+  .amb-done{text-align:center;padding:28px 16px}
+  .amb-done-ic{width:64px;height:64px;border-radius:50%;background:#1f7a37;color:#fff;font-size:34px;font-weight:900;line-height:64px;margin:0 auto 14px}
+  .amb-done h3{margin:0 0 6px;font-size:21px;color:var(--ink)} .amb-done p{color:var(--mut);font-weight:600;margin:0 0 14px}
+  .amb-done .ebtn{display:block;width:100%;padding:14px;font-size:15px;border-radius:12px;margin-top:10px}
+  .amb-ok{color:#1f7a37 !important;font-weight:800 !important}
+  .amb-flaglist{text-align:left;background:#fdecec;border:1px solid #f0b4bb;border-radius:12px;padding:10px 14px;margin:0 0 12px;color:#8a1f1f}
+  .amb-flaglist b{font-size:12px;letter-spacing:.5px;text-transform:uppercase} .amb-flaglist ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;font-weight:700;line-height:1.5}
+  .amb-okline{background:#e5f3ea;color:#1f6b3a;border-radius:12px;padding:10px 14px;font-weight:800;font-size:13.5px;margin-bottom:12px}
+  .amb-list{padding:4px 0}
+  .amb-row{width:100%;text-align:left;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:7px;cursor:pointer}
+  .amb-rl{flex:1;min-width:0} .amb-rl b{display:block;font-size:14px;color:var(--ink)} .amb-rl span{font-size:12.5px;color:var(--mut);font-weight:700}
+  .amb-flagn{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:#fdecec;color:#8a1f1f;border-radius:6px;padding:3px 7px}
+  .amb-okn{font-size:11px;font-weight:800;letter-spacing:.3px;background:#e5f3ea;color:#1f6b3a;border-radius:6px;padding:3px 7px}
+  .amb-row .chev{color:#9aa8bd;font-size:20px;font-weight:700}
+  .adm-backlink{border:0;background:transparent;color:var(--navy);font-weight:800;font-size:14px;padding:0 0 10px;cursor:pointer}
+  .adm-mh button.ghost{margin-left:auto;background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
+  .adm-mh button.ghost:disabled{opacity:.5}
+  .amb-dq{display:flex;gap:12px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}
+  .amb-dqt{flex:1;font-size:13px;color:var(--mut);font-weight:700;line-height:1.35}
+  .amb-dqa{font-size:14px;font-weight:800;color:var(--ink);white-space:pre-wrap;max-width:55%;text-align:right}
+  .amb-dqa.warn{color:var(--red)} .amb-dqa.none{color:#b4bccb;font-weight:700} .amb-dqa.ok{color:#1f7a37}
+  .amb-dqt small{color:#9aa8bd;font-weight:700}
+  .amb-inv{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:9px 0}
+  .amb-inv .amb-invl{flex:1 1 180px;min-width:0} .amb-inv .amb-qt{margin-bottom:2px;font-size:14px}
+  .amb-invm{display:flex;gap:7px;align-items:center;font-size:11.5px;color:var(--mut);font-weight:700} .amb-invm b{color:var(--ink);font-size:12.5px}
+  .amb-code{border:1px solid var(--line);border-radius:5px;padding:0 5px;font-size:10px;letter-spacing:.4px;color:#5f7089;background:#f5f7fa}
+  .amb-opts.amb-sm{flex:0 0 auto;gap:6px} .amb-opts.amb-sm .amb-opt{padding:7px 11px;font-size:13px;min-width:0}
+  .amb-inv.issue{background:#fff7f7;margin:0 -14px;padding-left:14px;padding-right:14px}
+  .amb-invc{flex:1 1 100%;margin-top:2px;font-size:14px;padding:8px 11px}
+  .amb-allok{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;font-weight:800;font-size:11px;letter-spacing:.3px;cursor:pointer;text-transform:none}
+  .amb-sech{display:flex;align-items:center}
+
   .adm-tag.off{background:#fdecec;color:#8a1f1f}
   .adm-empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
   .adm-addbtn{margin:0;padding:11px 12px;border-top:1px solid var(--line);background:#fff}
@@ -1507,7 +1588,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.3.2</div>
+  <div class="ver-line">Version 1.4.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1629,7 +1710,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.3.2</div>
+  <div class="ver-line">Version 1.4.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1830,6 +1911,14 @@
   </div>
   <div class="scr-body pdf-body" id="pdfBody"></div>
 </div>
+<div class="screen" id="ambScreen">
+  <div class="scr-head">
+    <button class="back" id="ambBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2 id="ambTitle">Ambulance Checkoff</h2>
+  </div>
+  <div class="scr-body" id="ambBody"></div>
+</div>
+
 <div class="screen" id="resScreen">
   <div class="scr-head">
     <button class="back" id="resBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
@@ -2194,7 +2283,7 @@
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
   var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements"};
-  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
+  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","service_unit":"Service Unit","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   /* ---------- Diagnostics ----------
@@ -2680,7 +2769,7 @@
         if(!(active===""||active==="x"||active==="yes"||active==="true")) continue;
         var re=String(r_(r,"Email")||"").trim().toLowerCase();
         if(re && re===em){
-          return {last:r_(r,"Last Name"),first:r_(r,"First Name"),unit:r_(r,"Unit"),admin:isX(r["Admin"]),dispatcher:isX(r["Dispatcher"]),status:r_(r,"Status"),email:em,pw:""};
+          return {last:r_(r,"Last Name"),first:r_(r,"First Name"),unit:r_(r,"Unit"),admin:isX(r["Admin"]),dispatcher:isX(r["Dispatcher"]),serviceUnit:isX(r["Service Unit"])||/service unit/i.test(r_(r,"Type")||""),status:r_(r,"Status"),email:em,pw:""};
         }
       }
       return null;
@@ -2698,7 +2787,7 @@
       }
       $("pwLoad").classList.add("hidden");
       if(!hit){ $("pwErr").textContent="Password not recognized. Check with your coordinator."; return false; }
-      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),dispatcher:isX(hit["Dispatcher"]),status:r_(hit,"Status"),pw:pw.trim()};
+      var me={last:r_(hit,"Last Name"),first:r_(hit,"First Name"),unit:r_(hit,"Unit"),admin:isX(hit["Admin"]),dispatcher:isX(hit["Dispatcher"]),serviceUnit:isX(hit["Service Unit"])||/service unit/i.test(r_(hit,"Type")||""),status:r_(hit,"Status"),pw:pw.trim()};
       localStorage.setItem(LS,JSON.stringify(me)); STATE.me=me; return true;
     }).catch(function(){
       $("pwLoad").classList.add("hidden");
@@ -2770,6 +2859,7 @@
           STATE.me.status=r_(h,"Status");
           STATE.me.admin=isX(h["Admin"]);
           STATE.me.dispatcher=isX(h["Dispatcher"]);
+          STATE.me.serviceUnit=isX(h["Service Unit"])||/service unit/i.test(r_(h,"Type")||"");
           STATE.me.unit=r_(h,"Unit")||STATE.me.unit;
           STATE.me.first=r_(h,"First Name")||STATE.me.first;
           try{ setTimeout(rememberWho,0); }catch(e){}
@@ -3116,6 +3206,7 @@
     if(isX(t["Admin Only"]) && !STATE.me.admin) return false;
     var ty=(r_(t,"Type")||"").toLowerCase();
     if((ty==="taskbook"||ty==="task") && !canTaskBook()) return false;
+    if(ty==="ambcheck" && !canAmbCheck()) return false;
     return true;
   }
   function buildTileEl(t){
@@ -3516,6 +3607,440 @@
     }catch(e){}
   }
 
+  /* ===================== Ambulance Checkoff ===================== */
+  // The weekly / monthly / maintenance checklist the service units used to fill
+  // in on a Google Form. Questions are defined once (AMB_SPEC); the same list
+  // drives the checklist, the validation, the admin's detail view and the
+  // spreadsheet export, so a change here shows up everywhere.
+  var AMB={ amb:"", type:"", date:"", ans:{}, photos:{}, step:"setup", recent:[], recentLoaded:false, busy:false, urls:{} };
+  var AMB_KEY="hoh_amb_draft_v1";
+  var AMB_TYPES=[{k:"weekly",label:"Weekly check",sub:"Ambulance + generator"},
+                 {k:"monthly",label:"Monthly check",sub:"Ambulance + generator + item expiration"},
+                 {k:"maintenance",label:"Maintenance log",sub:"Service done and the invoice"},
+                 {k:"inventory",label:"Inventory checklist",sub:"The BLS ambulance inventory, item by item"}];
+  function ambulances(){ return admList("Ambulances",["A1 Ambulance - 1","A2 Ambulance - 2"]); }
+  function canAmbCheck(){ return !!(STATE.me && (STATE.me.serviceUnit || STATE.me.admin)); }
+  function ambTypeLabel(k){ for(var i=0;i<AMB_TYPES.length;i++) if(AMB_TYPES[i].k===k) return AMB_TYPES[i].label; return k; }
+
+  /* ---- the questions (kind: choice | yn | num | text | long | photo) ---- */
+  function ambFluid(k, label, topLabel, opts, warn){
+    return [ {k:k, q:label, kind:"choice", opts:opts||["Good","Low"], warn:warn||["Low"]},
+             {k:k+"_top", q:topLabel, kind:"yn"} ];
+  }
+  var AMB_TIRES=[["t_df","Driver FRONT",60],["t_dro","Driver REAR OUTER",65],["t_dri","Driver REAR INNER",65],
+                 ["t_pf","Passenger FRONT",60],["t_pro","Passenger REAR OUTER",65],["t_pri","Passenger REAR INNER",65]];
+  function ambVehicleSection(weekly){
+    var items=[ {k:"odometer", q:"Ambulance odometer / mileage", kind:"num", unit:"mi"},
+                {k:"gas", q:"Gas level", kind:"choice", opts:["Full","3/4","Half","Almost empty"], warn:["Almost empty"]},
+                {k:"wiper_top", q:"Was the windshield wiper fluid topped off?", kind:"yn"} ];
+    items=items.concat(ambFluid("coolant","Coolant fluid level","Was the coolant topped off?"));
+    items=items.concat(ambFluid("brake","Brake fluid level","Was the brake fluid topped off?"));
+    items=items.concat(ambFluid("trans","Transmission fluid level","Was the transmission fluid topped off?"));
+    items=items.concat(ambFluid("oil","Engine oil level","Did you top off the oil?",["Good","Bad"],["Bad"]));
+    items.push({k:"oil_photo", q:"Photo of the oil dipstick and rag", kind:"photo", req:true});
+    if(weekly){
+      items.push({k:"lucas_batt", q:"Was the Lucas battery changed?", kind:"yn"});
+      items.push({k:"stretcher_batt", q:"Was the stretcher battery changed?", kind:"yn"});
+      items.push({k:"o2_psi", q:"Main oxygen tank PSI (H tank)", kind:"num", unit:"PSI", low:500});
+      items.push({k:"trash", q:"Were the trash bins emptied?", kind:"yn"});
+    }
+    var tires=[];
+    AMB_TIRES.forEach(function(t){
+      tires.push({k:t[0], q:t[1]+" tire pressure", kind:"num", unit:"PSI", target:t[2], hint:"Full is "+t[2]+" PSI"});
+      tires.push({k:t[0]+"_fill", q:"Filled up to "+t[2]+" PSI?", kind:"yn"});
+    });
+    var cond=[ {k:"damage", q:"Any notable damage? Describe it", kind:"long", opt:true, flag:"Damage noted"},
+               {k:"damage_photo", q:"Photos of the damage", kind:"photo", multi:true, opt:true},
+               {k:"inside_clean", q:"Is the inside of the ambulance clean?", kind:"choice", opts:["Yes","No","Maybe"], warn:["No","Maybe"]},
+               {k:"inside_photo", q:"Photos of the inside", kind:"photo", multi:true, opt:true},
+               {k:"outside_wash", q:"Does the outside need to be washed?", kind:"yn", warnYes:true, flag:"Needs a wash"},
+               {k:"outside_photo", q:"Photo of the outside", kind:"photo", opt:true} ];
+    return [ {title:"Fluids & engine", items:items},
+             {title:"Tires", items:tires},
+             {title:"Condition", items:cond} ];
+  }
+  function ambGeneratorSection(){
+    return {title:"Generator", items:[
+      {k:"gen_hours", q:"Generator hours", kind:"num", unit:"hrs"},
+      {k:"gen_oil", q:"Generator oil level", kind:"choice", opts:["Good","Bad","Low"], warn:["Bad","Low"]},
+      {k:"gen_oil_top", q:"Did you top off the generator oil?", kind:"yn"},
+      {k:"gen_oil_photo", q:"Photo of the generator dipstick and rag", kind:"photo", req:true} ]};
+  }
+  function ambExpirationSection(){
+    return {title:"Item expiration", note:"Every item has to have its expiration checked, and all equipment checked for function.", items:[
+      {k:"exp_checked", q:"Was every item’s expiration checked?", kind:"yn", warnNo:true},
+      {k:"exp_replaced", q:"Was every expired item replaced (if any)?", kind:"yn"},
+      {k:"equip_checked", q:"Was all equipment checked for function?", kind:"yn", warnNo:true},
+      {k:"equip_damage", q:"Any damaged equipment? Explain", kind:"long", opt:true, flag:"Equipment damaged"},
+      {k:"equip_photo", q:"Photos of damaged equipment", kind:"photo", multi:true, opt:true} ]};
+  }
+  function ambMaintenanceSection(){
+    return {title:"Maintenance", items:[
+      {k:"service", q:"What service was provided?", kind:"text"},
+      {k:"invoice", q:"How much was the invoice?", kind:"num", unit:"$"},
+      {k:"receipt_photo", q:"Photo of the receipt", kind:"photo", opt:true} ]};
+  }
+  /* ---- the BLS ambulance inventory checklist (the paper sheet), item by item.
+     Each row: name, who requires it (S = State, C = City, SC = both), quantity. ---- */
+  var AMB_INV=[
+    ["Vehicle requirements",[["Current registration","C","1"],["Name of service on both sides","SC",""],["No smoking signs in front and rear","SC","2"],["Tires in good condition","C","4"],["Doors in acceptable condition","C",""],["All items stored securely","SC",""],["Dome lights","C",""],["Seat belts front / rear","C",""],["Emergency lights","SC",""],["Siren","SC",""],["Vehicle horn","C",""],["Vehicle lights","C",""],["Windshield free of obstructions","C",""],["Communication equipment","SC",""],["Steps and body free of major damage","C",""],["Positive locks on cabinets and seats","C",""],["Free from electrical hazards","C",""],["Clean equipment patient area","C",""],["Environmental system \u2014 heating and cooling","S",""]]],
+    ["Documentation",[["Current protocols signed by medical director","SC","1"],["Current TDSHS vehicle authorization","SC","1"],["Current proof of insurance","C","1"],["CoH ambulance service permit","C","1"],["CoH ambulance driver\u2019s permit","C","1"],["Vehicle is listed on vehicle information page","C",""],["Equipment, supply and medication list available to crew","S","1"]]],
+    ["Safety equipment",[["Emergency road triangles or non-flammable reflective devices","C","3"],["Fire extinguisher \u2014 mounted, tagged, accessible from patient area","SC","1"],["Flashlight with charger or extra batteries","SC","1"],["Current HAZMAT ERG","SC","1"],["Reflective vests","C","2"],["Powered equipment: manual feature, spare batteries, or alternate power","S",""]]],
+    ["Transportation, immobilization and splinting",[["KED or short board","SC","1"],["Long spine board","SC","1"],["Cervical collars infant \u2013 adult","SC","1 ea"],["Stretcher","SC","1"],["Stair chair or mega mover","C","1"],["Pediatric restraint system","C","1"],["Extremity splint","SC","2"],["Femoral (traction) splint","C","1"],["Pelvis stabilizing device or material","C","1"],["Equipment to meet special patient needs","S",""]]],
+    ["Oxygen & suction",[["Mounted oxygen cylinder (>200 psi)","SC","1"],["Portable oxygen cylinder w/ regulator","SC","1"],["Nasal cannula pediatric \u2013 adult","SC","1 ea"],["Non-rebreather or simple face mask pediatric \u2013 adult","SC","1 ea"],["BVM infant \u2013 adult","SC","1 ea"],["OPA (40mm, 60mm, 80mm, 90mm, 100mm & 110mm)","SC","1 ea"],["NPA (16fr or smaller, 18fr\u201324fr & 26fr or larger)","C","1 ea"],["Mounted and portable suction w/ intact canister","SC","1"],["Suction catheter (5 or 6, 8 or 10, 12 or 14, 16 or 18)","C","1 ea"],["Rigid suction catheter","C","1"]]],
+    ["Trauma & bandaging",[["Commercial arterial tourniquet","SC","2"],["4x4 sterile","SC","25"],["4x4 non-sterile","C","25"],["Adhesive bandage","SC","1 bx"],["Adhesive tape","SC","2"],["Occlusive dressing / chest seal","SC","2"],["Fluid for irrigation of wounds","C","1"],["Elastic (ACE) bandage","SC","2"]]],
+    ["Infection control",[["Hand cleaner / sanitizer","C","1"],["Mounted sharps container","SC","1"],["Emesis bag, basin, or bed pan","C","2 ea"],["Biohazard bags","SC","1"],["General trash bags","C","1"],["Disinfectant wipes or solution","C","1"],["Examination gloves","SC","1 bx"],["Eye protection","SC","2"],["Gowns","SC","2"],["Surgical masks","C","2"],["N95 masks","SC","2"],["Personal cleansing supplies","S",""]]],
+    ["Vitals & diagnostics",[["Glucometer w/ test strips & disposable lancets","SC","1"],["Oral glucose","C","1"],["Pulse oximeter with pediatric \u2013 adult capabilities","SC","1"],["Stethoscope","SC","1"],["Blood pressure cuffs infant \u2013 adult","SC","1 ea"],["Thermometer (w/ covers if oral)","SC","1"]]],
+    ["Miscellaneous",[["Trauma shears","C","1"],["Triage marking system or 10 tags","SC","25"],["Cold pack","C","2"],["Heat pack","C","2"],["Emergency blanket","C","2"],["Alcohol swabs or topical antiseptic towelettes","C","20"],["Pediatric dosing","C","1"],["OB kit w/ baby bunting and bulb suction","C","1"]]],
+    ["Cardiovascular care",[["AED w/ no errors","SC","1"],["Spare battery","C","1"],["Adult & pediatric defibrillator pads (compatible with AED)","SC","2 ea"]]],
+    ["Medications",[["Epinephrine for anaphylaxis w/ delivery capability (pediatric & adult)","SC","1 ea"],["Filter needles if using ampule","C","1 ea"],["Naloxone w/ appropriate delivery system","C","1"],["Other medications per protocols w/ appropriate delivery devices","SC",""],["Pediatric and neonatal equipment per endorsed national standards","S",""]]]
+  ];
+  function ambInventorySections(){
+    return AMB_INV.map(function(sec,si){
+      return {title:sec[0], inv:true, items:sec[1].map(function(it,ii){ return {k:"i"+si+"_"+ii, q:it[0], kind:"inv", code:it[1], qty:it[2]}; })};
+    });
+  }
+  function ambSpec(type){
+    if(type==="weekly") return ambVehicleSection(true).concat([ambGeneratorSection()]);
+    if(type==="monthly") return ambVehicleSection(false).concat([ambGeneratorSection(), ambExpirationSection()]);
+    if(type==="maintenance") return [ambMaintenanceSection()];
+    if(type==="inventory") return ambInventorySections();
+    return [];
+  }
+  function ambItems(type){ var out=[]; ambSpec(type).forEach(function(s){ out=out.concat(s.items); }); return out; }
+  /* every question key that can appear in any log type, in order - for the export */
+  function ambAllItems(){
+    var seen={}, out=[];
+    ["weekly","monthly","maintenance","inventory"].forEach(function(t){ ambItems(t).forEach(function(it){ if(!seen[it.k]){ seen[it.k]=1; out.push(it); } }); });
+    return out;
+  }
+
+  /* ---- what the member answered ---- */
+  function ambHas(it){
+    if(it.kind==="photo") return !!((AMB.photos[it.k]||[]).length);
+    var v=AMB.ans[it.k]; return !(v===undefined || v===null || String(v).trim()==="");
+  }
+  function ambMissing(){
+    return ambItems(AMB.type).filter(function(it){ return !it.opt && !ambHas(it) && (it.kind!=="photo" || it.req); });
+  }
+  /* things an admin should look at, worked out from the answers */
+  function ambFlags(){
+    var f=[], a=AMB.ans;
+    function low(k,label){ if(a[k] && a[k]!=="Good" && a[k+"_top"]!=="Yes") f.push(label+" "+String(a[k]).toLowerCase()+", not topped off"); }
+    if(AMB.type==="weekly"||AMB.type==="monthly"){
+      if(a.gas==="Almost empty") f.push("Gas almost empty");
+      low("coolant","Coolant"); low("brake","Brake fluid"); low("trans","Transmission fluid"); low("oil","Engine oil");
+      if(AMB.type==="weekly" && a.o2_psi!=="" && a.o2_psi!==undefined && parseFloat(a.o2_psi)<500) f.push("Main O2 tank "+a.o2_psi+" PSI");
+      AMB_TIRES.forEach(function(t){ var v=parseFloat(a[t[0]]); if(isFinite(v) && v<t[2]-5 && a[t[0]+"_fill"]!=="Yes") f.push(t[1].replace(/\b[A-Z]{2,}\b/g,function(m){return m.charAt(0)+m.slice(1).toLowerCase();})+" tire "+v+" PSI (full is "+t[2]+")"); });
+      if(String(a.damage||"").trim()) f.push("Damage noted");
+      if(a.inside_clean && a.inside_clean!=="Yes") f.push("Inside not clean");
+      if(a.outside_wash==="Yes") f.push("Needs a wash");
+      low("gen_oil","Generator oil");
+    }
+    if(AMB.type==="inventory"){
+      ambItems("inventory").forEach(function(it){ if(a[it.k]==="Issue") f.push(it.q+(String(a[it.k+"_c"]||"").trim()?" — "+String(a[it.k+"_c"]).trim():"")); });
+    }
+    if(AMB.type==="monthly"){
+      if(a.exp_checked==="No") f.push("Item expirations NOT checked");
+      if(a.equip_checked==="No") f.push("Equipment NOT checked");
+      if(String(a.equip_damage||"").trim()) f.push("Equipment damaged");
+    }
+    return f;
+  }
+
+  /* ---- draft: kept on the phone until it is submitted ---- */
+  function ambSaveDraft(){ try{ localStorage.setItem(AMB_KEY, JSON.stringify({unit:STATE.me&&STATE.me.unit, amb:AMB.amb, type:AMB.type, date:AMB.date, ans:AMB.ans, photos:AMB.photos, step:AMB.step, t:Date.now()})); }catch(e){} }
+  function ambClearDraft(){ try{ localStorage.removeItem(AMB_KEY); }catch(e){} }
+  function ambLoadDraft(){
+    try{ var d=JSON.parse(localStorage.getItem(AMB_KEY)||"null");
+      if(d && d.unit===(STATE.me&&STATE.me.unit) && d.type && (Date.now()-(d.t||0) < 3*864e5)){
+        AMB.amb=d.amb||""; AMB.type=d.type||""; AMB.date=d.date||""; AMB.ans=d.ans||{}; AMB.photos=d.photos||{}; AMB.step=d.step==="check"?"check":"setup"; return true; }
+    }catch(e){} return false;
+  }
+  function ambToday(){ var d=new Date(); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+  function ambPrettyDate(iso){ var m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return String(iso||""); var d=new Date(+m[1],+m[2]-1,+m[3]); return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:(d.getFullYear()===new Date().getFullYear()?undefined:"numeric")}); }
+  function ambAgo(iso){ var m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return ""; var d=new Date(+m[1],+m[2]-1,+m[3]); var days=Math.round((new Date().setHours(0,0,0,0)-d.getTime())/864e5); if(days<=0) return "today"; if(days===1) return "yesterday"; if(days<14) return days+" days ago"; if(days<60) return Math.round(days/7)+" weeks ago"; return ambPrettyDate(iso); }
+
+  /* ---- open / close ---- */
+  function openAmbCheck(){
+    if(demoNo()) return;
+    if(!$("ambScreen").classList.contains("open")) navOpen(closeAmbCheck);
+    $("ambScreen").classList.add("open");
+    if(!AMB.type && !ambLoadDraft()){ AMB.step="setup"; AMB.amb=""; AMB.type=""; AMB.date=ambToday(); AMB.ans={}; AMB.photos={}; }
+    if(!AMB.date) AMB.date=ambToday();
+    ambRender();
+    if(!AMB.recentLoaded) ambLoadRecent();
+  }
+  function closeAmbCheck(){ $("ambScreen").classList.remove("open"); if(AMB.step==="check") ambSaveDraft(); }
+  function ambLoadRecent(){
+    return sbFetch(SB_URL+"/rest/v1/ambulance_checks?select=id,unit,name,ambulance,log_type,check_date,flags,created_at&order=check_date.desc,created_at.desc&limit=60",{cache:"no-store"})
+      .then(function(r){ return r.ok?r.json():[]; }).then(function(rows){ AMB.recent=Array.isArray(rows)?rows:[]; AMB.recentLoaded=true; if(AMB.step==="setup") ambRender(); })
+      ["catch"](function(){ AMB.recentLoaded=true; });
+  }
+  function ambLastFor(amb, type){
+    for(var i=0;i<AMB.recent.length;i++){ var r=AMB.recent[i]; if(r.ambulance===amb && r.log_type===type) return r; }
+    return null;
+  }
+
+  /* ---- rendering ---- */
+  function ambRender(){
+    var b=$("ambBody"); if(!b) return;
+    if(AMB.step==="done"){ ambRenderDone(); return; }
+    if(AMB.step==="check"){ ambRenderCheck(); return; }
+    ambRenderSetup();
+  }
+  function ambRenderSetup(){
+    var b=$("ambBody"), ambs=ambulances();
+    $("ambTitle").textContent="Ambulance Checkoff";
+    var h='<div class="amb-card"><div class="amb-h">Which ambulance?</div><div class="amb-opts amb-big">'+
+      ambs.map(function(a){ return '<button class="amb-opt'+(AMB.amb===a?" on":"")+'" data-amb="'+esc(a)+'">'+esc(a)+'</button>'; }).join("")+'</div></div>';
+    h+='<div class="amb-card"><div class="amb-h">What are you logging?</div><div class="amb-types">'+
+      AMB_TYPES.map(function(t){
+        var last=AMB.amb?ambLastFor(AMB.amb,t.k):null;
+        return '<button class="amb-type'+(AMB.type===t.k?" on":"")+'" data-type="'+t.k+'"><b>'+esc(t.label)+'</b><span>'+esc(t.sub)+'</span>'+
+          (AMB.amb?'<em>'+(last?("Last: "+ambAgo(last.check_date)+(last.name?" · "+esc(last.name.split(" ")[0]):"")):"No "+t.label.toLowerCase()+" on file yet")+'</em>':'')+'</button>';
+      }).join("")+'</div></div>';
+    h+='<div class="amb-card"><div class="amb-h">Date</div><input type="date" id="ambDate" class="amb-date" value="'+esc(AMB.date||ambToday())+'" max="'+ambToday()+'"></div>';
+    var ready=!!(AMB.amb && AMB.type);
+    h+='<button class="ebtn primary amb-go" id="ambStart"'+(ready?"":" disabled")+'>'+(ready?"Start the "+ambTypeLabel(AMB.type).toLowerCase():"Pick an ambulance and a log type")+'</button>';
+    h+='<div class="amb-foot">Logged as '+esc(((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||""))+' · '+esc((STATE.me&&STATE.me.unit)||"")+'</div>';
+    b.innerHTML=h;
+    b.querySelectorAll("[data-amb]").forEach(function(el){ el.addEventListener("click",function(){ AMB.amb=el.getAttribute("data-amb"); ambRenderSetup(); }); });
+    b.querySelectorAll("[data-type]").forEach(function(el){ el.addEventListener("click",function(){ AMB.type=el.getAttribute("data-type"); ambRenderSetup(); }); });
+    var d=$("ambDate"); if(d) d.addEventListener("change",function(){ AMB.date=d.value||ambToday(); });
+    var go=$("ambStart"); if(go) go.addEventListener("click",function(){
+      if(!(AMB.amb&&AMB.type)) return;
+      AMB.date=(d&&d.value)||ambToday();
+      /* a draft for a different ambulance or log type is not this check */
+      var dr=null; try{ dr=JSON.parse(localStorage.getItem(AMB_KEY)||"null"); }catch(e){}
+      if(!(dr && dr.amb===AMB.amb && dr.type===AMB.type)){ AMB.ans={}; AMB.photos={}; }
+      AMB.step="check"; ambSaveDraft(); ambRenderCheck(); $("ambBody").scrollTop=0;
+    });
+  }
+  function ambItemHTML(it){
+    var v=AMB.ans[it.k], has=ambHas(it), req=!it.opt && (it.kind!=="photo"||it.req);
+    var h='<div class="amb-q'+(has?" done":"")+(req?" req":"")+'" data-k="'+it.k+'"><div class="amb-qt">'+esc(it.q)+(req?'':'<span class="amb-optl">optional</span>')+'</div>';
+    if(it.kind==="choice"||it.kind==="yn"){
+      var opts=it.kind==="yn"?["Yes","No"]:it.opts;
+      h+='<div class="amb-opts">'+opts.map(function(o){ var warn=(it.warn&&it.warn.indexOf(o)>=0)||(it.warnYes&&o==="Yes")||(it.warnNo&&o==="No");
+        return '<button class="amb-opt'+(v===o?" on":"")+(warn&&v===o?" warn":"")+'" data-k="'+it.k+'" data-v="'+esc(o)+'">'+esc(o)+'</button>'; }).join("")+'</div>';
+    } else if(it.kind==="num"){
+      var t=it.target, bad=(t && v!==undefined && v!=="" && parseFloat(v)<t-5);
+      h+='<div class="amb-num'+(bad?" bad":"")+'">'+(it.unit==="$"?'<span class="amb-unit">$</span>':'')+'<input type="number" inputmode="decimal" step="any" data-k="'+it.k+'" value="'+esc(v===undefined?"":v)+'" placeholder="\u2014">'+(it.unit&&it.unit!=="$"?'<span class="amb-unit">'+esc(it.unit)+'</span>':'')+'</div>'+
+         (it.hint?'<div class="amb-hint">'+esc(it.hint)+'</div>':'');
+    } else if(it.kind==="text"){
+      h+='<input type="text" class="amb-text" data-k="'+it.k+'" value="'+esc(v||"")+'" placeholder="Type here">';
+    } else if(it.kind==="long"){
+      h+='<textarea class="amb-text" rows="2" data-k="'+it.k+'" placeholder="'+(it.opt?"Leave blank if none":"Type here")+'">'+esc(v||"")+'</textarea>';
+    } else if(it.kind==="inv"){
+      h='<div class="amb-q amb-inv'+(has?" done":"")+(v==="Issue"?" issue":"")+' req" data-k="'+it.k+'"><div class="amb-invl"><div class="amb-qt">'+esc(it.q)+'</div><div class="amb-invm">'+(it.qty?'<b>'+esc(it.qty)+'</b>':'')+'<span class="amb-code" title="'+(it.code==="SC"?"State and City":it.code==="S"?"State":"City")+' requirement">'+esc(it.code)+'</span></div></div>'+
+         '<div class="amb-opts amb-sm"><button class="amb-opt'+(v==="OK"?" on":"")+'" data-k="'+it.k+'" data-v="OK">\u2713 OK</button><button class="amb-opt'+(v==="Issue"?" on warn":"")+'" data-k="'+it.k+'" data-v="Issue">Issue</button></div>'+
+         (v==="Issue"?'<input type="text" class="amb-text amb-invc" data-k="'+it.k+'_c" value="'+esc(AMB.ans[it.k+"_c"]||"")+'" placeholder="What\u2019s wrong \u2014 missing, short, expired\u2026">':'');
+      return h+'</div>';
+    } else if(it.kind==="photo"){
+      var refs=AMB.photos[it.k]||[];
+      h+='<div class="amb-photos">'+refs.map(function(ref,i){ return '<div class="amb-ph" data-ref="'+esc(ref)+'"><img alt="" data-ref="'+esc(ref)+'"><button class="amb-phx" data-k="'+it.k+'" data-i="'+i+'" aria-label="Remove">×</button></div>'; }).join("")+
+         ((it.multi||!refs.length)?'<button class="amb-add" data-k="'+it.k+'">📷 '+(refs.length?"Add another":"Take photo")+'</button>':'')+'</div>';
+    }
+    return h+'</div>';
+  }
+  function ambRenderCheck(){
+    var b=$("ambBody"), spec=ambSpec(AMB.type), items=ambItems(AMB.type);
+    var done=items.filter(function(it){ return ambHas(it); }).length, need=items.filter(function(it){ return !it.opt&&(it.kind!=="photo"||it.req); }).length;
+    $("ambTitle").textContent=ambTypeLabel(AMB.type);
+    var h='<div class="amb-top"><div><b>'+esc(AMB.amb)+'</b><span>'+esc(ambPrettyDate(AMB.date))+' · '+esc((STATE.me&&STATE.me.first)||"")+'</span></div><button class="amb-change" id="ambChange">Change</button></div>';
+    h+='<div class="amb-prog"><div class="amb-bar"><i style="width:'+Math.round(100*Math.min(done,need)/Math.max(need,1))+'%"></i></div><span id="ambProgT">'+done+' of '+items.length+' answered</span></div>';
+    spec.forEach(function(sec){
+      h+='<div class="amb-sec"><div class="amb-sech">'+esc(sec.title)+(sec.inv?'<button class="amb-allok" data-sec="'+esc(sec.title)+'">All OK</button>':'')+'</div>'+(sec.note?'<div class="amb-note">'+esc(sec.note)+'</div>':'')+sec.items.map(ambItemHTML).join("")+'</div>';
+    });
+    var miss=ambMissing();
+    h+='<div class="amb-submit"><button class="ebtn primary" id="ambSubmit">'+(miss.length?("Submit — "+miss.length+" left"):"Submit")+'</button><div class="amb-foot">Your answers are kept on this phone until you submit.</div></div>';
+    b.innerHTML=h;
+    ambWire(); ambPaintPhotos();
+  }
+  function ambRefresh(k){
+    /* repaint one question in place and the progress line, keeping the keyboard where it is */
+    var items=ambItems(AMB.type), it=null; for(var i=0;i<items.length;i++) if(items[i].k===k) it=items[i];
+    var old=$("ambBody").querySelector('.amb-q[data-k="'+k+'"]');
+    if(it && old && it.kind!=="num" && it.kind!=="text" && it.kind!=="long"){ var tmp=document.createElement("div"); tmp.innerHTML=ambItemHTML(it); old.parentNode.replaceChild(tmp.firstChild, old); ambWireIn($("ambBody").querySelector('.amb-q[data-k="'+k+'"]')); ambPaintPhotos(); }
+    else if(old){ old.classList.toggle("done", ambHas(it)); if(it.kind==="num"&&it.target){ var w=old.querySelector(".amb-num"); var v=parseFloat(AMB.ans[k]); if(w) w.classList.toggle("bad", isFinite(v)&&v<it.target-5); } }
+    var done=items.filter(function(x){ return ambHas(x); }).length, need=items.filter(function(x){ return !x.opt&&(x.kind!=="photo"||x.req); }).length;
+    var bar=$("ambBody").querySelector(".amb-bar i"); if(bar) bar.style.width=Math.round(100*Math.min(done,need)/Math.max(need,1))+"%";
+    var pt=$("ambProgT"); if(pt) pt.textContent=done+" of "+items.length+" answered";
+    var miss=ambMissing(), sb=$("ambSubmit"); if(sb) sb.textContent=miss.length?("Submit — "+miss.length+" left"):"Submit";
+    ambSaveDraft();
+  }
+  function ambWireIn(root){
+    if(!root) return;
+    root.querySelectorAll(".amb-opt[data-k]").forEach(function(el){ el.addEventListener("click",function(){ var k=el.getAttribute("data-k"), v=el.getAttribute("data-v"); AMB.ans[k]=(AMB.ans[k]===v)?"":v; ambRefresh(k); }); });
+    root.querySelectorAll("input[type=number][data-k], input[type=text][data-k], textarea[data-k]").forEach(function(el){ el.addEventListener("input",function(){ AMB.ans[el.getAttribute("data-k")]=el.value; ambRefresh(el.getAttribute("data-k")); }); });
+    root.querySelectorAll(".amb-add[data-k]").forEach(function(el){ el.addEventListener("click",function(){ ambPick(el.getAttribute("data-k"), el); }); });
+    root.querySelectorAll(".amb-phx").forEach(function(el){ el.addEventListener("click",function(){ ambRemovePhoto(el.getAttribute("data-k"), parseInt(el.getAttribute("data-i"),10)); }); });
+    root.querySelectorAll(".amb-ph img").forEach(function(im){ im.addEventListener("click",function(){ openDocRef(im.getAttribute("data-ref"), "Photo"); }); });
+  }
+  function ambWire(){
+    ambWireIn($("ambBody"));
+    var ch=$("ambChange"); if(ch) ch.addEventListener("click",function(){ AMB.step="setup"; ambSaveDraft(); ambRenderSetup(); });
+    /* "All OK" fills in the blanks of one inventory section - anything already marked Issue stays */
+    $("ambBody").querySelectorAll(".amb-allok").forEach(function(el){ el.addEventListener("click",function(){
+      var title=el.getAttribute("data-sec"); ambSpec(AMB.type).forEach(function(sec){ if(sec.title!==title) return; sec.items.forEach(function(it){ if(!AMB.ans[it.k]) AMB.ans[it.k]="OK"; }); });
+      ambSaveDraft(); var top=$("ambBody").scrollTop; ambRenderCheck(); $("ambBody").scrollTop=top;
+    }); });
+    var sb=$("ambSubmit"); if(sb) sb.addEventListener("click",ambSubmit);
+  }
+  /* thumbnails come from the private bucket, so each needs a short-lived link */
+  function ambPaintPhotos(){
+    $("ambBody").querySelectorAll(".amb-ph img[data-ref]").forEach(function(im){
+      var ref=im.getAttribute("data-ref"); if(im.src) return;
+      if(AMB.urls[ref]){ im.src=AMB.urls[ref]; return; }
+      sbSignedUrl(ref).then(function(u){ AMB.urls[ref]=u; im.src=u; })["catch"](function(){});
+    });
+  }
+
+  /* ---- photos: taken with the camera, shrunk, and sent straight to the private bucket ---- */
+  function ambPick(k, btn){
+    var inp=document.createElement("input"); inp.type="file"; inp.accept="image/*"; inp.setAttribute("capture","environment"); inp.style.display="none";
+    inp.addEventListener("change",function(){ var f=inp.files&&inp.files[0]; try{ document.body.removeChild(inp); }catch(e){} if(f) ambUpload(k, f, btn); });
+    document.body.appendChild(inp); inp.click();
+  }
+  function ambUpload(k, f, btn){
+    if(btn){ btn.disabled=true; btn.textContent="Uploading…"; }
+    var unit=String((STATE.me&&STATE.me.unit)||"unknown").replace(/[^A-Za-z0-9-]/g,"");
+    var base="checks/"+unit+"/"+Date.now().toString(36)+"-"+k+".jpg";
+    return sbResize(f,1600,0.85).then(function(blob){
+      return sbFetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(base),{ method:"POST", headers:{"Content-Type":"image/jpeg","x-upsert":"true"}, body:blob })
+        .then(function(r){ if(!r.ok) throw new Error("upload-"+r.status); });
+    }).then(function(){
+      (AMB.photos[k]=AMB.photos[k]||[]).push("doc:"+base);
+      diagLog("ambcheck-photo", k); ambRefresh(k);
+    })["catch"](function(err){
+      if(btn){ btn.disabled=false; btn.textContent="📷 Try again"; }
+      toast(navigator.onLine===false ? "No signal — the photo didn’t upload. Try again when you have service." : "The photo didn’t upload. Try again.");
+      diagLog("ambcheck-photo-failed", k+" "+String((err&&err.message)||err));
+    });
+  }
+  function ambRemovePhoto(k, i){
+    var refs=AMB.photos[k]||[], ref=refs[i]; if(!ref) return;
+    refs.splice(i,1); ambRefresh(k);
+    /* best effort - a photo that stays behind costs nothing but space */
+    try{ sbFetch(SB_URL+"/storage/v1/object/"+SB_DOCS+"/"+encodeURI(String(ref).replace(/^doc:/,"")),{method:"DELETE", headers:{Prefer:"return=minimal"}})["catch"](function(){}); }catch(e){}
+  }
+
+  /* ---- submit ---- */
+  function ambSubmit(){
+    if(AMB.busy) return;
+    var miss=ambMissing();
+    if(miss.length){
+      var first=$("ambBody").querySelector('.amb-q[data-k="'+miss[0].k+'"]');
+      $("ambBody").querySelectorAll(".amb-q.miss").forEach(function(el){ el.classList.remove("miss"); });
+      miss.forEach(function(it){ var el=$("ambBody").querySelector('.amb-q[data-k="'+it.k+'"]'); if(el) el.classList.add("miss"); });
+      if(first){ try{ first.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ first.scrollIntoView(); } }
+      toast(miss.length===1 ? "One more to answer: "+miss[0].q : miss.length+" still to answer — they’re marked in red.");
+      return;
+    }
+    var btn=$("ambSubmit"); AMB.busy=true; if(btn){ btn.disabled=true; btn.textContent="Submitting…"; }
+    var photos=[]; Object.keys(AMB.photos).forEach(function(k){ (AMB.photos[k]||[]).forEach(function(ref){ photos.push({key:k, ref:ref}); }); });
+    var answers={}; ambItems(AMB.type).forEach(function(it){ if(it.kind!=="photo" && AMB.ans[it.k]!==undefined) answers[it.k]=AMB.ans[it.k]; if(it.kind==="inv" && AMB.ans[it.k]==="Issue" && AMB.ans[it.k+"_c"]) answers[it.k+"_c"]=AMB.ans[it.k+"_c"]; });
+    var flags=ambFlags();
+    var row={ unit:String((STATE.me&&STATE.me.unit)||""), name:(((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim(),
+              ambulance:AMB.amb, log_type:AMB.type, check_date:AMB.date||ambToday(), answers:answers, photos:photos, flags:flags,
+              notes:String(answers.damage||answers.equip_damage||"").slice(0,2000), app_version:String(APP_VERSION) };
+    sbWrite("POST","ambulance_checks",row).then(function(r){
+      if(!r.ok) throw new Error("save-"+r.status);
+      diagLog("ambcheck", AMB.type+" "+AMB.amb+(flags.length?" ("+flags.length+" flags)":""));
+      AMB.busy=false; AMB.lastFlags=flags; AMB.step="done"; ambClearDraft(); AMB.recentLoaded=false; ambRenderDone();
+    })["catch"](function(err){
+      AMB.busy=false; if(btn){ btn.disabled=false; btn.textContent="Submit"; }
+      toast(navigator.onLine===false ? "No signal — your answers are saved on this phone. Submit again when you have service." : "Couldn’t submit. Your answers are still here — try again in a moment.");
+      diagLog("ambcheck-failed", String((err&&err.message)||err));
+    });
+  }
+  function ambRenderDone(){
+    var b=$("ambBody"), flags=AMB.lastFlags||[];
+    $("ambTitle").textContent="Ambulance Checkoff";
+    b.innerHTML='<div class="amb-done"><div class="amb-done-ic">✓</div><h3>Saved. Thank you!</h3><p>'+esc(ambTypeLabel(AMB.type))+' for '+esc(AMB.amb)+' on '+esc(ambPrettyDate(AMB.date))+'.</p>'+
+      (flags.length?'<div class="amb-flaglist"><b>Flagged for the admins:</b><ul>'+flags.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<p class="amb-ok">Nothing flagged — all good.</p>')+
+      '<button class="ebtn primary" id="ambAnother">Log another</button><button class="ebtn" id="ambDone">Done</button></div>';
+    $("ambAnother").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); ambRender(); ambLoadRecent(); });
+    $("ambDone").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); navBack(); });
+  }
+  if($("ambBack")) $("ambBack").addEventListener("click",navBack);
+
+  /* ===================== Admin: Ambulance checks ===================== */
+  var ADMAMB={rows:[], loaded:false, amb:"", type:"", sel:null, urls:{}};
+  function admAmbLoad(){
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading…</div>';
+    return sbFetch(SB_URL+"/rest/v1/ambulance_checks?select=*&order=check_date.desc,created_at.desc&limit=1000",{cache:"no-store"})
+      .then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); })
+      .then(function(rows){ ADMAMB.rows=Array.isArray(rows)?rows:[]; ADMAMB.loaded=true; admAmbRender(); })
+      ["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_ambulance_checkoff.sql if this is the first time.</div>'; });
+  }
+  function admAmbRender(){
+    if(ADMAMB.sel){ admAmbDetail(ADMAMB.sel); return; }
+    var rows=ADMAMB.rows.filter(function(r){ return (!ADMAMB.amb||r.ambulance===ADMAMB.amb) && (!ADMAMB.type||r.log_type===ADMAMB.type); });
+    var ambs=ambulances(); ADMAMB.rows.forEach(function(r){ if(r.ambulance && ambs.indexOf(r.ambulance)<0) ambs.push(r.ambulance); });
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Ambulance checks</h3><div class="u">'+ADMAMB.rows.length+' on file</div></div>'+
+      '<button class="ghost" id="admAmbExport"'+(ADMAMB.rows.length?"":" disabled")+'>Download as spreadsheet</button></div>'+
+      '<div class="adm-help">Every weekly, monthly and maintenance log the service units submit. Tap one to see each answer and photo. Red items are things the checker flagged.</div>'+
+      '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.amb?"":" on")+'" data-amb="">All ambulances</button>'].concat(ambs.map(function(a){ return '<button class="adm-chip'+(ADMAMB.amb===a?" on":"")+'" data-amb="'+esc(a)+'">'+esc(a.replace(/ Ambulance - \d+$/,""))+'</button>'; })).join("")+'</div>'+
+      '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.type?"":" on")+'" data-lt="">All types</button>'].concat(AMB_TYPES.map(function(t){ return '<button class="adm-chip'+(ADMAMB.type===t.k?" on":"")+'" data-lt="'+t.k+'">'+esc(t.label)+'</button>'; })).join("")+'</div>';
+    if(!rows.length) h+='<div class="adm-empty">'+(ADMAMB.rows.length?"Nothing matches those filters.":"No checks submitted yet.")+'</div>';
+    else h+='<div class="amb-list">'+rows.map(function(r){
+      var fl=Array.isArray(r.flags)?r.flags:[];
+      return '<button class="amb-row" data-id="'+r.id+'"><div class="amb-rl"><b>'+esc(r.ambulance.replace(/ Ambulance - \d+$/,""))+' · '+esc(ambTypeLabel(r.log_type))+'</b><span>'+esc(ambPrettyDate(r.check_date))+' · '+esc(r.name||r.unit)+'</span></div>'+
+        (fl.length?'<span class="amb-flagn">'+fl.length+' flag'+(fl.length===1?"":"s")+'</span>':'<span class="amb-okn">OK</span>')+'<span class="chev">›</span></button>';
+    }).join("")+'</div>';
+    $("admGenPane").innerHTML=h+'</div>';
+    $("admGenPane").querySelectorAll("[data-amb]").forEach(function(el){ el.addEventListener("click",function(){ ADMAMB.amb=el.getAttribute("data-amb"); admAmbRender(); }); });
+    $("admGenPane").querySelectorAll("[data-lt]").forEach(function(el){ el.addEventListener("click",function(){ ADMAMB.type=el.getAttribute("data-lt"); admAmbRender(); }); });
+    $("admGenPane").querySelectorAll(".amb-row").forEach(function(el){ el.addEventListener("click",function(){ var id=parseInt(el.getAttribute("data-id"),10); ADMAMB.sel=ADMAMB.rows.filter(function(r){ return r.id===id; })[0]||null; admAmbRender(); }); });
+    var ex=$("admAmbExport"); if(ex) ex.addEventListener("click",admAmbExport);
+  }
+  function admAmbDetail(r){
+    var spec=ambSpec(r.log_type), a=r.answers||{}, fl=Array.isArray(r.flags)?r.flags:[], ph=Array.isArray(r.photos)?r.photos:[];
+    function photosFor(k){ return ph.filter(function(p){ return p.key===k; }); }
+    var h='<div class="adm-body"><button class="adm-backlink" id="admAmbBack">‹ All checks</button>'+
+      '<div class="adm-mh"><div class="t"><h3>'+esc(r.ambulance)+'</h3><div class="u">'+esc(ambTypeLabel(r.log_type))+' · '+esc(ambPrettyDate(r.check_date))+' · '+esc(r.name||"")+' ('+esc(r.unit)+')</div></div></div>';
+    h+=fl.length?'<div class="amb-flaglist adm"><b>Flagged</b><ul>'+fl.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<div class="amb-okline">Nothing flagged.</div>';
+    spec.forEach(function(sec){
+      h+='<div class="adm-sec"><div class="adm-sech">'+esc(sec.title)+'</div>'+sec.items.map(function(it){
+        if(it.kind==="photo"){ var ps=photosFor(it.k); if(!ps.length) return ''; return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-photos">'+ps.map(function(p){ return '<div class="amb-ph"><img alt="" data-ref="'+esc(p.ref)+'"></div>'; }).join("")+'</div></div>'; }
+        var v=a[it.k]; if(v===undefined||v===null||String(v).trim()==="") return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa none">—</div></div>';
+        if(it.kind==="inv") return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+(it.qty?' <small>('+esc(it.qty)+')</small>':'')+'</div><div class="amb-dqa'+(v==="Issue"?" warn":" ok")+'">'+(v==="Issue"?"Issue"+(a[it.k+"_c"]?" — "+esc(a[it.k+"_c"]):""):"\u2713 OK")+'</div></div>';
+        var warn=(it.warn&&it.warn.indexOf(v)>=0)||(it.warnYes&&v==="Yes")||(it.warnNo&&v==="No")||(it.target&&parseFloat(v)<it.target-5)||(it.low&&parseFloat(v)<it.low);
+        return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa'+(warn?" warn":"")+'">'+esc(it.unit==="$"?("$"+v):(v+(it.unit?" "+it.unit:"")))+'</div></div>';
+      }).join("")+'</div>';
+    });
+    h+='<div class="adm-help">Submitted '+esc(new Date(r.created_at).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+(r.app_version?' from app '+esc(r.app_version):'')+'</div></div>';
+    $("admGenPane").innerHTML=h;
+    $("admAmbBack").addEventListener("click",function(){ ADMAMB.sel=null; admAmbRender(); });
+    $("admGenPane").querySelectorAll(".amb-ph img[data-ref]").forEach(function(im){
+      var ref=im.getAttribute("data-ref");
+      im.addEventListener("click",function(){ openDocRef(ref,"Photo"); });
+      if(ADMAMB.urls[ref]){ im.src=ADMAMB.urls[ref]; return; }
+      sbSignedUrl(ref).then(function(u){ ADMAMB.urls[ref]=u; im.src=u; })["catch"](function(){});
+    });
+  }
+  function admAmbExport(){
+    var rows=ADMAMB.rows; if(!rows.length){ toast("Nothing to export yet."); return; }
+    var items=ambAllItems().filter(function(it){ return it.kind!=="photo"; });
+    var head=["Date","Ambulance","Log type","By","Unit","Flags","Photos"].concat(items.map(function(it){ return it.q; }));
+    var data=[head].concat(rows.map(function(r){
+      var a=r.answers||{};
+      return [r.check_date, r.ambulance, ambTypeLabel(r.log_type), r.name||"", r.unit, (Array.isArray(r.flags)?r.flags:[]).join("; "), (Array.isArray(r.photos)?r.photos.length:0)]
+        .concat(items.map(function(it){ var v=a[it.k]; if(v===undefined||v===null) return ""; if(it.kind==="inv" && v==="Issue" && a[it.k+"_c"]) return "Issue: "+a[it.k+"_c"]; return v; }));
+    }));
+    toast("Preparing the spreadsheet…");
+    loadXlsxLib().then(function(X){
+      var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Checks");
+      X.writeFile(wb, "ambulance-checks-"+ambToday()+".xlsx");
+    })["catch"](function(){
+      /* no library (offline?): a CSV still opens in Excel */
+      var csv=data.map(function(row){ return row.map(function(c){ c=String(c==null?"":c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(","); }).join("\n");
+      var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="ambulance-checks-"+ambToday()+".csv"; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },500);
+    });
+  }
+
   /* ===================== Scene Timer ===================== */
   // Defaults; overridden by the Settings tab in the admin portal.
   var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
@@ -3723,6 +4248,7 @@
     if(type==="upload"||type==="fileupload"){ openUpload(r_(t,"Target")); return; }
     if(type==="certifications"||type==="certs"){ openCerts(); return; }
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
+    if(type==="ambcheck"){ openAmbCheck(); return; }
     if(type==="medication"||type==="meds"||type==="drug"||type==="rx"){ openMeds(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
     if(type==="admin"||type==="adminportal"||type==="manage"){ openAdmin(); return; }
@@ -3891,6 +4417,7 @@
         (lv?'<span class="adm-tag lvl">'+esc(lv)+'</span>':'')+
         (ty?'<span class="adm-tag">'+esc(ty)+'</span>':'')+
         (isX(r["Admin"])?'<span class="adm-tag adm">Admin</span>':'')+
+        (isX(r["Service Unit"])&&!/service unit/i.test(ty||"")?'<span class="adm-tag svc">Service</span>':'')+
         (act?'':'<span class="adm-tag off">Inactive</span>')+
         (admPushOf(u)?'<span class="adm-tag bell" title="Notifications on">\u{1F514}</span>':'')+
         (admBehind(r)?'<span class="adm-tag oldv" title="Last opened on an older version">v'+esc(admVer(r))+'</span>':'')+
@@ -3963,12 +4490,13 @@
         admFld("adEm","Org email (used to sign in)",r_(r,"Email"),"name@houstonhatzalah.org","email")+
         '<div class="adm-note">Must match their Google account exactly, or they won\u2019t be able to sign in.</div></div>'+
         '<div class="adm-sec"><div class="adm-sech">Role &amp; access</div>'+
-        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),admList("Member Types",["Responder","Non Responder","Dispatcher"]))+
+        '<div class="adm-2">'+admSel("adTy","Type",r_(r,"Type"),admList("Member Types",["Responder","Non Responder","Dispatcher","Service Unit"]))+
         admSel("adLv","Level",r_(r,"Level"),admList("Member Levels",["EMT","AEMT","ALS","Doctor","PR"]))+'</div>'+
         '<div class="adm-2">'+admSel("adSt","Status",r_(r,"Status"),admList("Member Statuses",["Primary","Backup","Observer","Dispatcher"]))+
         admFld("adFto","FTO for units",r_(r,"FTO"),"e.g. H-44, H-51")+'</div>'+
         admSw("adAdmin","Administrator","Full access \u2014 sees everyone\u2019s private info and can edit members",isX(r["Admin"]),true)+
         admSw("adDisp","Dispatcher","Sees the responder status board instead of the normal tiles",isX(r["Dispatcher"]))+
+        admSw("adSvc","Service unit","Sees the Ambulance Checkoff tile (members whose Type is Service Unit see it too)",isX(r["Service Unit"]))+
         admSw("adAct","Active","Off = cannot sign in and hidden from the directory",admIsActive(r))+
         '</div>';
     } else if(t==="contact"){
@@ -4046,9 +4574,10 @@
       put("unit","Unit",admVal("adU")); put("dob","DOB",admVal("adDob")); put("email","Email",admVal("adEm"));
       put("type","Type",admVal("adTy")); put("level","Level",admVal("adLv"));
       put("status","Status",admVal("adSt")); put("fto","FTO",admVal("adFto"));
-      var a=admSwOn("adAdmin"), d=admSwOn("adDisp"), ac=admSwOn("adAct");
+      var a=admSwOn("adAdmin"), d=admSwOn("adDisp"), ac=admSwOn("adAct"), sv=admSwOn("adSvc");
       if(a!==null) put("admin","Admin",a?"X":"");
       if(d!==null) put("dispatcher","Dispatcher",d?"X":"");
+      if(sv!==null) put("service_unit","Service Unit",sv?"X":"");
       if(ac!==null) put("active","Active",ac?"X":"No");
     } else if(ADM.tab==="contact"){
       put("phone","Phone",admVal("adPh")); put("address","Address",admVal("adAddr")); put("personal_email","Personal Email",admVal("adPe"));
@@ -4286,7 +4815,7 @@
       });
     }
     var rosterCols=["Unit","Last Name","First Name","Email","Personal Email","Phone","Address","DOB",
-      "Type","Level","Status","FTO","Admin","Dispatcher","Active","Last Active","Last Version",
+      "Type","Level","Status","FTO","Admin","Dispatcher","Service Unit","Active","Last Active","Last Version",
       "T-Shirt Size","Dress Shirt Size","Polo Shirt Size","Hat Size","Coat Size","Glove Size",
       "Emergency Contact","Emergency Phone","Emergency Relationship","Text Home","Text Home Method"];
 
@@ -4440,6 +4969,7 @@
     {k:"cpr",label:"CPR Buttons"},
     {k:"vitals",label:"Vitals"},
     {k:"resources",label:"Resources"},
+    {k:"ambchecks",label:"Ambulance checks"},
     {k:"announce",label:"Announcements"},
     {k:"uploads",label:"Upload Types"},
     {k:"guests",label:"Guest Codes"}
@@ -4603,6 +5133,7 @@
     }).join("");
   }
   function admLoadSec(k){
+    if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
     if(k==="certtypes"){
       if(CERT.certCols&&CERT.certCols.length){ admRenderCertTypes(); return; }
       $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
@@ -4861,6 +5392,7 @@
                                           "Scene Reminder Minutes","Scene Reminder Message",
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
+    {name:"Ambulance checkoff",    keys:["Ambulances"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
                                           "Cert Email Subject (expiring)","Cert Email Body (expiring)",
                                           "Cert Email Subject (expired)","Cert Email Body (expired)",
@@ -8735,7 +9267,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.4.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -8778,7 +9310,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.3.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.4.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -9814,7 +10346,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.3.2".replace("Version ","");
+  var APP_VERSION="Version 1.4.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
