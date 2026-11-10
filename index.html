@@ -825,6 +825,34 @@
   .jb-pills{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:52%}
   .jb-pills i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.2px;border-radius:6px;padding:3px 7px;background:#eef2f7;color:var(--mut);white-space:nowrap}
   .jb-pills i.bad{background:#fdecec;color:#8a1f1f} .jb-pills i.warn{background:#fff3d6;color:#8a6d00} .jb-pills i.good{background:#e5f3ea;color:#1f6b3a}
+  .jb-pill{font:inherit;font-size:11px;font-weight:800;letter-spacing:.2px;border-radius:6px;padding:3px 7px;border:1.5px solid transparent;cursor:pointer;white-space:nowrap;background:#eef2f7;color:var(--mut)}
+  .jb-pill.bad{background:#fdecec;color:#8a1f1f} .jb-pill.warn{background:#fff3d6;color:#8a6d00}
+  .jb-pill.on{border-color:currentColor} .jb-caret{font-size:10px;opacity:.8}
+  .jb-jump{margin-top:10px;border:1px solid var(--line);border-radius:11px;background:#f7f9fc;padding:4px 0;max-height:300px;overflow-y:auto}
+  .jb-jumpit{display:block;width:100%;text-align:left;font:inherit;border:0;background:transparent;padding:9px 12px;border-top:1px solid var(--line);cursor:pointer;color:var(--ink)}
+  .jb-jumpit:first-child{border-top:0} .jb-jumpit b{display:block;font-size:13.5px} .jb-jumpit span{font-size:11.5px;font-weight:700;color:var(--mut)}
+  .jb-jumpnone{padding:9px 12px;font-size:12.5px;font-weight:700;color:var(--mut)}
+  .amb-jumph{padding:8px 12px 2px;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy)}
+  .amb-jumph + .amb-jumpit{border-top:0}
+  .amb-prog{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .amb-leftbtn{margin-left:auto;font:inherit;font-size:12px;font-weight:800;border:1.5px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap}
+  .amb-leftbtn.on{border-color:var(--navy)} .amb-leftbtn[hidden]{display:none}
+  .amb-jump{border:1px solid var(--line);border-radius:11px;background:#f7f9fc;padding:4px 0;margin:0 0 10px;max-height:300px;overflow-y:auto} .amb-jump[hidden]{display:none}
+  @keyframes hohflash{0%{background:#fff3b0}100%{background:transparent}}
+  .jb-row.flash, .amb-q.flash{animation:hohflash 1.8s ease-out;border-radius:8px}
+  /* Tablets (touch, 700px and up): the phone layout stretched edge to edge cropped every tile.
+     Four tiles across (five in landscape) keep the phone proportions, and screens are centered. */
+  @media (min-width:700px) and (hover:none){
+    .grid, .grid.cols3{grid-template-columns:repeat(4,1fr);gap:14px;padding:14px 20px}
+    .grid .tile, .grid.cols3 .tile{min-height:0;aspect-ratio:1.45/1;padding:16px 10px}
+    .grid .tile.imgtile, .grid.cols3 .tile.imgtile{padding:0}
+    .grid .tile .lab, .grid.cols3 .tile .lab{font-size:15px}
+    .grid.cols3 .tile.imgtile .lab{padding:22px 10px 11px;font-size:15px}
+    .grid.cols3 .tile .ic{width:42px;height:42px} .grid.cols3 .tile .ic svg{width:23px;height:23px}
+    .search, #noticeStack, .nx-more{max-width:820px;margin-left:auto;margin-right:auto}
+    .scr-body:not(.pdf-body):not(#protoBody):not(#ergBody):not(#equipBody){padding-left:max(12px, calc((100% - 760px) / 2));padding-right:max(12px, calc((100% - 760px) / 2))}
+  }
+  @media (min-width:1000px) and (hover:none){ .grid, .grid.cols3{grid-template-columns:repeat(5,1fr)} }
   .jb-hint{font-size:12px;color:var(--mut);font-weight:600;line-height:1.4;margin-top:9px}
   .jb-sec .amb-sech em{font-style:normal;margin-left:8px;color:var(--mut);font-size:11.5px;letter-spacing:0;text-transform:none}
   .jb-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
@@ -1636,7 +1664,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.5.1</div>
+  <div class="ver-line">Version 1.5.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1758,7 +1786,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.5.1</div>
+  <div class="ver-line">Version 1.5.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -3917,7 +3945,8 @@
     var done=items.filter(function(it){ return ambHas(it); }).length, need=items.filter(function(it){ return !it.opt&&(it.kind!=="photo"||it.req); }).length;
     $("ambTitle").textContent=ambTypeLabel(AMB.type);
     var h='<div class="amb-top"><div><b>'+esc(AMB.amb)+'</b><span>'+esc(ambPrettyDate(AMB.date))+' · '+esc((STATE.me&&STATE.me.first)||"")+'</span></div><button class="amb-change" id="ambChange">Change</button></div>';
-    h+='<div class="amb-prog"><div class="amb-bar"><i style="width:'+Math.round(100*Math.min(done,need)/Math.max(need,1))+'%"></i></div><span id="ambProgT">'+done+' of '+items.length+' answered</span></div>';
+    h+='<div class="amb-prog"><div class="amb-bar"><i style="width:'+Math.round(100*Math.min(done,need)/Math.max(need,1))+'%"></i></div><span id="ambProgT">'+done+' of '+items.length+' answered</span>'+
+       '<button class="amb-leftbtn" id="ambLeftBtn"'+(ambMissing().length?'':' hidden')+'>What\u2019s left <span class="jb-caret">\u25BE</span></button></div><div class="amb-jump" id="ambJump"'+(AMB.leftOpen?'':' hidden')+'>'+ambLeftHTML()+'</div>';
     spec.forEach(function(sec){
       h+='<div class="amb-sec'+(ambSecOpen(sec.title)?"":" closed")+'" data-sec="'+esc(sec.title)+'">'+ambSecHead(sec)+'<div class="amb-secb">'+(sec.note?'<div class="amb-note">'+esc(sec.note)+'</div>':'')+sec.items.map(ambItemHTML).join("")+'</div></div>';
     });
@@ -3925,6 +3954,34 @@
     h+='<div class="amb-submit"><button class="ebtn primary" id="ambSubmit">'+(miss.length?("Submit — "+miss.length+" left"):"Submit")+'</button><div class="amb-foot">Your answers are kept on this phone until you submit. Short on time? You can submit without finishing — skipped items are saved as not checked.</div></div>';
     b.innerHTML=h;
     ambWire(); ambPaintPhotos();
+  }
+  function ambLeftHTML(){
+    var miss=ambMissing(); if(!miss.length) return '<div class="jb-jumpnone">Everything is answered.</div>';
+    var mk={}; miss.forEach(function(it){ mk[it.k]=1; });
+    var h=""; ambSpec(AMB.type).forEach(function(sec){
+      var m=sec.items.filter(function(it){ return mk[it.k]; }); if(!m.length) return;
+      h+='<div class="amb-jumph">'+esc(sec.title)+' \u00b7 '+m.length+'</div>'+m.map(function(it){ return '<button class="jb-jumpit amb-jumpit" data-k="'+it.k+'"><b>'+esc(it.q)+'</b></button>'; }).join("");
+    });
+    return h;
+  }
+  function ambWireLeft(){
+    var btn=$("ambLeftBtn"), box=$("ambJump");
+    if(btn) btn.addEventListener("click",function(){ AMB.leftOpen=!AMB.leftOpen; if(box){ box.hidden=!AMB.leftOpen; box.innerHTML=ambLeftHTML(); ambWireJump(); } btn.classList.toggle("on", !!AMB.leftOpen); });
+    ambWireJump();
+  }
+  function ambWireJump(){
+    $("ambBody").querySelectorAll(".amb-jumpit[data-k]").forEach(function(el){ el.addEventListener("click",function(){ ambGoTo(el.getAttribute("data-k")); }); });
+  }
+  /* open the question's section, scroll to it and flash it */
+  function ambGoTo(k){
+    var sec=null; ambSpec(AMB.type).forEach(function(sc){ if(sc.items.some(function(it){ return it.k===k; })) sec=sc; });
+    if(!sec) return;
+    AMB.open=AMB.open||{}; AMB.open[sec.title]=true;
+    var secEl=$("ambBody").querySelector('.amb-sec[data-sec="'+sec.title.replace(/"/g,'\\"')+'"]');
+    if(secEl){ secEl.classList.remove("closed"); var hd=secEl.querySelector(".amb-tog"); if(hd) hd.classList.add("open"); }
+    var q=$("ambBody").querySelector('.amb-q[data-k="'+k+'"]'); if(!q) return;
+    try{ q.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ q.scrollIntoView(); }
+    q.classList.add("flash"); setTimeout(function(){ q.classList.remove("flash"); }, 1800);
   }
   function ambRefresh(k){
     /* repaint one question in place and the progress line, keeping the keyboard where it is */
@@ -3937,6 +3994,8 @@
     var bar=$("ambBody").querySelector(".amb-bar i"); if(bar) bar.style.width=Math.round(100*Math.min(done,need)/Math.max(need,1))+"%";
     var pt=$("ambProgT"); if(pt) pt.textContent=done+" of "+items.length+" answered";
     var miss=ambMissing(), sb=$("ambSubmit"); if(sb) sb.textContent=miss.length?("Submit — "+miss.length+" left"):"Submit";
+    var lb=$("ambLeftBtn"); if(lb) lb.hidden=!miss.length;
+    var jb=$("ambJump"); if(jb && AMB.leftOpen){ jb.innerHTML=ambLeftHTML(); ambWireJump(); if(!miss.length){ jb.hidden=true; AMB.leftOpen=false; if(lb) lb.classList.remove("on"); } }
     ambSaveDraft();
   }
   function ambWireIn(root){
@@ -3950,9 +4009,17 @@
   function ambWire(){
     ambWireIn($("ambBody"));
     var ch=$("ambChange"); if(ch) ch.addEventListener("click",function(){ AMB.step="setup"; ambSaveDraft(); ambRenderSetup(); });
+    ambWireLeft();
     $("ambBody").querySelectorAll(".amb-tog").forEach(function(el){ el.addEventListener("click",function(e){
       if(e.target && e.target.closest && e.target.closest(".amb-allok")) return;
-      var title=el.getAttribute("data-sec"); AMB.open=AMB.open||{}; AMB.open[title]=!AMB.open[title];
+      var title=el.getAttribute("data-sec"); AMB.open=AMB.open||{};
+      if(e.target && e.target.closest && e.target.closest(".amb-left") && !e.target.closest(".amb-left").classList.contains("done")){
+        /* the "N left" badge: straight to the first unanswered question in this section */
+        var first=null, mk={}; ambMissing().forEach(function(it){ mk[it.k]=1; });
+        ambSpec(AMB.type).forEach(function(sc){ if(sc.title!==title) return; sc.items.forEach(function(it){ if(!first && mk[it.k]) first=it; }); });
+        if(first){ ambGoTo(first.k); return; }
+      }
+      AMB.open[title]=!AMB.open[title];
       var sec=el.parentNode; sec.classList.toggle("closed", !AMB.open[title]); el.classList.toggle("open", !!AMB.open[title]);
       if(AMB.open[title]){ try{ el.scrollIntoView({block:"start",behavior:"smooth"}); }catch(err){} }
     }); });
@@ -4143,7 +4210,7 @@
   // Every member's own bag, checked against the item list the admins keep
   // (Admin -> Jump bag items). One row per item the member has marked; the
   // nightly script reads the expiration dates and sends the reminders.
-  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false};
+  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false, jumpOpen:null};
   var JB_REMIND_OPTS=[[0,"Off"],[30,"Every 30 days"],[60,"Every 60 days"],[90,"Every 90 days"],[180,"Every 180 days"]];
   var JB_SOON=30;
   function jbUnit(){ return String((STATE.me&&STATE.me.unit)||""); }
@@ -4238,7 +4305,7 @@
   }
   function jbWire(root){
     var b=root||$("jbBody");
-    if(!root){ jbWireBag();
+    if(!root){ jbWireBag(); jbWireSum();
       b.querySelectorAll(".amb-tog[data-pouch]").forEach(function(el){ el.addEventListener("click",function(e){
         if(e.target && e.target.closest && e.target.closest(".amb-allok")) return;
         var p=el.getAttribute("data-pouch"); JB.open[p]=!JB.open[p];
@@ -4262,15 +4329,50 @@
     jbWire($("jbBody").querySelector('.jb-row[data-id="'+id+'"]'));   /* only the new row - wiring the whole body again would double every tap */
     /* the summary line and pouch counts */
     var c=jbCounts(), top=$("jbBody").querySelector(".jb-sum");
-    if(top){ var tmp2=document.createElement("div"); tmp2.innerHTML=jbSumHTML(c); top.parentNode.replaceChild(tmp2.firstChild, top); }
+    if(top){ var tmp2=document.createElement("div"); tmp2.innerHTML=jbSumHTML(c); top.parentNode.replaceChild(tmp2.firstChild, top); jbWireSum(); }
     jbPouches().forEach(function(p){ var pc=jbCounts(p.items), bad=pc.expired+pc.missing+pc.short; $("jbBody").querySelectorAll(".jb-sec").forEach(function(sec){ if(sec.getAttribute("data-pouch")===p.name){ var em=sec.querySelector(".amb-sech em"); if(em) em.innerHTML=pc.have+"/"+pc.total+(bad?' · <i class="jb-secbad">'+bad+' to fix</i>':''); } }); });
   }
+  /* the items behind a summary pill: expired / expiring soon / short or missing */
+  function jbListFor(kind){
+    var out=[];
+    jbPouches().forEach(function(p){ p.items.forEach(function(r){
+      var st=JB.st[r.__id]||{}, es=jbExpState(st.exp_date);
+      if(kind==="expired" && es==="expired") out.push({r:r, p:p, why:jbExpText(st.exp_date)});
+      else if(kind==="soon" && es==="soon") out.push({r:r, p:p, why:jbExpText(st.exp_date)});
+      else if(kind==="fix" && (st.status==="short"||st.status==="missing")) out.push({r:r, p:p, why:st.status==="short"?"Short":"Missing"});
+    }); });
+    return out;
+  }
+  function jbPill(kind, cls, label){
+    return '<button class="jb-pill '+cls+(JB.jumpOpen===kind?" on":"")+'" data-jump="'+kind+'">'+label+' <span class="jb-caret">\u25BE</span></button>';
+  }
   function jbSumHTML(c){
-    var last=jbLastUpdated();
+    var last=jbLastUpdated(), open=JB.jumpOpen, list=open?jbListFor(open):[];
     return '<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+(last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
-      '<div class="jb-pills">'+(c.expired?'<i class="bad">'+c.expired+' expired</i>':'')+(c.soon?'<i class="warn">'+c.soon+' expiring soon</i>':'')+(c.short+c.missing?'<i class="warn">'+(c.short+c.missing)+' short/missing</i>':'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
+      '<div class="jb-pills">'+(c.expired?jbPill("expired","bad",c.expired+' expired'):'')+(c.soon?jbPill("soon","warn",c.soon+' expiring soon'):'')+(c.short+c.missing?jbPill("fix","warn",(c.short+c.missing)+' short/missing'):'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
       '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
+      (open?'<div class="jb-jump">'+(list.length?list.map(function(x){ return '<button class="jb-jumpit" data-id="'+x.r.__id+'"><b>'+esc(r_(x.r,"Item"))+'</b><span>'+esc(x.p.name)+' \u00b7 '+esc(x.why)+'</span></button>'; }).join(""):'<div class="jb-jumpnone">Nothing here any more.</div>')+'</div>':'')+
       '<div class="jb-hint">Tap what you have. Items with a date are checked nightly — you get an email and a notification '+esc(jbReminderText())+'.</div></div>';
+  }
+  function jbWireSum(){
+    var b=$("jbBody");
+    b.querySelectorAll(".jb-pill[data-jump]").forEach(function(el){ el.addEventListener("click",function(){
+      var k=el.getAttribute("data-jump"); JB.jumpOpen=(JB.jumpOpen===k)?null:k; jbRepaintSum();
+    }); });
+    b.querySelectorAll(".jb-jumpit[data-id]").forEach(function(el){ el.addEventListener("click",function(){ jbGoTo(el.getAttribute("data-id")); }); });
+  }
+  function jbRepaintSum(){
+    var top=$("jbBody").querySelector(".jb-sum"); if(!top) return;
+    var tmp=document.createElement("div"); tmp.innerHTML=jbSumHTML(jbCounts()); top.parentNode.replaceChild(tmp.firstChild, top); jbWireSum();
+  }
+  /* open the item's pouch, scroll to it and flash it */
+  function jbGoTo(id){
+    var hit=null; jbPouches().forEach(function(p){ p.items.forEach(function(r){ if(String(r.__id)===String(id)) hit=p; }); });
+    if(!hit) return;
+    JB.open[hit.name]=true; JB.jumpOpen=null; jbRender();
+    var row=$("jbBody").querySelector('.jb-row[data-id="'+id+'"]'); if(!row) return;
+    try{ row.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ row.scrollIntoView(); }
+    row.classList.add("flash"); setTimeout(function(){ row.classList.remove("flash"); }, 1800);
   }
   /* one item changed: remember it, repaint it, send it */
   function jbSet(id, status, exp, quiet){
@@ -9589,7 +9691,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9632,7 +9734,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10671,7 +10773,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.5.1".replace("Version ","");
+  var APP_VERSION="Version 1.5.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
