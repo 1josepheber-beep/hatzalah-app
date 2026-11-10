@@ -776,6 +776,14 @@
   .amb-rl{flex:1;min-width:0} .amb-rl b{display:block;font-size:14px;color:var(--ink)} .amb-rl span{font-size:12.5px;color:var(--mut);font-weight:700}
   .amb-flagn{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:#fdecec;color:#8a1f1f;border-radius:6px;padding:3px 7px}
   .amb-okn{font-size:11px;font-weight:800;letter-spacing:.3px;background:#e5f3ea;color:#1f6b3a;border-radius:6px;padding:3px 7px}
+  .amb-skipn{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:#fff3d6;color:#8a5a00;border-radius:6px;padding:3px 7px;white-space:nowrap}
+  .amb-flaglist.skip{background:#fff7e3;border-color:#f1d28a;color:#7a4f00}
+  .amb-skipnote{font-size:12px;font-weight:700;margin-top:6px;opacity:.85}
+  .amb-dqa.skip{color:#b26d00}
+  .amb-partial{background:#fff7e3;border:1px solid #f1d28a;border-radius:13px;padding:14px;text-align:left}
+  .amb-partial b{display:block;font-size:16px;color:#7a4f00} .amb-partial p{margin:4px 0 8px;font-size:13.5px;font-weight:600;color:#7a4f00;line-height:1.4}
+  .amb-partial-list{font-size:12.5px;font-weight:700;color:#8a5a00;background:#fff;border-radius:9px;padding:8px 10px;margin-bottom:10px;line-height:1.45}
+  .amb-partial .ebtn{width:100%;padding:13px;font-size:15px;border-radius:12px;margin-top:8px}
   .amb-row .chev{color:#9aa8bd;font-size:20px;font-weight:700}
   .adm-backlink{border:0;background:transparent;color:var(--navy);font-weight:800;font-size:14px;padding:0 0 10px;cursor:pointer}
   .adm-mh button.ghost{margin-left:auto;background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
@@ -794,6 +802,30 @@
   .amb-invc{flex:1 1 100%;margin-top:2px;font-size:14px;padding:8px 11px}
   .amb-allok{margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;padding:4px 9px;font-weight:800;font-size:11px;letter-spacing:.3px;cursor:pointer;text-transform:none}
   .amb-sech{display:flex;align-items:center}
+  /* ---- My Jump Bag ---- */
+  .jb-sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .jb-sumtop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .jb-sumtop b{display:block;font-size:17px;color:var(--ink)} .jb-sumtop span{font-size:12.5px;color:var(--mut);font-weight:700}
+  .jb-pills{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:52%}
+  .jb-pills i{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.2px;border-radius:6px;padding:3px 7px;background:#eef2f7;color:var(--mut);white-space:nowrap}
+  .jb-pills i.bad{background:#fdecec;color:#8a1f1f} .jb-pills i.warn{background:#fff3d6;color:#8a6d00} .jb-pills i.good{background:#e5f3ea;color:#1f6b3a}
+  .jb-hint{font-size:12px;color:var(--mut);font-weight:600;line-height:1.4;margin-top:9px}
+  .jb-sec .amb-sech em{font-style:normal;margin-left:8px;color:var(--mut);font-size:11.5px;letter-spacing:0;text-transform:none}
+  .jb-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
+  .jb-row.expired{background:#fff7f7;margin:0 -14px;padding-left:14px;padding-right:14px} .jb-row.soon{background:#fffaf0;margin:0 -14px;padding-left:14px;padding-right:14px}
+  .jb-row.pend .jb-n::after{content:" \00b7 not saved yet";color:#c9933a;font-size:11px;font-weight:800}
+  .jb-l{flex:1 1 auto;min-width:0} .jb-n{font-size:14px;font-weight:700;color:var(--ink);line-height:1.3} .jb-n b{color:var(--mut);font-weight:800;font-size:12px}
+  .jb-exp{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin-top:4px} .jb-exp label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .jb-exp input{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit;background:#fff;max-width:150px}
+  .jb-expt{font-size:11.5px;font-weight:800;color:var(--mut)} .jb-expt.soon{color:#8a6d00} .jb-expt.expired{color:var(--red)}
+  .jb-addexp{border:0;background:transparent;color:var(--navy);font-weight:800;font-size:12px;padding:3px 0 0;cursor:pointer}
+  .jb-st{display:flex;flex-direction:row;gap:4px;flex:0 0 auto}
+  .jb-b{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:8px 8px;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}
+  .jb-b.have.on{background:#1f7a37;border-color:#1f7a37;color:#fff} .jb-b.short.on{background:#e8a33d;border-color:#e8a33d;color:#231a00} .jb-b.missing.on{background:var(--red);border-color:var(--red);color:#fff}
+  .jb-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;max-width:46%}
+  .jb-tag{font-size:11px;font-weight:800;letter-spacing:.2px;background:#eef2f7;color:var(--mut);border-radius:6px;padding:3px 7px} .jb-tag.warn{background:#fff3d6;color:#8a6d00}
+  .jb-dexp{font-size:11.5px;font-weight:800;color:var(--mut)} .jb-dexp.soon{color:#8a6d00} .jb-dexp.expired{color:var(--red)}
+
 
   .adm-tag.off{background:#fdecec;color:#8a1f1f}
   .adm-empty{padding:26px 14px;text-align:center;color:var(--mut);font-size:13px}
@@ -1588,7 +1620,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.4.0</div>
+  <div class="ver-line">Version 1.5.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1710,7 +1742,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.4.0</div>
+  <div class="ver-line">Version 1.5.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -1917,6 +1949,14 @@
     <h2 id="ambTitle">Ambulance Checkoff</h2>
   </div>
   <div class="scr-body" id="ambBody"></div>
+</div>
+
+<div class="screen" id="jbScreen">
+  <div class="scr-head">
+    <button class="back" id="jbBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Back</button>
+    <h2>My Jump Bag</h2>
+  </div>
+  <div class="scr-body" id="jbBody"></div>
 </div>
 
 <div class="screen" id="resScreen">
@@ -2282,8 +2322,8 @@
   var SHEET_ID="1gM1ndlnuKvQK8JvM_STUyrG8XbAl0W5IQk10EQTF98o";
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
-  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements"};
-  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","service_unit":"Service Unit","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
+  var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements","Jump Bag Items":"jumpbag_items"};
+  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","service_unit":"Service Unit","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"jumpbag_items":{"order_col":"Order","pouch":"Pouch","name":"Item","qty":"Qty","expires":"Expires","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   /* ---------- Diagnostics ----------
@@ -3854,7 +3894,7 @@
       h+='<div class="amb-sec"><div class="amb-sech">'+esc(sec.title)+(sec.inv?'<button class="amb-allok" data-sec="'+esc(sec.title)+'">All OK</button>':'')+'</div>'+(sec.note?'<div class="amb-note">'+esc(sec.note)+'</div>':'')+sec.items.map(ambItemHTML).join("")+'</div>';
     });
     var miss=ambMissing();
-    h+='<div class="amb-submit"><button class="ebtn primary" id="ambSubmit">'+(miss.length?("Submit — "+miss.length+" left"):"Submit")+'</button><div class="amb-foot">Your answers are kept on this phone until you submit.</div></div>';
+    h+='<div class="amb-submit"><button class="ebtn primary" id="ambSubmit">'+(miss.length?("Submit — "+miss.length+" left"):"Submit")+'</button><div class="amb-foot">Your answers are kept on this phone until you submit. Short on time? You can submit without finishing — skipped items are saved as not checked.</div></div>';
     b.innerHTML=h;
     ambWire(); ambPaintPhotos();
   }
@@ -3927,39 +3967,54 @@
   }
 
   /* ---- submit ---- */
-  function ambSubmit(){
+  /* A check does not have to be complete. With 20 minutes a crew does the
+     important items and submits; whatever they left is saved as "not checked"
+     so the admins can see exactly what was skipped. */
+  function ambSubmit(force){
     if(AMB.busy) return;
     var miss=ambMissing();
-    if(miss.length){
-      var first=$("ambBody").querySelector('.amb-q[data-k="'+miss[0].k+'"]');
-      $("ambBody").querySelectorAll(".amb-q.miss").forEach(function(el){ el.classList.remove("miss"); });
-      miss.forEach(function(it){ var el=$("ambBody").querySelector('.amb-q[data-k="'+it.k+'"]'); if(el) el.classList.add("miss"); });
-      if(first){ try{ first.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ first.scrollIntoView(); } }
-      toast(miss.length===1 ? "One more to answer: "+miss[0].q : miss.length+" still to answer — they’re marked in red.");
-      return;
-    }
+    if(miss.length && force!==true){ ambAskPartial(miss); return; }   /* a click event is not "force" */
     var btn=$("ambSubmit"); AMB.busy=true; if(btn){ btn.disabled=true; btn.textContent="Submitting…"; }
     var photos=[]; Object.keys(AMB.photos).forEach(function(k){ (AMB.photos[k]||[]).forEach(function(ref){ photos.push({key:k, ref:ref}); }); });
-    var answers={}; ambItems(AMB.type).forEach(function(it){ if(it.kind!=="photo" && AMB.ans[it.k]!==undefined) answers[it.k]=AMB.ans[it.k]; if(it.kind==="inv" && AMB.ans[it.k]==="Issue" && AMB.ans[it.k+"_c"]) answers[it.k+"_c"]=AMB.ans[it.k+"_c"]; });
+    var answers={}; ambItems(AMB.type).forEach(function(it){ if(it.kind!=="photo" && AMB.ans[it.k]!==undefined && String(AMB.ans[it.k]).trim()!=="") answers[it.k]=AMB.ans[it.k]; if(it.kind==="inv" && AMB.ans[it.k]==="Issue" && AMB.ans[it.k+"_c"]) answers[it.k+"_c"]=AMB.ans[it.k+"_c"]; });
+    var skipped=miss.map(function(it){ return it.k; }); if(skipped.length) answers._skipped=skipped;
     var flags=ambFlags();
     var row={ unit:String((STATE.me&&STATE.me.unit)||""), name:(((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim(),
               ambulance:AMB.amb, log_type:AMB.type, check_date:AMB.date||ambToday(), answers:answers, photos:photos, flags:flags,
               notes:String(answers.damage||answers.equip_damage||"").slice(0,2000), app_version:String(APP_VERSION) };
     sbWrite("POST","ambulance_checks",row).then(function(r){
       if(!r.ok) throw new Error("save-"+r.status);
-      diagLog("ambcheck", AMB.type+" "+AMB.amb+(flags.length?" ("+flags.length+" flags)":""));
-      AMB.busy=false; AMB.lastFlags=flags; AMB.step="done"; ambClearDraft(); AMB.recentLoaded=false; ambRenderDone();
+      diagLog("ambcheck", AMB.type+" "+AMB.amb+(flags.length?" ("+flags.length+" flags)":"")+(skipped.length?" ("+skipped.length+" not checked)":""));
+      AMB.busy=false; AMB.lastFlags=flags; AMB.lastSkipped=miss.map(function(it){ return it.q; }); AMB.step="done"; ambClearDraft(); AMB.recentLoaded=false; ambRenderDone();
     })["catch"](function(err){
       AMB.busy=false; if(btn){ btn.disabled=false; btn.textContent="Submit"; }
       toast(navigator.onLine===false ? "No signal — your answers are saved on this phone. Submit again when you have service." : "Couldn’t submit. Your answers are still here — try again in a moment.");
       diagLog("ambcheck-failed", String((err&&err.message)||err));
     });
   }
+  function ambAskPartial(miss){
+    var box=$("ambBody").querySelector(".amb-submit"); if(!box) return;
+    var names=miss.map(function(it){ return it.q; });
+    box.innerHTML='<div class="amb-partial"><b>'+miss.length+' item'+(miss.length===1?"":"s")+' not checked</b>'+
+      '<p>You can still submit. '+(miss.length===1?"It":"They")+' will be saved as <i>not checked</i> and the admins will see which '+(miss.length===1?"one":"ones")+'.</p>'+
+      '<div class="amb-partial-list">'+esc(names.slice(0,6).join(" · "))+(names.length>6?' · and '+(names.length-6)+' more':'')+'</div>'+
+      '<button class="ebtn primary" id="ambSubmitPartial">Submit as is</button><button class="ebtn" id="ambFinish">Go back and finish</button></div>';
+    $("ambSubmitPartial").addEventListener("click",function(){ ambSubmit(true); });
+    $("ambFinish").addEventListener("click",function(){
+      box.innerHTML='<button class="ebtn primary" id="ambSubmit">Submit — '+miss.length+' left</button><div class="amb-foot">Your answers are kept on this phone until you submit.</div>';
+      $("ambSubmit").addEventListener("click",ambSubmit);
+      $("ambBody").querySelectorAll(".amb-q.miss").forEach(function(el){ el.classList.remove("miss"); });
+      miss.forEach(function(it){ var el=$("ambBody").querySelector('.amb-q[data-k="'+it.k+'"]'); if(el) el.classList.add("miss"); });
+      var first=$("ambBody").querySelector('.amb-q[data-k="'+miss[0].k+'"]');
+      if(first){ try{ first.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){ first.scrollIntoView(); } }
+    });
+  }
   function ambRenderDone(){
-    var b=$("ambBody"), flags=AMB.lastFlags||[];
+    var b=$("ambBody"), flags=AMB.lastFlags||[], skipped=AMB.lastSkipped||[];
     $("ambTitle").textContent="Ambulance Checkoff";
     b.innerHTML='<div class="amb-done"><div class="amb-done-ic">✓</div><h3>Saved. Thank you!</h3><p>'+esc(ambTypeLabel(AMB.type))+' for '+esc(AMB.amb)+' on '+esc(ambPrettyDate(AMB.date))+'.</p>'+
-      (flags.length?'<div class="amb-flaglist"><b>Flagged for the admins:</b><ul>'+flags.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<p class="amb-ok">Nothing flagged — all good.</p>')+
+      (flags.length?'<div class="amb-flaglist"><b>Flagged for the admins:</b><ul>'+flags.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<p class="amb-ok">Nothing flagged'+(skipped.length?'':' — all good')+'.</p>')+
+      (skipped.length?'<div class="amb-flaglist skip"><b>Not checked ('+skipped.length+'):</b><ul>'+skipped.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul><div class="amb-skipnote">Saved as not checked — the admins can see these were skipped.</div></div>':'')+
       '<button class="ebtn primary" id="ambAnother">Log another</button><button class="ebtn" id="ambDone">Done</button></div>';
     $("ambAnother").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); ambRender(); ambLoadRecent(); });
     $("ambDone").addEventListener("click",function(){ AMB.step="setup"; AMB.type=""; AMB.ans={}; AMB.photos={}; AMB.date=ambToday(); navBack(); });
@@ -3981,14 +4036,15 @@
     var ambs=ambulances(); ADMAMB.rows.forEach(function(r){ if(r.ambulance && ambs.indexOf(r.ambulance)<0) ambs.push(r.ambulance); });
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Ambulance checks</h3><div class="u">'+ADMAMB.rows.length+' on file</div></div>'+
       '<button class="ghost" id="admAmbExport"'+(ADMAMB.rows.length?"":" disabled")+'>Download as spreadsheet</button></div>'+
-      '<div class="adm-help">Every weekly, monthly and maintenance log the service units submit. Tap one to see each answer and photo. Red items are things the checker flagged.</div>'+
+      '<div class="adm-help">Every weekly, monthly, maintenance and inventory log the service units submit. Tap one to see each answer and photo. Red is something the checker flagged; amber means items were skipped (saved as not checked).</div>'+
       '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.amb?"":" on")+'" data-amb="">All ambulances</button>'].concat(ambs.map(function(a){ return '<button class="adm-chip'+(ADMAMB.amb===a?" on":"")+'" data-amb="'+esc(a)+'">'+esc(a.replace(/ Ambulance - \d+$/,""))+'</button>'; })).join("")+'</div>'+
       '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.type?"":" on")+'" data-lt="">All types</button>'].concat(AMB_TYPES.map(function(t){ return '<button class="adm-chip'+(ADMAMB.type===t.k?" on":"")+'" data-lt="'+t.k+'">'+esc(t.label)+'</button>'; })).join("")+'</div>';
     if(!rows.length) h+='<div class="adm-empty">'+(ADMAMB.rows.length?"Nothing matches those filters.":"No checks submitted yet.")+'</div>';
     else h+='<div class="amb-list">'+rows.map(function(r){
-      var fl=Array.isArray(r.flags)?r.flags:[];
-      return '<button class="amb-row" data-id="'+r.id+'"><div class="amb-rl"><b>'+esc(r.ambulance.replace(/ Ambulance - \d+$/,""))+' · '+esc(ambTypeLabel(r.log_type))+'</b><span>'+esc(ambPrettyDate(r.check_date))+' · '+esc(r.name||r.unit)+'</span></div>'+
-        (fl.length?'<span class="amb-flagn">'+fl.length+' flag'+(fl.length===1?"":"s")+'</span>':'<span class="amb-okn">OK</span>')+'<span class="chev">›</span></button>';
+      var fl=Array.isArray(r.flags)?r.flags:[], sk=ambSkipped(r);
+      return '<button class="amb-row" data-id="'+r.id+'"><div class="amb-rl"><b>'+esc(String(r.ambulance||"").replace(/ Ambulance - \d+$/,""))+' · '+esc(ambTypeLabel(r.log_type))+'</b><span>'+esc(ambPrettyDate(r.check_date))+' · '+esc(r.name||r.unit)+'</span></div>'+
+        (sk.length?'<span class="amb-skipn">'+sk.length+' not checked</span>':'')+
+        (fl.length?'<span class="amb-flagn">'+fl.length+' flag'+(fl.length===1?"":"s")+'</span>':(sk.length?'':'<span class="amb-okn">OK</span>'))+'<span class="chev">›</span></button>';
     }).join("")+'</div>';
     $("admGenPane").innerHTML=h+'</div>';
     $("admGenPane").querySelectorAll("[data-amb]").forEach(function(el){ el.addEventListener("click",function(){ ADMAMB.amb=el.getAttribute("data-amb"); admAmbRender(); }); });
@@ -3996,16 +4052,20 @@
     $("admGenPane").querySelectorAll(".amb-row").forEach(function(el){ el.addEventListener("click",function(){ var id=parseInt(el.getAttribute("data-id"),10); ADMAMB.sel=ADMAMB.rows.filter(function(r){ return r.id===id; })[0]||null; admAmbRender(); }); });
     var ex=$("admAmbExport"); if(ex) ex.addEventListener("click",admAmbExport);
   }
+  /* the question keys a check was submitted without */
+  function ambSkipped(r){ var a=r&&r.answers; return (a && Array.isArray(a._skipped))?a._skipped:[]; }
+  function ambQLabel(type,k){ var items=ambItems(type); for(var i=0;i<items.length;i++) if(items[i].k===k) return items[i].q; return k; }
   function admAmbDetail(r){
-    var spec=ambSpec(r.log_type), a=r.answers||{}, fl=Array.isArray(r.flags)?r.flags:[], ph=Array.isArray(r.photos)?r.photos:[];
+    var spec=ambSpec(r.log_type), a=r.answers||{}, fl=Array.isArray(r.flags)?r.flags:[], ph=Array.isArray(r.photos)?r.photos:[], sk=ambSkipped(r);
     function photosFor(k){ return ph.filter(function(p){ return p.key===k; }); }
     var h='<div class="adm-body"><button class="adm-backlink" id="admAmbBack">‹ All checks</button>'+
       '<div class="adm-mh"><div class="t"><h3>'+esc(r.ambulance)+'</h3><div class="u">'+esc(ambTypeLabel(r.log_type))+' · '+esc(ambPrettyDate(r.check_date))+' · '+esc(r.name||"")+' ('+esc(r.unit)+')</div></div></div>';
-    h+=fl.length?'<div class="amb-flaglist adm"><b>Flagged</b><ul>'+fl.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':'<div class="amb-okline">Nothing flagged.</div>';
+    h+=fl.length?'<div class="amb-flaglist adm"><b>Flagged</b><ul>'+fl.map(function(f){ return '<li>'+esc(f)+'</li>'; }).join("")+'</ul></div>':(sk.length?'':'<div class="amb-okline">Nothing flagged.</div>');
+    if(sk.length) h+='<div class="amb-flaglist adm skip"><b>Not checked ('+sk.length+')</b><ul>'+sk.map(function(k){ return '<li>'+esc(ambQLabel(r.log_type,k))+'</li>'; }).join("")+'</ul><div class="amb-skipnote">The checker submitted without these.</div></div>';
     spec.forEach(function(sec){
       h+='<div class="adm-sec"><div class="adm-sech">'+esc(sec.title)+'</div>'+sec.items.map(function(it){
-        if(it.kind==="photo"){ var ps=photosFor(it.k); if(!ps.length) return ''; return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-photos">'+ps.map(function(p){ return '<div class="amb-ph"><img alt="" data-ref="'+esc(p.ref)+'"></div>'; }).join("")+'</div></div>'; }
-        var v=a[it.k]; if(v===undefined||v===null||String(v).trim()==="") return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa none">—</div></div>';
+        if(it.kind==="photo"){ var ps=photosFor(it.k); if(!ps.length) return sk.indexOf(it.k)>=0?'<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa skip">Not checked</div></div>':''; return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-photos">'+ps.map(function(p){ return '<div class="amb-ph"><img alt="" data-ref="'+esc(p.ref)+'"></div>'; }).join("")+'</div></div>'; }
+        var v=a[it.k]; if(v===undefined||v===null||String(v).trim()==="") return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa'+(sk.indexOf(it.k)>=0?' skip">Not checked':' none">—')+'</div></div>';
         if(it.kind==="inv") return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+(it.qty?' <small>('+esc(it.qty)+')</small>':'')+'</div><div class="amb-dqa'+(v==="Issue"?" warn":" ok")+'">'+(v==="Issue"?"Issue"+(a[it.k+"_c"]?" — "+esc(a[it.k+"_c"]):""):"\u2713 OK")+'</div></div>';
         var warn=(it.warn&&it.warn.indexOf(v)>=0)||(it.warnYes&&v==="Yes")||(it.warnNo&&v==="No")||(it.target&&parseFloat(v)<it.target-5)||(it.low&&parseFloat(v)<it.low);
         return '<div class="amb-dq"><div class="amb-dqt">'+esc(it.q)+'</div><div class="amb-dqa'+(warn?" warn":"")+'">'+esc(it.unit==="$"?("$"+v):(v+(it.unit?" "+it.unit:"")))+'</div></div>';
@@ -4024,11 +4084,11 @@
   function admAmbExport(){
     var rows=ADMAMB.rows; if(!rows.length){ toast("Nothing to export yet."); return; }
     var items=ambAllItems().filter(function(it){ return it.kind!=="photo"; });
-    var head=["Date","Ambulance","Log type","By","Unit","Flags","Photos"].concat(items.map(function(it){ return it.q; }));
+    var head=["Date","Ambulance","Log type","By","Unit","Flags","Not checked","Photos"].concat(items.map(function(it){ return it.q; }));
     var data=[head].concat(rows.map(function(r){
-      var a=r.answers||{};
-      return [r.check_date, r.ambulance, ambTypeLabel(r.log_type), r.name||"", r.unit, (Array.isArray(r.flags)?r.flags:[]).join("; "), (Array.isArray(r.photos)?r.photos.length:0)]
-        .concat(items.map(function(it){ var v=a[it.k]; if(v===undefined||v===null) return ""; if(it.kind==="inv" && v==="Issue" && a[it.k+"_c"]) return "Issue: "+a[it.k+"_c"]; return v; }));
+      var a=r.answers||{}, sk=ambSkipped(r);
+      return [r.check_date, r.ambulance, ambTypeLabel(r.log_type), r.name||"", r.unit, (Array.isArray(r.flags)?r.flags:[]).join("; "), sk.length?(sk.length+": "+sk.map(function(k){ return ambQLabel(r.log_type,k); }).join("; ")):"", (Array.isArray(r.photos)?r.photos.length:0)]
+        .concat(items.map(function(it){ var v=a[it.k]; if(v===undefined||v===null||String(v).trim()===""){ return sk.indexOf(it.k)>=0?"(not checked)":""; } if(it.kind==="inv" && v==="Issue" && a[it.k+"_c"]) return "Issue: "+a[it.k+"_c"]; return v; }));
     }));
     toast("Preparing the spreadsheet…");
     loadXlsxLib().then(function(X){
@@ -4039,6 +4099,189 @@
       var csv=data.map(function(row){ return row.map(function(c){ c=String(c==null?"":c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(","); }).join("\n");
       var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="ambulance-checks-"+ambToday()+".csv"; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },500);
     });
+  }
+
+  /* ===================== My Jump Bag ===================== */
+  // Every member's own bag, checked against the item list the admins keep
+  // (Admin -> Jump bag items). One row per item the member has marked; the
+  // nightly script reads the expiration dates and sends the reminders.
+  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0};
+  var JB_SOON=30;
+  function jbUnit(){ return String((STATE.me&&STATE.me.unit)||""); }
+  function jbToday(){ var d=new Date(); d.setHours(0,0,0,0); return d; }
+  function jbDays(iso){ var m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return null; var d=new Date(+m[1],+m[2]-1,+m[3]); return Math.round((d.getTime()-jbToday().getTime())/864e5); }
+  function jbExpState(iso){ var n=jbDays(iso); if(n===null) return ""; if(n<0) return "expired"; if(n<=JB_SOON) return "soon"; return "ok"; }
+  function jbExpText(iso){ var n=jbDays(iso); if(n===null) return ""; if(n<0) return "Expired "+(n===-1?"yesterday":(-n)+" days ago"); if(n===0) return "Expires today"; if(n===1) return "Expires tomorrow"; if(n<=JB_SOON) return "Expires in "+n+" days"; return "Expires "+ambPrettyDate(iso); }
+  function jbActiveItems(){ return JB.items.filter(function(r){ return admBoolOn(r_(r,"Active"),"Active") && String(r_(r,"Item")||"").trim(); }).sort(function(a,b){ return (parseFloat(r_(a,"Order"))||9999)-(parseFloat(r_(b,"Order"))||9999); }); }
+  function jbPouches(){
+    var out=[], by={};
+    jbActiveItems().forEach(function(r){ var p=String(r_(r,"Pouch")||"Other").trim()||"Other"; if(!by[p]){ by[p]={name:p, items:[]}; out.push(by[p]); } by[p].items.push(r); });
+    return out;
+  }
+  function jbCounts(items){
+    var c={total:0, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0};
+    (items||jbActiveItems()).forEach(function(r){
+      var s=JB.st[r.__id]||{}; c.total++;
+      if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
+      var e=jbExpState(s.exp_date); if(e==="expired") c.expired++; else if(e==="soon") c.soon++;
+    });
+    return c;
+  }
+  function jbReminderText(){
+    var days=String(getSetting("Jump Bag Reminder Days","30, 7, 0")).split(/[,\s]+/).map(function(x){ return parseInt(x,10); }).filter(function(n){ return !isNaN(n)&&n>=0; }).sort(function(a,b){ return b-a; });
+    if(!days.length) days=[30,7,0];
+    var parts=days.map(function(n){ return n===0?"on the day":n+" days before"; });
+    return (parts.length>1?parts.slice(0,-1).join(", ")+" and "+parts[parts.length-1]:parts[0])+" they expire";
+  }
+  function jbLastUpdated(){ var t=0; Object.keys(JB.st).forEach(function(k){ var u=Date.parse(JB.st[k].updated_at||""); if(u>t) t=u; }); return t?new Date(t):null; }
+
+  function openJumpBag(){
+    if(demoNo()) return;
+    if(!$("jbScreen").classList.contains("open")) navOpen(closeJumpBag);
+    $("jbScreen").classList.add("open");
+    if(JB.loaded){ jbRender(); jbFlush(); return; }
+    $("jbBody").innerHTML='<div class="empty">Loading…</div>';
+    Promise.all([ fetchTab("Jump Bag Items"),
+                  sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&unit=eq."+encodeURIComponent(jbUnit()),{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }) ])
+      .then(function(res){
+        JB.items=res[0]||[]; JB.st={};
+        (Array.isArray(res[1])?res[1]:[]).forEach(function(s){ JB.st[s.item_id]=s; });
+        JB.loaded=true; jbRender(); jbFlush();
+      })["catch"](function(){ $("jbBody").innerHTML='<div class="empty">Couldn’t load. Check your internet and open this again.</div>'; });
+  }
+  function closeJumpBag(){ $("jbScreen").classList.remove("open"); }
+
+  function jbRender(){
+    var b=$("jbBody"), pouches=jbPouches();
+    if(!pouches.length){ b.innerHTML='<div class="empty">The jump bag list is empty. An admin can fill it in under Admin → Jump bag items.</div>'; return; }
+    var c=jbCounts(), last=jbLastUpdated();
+    var h='<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+
+      (last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
+      '<div class="jb-pills">'+(c.expired?'<i class="bad">'+c.expired+' expired</i>':'')+(c.soon?'<i class="warn">'+c.soon+' expiring soon</i>':'')+(c.short+c.missing?'<i class="warn">'+(c.short+c.missing)+' short/missing</i>':'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
+      '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
+      '<div class="jb-hint">Tap what you have. Items with a date are checked nightly — you get an email and a notification '+esc(jbReminderText())+'.</div></div>';
+    pouches.forEach(function(p){
+      var pc=jbCounts(p.items);
+      h+='<div class="amb-sec jb-sec"><div class="amb-sech"><span>'+esc(p.name)+'</span><em>'+pc.have+'/'+pc.total+'</em>'+(pc.unchecked?'<button class="amb-allok" data-pouch="'+esc(p.name)+'">All stocked</button>':'')+'</div>'+
+        p.items.map(jbRowHTML).join("")+'</div>';
+    });
+    b.innerHTML=h; jbWire();
+  }
+  function jbRowHTML(r){
+    var id=r.__id, s=JB.st[id]||{}, exp=s.exp_date||"", es=jbExpState(exp);
+    var showDate=admBoolOn(r_(r,"Expires"),"Expires") || !!exp || !!JB.expOpen[id];
+    var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+(JB.pending[id]?" pend":"");
+    return '<div class="'+cls+'" data-id="'+id+'"><div class="jb-l"><div class="jb-n">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <b>×'+esc(r_(r,"Qty"))+'</b>':'')+'</div>'+
+      (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span>':'')+'</div>'
+               :'<button class="jb-addexp" data-id="'+id+'">+ expiration date</button>')+'</div>'+
+      '<div class="jb-st"><button class="jb-b have'+(s.status==="have"?" on":"")+'" data-id="'+id+'" data-s="have">✓ Have</button><button class="jb-b short'+(s.status==="short"?" on":"")+'" data-id="'+id+'" data-s="short">Short</button><button class="jb-b missing'+(s.status==="missing"?" on":"")+'" data-id="'+id+'" data-s="missing">Missing</button></div></div>';
+  }
+  function jbWire(root){
+    var b=root||$("jbBody");
+    b.querySelectorAll(".jb-b[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), v=el.getAttribute("data-s"); var s=JB.st[id]||{}; jbSet(id, (s.status===v)?"":v, s.exp_date||null); }); });
+    b.querySelectorAll(".jb-exp input[data-id]").forEach(function(el){ el.addEventListener("change",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", el.value||null); }); });
+    b.querySelectorAll(".jb-addexp[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"); JB.expOpen[id]=true; jbRepaint(id); var inp=b.querySelector('.jb-row[data-id="'+id+'"] input[type=date]'); if(inp){ try{ inp.focus(); if(inp.showPicker) inp.showPicker(); }catch(e){} } }); });
+    b.querySelectorAll(".amb-allok[data-pouch]").forEach(function(el){ el.addEventListener("click",function(){
+      var p=el.getAttribute("data-pouch"); jbPouches().forEach(function(pp){ if(pp.name!==p) return; pp.items.forEach(function(r){ var s=JB.st[r.__id]||{}; if(!s.status) jbSet(r.__id,"have",s.exp_date||null,true); }); });
+      jbRender();
+    }); });
+  }
+  function jbRepaint(id){
+    var r=jbActiveItems().filter(function(x){ return String(x.__id)===String(id); })[0]; if(!r) return;
+    var old=$("jbBody").querySelector('.jb-row[data-id="'+id+'"]'); if(!old) return;
+    var tmp=document.createElement("div"); tmp.innerHTML=jbRowHTML(r); old.parentNode.replaceChild(tmp.firstChild, old);
+    jbWire($("jbBody").querySelector('.jb-row[data-id="'+id+'"]'));   /* only the new row - wiring the whole body again would double every tap */
+    /* the summary line and pouch counts */
+    var c=jbCounts(), top=$("jbBody").querySelector(".jb-sum");
+    if(top){ var tmp2=document.createElement("div"); tmp2.innerHTML=jbSumHTML(c); top.parentNode.replaceChild(tmp2.firstChild, top); }
+    jbPouches().forEach(function(p){ var pc=jbCounts(p.items); $("jbBody").querySelectorAll(".jb-sec").forEach(function(sec){ var sp=sec.querySelector(".amb-sech span"); if(sp && sp.textContent===p.name){ var em=sec.querySelector(".amb-sech em"); if(em) em.textContent=pc.have+"/"+pc.total; } }); });
+  }
+  function jbSumHTML(c){
+    var last=jbLastUpdated();
+    return '<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+(last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
+      '<div class="jb-pills">'+(c.expired?'<i class="bad">'+c.expired+' expired</i>':'')+(c.soon?'<i class="warn">'+c.soon+' expiring soon</i>':'')+(c.short+c.missing?'<i class="warn">'+(c.short+c.missing)+' short/missing</i>':'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
+      '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
+      '<div class="jb-hint">Tap what you have. Items with a date are checked nightly — you get an email and a notification '+esc(jbReminderText())+'.</div></div>';
+  }
+  /* one item changed: remember it, repaint it, send it */
+  function jbSet(id, status, exp, quiet){
+    var row={ unit:jbUnit(), item_id:+id, status:String(status||""), exp_date:exp||null, updated_at:new Date().toISOString() };
+    var prev=JB.st[id]||{}; row.id=prev.id; JB.st[id]=row;
+    if(!quiet) jbRepaint(id);
+    jbSend(id, row);
+  }
+  function jbSend(id, row){
+    var body={ unit:row.unit, item_id:row.item_id, status:row.status, exp_date:row.exp_date, updated_at:row.updated_at };
+    JB.saving++;
+    return sbFetch(SB_URL+"/rest/v1/jumpbag_status?on_conflict=unit,item_id",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify(body) })
+      .then(function(r){ JB.saving--; if(!r.ok) throw new Error("save-"+r.status); if(JB.pending[id]){ delete JB.pending[id]; jbRepaint(id); } })
+      ["catch"](function(err){ JB.saving--; JB.pending[id]=row; jbRepaint(id);
+        if(!JB.warned || Date.now()-JB.warned>15000){ JB.warned=Date.now(); toast(navigator.onLine===false?"No signal — saved on this phone, will send when you’re back online.":"Couldn’t save that one — will retry."); }
+        diagLog("jumpbag-save-failed", String((err&&err.message)||err)); });
+  }
+  /* anything that could not be sent goes again when a signal comes back */
+  function jbFlush(){ Object.keys(JB.pending).forEach(function(id){ var row=JB.pending[id]; jbSend(id,row); }); }
+  window.addEventListener("online", function(){ setTimeout(function(){ try{ if(JB.loaded) jbFlush(); }catch(e){} }, 2000); });
+  if($("jbBack")) $("jbBack").addEventListener("click",navBack);
+
+  /* ===================== Admin: Jump bags (everyone's status) ===================== */
+  var ADMJB={rows:[], items:[], roster:[], loaded:false, sel:null};
+  function admJbLoad(){
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading…</div>';
+    return Promise.all([ fetchTab("Jump Bag Items"), fetchTab("Roster"),
+                         sbFetch(SB_URL+"/rest/v1/jumpbag_status?select=*&limit=10000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; }) ])
+      .then(function(res){ ADMJB.items=res[0]||[]; ADMJB.roster=res[1]||[]; ADMJB.rows=Array.isArray(res[2])?res[2]:[]; ADMJB.loaded=true; admJbRender(); })
+      ["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_jump_bag.sql if this is the first time.</div>'; });
+  }
+  function admJbItems(){ return ADMJB.items.filter(function(r){ return admBoolOn(r_(r,"Active"),"Active") && String(r_(r,"Item")||"").trim(); }).sort(function(a,b){ return (parseFloat(r_(a,"Order"))||9999)-(parseFloat(r_(b,"Order"))||9999); }); }
+  function admJbSummary(unit){
+    var items=admJbItems(), st={}; ADMJB.rows.forEach(function(s){ if(normUnit(s.unit)===normUnit(unit)) st[s.item_id]=s; });
+    var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, last:0, st:st};
+    items.forEach(function(r){ var s=st[r.__id]||{}; if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
+      var e=jbExpState(s.exp_date); if(e==="expired") c.expired++; else if(e==="soon") c.soon++; var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
+    return c;
+  }
+  function admJbMembers(){
+    return ADMJB.roster.filter(function(r){ return admIsActive(r) && !/dispatcher/i.test(String(r_(r,"Type")||"")); })
+      .map(function(r){ return {r:r, unit:r_(r,"Unit"), name:admName(r), c:admJbSummary(r_(r,"Unit"))}; })
+      .sort(function(a,b){ function pr(c){ return c.expired*1000+c.missing*100+c.short*10+c.soon*5+(c.last?0:1); } var pa=pr(a.c), pb=pr(b.c); if(pb!==pa) return pb-pa; return String(a.name).localeCompare(String(b.name)); });
+  }
+  function admJbRender(){
+    if(ADMJB.sel){ admJbDetail(ADMJB.sel); return; }
+    var ms=admJbMembers(), checked=ms.filter(function(m){ return m.c.last; }).length;
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Jump bags</h3><div class="u">'+checked+' of '+ms.length+' members have checked theirs</div></div><button class="ghost" id="admJbExport">Download as spreadsheet</button></div>'+
+      '<div class="adm-help">What each member has marked in My Jump Bag. The ones with problems are at the top. The item list itself is under Jump bag items.</div>'+
+      '<div class="amb-list">'+ms.map(function(m){ var c=m.c, tags="";
+        if(c.expired) tags+='<span class="amb-flagn">'+c.expired+' expired</span>'; if(c.soon) tags+='<span class="jb-tag warn">'+c.soon+' expiring</span>'; if(c.missing+c.short) tags+='<span class="jb-tag warn">'+(c.missing+c.short)+' short/missing</span>';
+        if(!c.last) tags+='<span class="jb-tag">not checked</span>'; else if(c.unchecked) tags+='<span class="jb-tag">'+c.unchecked+' not checked</span>'; else if(!tags) tags='<span class="amb-okn">All set</span>';
+        return '<button class="amb-row" data-u="'+esc(m.unit)+'"><div class="amb-rl"><b>'+esc(m.name)+'</b><span>'+esc(m.unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambAgo(new Date(c.last).toISOString().slice(0,10))):'')+'</span></div><span class="jb-tags">'+tags+'</span><span class="chev">›</span></button>'; }).join("")+'</div></div>';
+    $("admGenPane").innerHTML=h;
+    $("admGenPane").querySelectorAll(".amb-row[data-u]").forEach(function(el){ el.addEventListener("click",function(){ ADMJB.sel=el.getAttribute("data-u"); admJbRender(); }); });
+    var ex=$("admJbExport"); if(ex) ex.addEventListener("click",admJbExport);
+  }
+  function admJbDetail(unit){
+    var m=admJbMembers().filter(function(x){ return normUnit(x.unit)===normUnit(unit); })[0]; var c=m?m.c:admJbSummary(unit);
+    var items=admJbItems(), by={}, order=[];
+    items.forEach(function(r){ var p=String(r_(r,"Pouch")||"Other"); if(!by[p]){ by[p]=[]; order.push(p); } by[p].push(r); });
+    var h='<div class="adm-body"><button class="adm-backlink" id="admJbBack">‹ All members</button><div class="adm-mh"><div class="t"><h3>'+esc(m?m.name:unit)+'</h3><div class="u">'+esc(unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambPrettyDate(new Date(c.last).toISOString().slice(0,10))):' · not checked yet')+'</div></div></div>';
+    order.forEach(function(p){
+      h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, e=jbExpState(s.exp_date);
+        var val=s.status==="have"?"✓ Have":s.status==="short"?"Short":s.status==="missing"?"Missing":"—";
+        return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(s.exp_date?'<div class="jb-dexp '+e+'">'+esc(jbExpText(s.exp_date))+'</div>':'')+'</div></div>'; }).join("")+'</div>';
+    });
+    $("admGenPane").innerHTML=h+'</div>';
+    $("admJbBack").addEventListener("click",function(){ ADMJB.sel=null; admJbRender(); });
+  }
+  function admJbExport(){
+    var ms=admJbMembers(), items=admJbItems();
+    if(!ms.length){ toast("Nothing to export yet."); return; }
+    var head=["Member","Unit","Stocked","Short","Missing","Not checked","Expired","Expiring soon","Last updated"].concat(items.map(function(r){ return r_(r,"Item"); }));
+    var data=[head].concat(ms.map(function(m){ var c=m.c; return [m.name, m.unit, c.have, c.short, c.missing, c.unchecked, c.expired, c.soon, c.last?new Date(c.last).toISOString().slice(0,10):""]
+      .concat(items.map(function(r){ var s=c.st[r.__id]||{}; var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(s.exp_date?" (exp "+s.exp_date+")":""); })); }));
+    toast("Preparing the spreadsheet…");
+    loadXlsxLib().then(function(X){ var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Jump bags"); X.writeFile(wb, "jump-bags-"+ambToday()+".xlsx"); })
+      ["catch"](function(){ var csv=data.map(function(row){ return row.map(function(x){ x=String(x==null?"":x); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(","); }).join("\n");
+        var a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="jump-bags-"+ambToday()+".csv"; document.body.appendChild(a); a.click(); setTimeout(function(){ document.body.removeChild(a); },500); });
   }
 
   /* ===================== Scene Timer ===================== */
@@ -4249,6 +4492,7 @@
     if(type==="certifications"||type==="certs"){ openCerts(); return; }
     if(type==="taskbook"||type==="task"){ openTaskBook(); return; }
     if(type==="ambcheck"){ openAmbCheck(); return; }
+    if(type==="jumpbag"||type==="jump bag"||type==="bag"){ openJumpBag(); return; }
     if(type==="medication"||type==="meds"||type==="drug"||type==="rx"){ openMeds(); return; }
     if(type==="apartments"||type==="apts"||type==="apartment"){ openApartments(); return; }
     if(type==="admin"||type==="adminportal"||type==="manage"){ openAdmin(); return; }
@@ -4970,12 +5214,14 @@
     {k:"vitals",label:"Vitals"},
     {k:"resources",label:"Resources"},
     {k:"ambchecks",label:"Ambulance checks"},
+    {k:"jumpbags",label:"Jump bags"},
+    {k:"jumpbag",label:"Jump bag items"},
     {k:"announce",label:"Announcements"},
     {k:"uploads",label:"Upload Types"},
     {k:"guests",label:"Guest Codes"}
   ];
-  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements",vitals:"Vitals"};
-  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1,vitals:1};
+  var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements",vitals:"Vitals",jumpbag:"Jump Bag Items"};
+  var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1,vitals:1,jumpbag:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
     "Post-Arrest Hypothermia","VAD","Burn","Hyperbaric","Obstetric","Pediatric ICU","SAFE Certified"];
   // column spec per section: [header, label, kind, opts]
@@ -5006,6 +5252,7 @@
               ["Notify","Send a notification when I save this","bool"],
               ["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
+    jumpbag:[["Item","Item","text"],["Pouch","Pouch","text"],["Qty","Quantity to carry","text"],["Expires","Has an expiration date","bool"],["Active","Active","bool"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Phone (Call)","Phone","text"],
                ["Red Phone","Red phone","text"],["Address (Navigate)","Address","text"],["Door Code","Door code","text"],
@@ -5134,6 +5381,7 @@
   }
   function admLoadSec(k){
     if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
+    if(k==="jumpbags"){ ADMJB.sel=null; admJbLoad(); return; }
     if(k==="certtypes"){
       if(CERT.certCols&&CERT.certCols.length){ admRenderCertTypes(); return; }
       $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';
@@ -5393,6 +5641,7 @@
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
     {name:"Ambulance checkoff",    keys:["Ambulances"]},
+    {name:"Jump bag",              keys:["Jump Bag Reminder Days"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
                                           "Cert Email Subject (expiring)","Cert Email Body (expiring)",
                                           "Cert Email Subject (expired)","Cert Email Body (expired)",
@@ -5454,7 +5703,8 @@
       uploads:"The document types members can pick when uploading a file. Drag to reorder.",
       guests:"Passcodes that let someone try the app in demo mode.",
       hospitals:"Receiving facilities. Drag to reorder; tap one to open it.",
-      tasklist:"The EMT Task Book items. Drag to reorder; tap one to edit it."
+      tasklist:"The EMT Task Book items. Drag to reorder; tap one to edit it.",
+      jumpbag:"What every member should carry in their personal jump bag. Tick \u201CHas an expiration date\u201D and members are asked for the date and reminded before it runs out. Drag to reorder."
     }[k]||"";
     var orderable=!!ADM_ORDERABLE[k];
     var head='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>'+esc((ADM_SECS.filter(function(s){return s.k===k;})[0]||{}).label)+'</h3>'+
@@ -9267,7 +9517,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.4.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9310,7 +9560,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.4.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.5.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -9377,7 +9627,7 @@
   var OFF_LAST_KEY="hoh_off_last";
   var OFF_TABS=["Tiles","Roster","Settings","apartments","Apartment Markers",
                 "Hospitals","Resources","Vitals","Uploads","CPR Buttons",
-                "Task List","Task Progress","Certifications"];
+                "Task List","Task Progress","Certifications","Jump Bag Items"];
   var OFF_RAW=["/rest/v1/cabinets?select=*&order=sort_order.asc",
                "/rest/v1/cabinet_bins?select=*&order=sort_order.asc",
                "/rest/v1/equipment_items?select=*&order=sort_order.asc",
@@ -10316,7 +10566,10 @@
           /* the alarm push arrived while the app is in front: the app rings itself */
           try{ if(SCT.active) scTick(); }catch(x){}
         }
-        if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="scene-timer"){
+        if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="jumpbag"){
+          diagLog("push-open", "jumpbag"); try{ openJumpBag(); }catch(x){}
+        }
+        else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="scene-timer"){
           diagLog("push-open", "scene-timer");
           try{ if(SCT.active) scTick(); scOpen(); }catch(x){}
         }
@@ -10346,7 +10599,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.4.0".replace("Version ","");
+  var APP_VERSION="Version 1.5.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
