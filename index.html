@@ -1065,9 +1065,32 @@
   .au-sub{font-size:10.5px;color:var(--mut);margin-top:4px}
   .au-warn{width:100%;font-size:12px;font-weight:700;color:#8a1f1f;background:#fdecec;border:1px solid #f3b6b6;border-radius:9px;padding:8px 11px}
   .au-warn.soft{color:#8a6d00;background:#fff3d6;border-color:#f0d58f}
-  .adm-secbar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);overflow-x:auto;flex:0 0 auto}
-  .adm-sbtn{border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 15px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap}
-  .adm-sbtn.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  /* ---- admin sections: one grouped list, shown as a picker (phones) or a sidebar (wide) ---- */
+  .adm-cols{display:flex;flex-direction:column;flex:1;min-height:0;position:relative}
+  .adm-secbar{flex:0 0 auto;background:#fff;border-bottom:1px solid var(--line);padding:8px 12px;position:relative;z-index:5}
+  .adm-secsel{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1.5px solid var(--navy);background:#fff;color:var(--ink);
+    border-radius:12px;padding:10px 14px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;text-align:left}
+  .adm-secsel-c{color:var(--navy);font-size:13px}
+  .adm-secsel .adm-secn{margin-left:auto;margin-right:6px}
+  .adm-secmenu{display:none;position:absolute;left:12px;right:12px;top:calc(100% - 2px);max-height:min(78vh,640px);overflow-y:auto;background:#fff;border:1px solid var(--line);
+    border-radius:14px;box-shadow:0 12px 32px rgba(16,38,74,.18);padding:4px 0 6px;z-index:6}
+  .adm-secbar.open .adm-secmenu{display:block}
+  .adm-secg{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8a97ad;font-weight:900;padding:11px 14px 3px}
+  .adm-secit{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;border:0;background:none;text-align:left;padding:9px 14px;
+    font-weight:800;font-size:14px;color:#2b3a55;cursor:pointer;font-family:inherit}
+  .adm-secit.on{color:var(--navy);background:#eaf0fa}
+  .adm-secn{font-size:12px;font-weight:800;color:#8a97ad;white-space:nowrap} .adm-secn.red{color:var(--red)}
+  .adm-secbar .adm-secback{display:none}
+  .adm-secbar.open .adm-secback{display:block;position:fixed;inset:0;z-index:4;background:rgba(16,38,74,.18)}
+  .adm-secbar.open{z-index:7}
+  @media (min-width:1000px){
+    .adm-cols{flex-direction:row}
+    .adm-secbar{width:236px;flex:0 0 auto;border-bottom:0;border-right:1px solid var(--line);padding:6px 0 20px;overflow-y:auto}
+    .adm-secsel,.adm-secback,.adm-secbar.open .adm-secback{display:none}
+    .adm-secmenu,.adm-secbar.open .adm-secmenu{display:block;position:static;max-height:none;border:0;border-radius:0;box-shadow:none;padding:0;overflow:visible}
+    .adm-secit{padding:9px 18px} .adm-secit.on{border-right:3px solid var(--navy)} .adm-secg{padding:14px 18px 5px}
+    #admScreen .adm-wrap{flex:1;min-width:0}
+  }
   .adm-gen{flex:1;min-width:0;overflow:auto;background:var(--bg)}
   .adm-gen .adm-body{max-width:840px;margin:0 auto}
   .adm-help{background:#eef4fc;border:1px solid #cfe0f5;color:#1d4a86;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:15px}
@@ -1683,7 +1706,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.6.1</div>
+  <div class="ver-line">Version 1.7.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1805,7 +1828,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.6.1</div>
+  <div class="ver-line">Version 1.7.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2124,7 +2147,13 @@
     </button>
   </div>
   <div class="adm-usage" id="admUsage"></div>
-  <div class="adm-secbar" id="admSecs"></div>
+  <div class="adm-cols">
+  <!-- Sections: a picker on phones, a sidebar on wide screens. Same grouped list in both. -->
+  <nav class="adm-secbar" id="admSecs" aria-label="Admin sections">
+    <button class="adm-secsel" id="admSecBtn" aria-haspopup="listbox" aria-expanded="false"><span class="adm-secsel-l" id="admSecCur">Members</span><span class="adm-secsel-c">&#9662;</span></button>
+    <div class="adm-secback" id="admSecBack"></div>
+    <div class="adm-secmenu" id="admSecMenu" role="listbox"></div>
+  </nav>
   <div class="adm-wrap">
     <div class="adm-left" id="admMembersPane">
       <div class="adm-srch"><input id="admSearch" type="search" placeholder="Search name, unit, email" enterkeyhint="search"></div>
@@ -2139,6 +2168,7 @@
       <div class="adm-ph">Select a member to view and edit their record.</div>
     </div>
     <div class="adm-gen" id="admGenPane" style="display:none"></div>
+  </div>
   </div>
 </div>
 
@@ -4566,9 +4596,11 @@
   function srLoad(){
     return sbFetch(SB_URL+"/rest/v1/supply_requests?select=*&order=created_at.desc&limit=500",{cache:"no-store"})
       .then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); })
-      .then(function(rows){ SR.rows=Array.isArray(rows)?rows:[]; SR.loaded=true; return SR.rows; });
+      .then(function(rows){ SR.rows=Array.isArray(rows)?rows:[]; SR.loaded=true; srBadge(); return SR.rows; });
   }
   function srOpenCount(){ return SR.rows.filter(function(r){ return r.status==="open"; }).length; }
+  /* the count next to "Supply requests" in the admin sections */
+  function srBadge(){ try{ var n=SR.loaded?srOpenCount():0; admSetBadge("supply", n?n+" open":"", n>0); }catch(e){} }
   function srRenderInto(host, backFn){
     if(!host) return;
     if(SR.sel){ var selRow=SR.rows.filter(function(r){ return r.id===SR.sel; })[0]; if(selRow){ srRenderDetail(host, selRow, backFn); return; } SR.sel=null; }
@@ -4604,7 +4636,7 @@
     var patch={ status:status, status_by:(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")", status_at:new Date().toISOString() };
     sbWrite("PATCH","supply_requests?id=eq."+encodeURIComponent(r.id),patch).then(function(res){
       SR.busy=false; if(!res.ok) throw new Error("status-"+res.status);
-      Object.assign(r, patch); diagLog("restock-status", r.id+" "+status);
+      Object.assign(r, patch); diagLog("restock-status", r.id+" "+status); srBadge();
       if(status!=="open") srNotify("restock_status", r.id);      /* tells the member */
       toast(status==="ordered"?"Marked ordered — the member has been told.":status==="done"?"Marked done.":"Reopened.");
       srRenderInto(host, backFn);
@@ -4943,6 +4975,7 @@
     admPaintSecs();
     try{ admLoadUsage(); }catch(e){}
     try{ admLoadPush(); }catch(e){}
+    try{ srLoad()["catch"](function(){}); }catch(e){}
     if(!ADM.loaded){
       $("admList").innerHTML='<div class="adm-empty">Loading\u2026</div>';
       Promise.all([fetchTab("Roster"),fetchTab("Certifications")]).then(function(res){
@@ -4968,6 +5001,7 @@
     return any?worst:"";
   }
   function admRender(){
+    try{ var nAct=ADM.rows.filter(function(r){ return (r_(r,"Unit")||r_(r,"Last Name")) && admIsActive(r); }).length; admSetBadge("members", ADM.loaded&&nAct?String(nAct):""); }catch(e){}
     var q=ADM.q.toLowerCase().trim();
     var list=ADM.rows.filter(function(r){
       if(!r_(r,"Unit") && !r_(r,"Last Name")) return false;
@@ -5544,25 +5578,26 @@
 
   // ---------- Admin Portal: other sections ----------
   var ADM2={sec:"members",data:{},loaded:{},dirty:false};
-  var ADM_SECS=[
-    {k:"members",label:"Members"},
-    {k:"settings",label:"Settings"},
-    {k:"tiles",label:"Tiles"},
-    {k:"certtypes",label:"Certifications"},
-    {k:"hospitals",label:"Hospitals"},
-    {k:"apartments",label:"Apartments"},
-    {k:"tasklist",label:"Task List"},
-    {k:"cpr",label:"CPR Buttons"},
-    {k:"vitals",label:"Vitals"},
-    {k:"resources",label:"Resources"},
-    {k:"ambchecks",label:"Ambulance checks"},
-    {k:"jumpbags",label:"Jump bags"},
-    {k:"supply",label:"Supply requests"},
-    {k:"jumpbag",label:"Jump bag items"},
-    {k:"announce",label:"Announcements"},
-    {k:"uploads",label:"Upload Types"},
-    {k:"guests",label:"Guest Codes"}
+  /* The admin sections, grouped the way the picker and the sidebar show them.
+     Most-used first inside each group. ADM_SECS is the flat list the rest of
+     the admin code looks labels up in. */
+  var ADM_GROUPS=[
+    {g:"People", secs:[{k:"members",label:"Members"},{k:"guests",label:"Guest codes"}]},
+    {g:"Ambulances & gear", secs:[{k:"supply",label:"Supply requests"},{k:"ambchecks",label:"Ambulance checks"},{k:"jumpbags",label:"Jump bags"},{k:"jumpbag",label:"Jump bag items"}]},
+    {g:"App content", secs:[{k:"announce",label:"Announcements"},{k:"tiles",label:"Tiles"},{k:"resources",label:"Resources"},{k:"settings",label:"Settings"}]},
+    {g:"Certifications", secs:[{k:"certtypes",label:"Certification types"},{k:"uploads",label:"Document types"}]},
+    {g:"Reference lists", secs:[{k:"hospitals",label:"Hospitals"},{k:"apartments",label:"Apartments"},{k:"tasklist",label:"Task list"},{k:"cpr",label:"CPR buttons"},{k:"vitals",label:"Vitals"}]}
   ];
+  var ADM_SECS=[]; ADM_GROUPS.forEach(function(g){ g.secs.forEach(function(s){ ADM_SECS.push(s); }); });
+  /* small counts next to a section: {text, red}. Filled in as the data arrives. */
+  var ADM_BADGE={};
+  function admSetBadge(k, text, red){
+    var cur=ADM_BADGE[k];
+    if(!text){ if(!cur) return; delete ADM_BADGE[k]; }
+    else { if(cur && cur.text===text && !!cur.red===!!red) return; ADM_BADGE[k]={text:String(text), red:!!red}; }
+    admPaintSecs();
+  }
+  function admBadgeHTML(k){ var b=ADM_BADGE[k]; return b?'<span class="adm-secn'+(b.red?" red":"")+'">'+esc(b.text)+'</span>':''; }
   var ADM_TABLES={settings:"Settings",tiles:"Tiles",apartments:"apartments",cpr:"CPR Buttons",uploads:"Uploads",guests:"Guests",hospitals:"Hospitals",tasklist:"Task List",resources:"Resources",announce:"Announcements",vitals:"Vitals",jumpbag:"Jump Bag Items"};
   var ADM_ORDERABLE={tiles:1,cpr:1,hospitals:1,apartments:1,tasklist:1,uploads:1,resources:1,announce:1,vitals:1,jumpbag:1};
   var HOSP_SPECS=["Trauma I/II","Trauma III","Pedi Trauma I","Stroke Comprehensive","Stroke Primary","24hr Cardiac Cath",
@@ -5718,9 +5753,20 @@
       .catch(function(){ box.innerHTML=""; });
   }
   function admPaintSecs(){
-    $("admSecs").innerHTML=ADM_SECS.map(function(s){
-      return '<button class="adm-sbtn'+(ADM2.sec===s.k?" on":"")+'" data-sec="'+s.k+'">'+s.label+'</button>';
+    var cur=ADM_SECS.filter(function(s){ return s.k===ADM2.sec; })[0]||ADM_SECS[0];
+    $("admSecCur").textContent=cur.label;
+    var btn=$("admSecBtn"), oldN=btn.querySelector(".adm-secn"); if(oldN) oldN.parentNode.removeChild(oldN);
+    if(ADM_BADGE[cur.k]){ var tmp=document.createElement("span"); tmp.innerHTML=admBadgeHTML(cur.k); btn.insertBefore(tmp.firstChild, btn.lastElementChild); }
+    $("admSecMenu").innerHTML=ADM_GROUPS.map(function(g){
+      return '<div class="adm-secg">'+esc(g.g)+'</div>'+g.secs.map(function(s){
+        return '<button class="adm-secit'+(ADM2.sec===s.k?" on":"")+'" role="option" aria-selected="'+(ADM2.sec===s.k)+'" data-sec="'+s.k+'" data-label="'+esc(s.label)+'"><span class="adm-secl">'+esc(s.label)+'</span>'+admBadgeHTML(s.k)+'</button>';
+      }).join("");
     }).join("");
+  }
+  function admSecMenuToggle(open){
+    var bar=$("admSecs"); if(open===undefined) open=!bar.classList.contains("open");
+    bar.classList.toggle("open", open); $("admSecBtn").setAttribute("aria-expanded", open?"true":"false");
+    if(open){ var on=$("admSecMenu").querySelector(".adm-secit.on"); if(on && on.scrollIntoView){ try{ on.scrollIntoView({block:"nearest"}); }catch(e){} } }
   }
   function admLoadSec(k){
     if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
@@ -6537,7 +6583,13 @@
     $("u_ok").addEventListener("click",function(){ admHost().innerHTML=""; });
     $("uModal").addEventListener("click",function(e){ if(e.target===this) admHost().innerHTML=""; });
   });
-  $("admSecs").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest(".adm-sbtn"):null; if(!b) return; admSecSwitch(b.getAttribute("data-sec")); });
+  $("admSecBtn").addEventListener("click",function(e){ e.stopPropagation(); admSecMenuToggle(); });
+  $("admSecs").addEventListener("click",function(e){
+    if(e.target && e.target.id==="admSecBack"){ admSecMenuToggle(false); return; }
+    var b=e.target.closest?e.target.closest(".adm-secit"):null; if(!b) return;
+    admSecMenuToggle(false); admSecSwitch(b.getAttribute("data-sec"));
+  });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape" && $("admSecs").classList.contains("open")) admSecMenuToggle(false); });
   $("admGenPane").addEventListener("input",function(){ admMarkDirty(); });
   $("admGenPane").addEventListener("change",function(){ admMarkDirty(); });
   $("admGenPane").addEventListener("click",function(e){
@@ -9861,7 +9913,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.6.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9904,7 +9956,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.6.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10946,7 +10998,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.6.1".replace("Version ","");
+  var APP_VERSION="Version 1.7.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
