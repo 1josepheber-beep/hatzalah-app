@@ -76,6 +76,13 @@ that makes it wrong.
 - **Waiting on others:** SETRAC / Juvare reply about an EMResource hospital-status feed
   (Joseph emailed; the Resource Status API is a paid Juvare feature needing an agreement);
   the API contact for the personal call-statistics "standing board" (Joseph asked for pull).
+- **Standings (call-activity tiers):** the screen exists in the app as a "Coming soon"
+  preview (`standScreen`, search `stand-tier` in index.html). Rule as previewed: Primary =
+  15+ calls / quarter, Backup = 6–14, Observer = under 6; shows current standing, calls this
+  quarter, the minimum for the tier, days left. Those thresholds are placeholders until the
+  coordinator confirms them. Not yet decided / recorded: automatic move vs admin-approved,
+  and how a member moves back up. The real numbers will come from the outside call-data
+  API (pull on a schedule) once Joseph gets access.
 
 ## Running things
 
