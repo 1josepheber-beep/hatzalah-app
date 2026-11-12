@@ -1715,7 +1715,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-<div class="demobar" id="demobar">DEMO MODE &middot; sample data <button id="demoExit">Exit demo</button></div>
+<div class="demobar" id="demobar">DEMO MODE &middot; sample data <button id="demoRestart" title="Put the sample data back the way it was">Start over</button><button id="demoExit">Exit demo</button></div>
 
 <div class="gate" id="ggate">
   <div class="logo"><img src="logo.png" alt="Hatzalah of Houston"></div>
@@ -1729,7 +1729,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.7.2</div>
+  <div class="ver-line">Version 1.8.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1851,7 +1851,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.7.2</div>
+  <div class="ver-line">Version 1.8.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2642,6 +2642,7 @@
   // silently went out as "anonymous" and was refused.
   function sbFetch(url, opts){
     opts=opts||{};
+    if(STATE.demo && DEMO_DB){ return demoServe(url, opts); }
     function go(){
       var o={}, h={}, src=opts.headers||{}, k;
       for(k in opts) o[k]=opts[k];
@@ -2758,7 +2759,6 @@
 
   function tabRange(name){ return /^[A-Za-z0-9_]+$/.test(name) ? name : "'"+String(name).replace(/'/g,"''")+"'"; }
   function fetchTab(name){
-    if(STATE.demo){ return Promise.resolve((DEMO.tabs && DEMO.tabs[name]) ? DEMO.tabs[name] : []); }
     var tbl=SB_TAB2TBL[name];
     if(!tbl){
       // match case-insensitively rather than failing silently
@@ -2819,72 +2819,256 @@
     return isHash(stored) ? (stored.toLowerCase()===typedHash) : (normPw(stored)===typedNorm);
   }
 
-  // ---------- Guest demo mode ----------
-  var DEMO_PEOPLE=[
-    {Type:"Responder",First:"Sample",Last:"Cohen",Unit:"DEMO",Phone:"713-555-0101",Address:"1200 Binz St, Houston, TX 77004",DOB:"3/14/1985",Level:"ALS",Status:"Primary",Admin:"",Dispatcher:""},
-    {Type:"Responder",First:"Avi",Last:"Berger",Unit:"H-201",Phone:"713-555-0142",Address:"5100 Fannin St, Houston, TX 77004",DOB:"7/2/1990",Level:"EMT",Status:"Backup"},
-    {Type:"Responder",First:"Dovid",Last:"Friedman",Unit:"H-202",Phone:"713-555-0177",Address:"2900 Weslayan St, Houston, TX 77027",DOB:"11/9/1988",Level:"ALS",Status:"Observer"},
-    {Type:"Dispatcher",First:"Miriam",Last:"Katz",Unit:"D-301",Phone:"713-555-0190",Address:"4200 Law St, Houston, TX 77005",DOB:"5/21/1992",Level:"EMT"},
-    {Type:"Responder",First:"Yosef",Last:"Green",Unit:"H-203",Phone:"713-555-0166",Address:"3300 Bissonnet St, Houston, TX 77005",DOB:"1/30/1979",Level:"EMT",Status:"Backup"}
-  ];
-  function demoMembers(){ return DEMO_PEOPLE.map(function(p){ return {"Last Name":p.Last,"First Name":p.First,"Unit":p.Unit,"Password":"","Admin":p.Admin||"","Active":"X","Status":p.Status||"","Dispatcher":p.Dispatcher||""}; }); }
-  function demoDirectory(){ return DEMO_PEOPLE.map(function(p){ return {"Type":p.Type,"First Name":p.First,"Last Name":p.Last,"Unit":p.Unit,"Phone":p.Phone,"Address":p.Address,"DOB":p.DOB,"Active":"X","Level":p.Level}; }); }
-  function demoHospitals(){
-    return [
-      {"Hospital Name":"Sample General Hospital","Phone (Call)":"713-555-1000","Red Phone":"713-555-1911","Address (Navigate)":"6720 Bertner Ave, Houston, TX 77030","Latitude":"29.7096","Longitude":"-95.3971","Door Code":"4412#","Trauma":"X","Stroke":"X","STEMI":"X","Pediatric":"X"},
-      {"Hospital Name":"Riverside Medical Center","Phone (Call)":"713-555-2000","Red Phone":"713-555-2911","Address (Navigate)":"1504 Taub Loop, Houston, TX 77030","Latitude":"29.7106","Longitude":"-95.3951","Door Code":"7788*","Trauma":"","Stroke":"X","STEMI":"X"},
-      {"Hospital Name":"North Community Hospital","Phone (Call)":"713-555-3000","Red Phone":"","Address (Navigate)":"2000 Crawford St, Houston, TX 77002","Latitude":"29.7590","Longitude":"-95.3620","Door Code":"","Stroke":"X"}
-    ];
-  }
-  function demoCerts(){
-    return [
-      {"Last Name":"Cohen","First Name":"Sample","Unit #":"DEMO","Driver's License Exp":"6/6/2029","Driver's License #":"TX-DEMO-1234","State EMT/Paramedic License Exp":"7/31/2027","State EMT/Paramedic License #":"P-55512","NREMT Exp":"3/31/2028","NREMT #":"M5140001","American Heart BLS Exp":"12/12/2027","ACLS Exp":"5/1/2027","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"},
-      {"Last Name":"Berger","First Name":"Avi","Unit #":"H-201","Driver's License Exp":"9/15/2028","Driver's License #":"TX-DEMO-2201","State EMT/Paramedic License Exp":"10/10/2026","State EMT/Paramedic License #":"E-22014","NREMT Exp":"10/31/2026","NREMT #":"M5140142","American Heart BLS Exp":"1/20/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"},
-      {"Last Name":"Friedman","First Name":"Dovid","Unit #":"H-202","Driver's License Exp":"4/2/2029","Driver's License #":"TX-DEMO-2202","State EMT/Paramedic License Exp":"6/30/2028","State EMT/Paramedic License #":"P-22025","NREMT Exp":"6/30/2028","NREMT #":"M5140177","American Heart BLS Exp":"8/1/2027","ACLS Exp":"9/1/2027","PALS Exp":"9/1/2027","HIPAA":"Completed","EVOC Course":"Completed"},
-      {"Last Name":"Katz","First Name":"Miriam","Unit #":"D-301","Driver's License Exp":"11/5/2027","Driver's License #":"TX-DEMO-3301","State EMT/Paramedic License Exp":"","State EMT/Paramedic License #":"","NREMT Exp":"","NREMT #":"","American Heart BLS Exp":"5/15/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":""},
-      {"Last Name":"Green","First Name":"Yosef","Unit #":"H-203","Driver's License Exp":"2/1/2027","Driver's License #":"TX-DEMO-2203","State EMT/Paramedic License Exp":"5/31/2026","State EMT/Paramedic License #":"E-22036","NREMT Exp":"5/31/2026","NREMT #":"M5140166","American Heart BLS Exp":"3/1/2027","ACLS Exp":"","PALS Exp":"","HIPAA":"Completed","EVOC Course":"Completed"}
-    ];
-  }
+  // ===================== Guest demo mode =====================
+  // The demo is the whole app running against an in-memory copy of the
+  // database. demo/demo-data.js holds the sample tables (real lists, invented
+  // people); everything the app reads or writes goes through sbFetch, and in
+  // demo mode sbFetch answers from DEMO_DB instead of the network. Changes
+  // are kept until "Exit demo" or a reload; nothing ever reaches Supabase.
   var DEMO={on:false, name:"", tabs:{}};
-  function demoSchedule(){
-    var now=Date.now(), h=3600000, iso=function(t){ return new Date(t).toISOString(); };
-    return [
-      {ID:"g1",Unit:"DEMO",Start:iso(now-1.5*h),End:iso(now+3*h),Label:"Primary",Lat:"29.7420",Lng:"-95.4100","Loc Source":"gps",Created:""},
-      {ID:"g2",Unit:"H-201",Start:iso(now-0.5*h),End:iso(now+2.5*h),Label:"Backup",Lat:"29.7250",Lng:"-95.3900","Loc Source":"gps",Created:""},
-      {ID:"g3",Unit:"H-202",Start:iso(now-1*h),End:iso(now+4*h),Label:"Observer",Lat:"29.7600",Lng:"-95.3640","Loc Source":"gps",Created:""},
-      {ID:"g4",Unit:"H-203",Start:iso(now-0.75*h),End:iso(now+1.5*h),Label:"Backup",Lat:"29.7080",Lng:"-95.4230","Loc Source":"gps",Created:""},
-      {ID:"g5",Unit:"D-301",Start:iso(now+5*h),End:iso(now+9*h),Label:"Primary",Lat:"",Lng:"","Loc Source":"",Created:""}
-    ];
+  var DEMO_DB=null, DEMO_FILES={}, DEMO_NOTED=false;
+  var DEMO_ME={first:"Demo", last:"Admin", unit:"H-100"};
+  function demoLoadData(){
+    if(window.HOH_DEMO_DATA) return Promise.resolve(window.HOH_DEMO_DATA);
+    return new Promise(function(res, rej){
+      var s=document.createElement("script"); s.src="demo/demo-data.js?v="+encodeURIComponent(APP_VERSION||"");
+      s.onload=function(){ window.HOH_DEMO_DATA ? res(window.HOH_DEMO_DATA) : rej(new Error("demo-data-empty")); };
+      s.onerror=function(){ rej(new Error("demo-data-load")); };
+      document.head.appendChild(s);
+    });
   }
-  function demoTabs(returned){
-    var t={ Members:demoMembers(), Directory:demoDirectory(), Hospitals:demoHospitals(), Certifications:demoCerts(),
-      Schedule:demoSchedule(), Availability:[], "Code Logs":[], Changes:[], Guests:[],
-      Apartments: APT_INDEX.map(function(a){ return {"Name":a.name,"File":a.slug,"Address":"","Active":"X"}; }),
-      "Apartment Markers": [
-        {"File":"12211-fondren","Label":"1301-1312","X":0.42,"Y":0.85},
-        {"File":"12211-fondren","Label":"809-816","X":0.24,"Y":0.15},
-        {"File":"12211-fondren","Label":"201-212","X":0.78,"Y":0.11}
-      ] };
-    var tiles = (returned && returned.tiles) ? returned.tiles.slice() : [];
-    tiles.push({Label:"Responder Location", Type:"board", Order:"90", Icon:"", Image:"data:image/png;base64,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", Target:"", "Admin Only":"", Active:"X"});
-    if(!tiles.some(function(x){ return String(x.Type||"").toLowerCase()==="apartments"; }))
-      tiles.push({Label:"Apartments Directory", Type:"apartments", Order:"95", Icon:"", Image:"", Target:"", "Admin Only":"", Active:"X"});
-    t.Tiles = tiles;
-    if(returned && returned.settings){
-      var s=returned.settings;
-      s["Dispatch Number"]="713-555-0100"; s["Medical Control Number"]="713-555-0111";
-      s["Availability"]="on"; s["Location"]="on";
-      t.Settings=Object.keys(s).map(function(k){ return {"Setting":k,"Value":s[k]}; });
+  function demoReset(){
+    DEMO_DB=JSON.parse(JSON.stringify(window.HOH_DEMO_DATA||{}));
+    DEMO_FILES={}; DEMO_NOTED=false;
+    try{ demoSeedLive(); }catch(e){ try{ console.warn("demo seed", e); }catch(x){} }
+  }
+  function demoRows(t){ if(!DEMO_DB) DEMO_DB={}; if(!DEMO_DB[t]) DEMO_DB[t]=[]; return DEMO_DB[t]; }
+  /* for the test harness and the console: a look at the demo's tables while the demo runs */
+  window.HOH_DEMO_DEBUG=function(){ return (STATE&&STATE.demo) ? {db:DEMO_DB, me:STATE.me, files:DEMO_FILES} : null; };
+  function demoNextId(t){ var m=0; demoRows(t).forEach(function(r){ var n=parseInt(r.id,10); if(n>m) m=n; }); return m+1; }
+  function demoFindRow(t, where){ var rows=demoRows(t); for(var i=0;i<rows.length;i++){ var ok=true; for(var k in where){ if(String(rows[i][k])!==String(where[k])){ ok=false; break; } } if(ok) return rows[i]; } return null; }
+  /* The live parts of the sample data are made at start-up, so "now" is now:
+     who is on shift, who is available, the jump bags, the last checkoffs. */
+  function demoSeedLive(){
+    var now=Date.now(), H=3600000, D=86400000, iso=function(t){ return new Date(t).toISOString(); };
+    var ymd=function(t){ var d=new Date(t); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); };
+    DEMO_DB.schedule=[
+      {id:1,sched_id:"g1",unit:"H-100",start_at:iso(now-1.5*H),end_at:iso(now+3*H),label:"Primary",lat:"29.7420",lng:"-95.4100",loc_source:"gps",created:iso(now-2*H)},
+      {id:2,sched_id:"g2",unit:"H-102",start_at:iso(now-0.5*H),end_at:iso(now+2.5*H),label:"Backup",lat:"29.7250",lng:"-95.3900",loc_source:"gps",created:iso(now-1*H)},
+      {id:3,sched_id:"g3",unit:"H-105",start_at:iso(now-1*H),end_at:iso(now+4*H),label:"Observer",lat:"29.7600",lng:"-95.3640",loc_source:"gps",created:iso(now-1*H)},
+      {id:4,sched_id:"g4",unit:"H-103",start_at:iso(now-0.75*H),end_at:iso(now+1.5*H),label:"Backup",lat:"29.7080",lng:"-95.4230",loc_source:"gps",created:iso(now-1*H)},
+      {id:5,sched_id:"g5",unit:"D-301",start_at:iso(now+5*H),end_at:iso(now+9*H),label:"Dispatcher",lat:"",lng:"",loc_source:"",created:iso(now-3*H)},
+      {id:6,sched_id:"g6",unit:"H-101",start_at:iso(now+6*H),end_at:iso(now+12*H),label:"Primary",lat:"",lng:"",loc_source:"",created:iso(now-5*H)} ];
+    DEMO_DB.availability=[
+      {id:1,unit:"H-100",available:"X",until:iso(now+3*H),lat:"29.7420",lng:"-95.4100",loc_source:"gps",updated:iso(now-20*60000)},
+      {id:2,unit:"H-102",available:"X",until:iso(now+2*H),lat:"29.7250",lng:"-95.3900",loc_source:"gps",updated:iso(now-40*60000)},
+      {id:3,unit:"H-105",available:"X",until:iso(now+4*H),lat:"29.7600",lng:"-95.3640",loc_source:"gps",updated:iso(now-5*60000)},
+      {id:4,unit:"H-109",available:"",until:"",lat:"",lng:"",loc_source:"",updated:iso(now-2*D)} ];
+    /* jump bags: the viewer's is nearly complete with a few things to fix; four others at various states */
+    var items=demoRows("jumpbag_items"), st=[], sid=1;
+    function bag(unit, missIdx, shortIdx, expIdx, soonIdx, keep, ago){
+      items.forEach(function(it, i){
+        if(i>=keep) return;
+        var row={id:sid++, unit:unit, item_id:it.id, status:"have", exp_date:null, updated_at:iso(now-ago*D)};
+        if(missIdx.indexOf(i)>=0) row.status="missing"; else if(shortIdx.indexOf(i)>=0) row.status="short";
+        if(String(it.expires||"").toUpperCase()==="X"){
+          if(expIdx.indexOf(i)>=0) row.exp_date=ymd(now-9*D);
+          else if(soonIdx.indexOf(i)>=0) row.exp_date=ymd(now+12*D);
+          else row.exp_date=ymd(now+(200+i*9)*D);
+        }
+        st.push(row);
+      });
     }
-    return t;
+    bag("H-100",[29],[37,74],[12],[36],75,0);
+    bag("H-101",[],[5],[],[],75,3);
+    bag("H-102",[13],[],[2],[9],75,6);
+    bag("H-105",[],[],[],[],60,1);
+    bag("H-109",[4,40],[41],[12,36],[],75,25);
+    DEMO_DB.jumpbag_status=st;
+    DEMO_DB.jumpbag_bags=[
+      {id:1,unit:"H-100",checked_at:iso(now-2*D),remind_days:30,reminded_at:null},
+      {id:2,unit:"H-101",checked_at:iso(now-3*D),remind_days:60,reminded_at:null},
+      {id:3,unit:"H-102",checked_at:iso(now-41*D),remind_days:30,reminded_at:iso(now-11*D)},
+      {id:4,unit:"H-105",checked_at:iso(now-1*D),remind_days:0,reminded_at:null} ];
+    DEMO_DB.jumpbag_reminders=[ {id:1,when_at:iso(now-1*D),unit:"H-100",item_id:items[36]?items[36].id:1,exp_date:ymd(now+12*D),milestone:"30"},
+      {id:2,when_at:iso(now-9*D),unit:"H-100",item_id:items[12]?items[12].id:1,exp_date:ymd(now-9*D),milestone:"0"} ];
+    /* ambulance checkoffs: the answers follow the real question list */
+    function answersFor(type, skip){
+      var a={}, secs=[]; try{ secs=ambSpec(type); }catch(e){ secs=[]; }
+      var n=0;
+      secs.forEach(function(sec){ (sec.items||[]).forEach(function(it){
+        n++; if(skip && skip.indexOf(it.k)>=0) return;
+        if(it.kind==="num") a[it.k]=String(it.low ? it.low+900 : (it.k==="odometer"?48211:it.k==="t_df"?48:7));
+        else if(it.kind==="choice") a[it.k]=(it.opts&&it.opts[0])||"Good";
+        else if(it.kind==="yn") a[it.k]="Yes";
+        else if(it.kind==="photo") a[it.k]="";
+        else if(it.kind==="text"||it.kind==="area") a[it.k]="";
+        else a[it.k]="Yes";
+      }); });
+      return a;
+    }
+    var w=answersFor("weekly"); w.gas="3/4"; w.coolant="Good";
+    var wSkip=["lucas_batt","stretcher_batt","o2_psi"], p=answersFor("weekly", wSkip); p.gas="Almost empty"; p._skipped=wSkip;
+    var inv=answersFor("inventory"); var invKeys=Object.keys(inv); if(invKeys.length>8){ inv[invKeys[6]]="Issue"; inv[invKeys[6]+"_o"]="X"; inv[invKeys[8]]="Issue"; }
+    DEMO_DB.ambulance_checks=[
+      {id:3,created_at:iso(now-1*D),unit:"H-110",name:"Chaim Gold",ambulance:"A1 Ambulance - 1",log_type:"weekly",check_date:ymd(now-1*D),answers:w,photos:[{key:"oil_photo",ref:"doc:checks/H-110/demo-oil.jpg"}],flags:[],notes:"All good. Washed the truck.",app_version:APP_VERSION},
+      {id:2,created_at:iso(now-3*D),unit:"H-110",name:"Chaim Gold",ambulance:"A2 Ambulance - 2",log_type:"inventory",check_date:ymd(now-3*D),answers:inv,photos:[],flags:[{k:invKeys[6]||"",msg:"Issue"},{k:invKeys[8]||"",msg:"Issue"}],notes:"Two items need restocking — order placed from the app.",app_version:APP_VERSION},
+      {id:1,created_at:iso(now-8*D),unit:"H-102",name:"Dovid Friedman",ambulance:"A2 Ambulance - 2",log_type:"weekly",check_date:ymd(now-8*D),answers:p,photos:[],flags:[{k:"gas",msg:"Almost empty"}],notes:"Ran out of time — finished what I could.",app_version:"1.6.1"} ];
+  }
+  /* ---- the fake server ---- */
+  function demoJSON(body, status, hdr){ var h={"Content-Type":"application/json"}; if(hdr) for(var k in hdr) h[k]=hdr[k]; return new Response(JSON.stringify(body==null?null:body),{status:status||200,headers:h}); }
+  function demoParseQuery(q){
+    var out={filters:[], order:[], limit:0, offset:0, select:"*", onConflict:""};
+    (q||"").split("&").forEach(function(part){
+      if(!part) return; var eq=part.indexOf("="); var k=decodeURIComponent(part.slice(0,eq)), v=decodeURIComponent((part.slice(eq+1)||"").replace(/\+/g,"%20"));
+      if(k==="select"){ out.select=v; return; }
+      if(k==="order"){ v.split(",").forEach(function(o){ var s=o.split("."); out.order.push({col:s[0], desc:s[1]==="desc"}); }); return; }
+      if(k==="limit"){ out.limit=parseInt(v,10)||0; return; }
+      if(k==="offset"){ out.offset=parseInt(v,10)||0; return; }
+      if(k==="on_conflict"){ out.onConflict=v; return; }
+      var m=v.match(/^(not\.)?(eq|neq|gt|gte|lt|lte|like|ilike|is|in)\.([\s\S]*)$/);
+      if(m) out.filters.push({col:k, not:!!m[1], op:m[2], val:m[3]});
+    });
+    return out;
+  }
+  function demoMatch(row, f){
+    var a=row[f.col], v=f.val, r;
+    if(f.op==="in"){ var list=v.replace(/^\(|\)$/g,"").split(",").map(function(x){ return x.replace(/^"|"$/g,""); }); r=list.indexOf(String(a==null?"":a))>=0; }
+    else if(f.op==="is"){ r=(v==="null")?(a==null||a===""):(String(a)===v); }
+    else if(f.op==="eq"){ r=String(a==null?"":a)===v; }
+    else if(f.op==="neq"){ r=String(a==null?"":a)!==v; }
+    else if(f.op==="gt"){ r=(a!=null)&&(isNaN(+a)||isNaN(+v)?String(a)>v:+a>+v); }
+    else if(f.op==="gte"){ r=(a!=null)&&(isNaN(+a)||isNaN(+v)?String(a)>=v:+a>=+v); }
+    else if(f.op==="lt"){ r=(a!=null)&&(isNaN(+a)||isNaN(+v)?String(a)<v:+a<+v); }
+    else if(f.op==="lte"){ r=(a!=null)&&(isNaN(+a)||isNaN(+v)?String(a)<=v:+a<=+v); }
+    else if(f.op==="like"||f.op==="ilike"){ var re=new RegExp("^"+v.replace(/[.+?^${}()|[\]\\]/g,"\\$&").replace(/\*|%/g,".*")+"$", f.op==="ilike"?"i":""); r=re.test(String(a==null?"":a)); }
+    else r=true;
+    return f.not ? !r : r;
+  }
+  function demoSelect(table, q){
+    var rows=demoRows(table).filter(function(r){ return q.filters.every(function(f){ return demoMatch(r,f); }); });
+    if(q.order.length){ rows=rows.slice().sort(function(x,y){ for(var i=0;i<q.order.length;i++){ var o=q.order[i], a=x[o.col], b=y[o.col]; if(a==null&&b==null) continue; if(a==null) return 1; if(b==null) return -1; var na=+a, nb=+b, c=(!isNaN(na)&&!isNaN(nb)&&String(a).trim()!==""&&String(b).trim()!=="")?(na-nb):String(a).localeCompare(String(b)); if(c) return o.desc?-c:c; } return 0; }); }
+    if(q.offset) rows=rows.slice(q.offset);
+    if(q.limit) rows=rows.slice(0,q.limit);
+    if(q.select && q.select!=="*"){ var cols=q.select.split(",").map(function(s){ return s.trim(); }); rows=rows.map(function(r){ var o={}; cols.forEach(function(c){ if(c in r) o[c]=r[c]; }); return o; }); }
+    return JSON.parse(JSON.stringify(rows));
+  }
+  function demoRpc(name, body){
+    body=body||{};
+    if(name==="usage_stats"){ var files=0, n=0; for(var k in DEMO_FILES){ n++; files+=(DEMO_FILES[k].size||0); } return {ok:true, db_bytes:68*1048576, file_bytes:141*1048576+files, file_count:312+n}; }
+    if(name==="ping_seen"){ return {ok:true}; }
+    if(name==="add_certification"){
+      var nm=String(body.cert_name||"").trim(); if(!nm) return {ok:false, error:"Enter a name."};
+      var col=nm.toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_+|_+$/g,""), exp=col+"_exp";
+      demoRows("certifications").forEach(function(r){ if(!(exp in r)) r[exp]=(body.only_unit && r.unit!==body.only_unit)?"N/A":""; if(!((col+"_num") in r)) r[col+"_num"]=""; });
+      SB_COLMAP.certifications[exp]=nm+" Exp"; SB_COLMAP.certifications[col+"_num"]=nm+" #";
+      return {ok:true};
+    }
+    if(name==="remove_certification"){
+      var ec=String(body.exp_column||""); var base=ec.replace(/_exp$/,"");
+      demoRows("certifications").forEach(function(r){ delete r[ec]; delete r[base+"_num"]; delete r[base]; });
+      delete SB_COLMAP.certifications[ec]; delete SB_COLMAP.certifications[base+"_num"];
+      return {ok:true};
+    }
+    if(name==="announcement_respond"){
+      var reads=demoRows("announcement_reads"), ex=null;
+      reads.forEach(function(r){ if(String(r.ann_id)===String(body.p_ann_id) && r.unit===body.p_unit) ex=r; });
+      if(ex){ ex.action=body.p_action; ex.choice=body.p_choice||""; ex.at=new Date().toISOString(); }
+      else reads.push({id:demoNextId("announcement_reads"), ann_id:parseInt(body.p_ann_id,10), unit:body.p_unit, action:body.p_action, choice:body.p_choice||"", at:new Date().toISOString()});
+      if(body.p_action==="voted" && body.p_choice){ var t=demoFindRow("poll_tallies",{ann_id:body.p_ann_id, choice:body.p_choice}); if(t) t.votes=(parseInt(t.votes,10)||0)+1; else demoRows("poll_tallies").push({ann_id:parseInt(body.p_ann_id,10), choice:body.p_choice, votes:1}); }
+      return {ok:true};
+    }
+    if(name==="announcement_change_vote"){
+      var t1=demoFindRow("poll_tallies",{ann_id:body.p_ann_id, choice:body.p_old}); if(t1 && t1.votes>0) t1.votes--;
+      var t2=demoFindRow("poll_tallies",{ann_id:body.p_ann_id, choice:body.p_new}); if(t2) t2.votes=(parseInt(t2.votes,10)||0)+1; else demoRows("poll_tallies").push({ann_id:parseInt(body.p_ann_id,10), choice:body.p_new, votes:1});
+      demoRows("announcement_reads").forEach(function(r){ if(String(r.ann_id)===String(body.p_ann_id) && r.unit===body.p_unit) r.choice=body.p_new; });
+      return {ok:true};
+    }
+    return {ok:true};
+  }
+  function demoFileUrl(path){
+    if(DEMO_FILES[path] && DEMO_FILES[path].url) return DEMO_FILES[path].url;
+    return location.origin+location.pathname.replace(/[^/]*$/,"")+(/\.pdf$/i.test(path)?"demo/sample.pdf":"demo/sample-photo.jpg");
+  }
+  function demoServe(url, opts){
+    opts=opts||{}; var method=String(opts.method||"GET").toUpperCase();
+    var u; try{ u=new URL(url, location.href); }catch(e){ return Promise.resolve(demoJSON({error:"bad url"},400)); }
+    var path=u.pathname, qs=u.search.replace(/^\?/,"");
+    var body=null; if(opts.body && typeof opts.body==="string"){ try{ body=JSON.parse(opts.body); }catch(e){ body=null; } }
+    var prefer=String((opts.headers&&(opts.headers.Prefer||opts.headers.prefer))||"");
+    /* ---- tables ---- */
+    var m=path.match(/\/rest\/v1\/rpc\/([a-z_]+)$/);
+    if(m){ return Promise.resolve(demoJSON(demoRpc(m[1], body))); }
+    m=path.match(/\/rest\/v1\/([a-z_]+)$/);
+    if(m){
+      var t=m[1], q=demoParseQuery(qs);
+      if(method==="GET"||method==="HEAD") return Promise.resolve(demoJSON(demoSelect(t,q)));
+      if(method==="POST"){
+        var rows=Array.isArray(body)?body:(body?[body]:[]), saved=[], keys=q.onConflict?q.onConflict.split(","):[];
+        rows.forEach(function(r){
+          var row=JSON.parse(JSON.stringify(r)), ex=null;
+          if(keys.length){ var w={}; keys.forEach(function(k){ w[k]=row[k]; }); ex=demoFindRow(t,w); }
+          if(ex && /merge-duplicates/.test(prefer)){ for(var k in row) ex[k]=row[k]; saved.push(ex); return; }
+          if(ex){ saved.push(ex); return; }   /* ignore-duplicates */
+          if(row.id==null) row.id=demoNextId(t);
+          if(!("created_at" in row) && (t==="supply_requests"||t==="ambulance_checks"||t==="cert_docs"||t==="push_subs"||t==="scene_alarms")) row.created_at=new Date().toISOString();
+          if(t==="supply_requests" && !row.notified) row.notified="3 emailed, 2 pushed";
+          if(t==="cert_docs" && !row.uploaded_at) row.uploaded_at=new Date().toISOString();
+          if(t==="jumpbag_status" && !row.updated_at) row.updated_at=new Date().toISOString();
+          demoRows(t).push(row); saved.push(row);
+        });
+        return Promise.resolve(/return=representation/.test(prefer) ? demoJSON(JSON.parse(JSON.stringify(saved)),201) : new Response(null,{status:201}));
+      }
+      if(method==="PATCH"){
+        var hit=demoRows(t).filter(function(r){ return q.filters.every(function(f){ return demoMatch(r,f); }); });
+        hit.forEach(function(r){ for(var k in (body||{})) r[k]=body[k]; });
+        return Promise.resolve(/return=representation/.test(prefer) ? demoJSON(JSON.parse(JSON.stringify(hit))) : new Response(null,{status:204}));
+      }
+      if(method==="DELETE"){
+        var keep=demoRows(t).filter(function(r){ return !q.filters.every(function(f){ return demoMatch(r,f); }); });
+        if(!q.filters.length) keep=[];
+        DEMO_DB[t]=keep;
+        return Promise.resolve(new Response(null,{status:204}));
+      }
+    }
+    /* ---- storage ---- */
+    m=path.match(/\/storage\/v1\/object\/sign\/([^/]+)\/(.+)$/);
+    if(m){ return Promise.resolve(demoJSON({signedURL:demoFileUrl(decodeURIComponent(m[2]))})); }
+    m=path.match(/\/storage\/v1\/object\/list\/([^/]+)$/);
+    if(m){
+      var prefix=String((body&&body.prefix)||"").replace(/\/+$/,""), out=[], seen={};
+      function add(name, size, created){ var rel=prefix?(name.indexOf(prefix+"/")===0?name.slice(prefix.length+1):null):name; if(rel==null||rel.indexOf("/")>=0||seen[rel]) return; seen[rel]=1; out.push({name:rel, id:"demo-"+rel, created_at:created||new Date().toISOString(), updated_at:created||new Date().toISOString(), metadata:{size:size||0, mimetype:/\.pdf$/i.test(rel)?"application/pdf":"image/jpeg"}}); }
+      demoRows("resources").forEach(function(r){ var f=String(r.file||"").replace(/^doc:/,""); if(f) add(f, 148000, "2026-09-01T12:00:00Z"); });
+      for(var k in DEMO_FILES) add(k, DEMO_FILES[k].size, DEMO_FILES[k].created);
+      return Promise.resolve(demoJSON(out));
+    }
+    m=path.match(/\/storage\/v1\/object\/(?:public\/)?([^/]+)\/(.+)$/);
+    if(m){
+      var key=decodeURIComponent(m[2]);
+      if(method==="POST"||method==="PUT"){
+        var blob=opts.body, size=(blob&&blob.size)||0, burl="";
+        try{ if(blob && typeof Blob!=="undefined" && blob instanceof Blob) burl=URL.createObjectURL(blob); }catch(e){}
+        DEMO_FILES[key]={size:size, url:burl, created:new Date().toISOString()};
+        return Promise.resolve(demoJSON({Key:m[1]+"/"+key}));
+      }
+      if(method==="DELETE"){ delete DEMO_FILES[key]; return Promise.resolve(demoJSON([])); }
+      /* GET: hand over the sample file */
+      return fetch(demoFileUrl(key)).then(function(r){ return r; });
+    }
+    return Promise.resolve(demoJSON({error:"not in the demo: "+path},404));
   }
   function startGuest(resp){
-    DEMO.on=true; STATE.demo=true; DEMO.name=resp.name||"Guest"; DEMO.tabs=demoTabs(resp);
-    STATE.me={first:"Demo",last:"User",unit:"DEMO",admin:true,dispatcher:false,status:"Primary",pw:"",demo:true,gaUnit:DEMO.name};
-    document.body.classList.add("demo");
-    $("ggate").classList.add("hidden"); if($("guestgate")) $("guestgate").classList.add("hidden"); if($("demoLoad")) $("demoLoad").classList.add("hidden");
-    $("app").classList.remove("hidden");
-    boot().catch(function(){ toast("Couldn't load the demo."); });
+    demoLoadData().then(function(){
+      demoReset();
+      DEMO.on=true; STATE.demo=true; DEMO.name=(resp&&resp.name)||"Guest";
+      var me=demoFindRow("roster",{unit:DEMO_ME.unit})||{};
+      STATE.me={first:me.first_name||DEMO_ME.first, last:me.last_name||DEMO_ME.last, unit:DEMO_ME.unit, admin:true, dispatcher:false, serviceUnit:false, status:me.status||"Primary", pw:"", demo:true, gaUnit:DEMO.name,
+                textHome:me.text_home||"", textHomeMethod:me.text_home_method||"sms", email:me.email||""};
+      document.body.classList.add("demo");
+      $("ggate").classList.add("hidden"); if($("guestgate")) $("guestgate").classList.add("hidden"); if($("demoLoad")) $("demoLoad").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      return boot();
+    })["catch"](function(e){ diagLog("demo-failed", String((e&&e.message)||e)); toast("Couldn’t load the demo."); try{ if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); }catch(x){} });
   }
   function guestCheck(code){
     return fetch(SB_URL+"/rest/v1/rpc/guest_demo",{
@@ -2892,28 +3076,19 @@
       headers:{apikey:SB_ANON,Authorization:"Bearer "+SB_ANON,"Content-Type":"application/json"},
       body:JSON.stringify({code:String(code||"")})
     }).then(function(r){ return r.json(); })
-      .then(function(j){
-        if(!j || !j.ok) return j||{ok:false};
-        // normalise tiles/settings into the shape the demo expects
-        var tiles=(j.tiles||[]).map(function(row){
-          var o={}, m=SB_COLMAP["tiles"]||{};
-          for(var k in row){ if(k==="id") continue; o[m[k]||k]=row[k]==null?"":String(row[k]); }
-          return o;
-        });
-        return { ok:true, name:j.name||"Guest", tiles:tiles, settings:j.settings||{} };
-      });
+      .then(function(j){ if(!j || !j.ok) return j||{ok:false}; return { ok:true, name:j.name||"Guest" }; });
   }
   function guestLogin(code){
     var err=$("guestErr"); if(err) err.textContent="";
     code=String(code||"").trim();
     if(!code){ if(err) err.textContent="Enter the demo passcode."; return; }
-    var btn=$("guestBtn"); if(btn){ btn.disabled=true; btn.textContent="Checking\u2026"; }
+    var btn=$("guestBtn"); if(btn){ btn.disabled=true; btn.textContent="Checking…"; }
     guestCheck(code)
       .then(function(res){
         if(btn){ btn.disabled=false; btn.textContent="Enter demo"; }
         if(res.ok){ try{localStorage.setItem("hoh_demo",code);}catch(e){} startGuest(res); }
-        else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn\u2019t valid or is inactive."; }
-      }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent="Enter demo"; } if(err) err.textContent="Couldn\u2019t reach the server. Try again."; });
+        else if(err){ err.textContent = res.error==="off" ? "The demo is turned off right now." : "That passcode isn’t valid or is inactive."; }
+      }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent="Enter demo"; } if(err) err.textContent="Couldn’t reach the server. Try again."; });
   }
   function exitDemo(){ try{localStorage.removeItem("hoh_demo"); localStorage.setItem("hoh_signedout","1");}catch(e){} document.body.classList.remove("demo"); DEMO.on=false; STATE.demo=false; STATE.me=null; location.reload(); }
   function resumeDemo(){
@@ -2926,7 +3101,8 @@
       }).catch(function(){ if($("demoLoad")) $("demoLoad").classList.add("hidden"); checkDemoEnabled(); googleBoot(); });
     return true;
   }
-  function demoNo(){ if(STATE.demo){ toast("Demo mode \u2014 changes aren\u2019t saved."); return true; } return false; }
+  /* In the demo everything can be tried; it is only kept until "Exit demo". Said once. */
+  function demoNo(){ if(STATE.demo && !DEMO_NOTED){ DEMO_NOTED=true; toast("Demo — your changes stay on this device until you exit."); } return false; }
   function resolveByEmail(){
     return fetchTab("Roster").then(function(rows){
       STATE.roster=rows;
@@ -3054,7 +3230,7 @@
       try{ loadAnnouncements().then(paintNotices); }catch(e){}
       // Analytics identity must be set on every open, cached or not.
       try{ if(window.gtag && STATE.me){ var gu=STATE.me.gaUnit||STATE.me.unit; if(gu){ gtag('set',{user_id:gu}); gtag('set','user_properties',{unit:gu,role:(STATE.me.demo?"guest":(STATE.me.admin?"admin":"member"))}); } } }catch(e){}
-      if(!fromCache){
+      if(!fromCache && !STATE.demo){
         try{ localStorage.setItem(DCACHE, JSON.stringify({s:res[0]||[], t:res[1]||[], r:res[2]||[]})); }catch(e){}
       }
   }
@@ -3092,7 +3268,7 @@
       return ia-ib;
     }).map(function(x){ return x.t; });
   }
-  function getTileCols(){ try{ return parseInt(localStorage.getItem("hoh_tilecols")||"2",10)===3?3:2; }catch(e){ return 2; } }
+  function getTileCols(){ try{ var v=localStorage.getItem("hoh_tilecols"); if(!v && STATE.demo) return 3; return parseInt(v||"2",10)===3?3:2; }catch(e){ return STATE.demo?3:2; } }
   function applyTileCols(){ var g=$("grid"); if(g) g.classList.toggle("cols3", getTileCols()===3); var b2=$("reCols2"),b3=$("reCols3"); if(b2)b2.classList.toggle("on",getTileCols()===2); if(b3)b3.classList.toggle("on",getTileCols()===3); }
   function rxLookupOn(){ var s=STATE.settings||{}; for(var k in s){ if(String(k).trim().toLowerCase()==="rx lookup"){ return !/^(off|no|false|0|disabled)$/i.test(String(s[k]).trim()); } } return true; }
   function applyRxSetting(){ document.body.classList.toggle("rxoff", !rxLookupOn()); }
@@ -5747,7 +5923,7 @@
         box.innerHTML=inner;
         // GitHub repository size (public API, no key needed)
         var repo=getSetting("GitHub Repo","1josepheber-beep/hatzalah-app");
-        if(repo){
+        if(repo && !STATE.demo){
           fetch("https://api.github.com/repos/"+repo)
             .then(function(r){ return r.ok?r.json():null; })
             .then(function(g){
@@ -6769,7 +6945,7 @@
     if(!$("placeScreen").classList.contains("open")) navOpen(closePlaceScreen);
     $("placeScreen").classList.add("open");
     $("placeSearch").value=""; $("placeSres").className="sresults"; $("placeSres").innerHTML="";
-    $("placeEdit").classList.toggle("hidden",!isAdmin()||STATE.demo);
+    $("placeEdit").classList.toggle("hidden",!isAdmin());
     if(PLACE.loaded){ return; }
     $("cabGrid").innerHTML='<div class="empty">Loading\u2026</div>';
     loadPlacement().then(function(d){ PLACE.cabs=d||[]; PLACE.loaded=true; renderCabGrid(); })
@@ -7091,7 +7267,7 @@
   function openEquip(){
     if(!$("equipScreen").classList.contains("open")) navOpen(closeEquip);
     $("equipScreen").classList.add("open");
-    $("equipEdit").classList.toggle("hidden",!isAdmin()||STATE.demo);
+    $("equipEdit").classList.toggle("hidden",!isAdmin());
     if(EQ.loaded){ renderEquip(); return; }
     $("equipBody").innerHTML='<div class="empty">Loading\u2026</div>';
     loadEquip().then(function(d){ EQ.d=d; EQ.loaded=true; buildTierChips(); renderEquip(); })
@@ -7305,7 +7481,7 @@
   function closeEquipFrame(){ $("equipFrameScreen").classList.remove("open"); }
   function openEquipFrame(){
     if(!$("equipFrameScreen").classList.contains("open")) navOpen(closeEquipFrame);
-    var fr=$("equipFrame"); if(!fr.getAttribute("src")) fr.setAttribute("src","equipment.html?admin=1");
+    var fr=$("equipFrame"); if(!fr.getAttribute("src")) fr.setAttribute("src","equipment.html?admin=1"+(STATE.demo?"&demo=1":""));
     $("equipFrameScreen").classList.add("open");
   }
   $("equipFrameBack").addEventListener("click",navBack);
@@ -7886,6 +8062,7 @@
     var wrap=btn.closest?btn.closest(".au-wrap"):null;
     var msg=(wrap&&wrap.querySelector(".au-bkmsg")) || btn.nextElementSibling;
     function say(html,cls){ if(msg){ msg.className="au-cleanmsg au-bkmsg"+(cls?" "+cls:""); msg.innerHTML=html; } }
+    if(STATE.demo){ say("Demo \u2014 in the real app every table is copied to a Google Sheet nightly, and right now when you tap this.","ok"); return; }
     if(!url || !key){ say("The backup runs through the reminder script. Fill in Settings \u203a Instant renewal emails first.","err"); return; }
     var orig=btn.textContent, started=Date.now();
     btn.disabled=true; btn.textContent="Backing up\u2026";
@@ -8029,7 +8206,6 @@
     return parts.map(function(x){return x.trim();}).filter(Boolean);
   }
   function loadAnnouncements(){
-    if(STATE.demo){ ANN.loaded=true; ANN.rows=[]; ANN.reads=[]; return Promise.resolve(); }
     function annRest(){
       return sbFetch(SB_URL+"/rest/v1/announcements?select=*&order=order_col.asc",
                    {headers:sbAuthHeaders()})
@@ -8058,7 +8234,7 @@
     var out=[];
     var i=CERT.myIssues;
     function names(a){ return a.length>2 ? (a.slice(0,2).join(", ")+" and "+(a.length-2)+" more") : a.join(" and "); }
-    if(i && !STATE.demo){
+    if(i){
       if(i.expiredBlocking.length){
         out.push({pri:1, cls:"bad", ic:"blocked", title:"You are not cleared to respond",
           sub:names(i.expiredBlocking)+(i.expiredBlocking.length===1?" has expired.":" have expired.")+" Renew and update it in the app.",
@@ -8322,7 +8498,7 @@
   });
   function annRespond(id, action, choice){
     var unit=annMyUnit();
-    if(!unit || STATE.demo) return Promise.resolve(false);
+    if(!unit) return Promise.resolve(false);
     return sbFetch(SB_URL+"/rest/v1/rpc/announcement_respond",{
       method:"POST", headers:sbAuthHeaders({"Content-Type":"application/json"}),
       body:JSON.stringify({p_ann_id:id, p_unit:unit, p_action:action, p_choice:choice||""})
@@ -8611,7 +8787,7 @@
   function paintCertBannerOld(){
     var host=$("certBanner"); if(!host) return;
     var i=CERT.myIssues;
-    if(!i || STATE.demo){ host.innerHTML=""; host.className="cert-banner hidden"; return; }
+    if(!i){ host.innerHTML=""; host.className="cert-banner hidden"; return; }
     function names(a){ return a.length>2 ? (a.slice(0,2).join(", ")+" and "+(a.length-2)+" more") : a.join(" and "); }
     var cls, title, sub;
     if(i.expiredBlocking.length){
@@ -9105,7 +9281,7 @@
     /* The documents behind the dates come in on the side: the list is drawn
        as soon as the certifications are here, and redrawn once the document
        index arrives (keeping any lit-up row lit). */
-    if(!CERT.docsLoaded && !STATE.demo){
+    if(!CERT.docsLoaded){
       certDocsFetch(STATE.me&&STATE.me.unit, isAdmin()).then(function(rows){
         CERT.docs=rows||[]; CERT.docsLoaded=true;
         if(CERT.loaded && $("certScreen").classList.contains("open")){
@@ -9510,7 +9686,6 @@
   // no history at all.
   function logCertUpdate(unit, certName, oldDate, newDate){
     try{
-      if(STATE.demo) return;
       oldDate=String(oldDate||"").trim(); newDate=String(newDate||"").trim();
       if(oldDate===newDate) return;
       var by=(STATE.me&&STATE.me.unit)?String(STATE.me.unit):"";
@@ -9942,7 +10117,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.2</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9985,7 +10160,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.2</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10391,7 +10566,6 @@
   $("insClose").addEventListener("click",function(){ $("insModal").classList.add("hidden"); });
   $("insModal").addEventListener("click",function(e){ if(e.target===this) this.classList.add("hidden"); });
   function doTextHome(){
-    if(STATE.demo){ toast("Not available in the demo."); return; }
     var raw=(STATE.me&&STATE.me.textHome)?String(STATE.me.textHome):"";
     var num=raw.replace(/[^0-9+]/g,"");
     if(!num){ toast("Add your home number in your profile first."); openProfile(); return; }
@@ -10914,6 +11088,7 @@
       if(whoEl && !whoTyped){ err.textContent="Please add your name or unit so we know who to help."; return; }
       if(!note){ err.textContent="Tell us what happened first."; return; }
       var cfg=diagSettings();
+      if(STATE.demo){ box.querySelector(".adm-mbox").innerHTML='<h3>Sent \u2014 thank you</h3><p>In the real app this emails every admin your note with the phone\u2019s diagnostics attached. In the demo it goes nowhere.</p><button class="ebtn primary" id="'+id+'_done">Close</button>'; var dn=box.querySelector("#"+id+"_done"); if(dn) dn.addEventListener("click",function(){ admHost().innerHTML=""; }); return; }
       if(!cfg.url || !cfg.key){ err.textContent="Reports aren\u2019t set up yet \u2014 please text an admin instead."; return; }
       ok.disabled=true; no.disabled=true; ok.textContent="Sending\u2026"; err.textContent="";
       diagLog("report", "sent from "+(where||"app"));
@@ -11028,7 +11203,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.7.2".replace("Version ","");
+  var APP_VERSION="Version 1.8.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -11249,6 +11424,7 @@
   $("guestBtn").addEventListener("click",function(){ guestLogin($("guestCode").value); });
   $("guestCode").addEventListener("keydown",function(e){ if(e.key==="Enter") guestLogin($("guestCode").value); });
   $("demoExit").addEventListener("click",exitDemo);
+  if($("demoRestart")) $("demoRestart").addEventListener("click",function(){ location.reload(); });   /* the demo rebuilds its sample data on every open */
   function sbaEstablish(){
     if(sbaValid()) return Promise.resolve(SBA.email);
     if(SBA.refresh){ return sbaRefresh().then(function(){ return SBA.email; }).catch(function(){ return null; }); }

@@ -448,7 +448,10 @@ window.addEventListener('unhandledrejection', function(e){
     }
   }
 
+  var DEMO=/[?&]demo=1/.test(location.search);
+  window.__EQ_DEMO__=DEMO;
   function boot(){
+    if(DEMO){ run(); return; }   /* the demo uses the list baked into this page; saves stay on this device */
     if(!session()){
       document.body.innerHTML='<div style="padding:40px;font:15px system-ui;text-align:center">'+
         'Please open this from the Hatzalah app while signed in.</div>';
@@ -1145,6 +1148,7 @@ document.getElementById('publish').addEventListener('click', async ()=>{
   // Saves straight to the database. No token, no commit, no wait for a
   // site rebuild — every signed-in member sees it on their next open.
   const btn = document.getElementById('publish');
+  if (window.__EQ_DEMO__){ try { localStorage.setItem(LSKEY, JSON.stringify(snapshot())); } catch(e){} say('Demo \u2014 kept on this device only. In the real app this saves for every member.'); return; }
   const SB = window.__EQ_URL__, hdr = window.__EQ_AUTH__();
   say('Saving\u2026'); btn.disabled = true; btn.textContent = 'Saving\u2026';
   try {
