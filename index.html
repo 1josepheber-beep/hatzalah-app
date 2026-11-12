@@ -1729,7 +1729,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.7.1</div>
+  <div class="ver-line">Version 1.7.2</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1851,7 +1851,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.7.1</div>
+  <div class="ver-line">Version 1.7.2</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -9942,7 +9942,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.2</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9985,7 +9985,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.2</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11028,7 +11028,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.7.1".replace("Version ","");
+  var APP_VERSION="Version 1.7.2".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
@@ -11070,8 +11070,17 @@
   /* The app restarting itself for an update is not a fresh visit: whoever
      was inside stays unlocked across it. Without this, every update sent
      fingerprint users back to the unlock screen. */
+  /* One automatic restart per two minutes, however many "update ready"
+     messages arrive. A phone whose worker was stuck three builds behind
+     restarted itself twice in four seconds and was going for a third: every
+     open looked like an update, the reload changed nothing, and the member
+     saw the app flicker and reload on its own. After one restart the bar
+     waits for a tap instead. */
+  var RESTART_KEY="hoh_last_restart", RESTART_GAP=120000;
+  function restartAllowed(){ try{ return (Date.now()-parseInt(localStorage.getItem(RESTART_KEY)||"0",10)) > RESTART_GAP; }catch(e){ return true; } }
   function selfReload(){
     try{ if(STATE&&STATE.me && !$("app").classList.contains("hidden")) markUnlocked(); }catch(e){}
+    try{ localStorage.setItem(RESTART_KEY, String(Date.now())); }catch(e){}
     diagLog("restart", "for update");
     location.reload();
   }
@@ -11093,6 +11102,7 @@
       setTimeout(function(){ onUpdateReady(msg, tries+1); }, 1500);
       return;
     }
+    if(!why && !restartAllowed()) why="restarted recently";
     diagLog("update", (msg&&msg.version?"v"+msg.version+" ":"")+(why?"held: "+why:"ready"));
     /* A reload from cache takes well under a second and the app returns to
        the same screen, so within the first minute of opening it is painless.
@@ -12459,13 +12469,19 @@
   // ---- PWA service worker + silent auto-update on reopen (no pop-up) ----
   if("serviceWorker" in navigator){
     var SWREG=null, UPD_READY=false, HIDDEN_AT=0;
-    function watchWorker(w){ if(!w) return; w.addEventListener("statechange",function(){ if(w.state==="installed" && navigator.serviceWorker.controller) UPD_READY=true; }); }
+    /* A new worker that has installed but not taken over ("waiting") is told
+       to go ahead. It is meant to do that by itself; one phone sat on a
+       worker three builds old with the new one waiting for days. */
+    function nudgeWaiting(reg){
+      try{ if(reg && reg.waiting && navigator.serviceWorker.controller){ reg.waiting.postMessage({type:"SKIP_WAITING"}); diagLog("update", "nudged the waiting worker"); } }catch(e){}
+    }
+    function watchWorker(w){ if(!w) return; w.addEventListener("statechange",function(){ if(w.state==="installed" && navigator.serviceWorker.controller){ UPD_READY=true; nudgeWaiting(SWREG); } }); }
     function cprBusy(){ try{ return !!(window.CPR && (CPR.running || CPR.total>0)); }catch(e){ return false; } }
     function typingNow(){ var a=document.activeElement; return !!(a && (a.tagName==="INPUT"||a.tagName==="TEXTAREA")); }
     window.addEventListener("load",function(){
       navigator.serviceWorker.register("sw.js").then(function(reg){
         SWREG=reg;
-        if(reg.waiting && navigator.serviceWorker.controller) UPD_READY=true;
+        if(reg.waiting && navigator.serviceWorker.controller){ UPD_READY=true; nudgeWaiting(reg); }
         reg.addEventListener("updatefound",function(){ watchWorker(reg.installing); });
         try{ reg.update().catch(function(){}); }catch(e){}       // check for a newer build right away
         setInterval(function(){ reg.update().catch(function(){}); }, 15*60*1000);
@@ -12474,7 +12490,10 @@
     document.addEventListener("visibilitychange",function(){
       if(document.hidden){ HIDDEN_AT=Date.now(); return; }
       if(SWREG) SWREG.update().catch(function(){});
-      if(UPD_READY && (Date.now()-HIDDEN_AT>2000) && !updateBusy()){ selfReload(); }
+      if(UPD_READY && (Date.now()-HIDDEN_AT>2000) && !updateBusy()){
+        if(restartAllowed()) selfReload();
+        else { diagLog("update","held: restarted recently"); var ub=$("updBar"); if(ub) ub.classList.remove("hidden"); }
+      }
     });
   }
 })();

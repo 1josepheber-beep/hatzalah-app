@@ -11,7 +11,7 @@
    response. Before this split, every deploy emptied the lot, so anyone who
    updated the app started again from nothing and had no offline copy until
    they had re-opened each screen with a signal. */
-var VERSION = "1.7.1";
+var VERSION = "1.7.2";
 var SHELL   = "hoh-shell-" + VERSION;
 var DATA    = "hoh-data";          /* deliberately has no version in the name */
 
@@ -42,10 +42,16 @@ function isStale(res, ms){
   }catch(e){ return true; }
 }
 
+/* A fetch that gives up after ms. The request is really aborted, not just
+   abandoned: a request left hanging on a weak signal kept running inside the
+   worker, and a worker with work still pending is a worker the browser will
+   not replace -- which is how one phone stayed on an old build with the new
+   one "waiting" behind it. */
 function timedFetch(req, ms){
   return new Promise(function(resolve, reject){
-    var settled = false;
-    var timer = setTimeout(function(){ if(!settled){ settled = true; reject(new Error("slow")); } }, ms);
+    var settled = false, ctl = null;
+    try{ if(typeof AbortController !== "undefined"){ ctl = new AbortController(); req = new Request(req, {signal: ctl.signal}); } }catch(e){ ctl = null; }
+    var timer = setTimeout(function(){ if(!settled){ settled = true; try{ if(ctl) ctl.abort(); }catch(e){} reject(new Error("slow")); } }, ms);
     fetch(req).then(function(res){
       if(settled) return;
       settled = true; clearTimeout(timer); resolve(res);
@@ -55,6 +61,7 @@ function timedFetch(req, ms){
     });
   });
 }
+var SLOW_FILE_MS = 60000;   /* a picture or page that has not arrived in a minute is not coming */
 
 self.addEventListener("message",function(e){
   if(e.data && e.data.type === "SKIP_WAITING") self.skipWaiting();
@@ -211,7 +218,7 @@ self.addEventListener("fetch",function(e){
          after it was uploaded. */
       if(req.cache === "no-store"){
         e.respondWith(
-          fetch(req).then(function(res){
+          timedFetch(req, SLOW_FILE_MS).then(function(res){
             if(res && res.ok){
               var copy = res.clone();
               caches.open(DATA).then(function(c){ c.put(req.url, copy); });
@@ -228,13 +235,13 @@ self.addEventListener("fetch",function(e){
       e.respondWith(
         caches.match(req.url, {ignoreVary:true}).then(function(hit){
           if(hit) return hit;
-          return fetch(req).then(function(res){
+          return timedFetch(req, SLOW_FILE_MS).then(function(res){
             if(res && (res.ok || res.type === "opaque")){
               var copy = res.clone();
               caches.open(DATA).then(function(c){ c.put(req.url, copy); });
             }
             return res;
-          }).catch(function(){ return hit; });
+          }).catch(function(){ return hit || Response.error(); });
         })
       );
       return;
@@ -298,7 +305,7 @@ self.addEventListener("fetch",function(e){
           }
           return hit;
         }
-        return fetch(req).then(function(res){
+        return timedFetch(req, SLOW_FILE_MS).then(function(res){
           if(res && (res.ok || res.type === "opaque")){
             var copy = res.clone();
             caches.open(DATA).then(function(c){ c.put(req.url, copy); });
@@ -333,7 +340,7 @@ self.addEventListener("fetch",function(e){
              signal it was the load that broke the first open after an update. */
           var recheck = !hit || page || isStale(hit, 86400000);
           var fresh = !recheck ? Promise.resolve(null) :
-            fetch(new Request(req, {cache:"no-store"})).then(function(res){
+            timedFetch(new Request(req, {cache:"no-store"}), SLOW_FILE_MS).then(function(res){
               if(res && res.ok){
                 var tag = res.headers.get("etag") || res.headers.get("last-modified") || "";
                 var oldTag = hit ? (hit.headers.get("etag") || hit.headers.get("last-modified") || "") : "";
