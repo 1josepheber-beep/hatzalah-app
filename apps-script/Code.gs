@@ -281,11 +281,16 @@ function dailyCertCheck(onlyUnit){
     var name = ((cr.first_name || "") + " " + (cr.last_name || "")).trim();
     var who = name ? (name + " (" + unit + ")") : unit;
 
-    var to = ADMIN_TO;
+    // The member is the only address in To; the admins ride along in Bcc, so
+    // nobody sees anyone else's address. A member with no address at all gets
+    // nothing, and the admins are then the To line so the reminder still lands.
+    var memberTo = [];
     var em = emailByUnit[uk] || "";
-    if (em && /@houstonhatzalah\.org$/i.test(em)) to += ", " + em;
+    if (em && /@houstonhatzalah\.org$/i.test(em)) memberTo.push(em);
     var pers = personalByUnit[uk] || "";
-    if (pers && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pers)) to += ", " + pers;
+    if (pers && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(pers) && memberTo.indexOf(pers) < 0) memberTo.push(pers);
+    var to = memberTo.length ? memberTo.join(", ") : ADMIN_TO;
+    var bcc = memberTo.length ? ADMIN_TO : "";
 
     // certifications this member has reminders paused on (set in the admin portal)
     var paused = String(cr.paused || "").split(",").map(function(s){ return s.trim(); })
@@ -365,7 +370,7 @@ function dailyCertCheck(onlyUnit){
              : ("Hi " + who + ",\n\nThis is a reminder that your " + cert + " will expire in " + days + " day" + (days === 1 ? "" : "s") +
                 ", on " + expNice + ". Please remember to renew it before the expiration date.\n\n" + howto + "\n\n" + closing);
       }
-      try { mailBoth(to, subj, body); sent++; } catch (err) { Logger.log("Mail failed: " + err); }
+      try { mailBoth(to, subj, body, bcc); sent++; } catch (err) { Logger.log("Mail failed: " + err); }
       var stamp = Utilities.formatDate(new Date(), TZ, "M/d/yyyy h:mm a");
       if (!sbInsert("cert_reminders", { when_at: stamp, unit: unit, name: name, certification: cert, cert_col: c.expCol, exp_date: e, type: phase })) {
         logFails++;
@@ -441,7 +446,7 @@ function dailyCertCheck(onlyUnit){
                   (stillBlocking.length === 1 ? "it" : "them") + " as well.\n\n" +
                   howto + "\n\nSincerely,\nHatzalah of Houston Administration";
         }
-        try { mailBoth(to, s2, b2txt); cleared++; } catch (err) { Logger.log("Renewal mail failed: " + err); }
+        try { mailBoth(to, s2, b2txt, bcc); cleared++; } catch (err) { Logger.log("Renewal mail failed: " + err); }
       });
     }
   });
@@ -648,7 +653,7 @@ function testSupabase(){
  * Templates have been stored two ways over time -- some with real line breaks,
  * some with literal <br> tags -- so both are handled.
  */
-function mailBoth(to, subject, body) {
+function mailBoth(to, subject, body, bcc) {
   var txt = String(body == null ? "" : body)
               .replace(/<br\s*\/?>/gi, "\n")
               .replace(/\r\n/g, "\n");
@@ -661,7 +666,13 @@ function mailBoth(to, subject, body) {
   html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;'
        + 'font-size:15px;line-height:1.55;color:#16202e;max-width:620px">'
        + html + '</div>';
-  MailApp.sendEmail({ to: to, subject: subject, body: txt, htmlBody: html });
+  // Group mail goes out Bcc so recipients never see each other's addresses.
+  // Gmail needs something in To, so a Bcc-only message is addressed to the
+  // account the script runs as.
+  var msg = { to: String(to || "").trim() || Session.getEffectiveUser().getEmail(),
+              subject: subject, body: txt, htmlBody: html };
+  if (bcc && String(bcc).trim()) msg.bcc = String(bcc).trim();
+  MailApp.sendEmail(msg);
 }
 
 function doPost(e){
@@ -900,7 +911,7 @@ function notifyRestock(id){
     [String(r.email || "").trim(), String(r.personal_email || "").trim()].forEach(function(e){ if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && mails.indexOf(e) < 0) mails.push(e); });
   });
   var okMail = false;
-  if (mails.length) { try { mailBoth(mails.join(", "), subject, body); okMail = true; } catch (e) { Logger.log("restock mail failed: " + e); } }
+  if (mails.length) { try { mailBoth("", subject, body, mails.join(", ")); okMail = true; } catch (e) { Logger.log("restock mail failed: " + e); } }
   who.forEach(function(r){ if (pushUnit(String(r.unit), subject, lines.map(function(l){ return l.replace(/^\u2022 /, ""); }).join("\n").slice(0, 180), "restock")) pushed++; });
   var note = (okMail ? mails.length + " emailed" : "mail failed") + ", " + pushed + " pushed, " + Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
   sbPatch("supply_requests", "id=eq." + id, { notified: note });
@@ -1327,6 +1338,6 @@ function sendProblemReport(rep){
   });
   if (log.length > 80) lines.push("  (" + (log.length - 80) + " older entries not shown)");
   var subject = "App problem report: " + String(rep.note || "").slice(0, 60).replace(/\s+/g, " ") + " \u2014 " + who;
-  mailBoth(adminRecipients(), subject, lines.join("\n"));
+  mailBoth("", subject, lines.join("\n"), adminRecipients());
   Logger.log("Problem report mailed for " + who);
 }

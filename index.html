@@ -1008,7 +1008,7 @@
   .stand-prev{position:relative}
   .stand-prev::after{content:"EXAMPLE";position:absolute;top:10px;right:12px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#8a6d00;background:#fff3d6;border:1px solid #f0d58f;padding:3px 9px;border-radius:999px}
   .stand-badge{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;text-align:center;position:relative;overflow:hidden;margin-bottom:12px}
-  .stand-badge::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:#1e9e57}
+  .stand-badge::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--stand-c,#1e9e57)}
   .stand-badge .lbl{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:8px}
   .stand-badge .big{font-size:34px;font-weight:900;color:#1e9e57;line-height:1}
   .stand-badge .sub{font-size:13px;color:var(--mut);margin-top:8px}
@@ -1728,7 +1728,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.8.1</div>
+  <div class="ver-line">Version 1.9.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1850,7 +1850,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.8.1</div>
+  <div class="ver-line">Version 1.9.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5140,32 +5140,53 @@
     $("standScreen").classList.add("open");
     var st=(STATE.me&&STATE.me.status?String(STATE.me.status):"Primary").trim() || "Primary";
     var label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
+    var t=standingTiers();
+    // The quarter and days left are real; the call count is an example until the
+    // call-data feed exists. The example is pitched to the member's current status.
+    var now=new Date(), q=Math.floor(now.getMonth()/3), qEnd=new Date(now.getFullYear(), q*3+3, 1);
+    var daysLeft=Math.max(0, Math.ceil((qEnd-now)/86400000));
+    var key=label.toLowerCase(), need, calls, note, barPct, color, obs=false;
+    if(key==="backup"){ need=t.backup; calls=t.backup+2; color="#C9933A"; }
+    else if(key==="observer"){ obs=true; need=0; calls=3; color="#6b7688"; }
+    else { key="primary"; label="Primary"; need=t.primary; calls=t.primary+3; color="#1e9e57"; }
+    // Observer is where new members start; it has no call target. They stay there until
+    // an admin moves them to Backup, so their screen shows calls only, no bar or minimum.
+    if(obs) note='Observer has no call minimum. Your coordinator will move you to Backup when you\u2019re ready.';
+    else note='<b>'+(calls-need)+' above</b> the minimum to keep '+esc(label)+' this quarter.';
+    barPct=need?Math.min(100,Math.round(calls/need*100)):0;
     $("standBody").innerHTML=
       '<div class="stand-soon"><span class="tag">Coming soon</span>'+
         '<h3>Your call activity, at a glance</h3>'+
         '<p>Soon this screen will show how many calls you\u2019ve responded to this quarter, '+
         'the minimum for your standing, and how much time is left. Below is an example of what it will look like \u2014 '+
-        'the numbers are not real yet.</p></div>'+
+        'the call count is not real yet.</p></div>'+
       '<div class="stand-prev">'+
-        '<div class="stand-badge"><div class="lbl">Your current standing</div>'+
-          '<div class="big">'+esc(label.toUpperCase())+'</div>'+
-          '<div class="sub">Based on this quarter\u2019s calls</div></div>'+
+        '<div class="stand-badge" style="--stand-c:'+color+'"><div class="lbl">Your current standing</div>'+
+          '<div class="big" style="color:'+color+'">'+esc(label.toUpperCase())+'</div>'+
+          '<div class="sub">'+(obs?'Set by your coordinator':'Based on this quarter\u2019s calls')+'</div></div>'+
         '<div class="stand-grid">'+
-          '<div class="stand-stat"><div class="k">This quarter</div><div class="v">Q3 2026</div></div>'+
-          '<div class="stand-stat"><div class="k">Days left</div><div class="v">24</div></div>'+
+          '<div class="stand-stat"><div class="k">This quarter</div><div class="v">Q'+(q+1)+' '+now.getFullYear()+'</div></div>'+
+          '<div class="stand-stat"><div class="k">Days left</div><div class="v">'+daysLeft+'</div></div>'+
         '</div>'+
         '<div class="stand-card">'+
-          '<div class="stand-top"><span>18 calls responded to</span><span class="need">min 15 for Primary</span></div>'+
-          '<div class="stand-bar"><span></span></div>'+
-          '<div class="stand-note"><b>3 above</b> the minimum to keep Primary this quarter.</div>'+
+          '<div class="stand-top"><span>'+calls+' calls responded to</span>'+(obs?'':'<span class="need">min '+need+' for '+esc(label)+'</span>')+'</div>'+
+          (obs?'':'<div class="stand-bar"><span style="width:'+barPct+'%;background:'+color+'"></span></div>')+
+          '<div class="stand-note">'+note+'</div>'+
         '</div>'+
         '<div class="stand-card" style="padding:6px 16px">'+
-          '<div class="stand-tier"><span class="d" style="background:#1e9e57"></span><span class="n">Primary</span><span class="r">15+ calls / quarter</span></div>'+
-          '<div class="stand-tier"><span class="d" style="background:#C9933A"></span><span class="n">Backup</span><span class="r">6\u201314 calls / quarter</span></div>'+
-          '<div class="stand-tier"><span class="d" style="background:#6b7688"></span><span class="n">Observer</span><span class="r">under 6 calls / quarter</span></div>'+
+          '<div class="stand-tier"><span class="d" style="background:#1e9e57"></span><span class="n">Primary</span><span class="r">'+t.primary+'+ calls / quarter</span></div>'+
+          '<div class="stand-tier"><span class="d" style="background:#C9933A"></span><span class="n">Backup</span><span class="r">'+t.backup+'+ calls / quarter</span></div>'+
+          '<div class="stand-tier"><span class="d" style="background:#6b7688"></span><span class="n">Observer</span><span class="r">new members, no minimum</span></div>'+
         '</div>'+
       '</div>'+
-      '<div class="stand-foot">Example only \u2014 minimums and call counts are not live yet.<br>Your coordinator will confirm the real numbers before this goes live.</div>';
+      '<div class="stand-foot">Example only \u2014 call counts are not live yet.<br>'+
+        (STATE.me&&STATE.me.admin?'Minimums come from Admin \u2192 Settings \u2192 Standings.':'Your coordinator sets the minimums.')+'</div>';
+  }
+  /* Tier minimums from Settings \u2192 Standings; falls back to 15 / 6 when unset. */
+  function standingTiers(){
+    var p=parseInt(getSetting("Standings Primary Minimum",""),10), b=parseInt(getSetting("Standings Backup Minimum",""),10);
+    if(!(p>0)) p=15; if(!(b>=0)) b=6; if(b>=p) b=Math.max(0,p-1);
+    return {primary:p, backup:b};
   }
   $("standBack").addEventListener("click",navBack);
 
@@ -6286,6 +6307,8 @@
                                           "Scene Reminder Minutes","Scene Reminder Message",
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
+    {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum"],
+     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum — they stay Observer until an admin moves them to Backup. For now these only change the example on the My Standing screen; real call counts arrive when the call-data feed is connected."},
     {name:"Ambulance checkoff",    keys:["Ambulances"]},
     {name:"Jump bag",              keys:["Jump Bag Reminder Days"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
@@ -6302,7 +6325,8 @@
     {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
      note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
-  var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)"};
+  var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
+                           "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
@@ -6702,7 +6726,32 @@
     return uiConfirm({title:"Unsaved changes", text:"Leave without saving? What you typed here will be lost.",
                       ok:"Leave", danger:true, cancel:"Stay"});
   }
+  /* Standings minimums must be whole numbers, and Primary must need more calls than Backup. */
+  function admStandingsCheck(){
+    var rows=ADM2.view||[], msg=$("admGenMsg"), vals={}, els={};
+    ["Standings Primary Minimum","Standings Backup Minimum"].forEach(function(key){
+      for(var i=0;i<rows.length;i++){
+        if(r_(rows[i],"Setting")===key){
+          var el=$("ag_settings_"+i+"_Value"); if(!el) return;
+          els[key]=el; vals[key]=String(el.value||"").trim(); return;
+        }
+      }
+    });
+    var bad=null, why="";
+    for(var key in vals){
+      if(vals[key] && !/^\d{1,4}$/.test(vals[key])){ bad=key; why=key+" must be a whole number of calls."; break; }
+    }
+    if(!bad && vals["Standings Primary Minimum"] && vals["Standings Backup Minimum"] &&
+       parseInt(vals["Standings Primary Minimum"],10)<=parseInt(vals["Standings Backup Minimum"],10)){
+      bad="Standings Primary Minimum"; why="The Primary minimum must be higher than the Backup minimum.";
+    }
+    if(!bad) return true;
+    if(msg){ msg.className="adm-msg err"; msg.textContent=why; }
+    try{ els[bad].focus(); }catch(e){}
+    return false;
+  }
   function admAnalyticsGate(){
+    if(!admStandingsCheck()) return Promise.resolve(false);
     var rows=ADM2.view||[], msg=$("admGenMsg"), changes=[];
     for(var kind in ANA_KEYS){
       var key=ANA_KEYS[kind], ri=-1;
@@ -10228,7 +10277,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.1</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.9.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10271,7 +10320,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.1</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.9.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11314,7 +11363,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.8.1".replace("Version ","");
+  var APP_VERSION="Version 1.9.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

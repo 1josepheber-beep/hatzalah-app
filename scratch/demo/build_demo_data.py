@@ -130,7 +130,8 @@ S=[("Org Name","Hatzalah of Houston"),("Medical Control Number","713-555-0111"),
  ("Cert Email Body (renewed)","Hi {name} ({unit}),\n\nThank you — your {cert} has been updated in our system and now expires {date}. No further action is needed for this one.\n\nSincerely,\nHatzalah of Houston Administration"),
  ("Cert Email Subject (renewed)","Thank you — your {cert} is up to date"),("Rule Of 9 Image","sb:misc/mu47e2ucqee6o.jpg"),("Cert Reminder Milestones","90, 60, 30, 14, 7, 3, 1"),
  ("Scene Alarm Repeats","5"),("Ambulances","A1 Ambulance - 1, A2 Ambulance - 2"),("Jump Bag Reminder Days","30, 7, 0"),("Renew Egnyte Step","off"),
- ("Storage Limit DB MB","500"),("Storage Limit Files MB","1024"),("Storage Limit Repo MB","1024")]
+ ("Storage Limit DB MB","500"),("Storage Limit Files MB","1024"),("Storage Limit Repo MB","1024"),
+ ("Google Analytics ID",""),("Google Tag Manager ID",""),("Meta Pixel ID",""),("Standings Primary Minimum","15"),("Standings Backup Minimum","6")]
 T["settings"]=[{"id":n+1,"setting":k,"value":v} for n,(k,v) in enumerate(S)]
 
 # ---------- people (all invented) ----------
