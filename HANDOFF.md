@@ -65,6 +65,17 @@ that makes it wrong.
 - **Open:** an announcement draft about the Quick Actions redesign (Joseph decides whether
   to post it); Google account owners for the private note; Service-unit switches on members.
 - **Supply requests** are in daily use — treat that flow as production-critical.
+- **Database access (RLS), fixed Nov 12, 2026:** the leftover migration-era `"temp read"`
+  policies (anon + authenticated, `using (true)`) were dropped from all 19 tables that had
+  them. Every table now reads only through its `member read` / `admin read` / own-row
+  policy, so the public anon key can no longer read roster, certifications, schedule, etc.
+  Pre-login reads go through the security-definer RPC `guest_demo`; the backup script and
+  push worker use the service key, so neither was affected. Side effect: a deactivated
+  member now sees empty screens instead of being bounced to sign-in. Audit query:
+  `select tablename, policyname, roles from pg_policies where schemaname='public'`.
+- **Waiting on others:** SETRAC / Juvare reply about an EMResource hospital-status feed
+  (Joseph emailed; the Resource Status API is a paid Juvare feature needing an agreement);
+  the API contact for the personal call-statistics "standing board" (Joseph asked for pull).
 
 ## Running things
 
