@@ -11,8 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hatzalah">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-6Z479MLSKZ"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag("js",new Date());gtag("config","G-6Z479MLSKZ");</script>
+<!-- Analytics (GA4 / Tag Manager / Meta Pixel) is loaded by applyAnalytics() from Settings → Analytics tracking -->
 <style>
   :root{
     --navy:#143D75; --navy-d:#0e2c56; --red:#C8202E; --gold:#C9933A;
@@ -1729,7 +1728,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.8.0</div>
+  <div class="ver-line">Version 1.8.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1851,7 +1850,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.8.0</div>
+  <div class="ver-line">Version 1.8.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2805,6 +2804,47 @@
   var STATE={settings:{},tiles:[],me:null};
   function getSetting(k,def){return STATE.settings[k]!=null&&STATE.settings[k]!==""?STATE.settings[k]:def;}
 
+  /* ---- Analytics. The IDs live in Settings → Analytics tracking (GA4, Google Tag
+     Manager, Meta Pixel). They are cached on the phone so tracking starts the
+     moment the page opens; the built-in GA id is used only until Settings have
+     been read once on this device. ---- */
+  var GA_DEFAULT="G-6Z479MLSKZ", ANA_KEY="hoh_analytics", ANA={ga:"",gtm:"",pixel:""};
+  var ANA_KEYS={ga:"Google Analytics ID", gtm:"Google Tag Manager ID", pixel:"Meta Pixel ID"};
+  var ANA_RX={ga:/^G-[A-Z0-9]{6,14}$/i, gtm:/^GTM-[A-Z0-9]{4,10}$/i, pixel:/^\d{8,20}$/};
+  var ANA_HINT={ga:"G-XXXXXXXXXX", gtm:"GTM-XXXXXXX", pixel:"numbers only, e.g. 123456789012345"};
+  function anaValid(kind,v){ v=String(v||"").trim(); return !v || ANA_RX[kind].test(v); }
+  function anaScript(src){ try{ var sc=document.createElement("script"); sc.async=true; sc.src=src; document.head.appendChild(sc); }catch(e){} }
+  function anaGA(id){ if(!id || ANA.ga===id) return; window.dataLayer=window.dataLayer||[];
+    if(!window.gtag){ window.gtag=function(){ window.dataLayer.push(arguments); }; window.gtag("js",new Date()); }
+    anaScript("https://www.googletagmanager.com/gtag/js?id="+encodeURIComponent(id)); window.gtag("config",id); ANA.ga=id; }
+  function anaGTM(id){ if(!id || ANA.gtm===id) return; window.dataLayer=window.dataLayer||[];
+    window.dataLayer.push({"gtm.start":Date.now(), event:"gtm.js"}); anaScript("https://www.googletagmanager.com/gtm.js?id="+encodeURIComponent(id)); ANA.gtm=id; }
+  function anaPixel(id){ if(!id || ANA.pixel===id) return;
+    if(!window.fbq){ var n=window.fbq=function(){ n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments); }; window._fbq=n; n.push=n; n.loaded=true; n.version="2.0"; n.queue=[]; anaScript("https://connect.facebook.net/en_US/fbevents.js"); }
+    window.fbq("init",id); window.fbq("track","PageView"); ANA.pixel=id; }
+  function anaIds(){ return {ga:getSetting(ANA_KEYS.ga,""), gtm:getSetting(ANA_KEYS.gtm,""), pixel:getSetting(ANA_KEYS.pixel,"")}; }
+  function applyAnalytics(fromSettings){
+    var ids=null;
+    if(fromSettings){
+      if(STATE.demo) return;                      // the demo keeps whatever the phone already loads
+      ids=anaIds(); try{ localStorage.setItem(ANA_KEY, JSON.stringify(ids)); }catch(e){}
+    } else {
+      try{ ids=JSON.parse(localStorage.getItem(ANA_KEY)||"null"); }catch(e){}
+      if(!ids || typeof ids!=="object") ids={ga:GA_DEFAULT, gtm:"", pixel:""};
+    }
+    Object.keys(ANA_RX).forEach(function(k){ if(!anaValid(k,ids[k])) ids[k]=""; });
+    anaGA(ids.ga); anaGTM(ids.gtm); anaPixel(ids.pixel);
+  }
+  try{ applyAnalytics(false); }catch(e){}
+
+  /* The organization's logo: header, sign-in screens, install banner. Empty = the built-in one. */
+  function applyLogo(){
+    var v=getSetting("Logo URL",""), src=v?sbImgUrl(v):"logo.png";
+    Array.prototype.forEach.call(document.querySelectorAll(".logo img, #hdrLogo img, .ib-ic img"),function(im){
+      if(im.getAttribute("src")!==src) im.setAttribute("src",src);
+    });
+  }
+
   function normPw(s){ return String(s||"").trim().toLowerCase().replace(/[\u2018\u2019\u201B\u02BC]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g,"-").replace(/\s+/g," "); }
   function sha256hex(str){
     try{
@@ -2845,6 +2885,8 @@
   function demoRows(t){ if(!DEMO_DB) DEMO_DB={}; if(!DEMO_DB[t]) DEMO_DB[t]=[]; return DEMO_DB[t]; }
   /* for the test harness and the console: a look at the demo's tables while the demo runs */
   window.HOH_DEMO_DEBUG=function(){ return (STATE&&STATE.demo) ? {db:DEMO_DB, me:STATE.me, files:DEMO_FILES} : null; };
+  /* test hooks for the harnesses (no secrets, nothing the UI doesn't already do) */
+  window.HOH_TEST={ anaValid:anaValid, applyLogo:applyLogo, settings:function(){ return STATE.settings; } };
   function demoNextId(t){ var m=0; demoRows(t).forEach(function(r){ var n=parseInt(r.id,10); if(n>m) m=n; }); return m+1; }
   function demoFindRow(t, where){ var rows=demoRows(t); for(var i=0;i<rows.length;i++){ var ok=true; for(var k in where){ if(String(rows[i][k])!==String(where[k])){ ok=false; break; } } if(ok) return rows[i]; } return null; }
   /* The live parts of the sample data are made at start-up, so "now" is now:
@@ -2852,6 +2894,8 @@
   function demoSeedLive(){
     var now=Date.now(), H=3600000, D=86400000, iso=function(t){ return new Date(t).toISOString(); };
     var ymd=function(t){ var d=new Date(t); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); };
+    /* sample members are always on the current build, so nobody shows as "old version" */
+    demoRows("roster").forEach(function(r){ if(/^(x|yes|true)$/i.test(String(r.active||""))) r.last_version=APP_VERSION; });
     DEMO_DB.schedule=[
       {id:1,sched_id:"g1",unit:"H-100",start_at:iso(now-1.5*H),end_at:iso(now+3*H),label:"Primary",lat:"29.7420",lng:"-95.4100",loc_source:"gps",created:iso(now-2*H)},
       {id:2,sched_id:"g2",unit:"H-102",start_at:iso(now-0.5*H),end_at:iso(now+2.5*H),label:"Backup",lat:"29.7250",lng:"-95.3900",loc_source:"gps",created:iso(now-1*H)},
@@ -3224,6 +3268,7 @@
         document.body.classList.add("dmode");
       } else { document.body.classList.remove("dmode"); }
       try{ scApplySettings(); }catch(e){}
+      try{ applyAnalytics(true); }catch(e){}
       paintHeader(); paintTiles(); updateAvailBtn();
       // fired together, not one behind the other
       loadCerts();
@@ -3235,6 +3280,7 @@
       }
   }
   function paintHeader(){
+    try{ applyLogo(); }catch(e){}
     var ab=$("availHdr"); if(ab) ab.style.display=(STATE.availOn===false)?"none":"";
     $("unit").textContent=STATE.me.unit||"—";
     $("mcLabel").textContent=getSetting("Medical Control Label","Medical Control");
@@ -6247,8 +6293,12 @@
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
-    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]}
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]},
+    {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
+     note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
+  var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)"};
+  var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
     for(var i=0;i<SETTING_GROUPS.length;i++){
@@ -6343,7 +6393,7 @@
         });
         if(members.length>1){
           members.forEach(function(m){ claimed[m.i]=1; });
-          cards.push({name:g.name, members:members});
+          cards.push({name:g.name, members:members, note:g.note||""});
         }
       });
       groupHtml=cards.map(function(c){
@@ -6363,15 +6413,16 @@
             return '<label class="adm-f wide">'+esc(flbl)+
               '<textarea id="'+fid+'" data-h="Value" data-row="'+m.i+'" rows="7">'+esc(fv)+'</textarea></label>';
           }
+          var fph=SETTING_PLACEHOLDER[r_(m.r,"Setting")]||"";
           return '<label class="adm-f wide">'+esc(flbl)+
-            '<input id="'+fid+'" data-h="Value" data-row="'+m.i+'" type="text" value="'+esc(fv)+'"></label>';
+            '<input id="'+fid+'" data-h="Value" data-row="'+m.i+'" type="text" value="'+esc(fv)+'"'+(fph?' placeholder="'+esc(fph)+'" autocapitalize="off" autocorrect="off" spellcheck="false"':'')+'></label>';
         }).join("");
         return '<div class="adm-item adm-gsec" data-i="'+c.members[0].i+'">'+
           '<div class="adm-itemh" data-toggle="1">'+
             '<span class="adm-itemt">'+esc(c.name)+'</span>'+
             '<span class="adm-itemsub">'+c.members.length+' settings</span>'+
             '<svg class="adm-car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+
-          '</div><div class="adm-itemb">'+inner+'</div></div>';
+          '</div><div class="adm-itemb">'+(c.note?'<div class="adm-note" style="margin-bottom:10px">'+esc(c.note)+'</div>':'')+inner+'</div></div>';
       }).join("");
       idxMap=[];
       var kept=[];
@@ -6392,7 +6443,7 @@
         }
         shownCount++;
       }
-      var title = k==="settings" ? r_(r,"Setting")
+      var title = k==="settings" ? (SETTING_LABELS[r_(r,"Setting")]||r_(r,"Setting"))
                 : (r_(r,"Label")||r_(r,"Name")||r_(r,"Hospital Name")||r_(r,"Task")||r_(r,"Title")||r_(r,"Item")||r_(r,"Document Type")||r_(r,"Passcode")||("Row "+(i+1)));
       var sub="";
       if(k==="settings") sub=r_(r,"Value");
@@ -6411,6 +6462,7 @@
       var fields=cols.map(function(c){
         var header=c[0], label=c[1], kind=c[2], v=r_(r,header);
         var id="ag_"+k+"_"+i+"_"+header.replace(/[^A-Za-z0-9]/g,"");
+        if(k==="settings" && header==="Setting" && v==="Logo URL") return "";   // the Logo card explains itself
         if(kind==="ro") return '<label class="adm-f">'+label+'<input value="'+esc(v)+'" disabled style="background:#f4f6fa;color:var(--mut)"></label>';
         if(kind==="bool") return '<div class="adm-tg" style="padding:8px 0"><div class="tl"><div class="tn" style="font-size:13.5px">'+label+'</div></div>'+
           '<button class="adm-sw'+(admBoolOn(v,header)?" on":"")+'" data-sw="1" id="'+id+'" data-h="'+esc(header)+'"></button></div>';
@@ -6430,6 +6482,18 @@
         }
         // A setting that holds a picture gets an uploader, not a text box
         // nobody could sensibly type into.
+        if(kind==="text" && header==="Value" && r_(r,"Setting")==="Logo URL"){
+          var curL=String(v||"").trim();
+          return '<div class="adm-note" style="margin-bottom:10px;grid-column:1 / -1">Your logo is shown in the header, on the sign-in screen and on the install banner. A square PNG with a transparent background looks best. Leave it empty to use the built-in logo.</div>'+
+            '<label class="adm-f wide">Logo file'+
+            '<input id="'+id+'" data-h="'+esc(header)+'" type="text" value="'+esc(curL)+'" readonly '+
+              'placeholder="No logo uploaded \u2014 using the built-in one"></label>'+
+            '<div class="adm-uprow">'+
+              '<button class="adm-up" data-up="'+id+'" data-folder="misc" data-upword="Replace logo">'+(curL?"Replace logo":"Upload your logo")+'</button>'+
+              (curL?'<button class="adm-clear" data-clear="'+id+'">Use the built-in logo</button>':'')+
+              '<img class="adm-thumb'+(curL?"":" hidden")+'" id="'+id+'_pv" src="'+esc(curL?sbImgUrl(curL):"logo.png")+'" alt="">'+
+            '</div>';
+        }
         if(kind==="text" && header==="Value" && /\bimage$/i.test(r_(r,"Setting"))){
           var cur=String(v||"").trim();
           return '<label class="adm-f wide">'+label+
@@ -6633,8 +6697,39 @@
     return uiConfirm({title:"Unsaved changes", text:"Leave without saving? What you typed here will be lost.",
                       ok:"Leave", danger:true, cancel:"Stay"});
   }
+  function admAnalyticsGate(){
+    var rows=ADM2.view||[], msg=$("admGenMsg"), changes=[];
+    for(var kind in ANA_KEYS){
+      var key=ANA_KEYS[kind], ri=-1;
+      for(var i=0;i<rows.length;i++){ if(r_(rows[i],"Setting")===key){ ri=i; break; } }
+      if(ri<0) continue;
+      var el=$("ag_settings_"+ri+"_Value"); if(!el) continue;
+      var nv=String(el.value||"").trim(), ov=String(r_(rows[ri],"Value")||"").trim();
+      if(!anaValid(kind,nv)){
+        if(msg){ msg.className="adm-msg err"; msg.textContent=key+" doesn\u2019t look right \u2014 it should look like "+ANA_HINT[kind]+"."; }
+        try{ el.focus(); }catch(e){}
+        return Promise.resolve(false);
+      }
+      if(ov && nv!==ov) changes.push({key:key, from:ov, to:nv});
+    }
+    if(!changes.length) return Promise.resolve(true);
+    var c=changes[0];
+    return uiConfirm({ title:"Replace the current analytics ID?",
+      text:c.key+" is currently "+c.from+". "+(c.to?"Usage data will stop going to that account and start going to "+c.to:"Tracking for it will stop")+
+           " on every phone the next time the app opens."+(changes.length>1?" "+changes.length+" IDs are changing.":""),
+      ok:"Yes, replace it", cancel:"Keep the current ID", danger:true });
+  }
   function admGenSave(){
     if(ADM2.sec==="certtypes"){ admSaveCertTypes(); return; }
+    if(ADM2.sec==="settings" && !ADM2._anaOk){
+      var gb=$("admGenSave"); if(gb) gb.disabled=true;
+      admAnalyticsGate().then(function(ok){
+        if(gb) gb.disabled=false;
+        if(!ok) return;
+        ADM2._anaOk=true; try{ admGenSave(); } finally{ ADM2._anaOk=false; }
+      });
+      return;
+    }
     var k=ADM2.sec, cols=ADM_COLS[k], rows=ADM2.view||[], tbl=SB_TAB2TBL[ADM_TABLES[k]];
     var msg=$("admGenMsg"), btn=$("admGenSave");
     btn.disabled=true; btn.textContent="Saving\u2026"; msg.className="adm-msg"; msg.textContent="";
@@ -6832,13 +6927,24 @@
           // the row isn't saved yet, so hold the old file until it is
           if(prevRef && prevRef!==ref && prevRef.indexOf("sb:")===0) PENDING_DROPS.push(prevRef);
           var pv=$(targetId+"_pv"); if(pv){ pv.src=sbImgUrl(ref); pv.classList.remove("hidden"); }
-          up.disabled=false; up.textContent="Upload image";
+          up.disabled=false; up.textContent=up.getAttribute("data-upword")||"Upload image";
+          try{ admMarkDirty(); }catch(e){}
           toast("Image uploaded \u2014 press Save to keep it.");
         }).catch(function(err){
-          up.disabled=false; up.textContent="Upload image";
+          up.disabled=false; up.textContent=up.getAttribute("data-upword")||"Upload image";
           toast("Upload failed."); try{ console.error("upload:",err); }catch(e){}
         });
       });
+      return;
+    }
+    var clr=e.target.closest?e.target.closest(".adm-clear"):null;
+    if(clr){
+      var cid=clr.getAttribute("data-clear"), cin=$(cid); if(cin){ cin.value=""; }
+      var cpv=$(cid+"_pv"); if(cpv){ cpv.src="logo.png"; }
+      var upb=document.querySelector('.adm-up[data-up="'+cid+'"]'); if(upb) upb.textContent="Upload your logo";
+      clr.parentNode.removeChild(clr);
+      try{ admMarkDirty(); }catch(e){}
+      toast("Back to the built-in logo \u2014 press Save to keep it.");
       return;
     }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
@@ -10117,7 +10223,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10160,7 +10266,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.8.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11203,7 +11309,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.8.0".replace("Version ","");
+  var APP_VERSION="Version 1.8.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
