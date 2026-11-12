@@ -178,9 +178,13 @@ time-based parts (who is on shift, jump bags, checkoffs) are made fresh each tim
 starts, so dates are always "now".
 
 The feature catalog PDF (every screen and setting, phone and desktop) is generated from the
-demo by the three scripts in `scratch/catalog/`: `catalog-shots.js` takes the screenshots
-with Playwright, `catalog-slice.py` splits the tall admin captures at card gaps, and
-`catalog-build.js` lays out the pages and prints the PDF. Re-run them after a release.
+demo by the three scripts in `scratch/catalog/` (`cd scratch/tests && npm run catalog`):
+`catalog-shots.js` takes the screenshots with Playwright, `catalog-slice.py` splits the tall
+admin captures at card gaps, and `catalog-build.js` lays out the pages and prints the PDF
+into `scratch/catalog/out/`. Re-run them after a release.
+
+The regression harnesses live in `scratch/tests/` (`npm install && npm test`); every release
+must pass them. `HANDOFF.md` is the starting point for a new working session.
 
 `db/` holds structure and templates only — never member data. The data lives in Supabase and
 in the nightly backup sheets.

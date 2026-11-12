@@ -2,8 +2,9 @@
 import json, os, sys
 from PIL import Image
 
-SHOTS = "/home/claude/scratch/catalog/shots"
-OUT = "/home/claude/scratch/catalog/pieces"
+HERE = os.path.dirname(os.path.abspath(__file__))
+SHOTS = os.path.join(HERE, "out", "shots")
+OUT = os.path.join(HERE, "out", "pieces")
 os.makedirs(OUT, exist_ok=True)
 MAX_H = 2500          # px of a 2049-wide capture that fit on one Letter page (7.0in wide image)
 SEARCH = 420          # how far to look for a quiet row around the ideal cut

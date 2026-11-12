@@ -1,11 +1,13 @@
 // Builds the feature catalog: HTML pages (Letter) from the demo screenshots, then prints to PDF.
 const {chromium}=require("playwright"); const fs=require("fs"); const path=require("path");
-const DIR="/home/claude/scratch/catalog", SHOTS=DIR+"/shots", PIECES=DIR+"/pieces";
-const OUT_HTML=DIR+"/catalog.html", OUT_PDF="/mnt/user-data/outputs/Hatzalah-App-Feature-Catalog.pdf";
+const ROOT=process.env.HOH_ROOT||path.join(__dirname,"..",".."); const DIR=path.join(__dirname,"out"), SHOTS=DIR+"/shots", PIECES=DIR+"/pieces";
+const OUT_HTML=DIR+"/catalog.html", OUT_PDF=process.env.OUT_PDF||DIR+"/Hatzalah-App-Feature-Catalog.pdf";
+// screens that can only be captured by hand (the Scheduler map needs live map tiles) live in manual/
+try{ fs.readdirSync(path.join(__dirname,"manual")).forEach(f=>{ if(/\.png$/.test(f)) fs.copyFileSync(path.join(__dirname,"manual",f), SHOTS+"/"+f); }); }catch(e){}
 const pieces=JSON.parse(fs.readFileSync(PIECES+"/pieces.json","utf8"));
 const sizeOf=require("image-size"); // for aspect ratios
 const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const VERSION="1.8.0", DATE="November 2026";
+const VERSION="1.8.1", DATE="November 2026";
 
 /* ------------------------------------------------------------------ content */
 const S=(id,title,blurb)=>({id,title,blurb});
@@ -13,8 +15,9 @@ const sections=[
  {key:"home", num:1, title:"Home screen & everyday use", kind:"phone",
   intro:"What a member sees every day. One tap to call dispatch or medical control, announcements that need an answer, and a grid of tiles the organization controls. Everything below was captured on a phone.",
   shots:[
-   S("p-home","Home screen","The header has the status pill (Primary / Backup / Observer), the availability check, and the unit badge. Below it: Call Dispatch and Call Medical Control, search across protocols and hospitals, the Rx lookup button, announcement cards, then the tiles. Members pick 2 or 3 tiles per row."),
+   S("p-home","Home screen","What a member sees: status pill, availability check and unit badge in the header; Call Dispatch and Call Medical Control; the search box that finds anything in the app (next section); announcements waiting for an answer; then the tiles, 2 or 3 per row. This is a new member, so a please-read and a welcome note are still pending."),
    S("p-quick","Quick Actions","The lightning bolt opens a thumb-first sheet built for an emergency: Text Home, Scene Timer, Vitals Reference, Call Notes, and a large red CPR Tracker. The install banner appears until the app is on the home screen."),
+   S("p-texthome","Text Home","One tap in Quick Actions opens the member’s texting app (SMS or WhatsApp) with a ready-made message to the number they chose — “I responded to a Hatzalah call and I’m heading out now…” — so the family knows without a phone call from the scene. The number and SMS/WhatsApp choice are set here in My Profile; the wording is an admin setting."),
    S("p-availability","My Availability","Tap the status pill. Go available or off now, share or hide location, and schedule a window ahead of time (with optional location sharing for that window). While available, dispatch sees status, phone and location."),
    S("p-profile","My Profile","Tap the unit badge. Members keep their own phone, address, personal email (used only for certification reminders), photo, emergency contact, uniform sizes and Text Home settings current — so admins don't have to."),
    S("p-notice-poll","Announcement: poll","A poll announcement asks for a vote. Members tap an option and submit; admins see the tally and who voted under Admin → Announcements."),
@@ -22,7 +25,17 @@ const sections=[
    S("p-rx","Medication Lookup","The Rx button in the search bar. Type a brand or generic name and read the official FDA label information. Needs internet."),
    S("p-report","Report a problem","At the bottom of the home screen. A member describes what happened in their own words; the app attaches the version, phone type and its own technical log and sends it to the admins."),
   ]},
- {key:"call", num:2, title:"On a call", kind:"phone",
+ {key:"search", num:2, title:"One search box finds everything", kind:"phone",
+  intro:"The box at the top of the home screen searches the whole app at once: members, hospitals, protocol pages, resources, apartment addresses and buildings, equipment on the ambulance, the ERG, even the tiles. Results are grouped by kind, and tapping one opens the right screen already pointed at the right thing.",
+  shots:[
+   S("p-search-mixed","“stroke”","One word, several kinds of answer: the hospitals that take stroke patients (with their capability tags) and the protocol pages that mention it. Scroll on for resources and more."),
+   S("p-search-member","“Katz”","People come up with a call button and a card button right in the results — no need to open the directory."),
+   S("p-search-address","“7822 Bellfort”","An address finds the building inside the complex: Bellfort Square, with the gate code right there in the result."),
+   S("p-search-address-open","… and the building is pinned","Tapping it opens the site plan with that building flagged and the gate code on top, so a crew knows where to drive before they arrive. Pinch to zoom."),
+   S("p-search-item","“iGel”","Equipment comes up with the cabinet it lives in — every size of iGel is in the Airway Cabinet — alongside the protocol page that mentions it."),
+   S("p-search-item-open","… and the slot lights up","Tapping it opens that cabinet’s photo with the item’s numbered slot highlighted, and the item list below. Find it in the truck in seconds."),
+  ]},
+ {key:"call", num:3, title:"On a call", kind:"phone",
   intro:"Tools that only matter when seconds do. Each one is one tap from the home screen and works without a signal.",
   shots:[
    S("p-scene","Scene Timer","Tap the logo (or Quick Actions). A reassessment timer with +5 min, snooze and a loud alarm that also fires as a phone notification. If it has been running 45+ minutes the app reminds you to close it. Minutes, messages and repeats are admin settings."),
@@ -37,31 +50,31 @@ const sections=[
    S("p-protocols","Protocols","The full protocol book, searchable, with page-numbered sections. Opens in the in-app reader."),
    S("p-protocol-page","Protocol reader","Page view with Prev / Next, zoom and a jump-to list. Pages are cached so the book opens without a signal."),
    S("p-erg","ERG 2024","The DOT Emergency Response Guidebook: search by material name or UN number, open the guidebook, and quick links to the placard tables, ID charts, isolation distances and guides."),
-   S("p-equipment","Equipment Finder","What is where on the ambulance. Cabinets with a photo and item count; searching an item tells you which cabinet it is in. Admins edit photos and lists in place with the Edit button."),
+   S("p-equipment","Equipment Finder","What is where on the ambulance. Cabinets with a photo and item count; searching an item tells you which cabinet it is in. (Admins get an Edit button here to update photos and lists in place.)"),
    S("p-equipment-cabinet","A cabinet opened","The numbered photo and everything stored in it with quantities, searchable within the cabinet."),
    S("p-apartments","Apartments Directory","Apartment complexes with their gate codes, searchable by name or address. Tap one for the site plan."),
-   S("p-apartment-plan","Apartment site plan","Gate code on top, the plan below with building markers; pinch or double-tap to zoom. Admins can pin buildings on the plan from this screen."),
+   S("p-apartment-plan","Apartment site plan","Gate code on top, the plan below with building markers; pinch or double-tap to zoom. (Admins can pin buildings on the plan from this screen.)"),
    S("p-resources","Resources","Documents the organization publishes: SOPs, the radio guide, Shabbos procedures, medication card, uniform policy. Each opens over a secure link that expires. Managed under Admin → Resources."),
    S("p-state-equipment","State Equipment (admin tile)","The Texas / City of Houston required-equipment list by tier (BLS, ALS, MICU) with required and overlap counts; download the checklist, export to Excel or PDF, and record what you checked."),
    S("p-directory","Members Directory","Search by name, unit or phone; filter by Responder, Service Unit, Dispatcher, Medical Control. Shows level, phone (tap to call), address, uniform sizes and emergency contact."),
-   S("p-scheduler","Scheduler","Who is available right now and until when, ranked by GPS distance from you, with one-tap call and map. This is how a dispatcher finds the closest responder."),
+   S("p-scheduler","Scheduler","Who is available right now and until when, ranked by GPS distance from you, with one-tap call and map. A dispatcher can type the call address to rank everyone by distance from the scene."),
+   S("p-scheduler-map","Scheduler — the map","Above the list, a live map with a pin for every available responder who is sharing location; type the call address and a red dot marks the scene and the list re-ranks by distance to it. Tap a pin for name, unit and distance."),
   ]},
  {key:"certs", num:4, title:"Certifications & training", kind:"phone",
   intro:"The app tracks every certification and document for every member, emails reminders before they expire, and lets a member renew by uploading the card from their phone.",
   shots:[
-   S("p-certs","Certifications","Admins see every responder with a color dot: green valid, amber within 30 days, red expired or missing. A regular member sees only their own list."),
-   S("p-certs-member","A member's certifications","Number, expiry date and the document on file for each. Buttons: View document, Remind (adds a calendar reminder), Edit date, Renew. Expired certifications that block response are marked."),
+   S("p-certs","Certifications","A member’s own list: each certification with its number and expiry, color-coded (green valid, amber within 30 days, red expired or missing), with Remind (adds a calendar reminder) and Renew. Admins see every responder here instead; that view is in the desktop admin section."),
    S("p-certs-renew","Renew","Enter the new expiry date and attach a photo or PDF of the card. The date is saved only once the document is in, so the record and the proof always match."),
-   S("p-taskbook","Task Book","The field-training book for a new responder: progress per trainee, items signed off by the FTO, and the observers list with percent complete. Task items are set under Admin → Task list."),
+   S("p-taskbook","Task Book","A new responder’s own field-training book: each item is self-marked, then confirmed by the FTO with a date, and the percent complete grows. An FTO sees their trainees here too. Task items are set under Admin → Task list."),
   ]},
  {key:"gear", num:5, title:"Jump bags, ambulance checks & supplies", kind:"phone",
-  intro:"Each responder keeps their own jump bag inventory; ambulance checks are logged from the phone; whatever is short becomes a supply request for the service units. Admins see all of it on the desktop.",
+  intro:"Each responder keeps their own jump bag inventory. Ambulance checks and supply requests belong to the service units (the members who look after the trucks), so those screens are shown here as a service unit sees them. Admins see all of it on the desktop.",
   shots:[
    S("p-jumpbag","My Jump Bag","72 of 75 stocked, by pouch (Trauma, Vital signs, Glucometer kit, Airway & O2, AED, Medication, Misc). “I checked my bag today” with a reminder every 30 days; items that carry an expiry date are tracked and flagged."),
    S("p-jumpbag-jump","Short / missing","Tap the amber badge to see only what needs attention, so restocking takes a minute."),
    S("p-jumpbag-pouch","A pouch opened","Every item is Have / Short / Missing with one tap. Expiry dates show where they apply."),
    S("p-jumpbag-restock","Request restock","Picks the short and missing items, lets the member add a note, and sends a supply request to the admins and service units."),
-   S("p-checkoff","Ambulance Checkoff","Pick the ambulance, the log type (weekly check, monthly check, maintenance log, inventory checklist) and the date. Service units also reach Supply requests from here."),
+   S("p-checkoff","Ambulance Checkoff","Pick the ambulance, the log type (weekly check, monthly check, maintenance log, inventory checklist) and the date. Supply requests are one tap below."),
    S("p-checkoff-sections","Weekly check","Sections with a count of what is left and a progress bar. Answers stay on the phone until submitted, so a check can be finished later."),
    S("p-checkoff-section","A section opened","Fluid levels, top-offs, odometer, tire pressures, photo items — tap to answer, with as little typing as possible."),
    S("p-checkoff-left","What's left","Jumps straight to the unanswered items."),
@@ -99,7 +112,8 @@ const sections=[
    S("d-admin-tiles","Tiles","The home-screen buttons. Each has a label, a type (web link or phone number, another app, or a built-in screen), a target, an image or icon, Admin-only and Active switches. Drag to reorder."),
    S("d-admin-tile-edit","A tile opened","Change the label, type, target, upload a tile image, or switch it off without deleting it."),
    S("d-admin-resources","Resources","Documents published to members: name, description and the PDF. Drag to reorder."),
-   S("d-admin-settings","Settings","Thirty-eight settings in grouped cards: dispatch and medical control numbers, Text Home, scene timer, member options, certification emails, storage limits, organization details, logo, and more. Every one is listed in section 8."),
+   S("d-admin-settings","Settings","Forty-one settings in grouped cards: dispatch and medical control numbers, Text Home, scene timer, member options, certification emails, storage limits, organization details, analytics, logo, and more. Every one is listed in the settings reference at the end."),
+   S("d-admin-settings-analytics","Analytics tracking & Logo (new in 1.8.1)","Google Analytics, Google Tag Manager and Meta Pixel IDs in their own card — an ID that doesn’t look right is refused, and changing one that is already set asks “Replace the current analytics ID?” before saving. Below it, the Logo card: upload your own logo for the header, sign-in screens and install banner, or go back to the built-in one."),
    S("d-admin-settings-all","Settings — every card opened","The same screen with every group expanded, so each setting and its current value is visible."),
    S("d-admin-certification-types","Certification types","Which certifications are tracked and, for each, whether being expired means the person cannot respond. Blocking ones warn the member; the rest only get reminders."),
    S("d-admin-document-types","Document types","The 22 documents a member can upload: agreements, licenses, courses, policies. Drag to reorder."),
@@ -116,7 +130,10 @@ const SETTINGS=[
  ["Organisation","Org Name","Hatzalah of Houston","Shown in the app title, emails and exports."],
  ["Organisation","Location","on","Lets members share GPS location while available."],
  ["Organisation","Search Placeholder","Search protocols, hospitals…","Hint text in the home-screen search box."],
- ["Organisation","Logo URL","(default)","The logo in the header and on the sign-in screen. Becoming an upload button in the next release."],
+ ["Organisation","Logo","(built-in)","Upload your own logo for the header, sign-in screens and install banner; one tap goes back to the built-in one."],
+ ["Analytics tracking","Google Analytics ID","G-DEMO123456","GA4 property every phone reports to. Changing a set ID asks for confirmation."],
+ ["Analytics tracking","Google Tag Manager ID","(empty)","Optional GTM container; leave empty to not use it."],
+ ["Analytics tracking","Meta Pixel ID","(empty)","Optional Meta (Facebook) Pixel; leave empty to not use it."],
  ["Dispatch","Dispatch Label","Call Dispatch","Text on the blue home-screen button."],
  ["Dispatch","Dispatch Number","713-555-0100","The number it dials."],
  ["Medical Control","Medical Control Label","Call Medical Control","Text on the red home-screen button."],
@@ -186,7 +203,7 @@ const TILES=[
 
 /* ------------------------------------------------------------------ layout math (inches) */
 const PAGE_H=11, PAD_T=0.55, PAD_B=0.5, HEAD=0.3, CAP=9.3;   // usable height for content
-const PHONE_W=3.35, DESK_W=7.0, HEADING_H=1.15;
+const PHONE_W=3.25, DESK_W=7.0, HEADING_H=1.15;
 function imgInfo(file){ const d=sizeOf.default?sizeOf.default(fs.readFileSync(file)):sizeOf(fs.readFileSync(file)); return {w:d.width,h:d.height}; }
 function phoneH(){ return PHONE_W*860/412 + 1.05; }                     // image + caption block
 function deskItemH(file, capLines){ const i=imgInfo(file); return DESK_W*i.h/i.w + 0.30 + 0.15*Math.max(1,capLines||2); }
@@ -198,7 +215,7 @@ function capHTML(s){ return '<div class="cap"><b>'+esc(s.title)+'</b><p>'+esc(s.
 function headingHTML(sec){ return '<div class="sechead"><div class="num">Section '+sec.num+'</div><h2>'+esc(sec.title)+'</h2><p>'+esc(sec.intro)+'</p></div>'; }
 
 function buildPhoneSection(sec){
-  const shots=sec.shots.slice(); let first=true; sec.page=pages.length+1;
+  const shots=sec.shots.filter(s=>{ const ok=fs.existsSync(SHOTS+"/"+s.id+".png"); if(!ok) console.log("  (no capture yet: "+s.id+")"); return ok; }); let first=true; sec.page=pages.length+1;
   while(shots.length){
     const pair=shots.splice(0,2);
     let h=(first?headingHTML(sec):'')+'<div class="prow">'+pair.map(s=>'<div class="pcol"><div class="phone"><img src="shots/'+s.id+'.png"></div>'+capHTML(s)+'</div>').join("")+'</div>';
@@ -259,7 +276,7 @@ addPage(`<div class="sechead"><div class="num">Before you start</div><h2>The app
   <li>Certification tracking with automatic reminder emails and in-app renewal</li>
   <li>Ambulance checks, jump bags and supply requests in one place</li>
   <li>Home-screen tiles, resources, hospitals, apartments — all editable, no developer needed</li>
-  <li>Every text and number the app shows is a setting</li>
+  <li>Every text, number, logo and analytics ID the app uses is a setting</li>
   <li>Nightly backup to Google Sheets, storage dashboard, problem reports from members</li>
  </ul></div>
 </div>
@@ -268,13 +285,14 @@ addPage(`<div class="sechead"><div class="num">Before you start</div><h2>The app
 addPage(`<div class="sechead"><div class="num">Before you start</div><h2>The home screen</h2><p>Every button on the home screen is a <b>tile</b>. Admins add, rename, reorder, switch off or restrict tiles under Admin → Tiles — a tile can be a built-in screen, a web link, a phone number or a shortcut into another app. These are the tiles in the demo.</p></div>
 <div class="tilepage"><div class="phone"><img src="shots/p-home.png"></div><div class="tilelist"><table><tr><th>Tile</th><th>Type</th><th>Opens</th></tr>${TILES.map(t=>'<tr><td>'+esc(t[0])+'</td><td>'+esc(t[1])+'</td><td>'+esc(t[2])+'</td></tr>').join("")}</table></div></div>`, {title:"The home screen"});
 
+sections.forEach((sec,i)=>{ sec.num=i+1; });
 sections.forEach(sec=>{ if(sec.kind==="phone") buildPhoneSection(sec); else buildDeskSection(sec); });
 
 /* settings reference */
-const SET_SEC={num:8,title:"Settings reference",intro:"Every setting under Admin → Settings, the value in the demo, and what it controls. Values with {name}, {unit}, {cert}, {days} and {date} are filled in per member when the email is sent.",page:pages.length+1};
+const SET_SEC={num:sections.length+1,title:"Settings reference",intro:"Every setting under Admin → Settings, the value in the demo, and what it controls. Values with {name}, {unit}, {cert}, {days} and {date} are filled in per member when the email is sent.",page:pages.length+1};
 sections.push(SET_SEC);
 {
-  const rowsPerPage=[14,17,17]; let idx=0, first=true, p=0;
+  const rowsPerPage=[15,18,18]; let idx=0, first=true, p=0;
   while(idx<SETTINGS.length){
     const chunk=SETTINGS.slice(idx, idx+rowsPerPage[Math.min(p,2)]); idx+=chunk.length; p++;
     let lastGroup="";
@@ -285,7 +303,7 @@ sections.push(SET_SEC);
 }
 /* admin sections reference + closing */
 const ADM=[["People","Members","Everyone with a record: identity, role, contact, certifications. Add, deactivate, download."],["People","Guest codes","Demo passcodes for visitors."],["Ambulances & gear","Supply requests","Restock requests from members and inventory checks."],["Ambulances & gear","Ambulance checks","Every submitted vehicle check."],["Ambulances & gear","Jump bags","Each responder’s bag status."],["Ambulances & gear","Jump bag items","The master item list."],["App content","Announcements","Notices, please-reads and polls, with responses."],["App content","Tiles","The home-screen buttons."],["App content","Resources","Published documents."],["App content","Settings","Every number and text the app uses."],["Certifications","Certification types","What is tracked and what blocks response."],["Certifications","Document types","What members can upload."],["Reference lists","Hospitals","The hospital list."],["Reference lists","Apartments","Complexes and gate codes."],["Reference lists","Task list","Task Book items."],["Reference lists","CPR buttons","The CPR Tracker buttons."],["Reference lists","Vitals","Vitals Reference values."]];
-const END_SEC={num:9,title:"Admin sections at a glance",intro:"Where each thing lives in the admin area, on the phone and on the desktop.",page:pages.length+1};
+const END_SEC={num:sections.length+1,title:"Admin sections at a glance",intro:"Where each thing lives in the admin area, on the phone and on the desktop.",page:pages.length+1};
 sections.push(END_SEC);
 {
   let lastGroup="";
@@ -297,7 +315,7 @@ sections.push(END_SEC);
 /* contents */
 {
   const toc=[{num:"",title:"The app at a glance",page:3},{num:"",title:"The home screen",page:4}].concat(sections.map(s=>({num:s.num,title:s.title,page:s.page})));
-  pages[CONTENTS_PAGE-1].html='<div class="sechead"><div class="num">Contents</div><h2>What’s inside</h2><p>Sections 1–6 are phone screens, section 7 is the desktop admin, section 8 lists every setting. Each screenshot has a short note on what the screen does and who uses it.</p></div><ol class="toc">'+
+  pages[CONTENTS_PAGE-1].html='<div class="sechead"><div class="num">Contents</div><h2>What’s inside</h2><p>The first sections are phone screens as members see them, then the desktop admin, and the last two list every setting and every admin section. This edition covers version 1.8.1. Each screenshot has a short note on what the screen does and who uses it.</p></div><ol class="toc">'+
     toc.map(t=>'<li><span class="n">'+t.num+'</span><span class="t">'+esc(t.title)+'</span><span class="dots"></span><span class="p">'+t.page+'</span></li>').join("")+'</ol>'+
     '<div class="legend"><h3>Reading the screenshots</h3><p>Phone screens were captured at the size of a typical phone; desktop screens at 1366 pixels wide. The orange <b>DEMO MODE</b> bar at the top of every screen is only shown in the demo — members never see it. Names, phone numbers, addresses and certification numbers are invented.</p></div>';
 }
@@ -386,7 +404,7 @@ pages.forEach((p,i)=>{
   html+='<div class="page"><div class="hdr"><span>Hatzalah of Houston · Member app — feature catalog</span><span>'+esc(secTitle)+'</span></div><div class="body">'+p.html+'</div><div class="ftr"><span>Version '+VERSION+' · '+DATE+'</span><span class="pn">'+n+'</span></div></div>';
 });
 html+='</body></html>';
-fs.copyFileSync("/home/claude/hatzalah-app/logo.png", DIR+"/logo.png");
+fs.copyFileSync(ROOT+"/logo.png", DIR+"/logo.png");
 fs.writeFileSync(OUT_HTML, html);
 console.log("pages:", pages.length);
 

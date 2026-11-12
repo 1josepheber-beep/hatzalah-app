@@ -3105,8 +3105,13 @@
     demoLoadData().then(function(){
       demoReset();
       DEMO.on=true; STATE.demo=true; DEMO.name=(resp&&resp.name)||"Guest";
-      var me=demoFindRow("roster",{unit:DEMO_ME.unit})||{};
-      STATE.me={first:me.first_name||DEMO_ME.first, last:me.last_name||DEMO_ME.last, unit:DEMO_ME.unit, admin:true, dispatcher:false, serviceUnit:false, status:me.status||"Primary", pw:"", demo:true, gaUnit:DEMO.name,
+      // The demo normally walks in as H-100 (an admin). hoh_demo_as lets a demo be
+      // viewed as any sample member instead -- used for screenshots and walkthroughs.
+      var asUnit=""; try{ asUnit=String(localStorage.getItem("hoh_demo_as")||"").trim(); }catch(e){}
+      var me=(asUnit && demoFindRow("roster",{unit:asUnit})) || demoFindRow("roster",{unit:DEMO_ME.unit}) || {};
+      var meUnit=me.unit||DEMO_ME.unit, meAdmin=(meUnit===DEMO_ME.unit) || /^(x|yes|true)$/i.test(String(me.admin||""));
+      var meType=String(me.type||"");
+      STATE.me={first:me.first_name||DEMO_ME.first, last:me.last_name||DEMO_ME.last, unit:meUnit, admin:meAdmin, dispatcher:/dispatcher/i.test(meType), serviceUnit:/service/i.test(meType), status:me.status||"Primary", pw:"", demo:true, gaUnit:DEMO.name,
                 textHome:me.text_home||"", textHomeMethod:me.text_home_method||"sms", email:me.email||""};
       document.body.classList.add("demo");
       $("ggate").classList.add("hidden"); if($("guestgate")) $("guestgate").classList.add("hidden"); if($("demoLoad")) $("demoLoad").classList.add("hidden");

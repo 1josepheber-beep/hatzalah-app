@@ -1,0 +1,10 @@
+{
+  "name": "hoh-app-tests",
+  "private": true,
+  "description": "Regression harnesses for the Hatzalah of Houston member app. Run from this folder: npm install, then npm test.",
+  "scripts": {
+    "test": "node smoke.js && node demo.js && node update.js && node jumpbag.js && node ambcheck.js && node glove.js && node gs-jumpbag.js",
+    "catalog": "cd ../catalog && node catalog-shots.js && python3 -I catalog-slice.py && node catalog-build.js"
+  },
+  "devDependencies": { "jsdom": "^29.1.1", "playwright": "^1.63.0", "image-size": "^1.2.1" }
+}
