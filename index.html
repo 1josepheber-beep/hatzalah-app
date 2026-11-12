@@ -56,6 +56,29 @@
   .sheet-item svg{width:24px;height:24px;stroke:var(--navy);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
   .sheet-item:active{transform:scale(.99)}
   .sheet-cancel{width:100%;border:0;background:#eef1f6;border-radius:13px;padding:14px;font-size:15px;font-weight:700;color:var(--mut);cursor:pointer;margin-top:2px}
+  /* Quick Actions: thumb-first. Every tile centres its icon and its words. One colour per tool. */
+  .qa .sheet-h{padding:4px 0 8px}
+  .qa button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .qa button:active{transform:scale(.985)}
+  .qa svg{stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+  .qa-ban{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:#eef3fb;border:1px dashed #9fb3d3;color:var(--navy);
+    border-radius:12px;padding:9px 12px;font-weight:800;font-size:13.5px;margin-bottom:10px}
+  .qa-ban svg{width:17px;height:17px} .qa-ban small{font-weight:700;color:var(--mut)} .qa-ban b{font-size:18px;line-height:1;margin-left:2px}
+  .qa-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px} .qa-row.one{grid-template-columns:1fr}
+  .qa-sm{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:9px 10px;
+    font-weight:800;font-size:14.5px;color:#2b3a55;min-height:50px}
+  .qa-ic{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto}
+  .qa-ic svg{width:18px;height:18px}
+  .qa-sm.purple .qa-ic{background:#5b3fa8} .qa-sm.navy .qa-ic{background:var(--navy)}
+  .qa-big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:0;border-radius:16px;padding:16px 10px;min-height:104px;
+    color:#fff;font-weight:900;font-size:17px;text-align:center;line-height:1.15}
+  .qa-big svg{width:36px;height:36px}
+  .qa-big.blue{background:#1d4b8f} .qa-big.teal{background:#0f7a6a}
+  .qa-huge{width:100%;display:flex;align-items:center;justify-content:center;gap:14px;border:0;border-radius:18px;padding:16px 14px;margin-bottom:10px;
+    background:var(--red);color:#fff;font-weight:900;font-size:23px;text-align:left;line-height:1.1}
+  .qa-huge svg{width:40px;height:40px}
+  .qa-huge small{display:block;font-size:12.5px;font-weight:700;opacity:.92;margin-top:4px;letter-spacing:.01em}
+  @media (max-width:360px){ .qa-big{font-size:15.5px;min-height:96px} .qa-huge{font-size:21px} .qa-sm{font-size:13.5px} }
   /* Vitals reference */
   .vit-tabs{display:flex;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line);background:#fff}
   .vit-tab{flex:1;border:1px solid var(--line);background:#fff;color:var(--ink);font-weight:800;font-size:14px;padding:9px;border-radius:10px;cursor:pointer}
@@ -1706,7 +1729,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.7.0</div>
+  <div class="ver-line">Version 1.7.1</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1828,7 +1851,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.7.0</div>
+  <div class="ver-line">Version 1.7.1</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2124,13 +2147,19 @@
 
 <!-- QUICK ACTIONS SHEET -->
 <div class="sheet-wrap hidden" id="qMenu">
-  <div class="sheet">
+  <div class="sheet qa">
+    <!-- Ordered by urgency from the thumb up: CPR biggest and lowest, the small stuff at the top. -->
     <div class="sheet-h">Quick Actions</div>
-    <button class="sheet-item" id="qVitals"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg>Vitals Reference</button>
-    <button class="sheet-item" id="qCpr"><svg viewBox="0 0 24 24"><path d="M12 21C7 17 3 13 3 8.5 3 6 5 4 7.5 4c1.6 0 3 .8 3.8 2 .8-1.2 2.2-2 3.7-2C20.5 4 21 6 21 8.5 21 13 17 17 12 21z"/></svg>CPR Tracker</button>
-    <button class="sheet-item" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Call Notes</button>
-    <button class="sheet-item" id="qInstall"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 19h16"/></svg>Install app</button>
-    <button class="sheet-item" id="qTextHome"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg>Text Home</button>
+    <button class="qa-ban" id="qInstall"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M4 19h16"/></svg><span>Install this app <small>&middot; faster next time</small></span><b>&rsaquo;</b></button>
+    <div class="qa-row">
+      <button class="qa-sm purple" id="qTextHome"><span class="qa-ic"><svg viewBox="0 0 24 24"><path d="M3 10.6L12 4l9 6.6V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/></svg></span>Text Home</button>
+      <button class="qa-sm navy" id="qScene"><span class="qa-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span>Scene Timer</button>
+    </div>
+    <div class="qa-row">
+      <button class="qa-big blue" id="qVitals"><svg viewBox="0 0 24 24"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg><span>Vitals Reference</span></button>
+      <button class="qa-big teal" id="qNotes"><svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span>Call Notes</span></button>
+    </div>
+    <button class="qa-huge" id="qCpr"><svg viewBox="0 0 24 24"><path d="M12 21C7 17 3 13 3 8.5 3 6 5 4 7.5 4c1.6 0 3 .8 3.8 2 .8-1.2 2.2-2 3.7-2C20.5 4 21 6 21 8.5 21 13 17 17 12 21z"/></svg><span>CPR Tracker<small>code time &middot; compression cycle &middot; epi timer</small></span></button>
     <button class="sheet-cancel" id="qCancel">Cancel</button>
   </div>
 </div>
@@ -9913,7 +9942,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.1</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -9956,7 +9985,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.7.1</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -10306,7 +10335,7 @@
   // ---------- Quick actions (lightning) ----------
   function openQMenu(){
     var thOn = !/^(off|no|false|0|disabled)$/i.test((getSetting("Text Home","on")||"on").trim());
-    var b=$("qTextHome"); if(b) b.style.display = thOn ? "" : "none";
+    var b=$("qTextHome"); if(b){ b.style.display = thOn ? "" : "none"; try{ b.parentNode.classList.toggle("one", !thOn); }catch(e){} }
     // Only offer "Install app" when it isn't installed yet.
     var ib=$("qInstall");
     if(ib){
@@ -10326,6 +10355,7 @@
   $("qNotes").addEventListener("click",function(){ closeQMenu(); openNotes(); });
   $("qTextHome").addEventListener("click",function(){ closeQMenu(); doTextHome(); });
   $("qInstall").addEventListener("click",function(){ closeQMenu(); doInstall(); });
+  $("qScene").addEventListener("click",function(){ closeQMenu(); scOpen(); });   /* the same screen the header logo opens */
   function pwaStandalone(){ return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone===true; }
   function doInstall(){
     if(pwaStandalone()){ toast("The app is already installed on this device."); return; }
@@ -10998,7 +11028,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.7.0".replace("Version ","");
+  var APP_VERSION="Version 1.7.1".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
