@@ -1227,6 +1227,30 @@ function sendTestToMe() {
   Logger.log("Nothing was written to the reminder log.");
 }
 
+/**
+ * Sends ONE sample jump bag reminder to you alone, with made-up items, so the
+ * layout can be checked. Nothing is read from or written to the jump bag tables.
+ */
+function sendJumpBagTestToMe() {
+  var TO = scriptProp_("TEST_EMAIL") || ADMIN_EMAILS.split(",")[0].trim();
+  var TZ = Session.getScriptTimeZone(), DAY = 86400000;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  function nice(d){ return Utilities.formatDate(new Date(d), TZ, "MMM d, yyyy"); }
+  var list = [ { name: "iGel (size 4)", n: -7 }, { name: "Oral Glucose", n: 12 } ];
+  list.forEach(function(x){ x.exp = new Date(today.getTime() + x.n * DAY); });
+  var expired = list.filter(function(x){ return x.n < 0; }), soon = list.filter(function(x){ return x.n >= 0; });
+  var lines = list.map(function(x){
+    var when = x.n < 0 ? ("expired " + nice(x.exp)) : x.n === 0 ? "expires TODAY" : ("expires " + nice(x.exp) + " (in " + x.n + " day" + (x.n === 1 ? "" : "s") + ")");
+    return "\u2022 " + x.name + " \u2014 " + when;
+  });
+  var bagLine = "Time to go through your whole bag \u2014 it has been 31 days since you last did (you asked to be reminded every 30 days). When you are done, tap \u201cI checked my bag today\u201d in the app.";
+  var subject = "Jump bag: " + expired.length + " item expired, " + soon.length + " item expiring soon";
+  var body = "Hi Joseph,\n\nFrom your jump bag in the app:\n\n" + lines.join("\n") + "\n\n" + bagLine + "\n\n" +
+             "Once you have replaced an item, open the app \u2192 My Jump Bag and enter the new expiration date so the reminders stop.\n" + APP_URL +
+             "\n\nThank you,\nHatzalah of Houston Administration";
+  mailBoth(TO, "[TEST] " + subject, body, "", { kind: "Jump bag (test)", strip: "1 item expired", stripColor: "red" });
+  Logger.log("Sent to " + TO + " only. Sample items; nothing was read or written.");
+}
 
 // ===================== BACKUP TO GOOGLE SHEETS =====================
 //
