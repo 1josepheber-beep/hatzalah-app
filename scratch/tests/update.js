@@ -58,7 +58,7 @@ async function boot(opts){
 
   // 4. a message naming the version already on screen does nothing at all
   a=await boot({waiting:false});
-  const ver=a.w.document.body.innerHTML.match(/Version (1\.\d\.\d)/)[1];
+  const ver=a.w.document.body.innerHTML.match(/Version (\d+\.\d+\.\d+)/)[1];
   a.swListeners.message({data:{type:"UPDATE_READY",version:ver}}); await wait(4000);
   check("an update message for the version already showing is ignored (no restart, no bar)", !a.diag().some(l=>/^restart |^update /.test(l)) && a.d.getElementById("updBar").classList.contains("hidden"));
 

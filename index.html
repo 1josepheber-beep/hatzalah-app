@@ -996,6 +996,10 @@
   .adm-certdel.armed{background:var(--red);color:#fff;border-color:var(--red)}
   .adm-ct{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
   .adm-ct:last-child{border-bottom:0}
+  .adm-ct{border-bottom:0;padding-bottom:6px}
+  .adm-ctnote{padding:0 0 14px;margin:0 0 6px;border-bottom:1px solid var(--line)}
+  .adm-ctnote:last-child{border-bottom:0}
+  .adm-ctnote textarea{margin-top:6px;font-weight:400}
   .adm-ctn{flex:1;min-width:0;font-weight:700;font-size:14.5px}
   .adm-ctd{font-size:12px;color:var(--mut);font-weight:400;margin-top:3px}
   .adm-addcert{width:100%;border:1px dashed #b9c6d8;background:#fff;color:var(--navy);border-radius:11px;padding:12px;font-weight:800;font-size:13.5px;cursor:pointer;margin-top:14px}
@@ -1728,7 +1732,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.9.0</div>
+  <div class="ver-line">Version 1.10.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1850,7 +1854,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.9.0</div>
+  <div class="ver-line">Version 1.10.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -6069,6 +6073,24 @@
     // The app treats a blank "Active" as active, so the toggle must agree.
     if(v==="") return (header==="Active");
     return v==="x"||v==="yes"||v==="true"; }
+  /* The setting that holds a certification's "how to renew" note, keyed by its
+     database column (e.g. "Cert Note (coh_ambulance_permit_exp)"), so renaming
+     the certification never loses the note. The Apps Script reads the same key. */
+  function certNoteKey(col){ return "Cert Note ("+String(col||"").trim().toLowerCase()+")"; }
+  /* Settings rows are normally edited in place; a note for a certification that
+     has never had one has no row yet, so this creates it on first save. */
+  function putSetting(k, v){
+    STATE.settings[k]=v;
+    return sbFetch(SB_URL+"/rest/v1/settings?setting=eq."+encodeURIComponent(k),
+        {method:"PATCH", headers:{"Content-Type":"application/json", Prefer:"return=representation"}, body:JSON.stringify({value:v})})
+      .then(function(r){
+        if(!r || !r.ok) return r;
+        return r.json().then(function(rows){
+          if(rows && rows.length) return r;
+          return sbWrite("POST","settings",{setting:k, value:v});
+        }, function(){ return r; });
+      });
+  }
   function admRenderCertTypes(){
     var cols=(CERT.certCols||[]);
     var raw=String(getSetting("Certifications That Block Response","")||"").trim();
@@ -6077,10 +6099,14 @@
     var rows=cols.map(function(c,i){
       var key=(sbCol("certifications", c.expKey||c.singleKey||"")||"").toLowerCase();
       var on = allBlock || list.indexOf(String(c.name).toLowerCase())>=0 || (key && list.indexOf(key)>=0);
+      var noteKey=certNoteKey(key||c.name);
       return '<div class="adm-ct"><div class="adm-ctn">'+esc(c.name)+
         '<div class="adm-ctd">'+(on?"Cannot respond to patients while expired"
                                   :"Reminders only \u2014 can still respond")+'</div></div>'+
-        '<button class="adm-sw'+(on?" on":"")+'" data-sw="1" data-block="'+esc(c.name)+'"></button></div>';
+        '<button class="adm-sw'+(on?" on":"")+'" data-sw="1" data-block="'+esc(c.name)+'"></button></div>'+
+        // Where and how to renew this one. Goes into every reminder email for it.
+        '<label class="adm-f wide adm-ctnote">How to renew <span class="adm-note" style="display:inline;margin:0">(shown in the reminder emails for '+esc(c.name)+')</span>'+
+          '<textarea rows="2" data-certnote="'+esc(noteKey)+'" placeholder="e.g. The application is in the app under Resources.">'+esc(getSetting(noteKey,""))+'</textarea></label>';
     }).join("");
     $("admGenPane").innerHTML='<div class="adm-body">'+
       '<div class="adm-mh"><div class="t"><h3>Certifications</h3><div class="u">'+cols.length+' in use</div></div></div>'+
@@ -6118,13 +6144,19 @@
       STATE.settings[k]=v;
       return sbWrite("PATCH","settings?setting=eq."+encodeURIComponent(k),{value:v});
     }
-    Promise.all([
+    var jobs=[];
+    Array.prototype.forEach.call(document.querySelectorAll("[data-certnote]"),function(t){
+      var k=t.getAttribute("data-certnote"), v=String(t.value||"").trim();
+      if(v===String(getSetting(k,"")||"").trim()) return;      // unchanged
+      jobs.push(putSetting(k, v));
+    });
+    Promise.all(jobs.concat([
       put("Certifications That Block Response", val),
       put("Cert Email Subject (expired)", ($("ce_sub_block")||{}).value||""),
       put("Cert Email Body (expired)", ($("ce_body_block")||{}).value||""),
       put("Cert Email Subject (expired, non-blocking)", ($("ce_sub_soft")||{}).value||""),
       put("Cert Email Body (expired, non-blocking)", ($("ce_body_soft")||{}).value||"")
-    ])
+    ]))
       .then(function(rs){
         var r={ok:rs.every(function(x){return x&&x.ok!==false;})};
         btn.disabled=false; btn.textContent="Save changes";
@@ -6366,7 +6398,7 @@
       var moved={"certifications that block response":1,"cert email subject (expired)":1,
                  "cert email body (expired)":1,"cert email subject (expired, non-blocking)":1,
                  "cert email body (expired, non-blocking)":1};
-      rows=rows.filter(function(r){ return !moved[String(r_(r,"Setting")).trim().toLowerCase()]; });
+      rows=rows.filter(function(r){ var sn=String(r_(r,"Setting")).trim().toLowerCase(); return !moved[sn] && sn.indexOf("cert note (")!==0; });
     }
     if(k==="tiles"||k==="cpr") rows.sort(function(a,b){ return (parseFloat(r_(a,"Order"))||99)-(parseFloat(r_(b,"Order"))||99); });
     var help={
@@ -10277,7 +10309,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.9.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.10.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10320,7 +10352,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.9.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.10.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11363,7 +11395,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.9.0".replace("Version ","");
+  var APP_VERSION="Version 1.10.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

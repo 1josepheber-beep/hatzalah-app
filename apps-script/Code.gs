@@ -370,7 +370,13 @@ function dailyCertCheck(onlyUnit){
              : ("Hi " + who + ",\n\nThis is a reminder that your " + cert + " will expire in " + days + " day" + (days === 1 ? "" : "s") +
                 ", on " + expNice + ". Please remember to renew it before the expiration date.\n\n" + howto + "\n\n" + closing);
       }
-      try { mailBoth(to, subj, body, bcc); sent++; } catch (err) { Logger.log("Mail failed: " + err); }
+      var brand = { kind: "Certification reminder",
+                    strip: phase === "expired" ? ("Expired " + (days === 0 ? "today" : Math.abs(days) + " day" + (Math.abs(days) === 1 ? "" : "s") + " ago")) : ("Expires in " + days + " day" + (days === 1 ? "" : "s")),
+                    stripColor: phase === "expired" ? "red" : "gold",
+                    facts: [["Certification", cert], ["Expires", Utilities.formatDate(exp, TZ, "MMM d, yyyy"), phase === "expired" ? "" : "\u00b7 " + days + " day" + (days === 1 ? "" : "s")]],
+                    note: { title: "How to renew", text: certNote(S, c.expCol) },
+                    footer: "You are receiving this because you are an active Hatzalah of Houston member. Reminders go out " + milestones.slice().sort(function(a, b){ return b - a; }).join(", ") + " days before a certification expires, then weekly once it has lapsed." };
+      try { mailBoth(to, subj, body, bcc, brand); sent++; } catch (err) { Logger.log("Mail failed: " + err); }
       var stamp = Utilities.formatDate(new Date(), TZ, "M/d/yyyy h:mm a");
       if (!sbInsert("cert_reminders", { when_at: stamp, unit: unit, name: name, certification: cert, cert_col: c.expCol, exp_date: e, type: phase })) {
         logFails++;
@@ -446,7 +452,9 @@ function dailyCertCheck(onlyUnit){
                   (stillBlocking.length === 1 ? "it" : "them") + " as well.\n\n" +
                   howto + "\n\nSincerely,\nHatzalah of Houston Administration";
         }
-        try { mailBoth(to, s2, b2txt, bcc); cleared++; } catch (err) { Logger.log("Renewal mail failed: " + err); }
+        var brand2 = { kind: "Certification renewed", strip: "Up to date", stripColor: "green",
+                       facts: [["Certification", c.name], ["New expiration", newNice]] };
+        try { mailBoth(to, s2, b2txt, bcc, brand2); cleared++; } catch (err) { Logger.log("Renewal mail failed: " + err); }
       });
     }
   });
@@ -653,19 +661,31 @@ function testSupabase(){
  * Templates have been stored two ways over time -- some with real line breaks,
  * some with literal <br> tags -- so both are handled.
  */
-function mailBoth(to, subject, body, bcc) {
+/**
+ * Every email goes out in the Hatzalah of Houston layout: navy header with the
+ * shield, an optional colored strip ("Expires in 30 days"), the message, an
+ * optional facts box and "How to renew" note, an "Open the app" button and a
+ * footer. The plain-text version is the same words without the decoration.
+ *
+ * brand (optional):
+ *   kind   small line under the org name, e.g. "Certification reminder"
+ *   strip  text for the colored bar; stripColor "gold" (default), "red", "green"
+ *   facts  [[label, value], ...] shown in a two-column box
+ *   note   {title, text} the highlighted box (the per-certification renewal note)
+ *   cta    {label, url} the button; default "Open the app" -> the app
+ *   footer extra line under the standard footer
+ */
+function mailBoth(to, subject, body, bcc, brand) {
   var txt = String(body == null ? "" : body)
               .replace(/<br\s*\/?>/gi, "\n")
               .replace(/\r\n/g, "\n");
-  var html = txt
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    // Stop at the address itself. The templates write it as "(https://... ),"
-    // and grabbing the trailing bracket and comma produced a dead link.
-    .replace(/(https?:\/\/[^\s<]*[^\s<.,;:!?)\]}])/g, '<a href="$1">$1</a>')
-    .replace(/\n/g, "<br>");
-  html = '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;'
-       + 'font-size:15px;line-height:1.55;color:#16202e;max-width:620px">'
-       + html + '</div>';
+  brand = brand || {};
+  var html = brandHtml(txt, brand);
+  // the plain-text copy carries the note too, just before the sign-off
+  if (brand.note && brand.note.text) {
+    var parts = splitSignoff(txt);
+    txt = parts.main + "\n\n" + (brand.note.title || "How to renew") + ": " + brand.note.text + (parts.signoff ? "\n\n" + parts.signoff : "");
+  }
   // Group mail goes out Bcc so recipients never see each other's addresses.
   // Gmail needs something in To, so a Bcc-only message is addressed to the
   // account the script runs as.
@@ -673,6 +693,86 @@ function mailBoth(to, subject, body, bcc) {
               subject: subject, body: txt, htmlBody: html };
   if (bcc && String(bcc).trim()) msg.bcc = String(bcc).trim();
   MailApp.sendEmail(msg);
+}
+var BRAND_NAVY = "#143D75", BRAND_GOLD = "#C9933A", BRAND_RED = "#b3261e", BRAND_GREEN = "#1e9e57";
+var BRAND_LOGO = APP_URL + "/logo-email.png";
+var BRAND_FONT = "font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;";
+function escHtml(s){ return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+/** Plain text -> paragraphs with live links and <b>..</b> kept from the templates. */
+function textToHtml(txt){
+  var h = escHtml(txt)
+    // Stop at the address itself. The templates write it as "(https://... ),"
+    // and grabbing the trailing bracket and comma produced a dead link.
+    .replace(/(https?:\/\/[^\s<]*[^\s<.,;:!?)\]}])/g, '<a href="$1" style="color:' + BRAND_NAVY + ';">$1</a>')
+    .replace(/&lt;b&gt;([\s\S]*?)&lt;\/b&gt;/g, "<b>$1</b>");
+  return h.split(/\n{2,}/).map(function(p){
+    return '<p style="margin:0 0 14px;">' + p.replace(/\n/g, "<br>") + "</p>";
+  }).join("");
+}
+/** Splits the closing lines ("Thank you...", "Sincerely, ...") off the end of a message,
+    so a box can go between the message and the sign-off. */
+function splitSignoff(txt){
+  var paras = String(txt || "").split(/\n{2,}/), i = paras.length;
+  while (i > 0 && i > paras.length - 3 && /^\s*(thank you|thanks|sincerely|regards|best)/i.test(paras[i - 1])) i--;
+  return { main: paras.slice(0, i).join("\n\n"), signoff: paras.slice(i).join("\n\n") };
+}
+function brandHtml(txt, b){
+  b = b || {};
+  var stripBg = b.stripColor === "red" ? BRAND_RED : b.stripColor === "green" ? BRAND_GREEN : BRAND_GOLD;
+  var stripFg = b.stripColor === "gold" || !b.stripColor ? "#1a1300" : "#ffffff";
+  var cta = b.cta || { label: "Open the app", url: APP_URL };
+  var h = '';
+  h += '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#eef1f5;"><tr><td align="center" style="padding:24px 12px;">';
+  h += '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;">';
+  // header
+  h += '<tr><td style="background:' + BRAND_NAVY + ';border-radius:14px 14px 0 0;padding:20px 28px;">'
+     + '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>'
+     + '<td width="54" valign="middle"><img src="' + BRAND_LOGO + '" width="48" height="62" alt="" style="display:block;border:0;"></td>'
+     + '<td valign="middle" style="padding-left:14px;' + BRAND_FONT + '">'
+     + '<div style="color:#ffffff;font-size:18px;font-weight:800;letter-spacing:.2px;">Hatzalah of Houston</div>'
+     + (b.kind ? '<div style="color:#b8c7e0;font-size:12.5px;font-weight:600;margin-top:2px;">' + escHtml(b.kind) + '</div>' : '')
+     + '</td></tr></table></td></tr>';
+  // strip
+  if (b.strip) h += '<tr><td style="background:' + stripBg + ';padding:10px 28px;' + BRAND_FONT + 'color:' + stripFg + ';font-size:13.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;">' + escHtml(b.strip) + '</td></tr>';
+  // body
+  h += '<tr><td style="background:#ffffff;padding:28px 28px 8px;' + BRAND_FONT + 'color:#16202e;font-size:15.5px;line-height:1.55;">';
+  if (b.facts && b.facts.length) {
+    h += '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #dfe5ee;border-radius:12px;margin-bottom:18px;"><tr>';
+    b.facts.forEach(function(f, i){
+      h += '<td width="' + Math.floor(100 / b.facts.length) + '%" style="padding:14px 18px;' + (i < b.facts.length - 1 ? 'border-right:1px solid #dfe5ee;' : '') + '">'
+         + '<div style="font-size:11.5px;font-weight:700;color:#6b7688;text-transform:uppercase;letter-spacing:.04em;">' + escHtml(f[0]) + '</div>'
+         + '<div style="font-size:16px;font-weight:800;color:' + (i === 0 ? BRAND_NAVY : '#16202e') + ';margin-top:4px;">' + escHtml(f[1]) + (f[2] ? ' <span style="color:' + BRAND_GOLD + ';">' + escHtml(f[2]) + '</span>' : '') + '</div></td>';
+    });
+    h += '</tr></table>';
+  }
+  if (b.note && b.note.text) {
+    var sp = splitSignoff(txt);
+    h += textToHtml(sp.main);
+    h += '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:4px 0 18px;background:#f3f6fb;border-left:4px solid ' + BRAND_NAVY + ';border-radius:0 10px 10px 0;"><tr><td style="padding:14px 18px;">'
+       + '<div style="font-size:12px;font-weight:800;color:' + BRAND_NAVY + ';text-transform:uppercase;letter-spacing:.04em;">' + escHtml(b.note.title || "How to renew") + '</div>'
+       + '<div style="margin-top:6px;font-size:15px;line-height:1.5;">' + textToHtml(b.note.text).replace(/margin:0 0 14px;/g, "margin:0;") + '</div></td></tr></table>';
+    if (sp.signoff) h += textToHtml(sp.signoff);
+  } else {
+    h += textToHtml(txt);
+  }
+  h += '</td></tr>';
+  // button
+  if (cta && cta.url) {
+    h += '<tr><td style="background:#ffffff;padding:6px 28px 28px;" align="left"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td style="background:' + BRAND_NAVY + ';border-radius:10px;">'
+       + '<a href="' + escHtml(cta.url) + '" style="display:inline-block;padding:13px 26px;' + BRAND_FONT + 'font-size:15px;font-weight:800;color:#ffffff;text-decoration:none;">' + escHtml(cta.label || "Open the app") + '</a>'
+       + '</td></tr></table></td></tr>';
+  }
+  // footer
+  h += '<tr><td style="background:' + BRAND_NAVY + ';border-radius:0 0 14px 14px;padding:14px 28px;' + BRAND_FONT + 'color:#b8c7e0;font-size:11.5px;line-height:1.5;">'
+     + 'Sent by the Hatzalah of Houston member app &middot; <a href="' + APP_URL + '" style="color:#ffffff;text-decoration:none;">' + APP_URL.replace(/^https?:\/\//, "") + '</a>'
+     + (b.footer ? '<br>' + escHtml(b.footer) : '')
+     + '</td></tr>';
+  h += '</table></td></tr></table>';
+  return h;
+}
+/** The admin's "how to renew" note for one certification (Admin -> Certifications). */
+function certNote(S, expCol){
+  return String(getSet(S, "cert note (" + String(expCol || "").toLowerCase() + ")", "")).trim();
 }
 
 function doPost(e){
@@ -828,7 +928,10 @@ function dailyJumpBagCheck(){
     var to = [String(r.email || "").trim(), String(r.personal_email || "").trim()].filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); });
     to = to.filter(function(e, i){ return to.indexOf(e) === i; });
     var okMail = false;
-    if (to.length) { try { mailBoth(to.join(", "), subject, body); okMail = true; } catch (e) { Logger.log("jump bag mail failed for " + r.unit + ": " + e); } }
+    var brandJb = { kind: "Jump bag",
+                    strip: list.length ? (expired.length ? (expired.length + " item" + (expired.length === 1 ? "" : "s") + " expired") : (soon.length + " item" + (soon.length === 1 ? "" : "s") + " expiring soon")) : "Time to check your bag",
+                    stripColor: expired.length ? "red" : "gold" };
+    if (to.length) { try { mailBoth(to.join(", "), subject, body, "", brandJb); okMail = true; } catch (e) { Logger.log("jump bag mail failed for " + r.unit + ": " + e); } }
     var pushBody = list.length ? lines.map(function(l){ return l.replace(/^\u2022 /, ""); }).join("\n") : (bd && bd.since !== null ? bd.since + " days since you last checked it." : "You asked to be reminded to go through it.");
     var okPush = pushUnit(String(r.unit), subject, pushBody.slice(0, 180));
     if (okMail || okPush) {
@@ -911,7 +1014,9 @@ function notifyRestock(id){
     [String(r.email || "").trim(), String(r.personal_email || "").trim()].forEach(function(e){ if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e) && mails.indexOf(e) < 0) mails.push(e); });
   });
   var okMail = false;
-  if (mails.length) { try { mailBoth("", subject, body, mails.join(", ")); okMail = true; } catch (e) { Logger.log("restock mail failed: " + e); } }
+  var brandRs = { kind: "Supply request", strip: "Restock needed", stripColor: "gold",
+                  facts: [["Requested by", String(req.name || req.unit) + " (" + String(req.unit) + ")"], ["For", String(req.source) === "inventory" ? String(req.ambulance || "Ambulance") : "Jump bag"]] };
+  if (mails.length) { try { mailBoth("", subject, body, mails.join(", "), brandRs); okMail = true; } catch (e) { Logger.log("restock mail failed: " + e); } }
   who.forEach(function(r){ if (pushUnit(String(r.unit), subject, lines.map(function(l){ return l.replace(/^\u2022 /, ""); }).join("\n").slice(0, 180), "restock")) pushed++; });
   var note = (okMail ? mails.length + " emailed" : "mail failed") + ", " + pushed + " pushed, " + Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
   sbPatch("supply_requests", "id=eq." + id, { notified: note });
@@ -934,7 +1039,8 @@ function notifyRestockStatus(id){
   var to = [String(me.email || "").trim(), String(me.personal_email || "").trim()].filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); });
   to = to.filter(function(e, i){ return to.indexOf(e) === i; });
   var n = 0;
-  if (to.length) { try { mailBoth(to.join(", "), subject, body); n++; } catch (e) { Logger.log("restock status mail failed: " + e); } }
+  var brandSt = { kind: "Supply request", strip: st === "ordered" ? "Ordered" : "Done", stripColor: "green" };
+  if (to.length) { try { mailBoth(to.join(", "), subject, body, "", brandSt); n++; } catch (e) { Logger.log("restock status mail failed: " + e); } }
   if (pushUnit(String(me.unit), subject, restockItemsText(req).map(function(l){ return l.replace(/^\u2022 /, ""); }).join("\n").slice(0, 180), "jumpbag")) n++;
   return n;
 }
@@ -1113,7 +1219,10 @@ function sendTestToMe() {
            "before the expiration date.\n\n" + howto + "\n\n" + closing;
   }
 
-  mailBoth(TO, "[TEST] " + subj, body);
+  mailBoth(TO, "[TEST] " + subj, body, "", { kind: "Certification reminder (test)",
+    strip: picked.days <= 0 ? "Expired" : ("Expires in " + picked.days + " days"), stripColor: picked.days <= 0 ? "red" : "gold",
+    facts: [["Certification", picked.c.name], ["Expires", Utilities.formatDate(picked.d, TZ, "MMM d, yyyy")]],
+    note: { title: "How to renew", text: certNote(S, picked.c.expCol) } });
   Logger.log("Sent to " + TO + " only \u2014 " + picked.c.name + ", " + picked.days + " days.");
   Logger.log("Nothing was written to the reminder log.");
 }
@@ -1338,6 +1447,6 @@ function sendProblemReport(rep){
   });
   if (log.length > 80) lines.push("  (" + (log.length - 80) + " older entries not shown)");
   var subject = "App problem report: " + String(rep.note || "").slice(0, 60).replace(/\s+/g, " ") + " \u2014 " + who;
-  mailBoth("", subject, lines.join("\n"), adminRecipients());
+  mailBoth("", subject, lines.join("\n"), adminRecipients(), { kind: "Problem report", strip: "Problem report from " + who, stripColor: "red" });
   Logger.log("Problem report mailed for " + who);
 }

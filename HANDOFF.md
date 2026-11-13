@@ -50,7 +50,12 @@ that makes it wrong.
   database — fine for reading and for small, reversible inserts (settings rows); say what
   you ran. No storage-file access.
 - **Joseph's Chrome** (Claude in Chrome): used for anything behind a login — Apps Script
-  editor (yeber@houstonhatzalah.org, authuser=2), Supabase dashboard, the live app.
+  editor (yeber@houstonhatzalah.org, authuser=2; the project is named **"Hatzalah App -
+  Background Jobs (emails, backups, push)"**, one file, Code.gs), Supabase dashboard, the
+  live app. To update the script: paste the repo's `apps-script/Code.gs` into the editor
+  (check the editor still matches the previous repo copy first), save, then Deploy →
+  Manage deployments → pencil → New version → Deploy, keeping the same deployment so the
+  /exec URL in Settings stays valid.
   Tool outputs containing base64/hex/JWT are blocked; page text truncates at 50k chars.
 - **The sandbox** can reach GitHub and npm/pip registries only — not Supabase, not the
   live site, not map tiles. Anything that needs the live backend goes through the MCP
@@ -58,15 +63,24 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **Live: 1.9.0** (Nov 12, 2026). 1.8.0 made the demo fully functional on sample data;
-  1.8.1 added Settings → Analytics tracking (GA / GTM / Meta Pixel IDs, validated, with a
-  "Replace the current analytics ID?" confirmation), the Logo upload card, and the demo
-  "view as member" switch (`localStorage.hoh_demo_as = "H-101"`); 1.9.0 added Settings →
-  Standings (the two tier minimums) and made the My Standing preview read from them.
-  Released straight to live on Joseph's "deploy everything pending" (beta still pinned).
-- **Apps Script (Nov 12, 2026):** group mail now goes out **Bcc** — certification emails
-  are To the member with admins in Bcc; supply-request and problem-report emails are all
-  Bcc with the sending account in To (`mailBoth(to, subject, body, bcc)`).
+- **Live: 1.10.0** (Nov 12, 2026). 1.8.0 made the demo fully functional on sample data;
+  1.8.1 added Settings → Analytics tracking, the Logo upload card and the demo "view as
+  member" switch (`localStorage.hoh_demo_as = "H-101"`); 1.9.0 added Settings → Standings
+  and made the My Standing preview read from them; 1.10.0 added a **"How to renew" note
+  per certification** in Admin → Certifications (saved as settings rows named
+  `Cert Note (<column>)`, e.g. `Cert Note (coh_ambulance_permit_exp)`, created on first
+  save by `putSetting()`; hidden from the plain Settings list). Both released straight to
+  live on Joseph's say-so (beta still pinned).
+- **Apps Script (Nov 12, 2026):** every email now goes out in the **branded layout**
+  (`brandHtml()` in Code.gs: navy header with `logo-email.png`, colored status strip,
+  facts box, the per-certification "How to renew" note placed before the sign-off, "Open
+  the app" button, footer). `mailBoth(to, subject, body, bcc, brand)`. Group mail is
+  **Bcc**: certification emails To the member, admins Bcc; supply-request and
+  problem-report emails all Bcc. Preview any of it without sending:
+  `node preview-emails.js` in scratch/email (runs the real Code.gs under Node →
+  scratch/email/out/*.png). Deployed as web-app version 52.
+- `logo-email.png` is the shield cut out of the 512 icon (transparent); `logo.png` has a
+  white background baked in and is still what the app itself uses.
 - **Feature catalog PDF**: generated from the demo by `scratch/catalog/` (see below).
   The Scheduler map screen can't be captured in the sandbox (no map tiles); a hand-taken
   screenshot lives in `scratch/catalog/manual/` and is used automatically.
