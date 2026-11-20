@@ -133,7 +133,7 @@ S=[("Org Name","Hatzalah of Houston"),("Medical Control Number","713-555-0111"),
  ("Storage Limit DB MB","500"),("Storage Limit Files MB","1024"),("Storage Limit Repo MB","1024"),
  ("Google Analytics ID",""),("Google Tag Manager ID",""),("Meta Pixel ID",""),("Standings Primary Minimum","15"),("Standings Backup Minimum","6"),
  ("Cert Note (coh_ambulance_permit_exp)","The permit application is in the app under Resources. Fill it in and submit it to the City of Houston before the expiration date."),
- ("Cert Note (epi_training_exp)","Renew it at EMS1 Academy: https://olt.ems1academy.com/login")]
+ ("Cert Note (epi_training_exp)","Renew it at EMS1 Academy: https://olt.ems1academy.com/login"),("Pickup Location","the stock room")]
 T["settings"]=[{"id":n+1,"setting":k,"value":v} for n,(k,v) in enumerate(S)]
 
 # ---------- people (all invented) ----------

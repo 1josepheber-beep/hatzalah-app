@@ -843,6 +843,8 @@
   .jb-remind{margin-top:8px;font-size:12.5px;font-weight:700;color:var(--mut);display:flex;align-items:center;gap:8px}
   .jb-remind select{border:1.5px solid var(--line);border-radius:8px;padding:5px 8px;font-size:13px;font-weight:700;color:var(--ink);font-family:inherit;background:#fff}
   .jb-bagline b{color:var(--ink)}
+  .jb-nudge .ebtn{width:100%;margin:2px 0 10px}
+  .jb-nudge .adm-note{margin:0}
   /* ---- My Jump Bag ---- */
   .jb-sum{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:10px;box-shadow:var(--shadow)}
   .jb-sumtop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
@@ -1732,7 +1734,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.10.0</div>
+  <div class="ver-line">Version 1.11.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1854,7 +1856,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.10.0</div>
+  <div class="ver-line">Version 1.11.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4808,8 +4810,28 @@
         var val=s.status==="have"?"✓ Have":s.status==="short"?"Short":s.status==="missing"?"Missing":"—";
         return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(s.exp_date?'<div class="jb-dexp '+e+'">'+esc(jbExpText(s.exp_date))+'</div>':'')+'</div></div>'; }).join("")+'</div>';
     });
+    // Remind: a push and an email to this member asking them to restock, admins Bcc'd.
+    // Sent by the Apps Script, so it needs the webhook settings; otherwise the button says so.
+    var cfg=diagSettings();
+    var canSend=!!(cfg.url&&cfg.key)||!!STATE.demo;
+    h+='<div class="adm-sec jb-nudge"><div class="adm-sech">Nudge</div>'+
+       '<button class="ebtn primary" id="admJbRemind"'+(canSend?'':' disabled')+'>Remind to restock</button>'+
+       '<div class="adm-note">Sends '+esc(m?m.name:unit)+' a notification and an email asking them to go through their bag, listing what is short, missing or expired. Admins are copied (Bcc).'+(canSend?'':' Set the Renewal Webhook URL and Secret in Settings to turn this on.')+'</div></div>';
     $("admGenPane").innerHTML=h+'</div>';
     $("admJbBack").addEventListener("click",function(){ ADMJB.sel=null; admJbRender(); });
+    var rb=$("admJbRemind");
+    if(rb) rb.addEventListener("click",function(){
+      uiConfirm({ title:"Send a restock reminder?", text:(m?m.name:unit)+" gets a push notification and an email asking them to restock their jump bag. Admins are copied.", ok:"Send reminder", cancel:"Not now" })
+        .then(function(ok){
+          if(!ok) return;
+          if(STATE.demo){ toast("Demo \u2014 a reminder would go to "+(m?m.name:unit)+" now."); return; }
+          rb.disabled=true; rb.textContent="Sending\u2026";
+          srNotify("jumpbag_remind", null, {unit:String(unit), by:srMeName()+((STATE.me&&STATE.me.unit)?" ("+STATE.me.unit+")":"")}).then(function(sent){
+            rb.disabled=false; rb.textContent="Remind to restock";
+            toast(sent?"Reminder sent to "+(m?m.name:unit)+".":"Couldn\u2019t send the reminder.");
+          });
+        });
+    });
   }
   function admJbExport(){
     var ms=admJbMembers(), items=admJbItems();
@@ -4833,10 +4855,11 @@
   function srCanHandle(){ return !!(STATE.me && (STATE.me.admin || STATE.me.serviceUnit)); }
   function srMeName(){ return ((((STATE.me&&STATE.me.first)||"")+" "+((STATE.me&&STATE.me.last)||"")).trim()); }
   /* the script that sends the emails: same address + secret as "Send a report" */
-  function srNotify(action, id){
+  function srNotify(action, id, extra){
     var cfg=diagSettings(); if(!cfg.url || !cfg.key){ diagLog("restock-notify", "not set up"); return Promise.resolve(false); }
     var ctl=null; try{ ctl=new AbortController(); setTimeout(function(){ ctl.abort(); },30000); }catch(e){}
-    return fetch(cfg.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify({secret:cfg.key, action:action, id:id}), signal:ctl?ctl.signal:undefined })
+    var payload={secret:cfg.key, action:action, id:id}; for(var k in (extra||{})) payload[k]=extra[k];
+    return fetch(cfg.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(payload), signal:ctl?ctl.signal:undefined })
       .then(function(r){ return r.json(); }).then(function(j){ if(!(j&&j.ok)) diagLog("restock-notify-failed", String((j&&j.error)||"no reply")); return !!(j&&j.ok); })
       ["catch"](function(e){ diagLog("restock-notify-failed", String((e&&e.message)||e)); return false; });
   }
@@ -4849,7 +4872,9 @@
       .then(function(rows){ var saved=(Array.isArray(rows)&&rows[0])||row; diagLog("restock", row.source+" "+row.items.length+" item(s)"); if(saved.id) srNotify("restock", saved.id); return saved; });
   }
   function srWhen(iso){ var d=new Date(iso); return isNaN(d)?"":ambAgo(d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)); }
-  function srStatusLabel(st){ return st==="ordered"?"Ordered":st==="done"?"Done":"Open"; }
+  // "done" in the database reads as "In stock" everywhere: an admin bought it and it is
+  // waiting in the stock room. The member is told to come and get it.
+  function srStatusLabel(st){ return st==="ordered"?"Ordered":st==="done"?"In stock":"Open"; }
   function srTitle(r){ return r.source==="inventory" ? (String(r.ambulance||"Ambulance").replace(/ Ambulance - \d+$/,"")+" inventory") : "Jump bag"; }
 
   /* ---- the list for admins and service units ---- */
@@ -4868,7 +4893,7 @@
     var rows=SR.rows.filter(function(r){ return SR.filter==="all" || r.status===SR.filter; });
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Supply requests</h3><div class="u">'+open+' open · '+ordered+' ordered</div></div></div>'+
       '<div class="adm-help">What members asked to have restocked (from My Jump Bag) and what the ambulance inventory checks flagged for ordering. Tap one, then mark it Ordered when it is on the way and Done when it is in the bag or on the truck.</div>'+
-      '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","Done"],["all","All"]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
+      '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","In stock"],["all","All"]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
     if(!rows.length) h+='<div class="adm-empty">'+(SR.rows.length?"Nothing here.":"No requests yet.")+'</div>';
     else h+='<div class="amb-list">'+rows.map(function(r){
       var items=Array.isArray(r.items)?r.items:[];
@@ -4886,7 +4911,7 @@
       '<div class="adm-sec"><div class="adm-sech">Needed</div>'+items.map(function(x){ return '<div class="amb-dq"><div class="amb-dqt">'+esc(x.name)+(x.qty?' <small>(×'+esc(x.qty)+')</small>':'')+'</div><div class="amb-dqa'+(/missing/i.test(x.why)?" warn":"")+'">'+esc(x.why||"")+'</div></div>'; }).join("")+'</div>'+
       (r.note?'<div class="adm-sec"><div class="adm-sech">Note</div><div class="sr-note">'+esc(r.note)+'</div></div>':'')+
       (r.status_by?'<div class="adm-help">Marked '+esc(srStatusLabel(r.status).toLowerCase())+' by '+esc(r.status_by)+(r.status_at?' · '+esc(srWhen(r.status_at)):'')+'</div>':'')+
-      '<div class="sr-btns">'+(r.status==="open"?'<button class="ebtn primary" data-srset="ordered">Mark ordered</button>':'')+(r.status!=="done"?'<button class="ebtn'+(r.status==="ordered"?" primary":"")+'" data-srset="done">Mark done</button>':'')+(r.status!=="open"?'<button class="ebtn" data-srset="open">Reopen</button>':'')+'</div></div>';
+      '<div class="sr-btns">'+(r.status==="open"?'<button class="ebtn primary" data-srset="ordered">Mark ordered</button>':'')+(r.status!=="done"?'<button class="ebtn'+(r.status==="ordered"?" primary":"")+'" data-srset="done">Mark in stock</button>':'')+(r.status!=="open"?'<button class="ebtn" data-srset="open">Reopen</button>':'')+'</div></div>';
     host.innerHTML=h;
     $("srBackLink").addEventListener("click",function(){ SR.sel=null; srRenderInto(host, backFn); });
     host.querySelectorAll("[data-srset]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srset"), host, backFn); }); });
@@ -4898,7 +4923,7 @@
       SR.busy=false; if(!res.ok) throw new Error("status-"+res.status);
       Object.assign(r, patch); diagLog("restock-status", r.id+" "+status); srBadge();
       if(status!=="open") srNotify("restock_status", r.id);      /* tells the member */
-      toast(status==="ordered"?"Marked ordered — the member has been told.":status==="done"?"Marked done.":"Reopened.");
+      toast(status==="ordered"?"Marked ordered \u2014 the member has been told.":status==="done"?"Marked in stock \u2014 they\u2019ve been told to pick it up.":"Reopened.");
       srRenderInto(host, backFn);
     })["catch"](function(err){ SR.busy=false; toast(navigator.onLine===false?"No signal — try again when you’re back online.":"Couldn’t save that — try again."); diagLog("restock-status-failed", String((err&&err.message)||err)); });
   }
@@ -6353,12 +6378,13 @@
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
-    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder"]},
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location"],
+     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails."},
     {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
      note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
-                           "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6"};
+                           "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
@@ -10309,7 +10335,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.10.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.11.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10352,7 +10378,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.10.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.11.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11395,7 +11421,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.10.0".replace("Version ","");
+  var APP_VERSION="Version 1.11.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

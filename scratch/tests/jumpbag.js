@@ -173,6 +173,12 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   click(b.w,rowsEl[0]); await wait(200);
   check("detail: every item by pouch with status and the expiry in red", /Fried/.test(pane.querySelector("h3").textContent) && pane.querySelectorAll(".amb-dqa.ok").length===2 && pane.querySelectorAll(".amb-dqa.none").length===5 && /Expired 2 days ago/.test(pane.textContent));
   check("detail: bag last checked + reminder setting", /Bag last checked: .*weeks ago/.test(pane.querySelector(".jb-bagline").textContent) && /every 30 days/.test(pane.querySelector(".jb-bagline").textContent));
+  check("detail: a 'Remind to restock' button", !!b.d.getElementById("admJbRemind") && !b.d.getElementById("admJbRemind").disabled);
+  const scriptCalls=b.scriptCalls, before=scriptCalls.length; click(b.w,b.d.getElementById("admJbRemind")); await wait(150);
+  const okBtn=[...b.d.querySelectorAll(".adm-modal button")].find(x=>/Send reminder/.test(x.textContent)); check("remind asks first", !!okBtn);
+  if(okBtn){ click(b.w,okBtn); await wait(300); }
+  const rc=scriptCalls.slice(before).find(c=>c.action==="jumpbag_remind");
+  check("remind calls the script with the member's unit and who asked  "+JSON.stringify(rc), !!rc && rc.unit==="H-22" && /\(H-24\)/.test(rc.by) && rc.secret==="s3cret");
   click(b.w,b.d.getElementById("admJbBack")); await wait(100); click(b.w,b.d.getElementById("admJbExport")); await wait(300);
   const x=b.w.__xlsx, head=x&&x.wb.sheets[0].ws.aoa[0], r1=x&&x.wb.sheets[0].ws.aoa[1];
   check("spreadsheet: a row per member, counts, bag check, then a column per item with status and date", !!x && /jump-bags-\d{4}-\d{2}-\d{2}\.xlsx/.test(x.name) && head.slice(0,11).join("|")==="Member|Unit|Stocked|Short|Missing|Not checked|Expired|Expiring soon|Last updated|Bag last checked|Reminder every (days)" && head.indexOf("Oral glucose")>=0 && r1[0]==="Fried, Joseph" && r1[2]===2 && r1[6]===1 && /^\d{4}-\d{2}-\d{2}$/.test(r1[9]) && r1[10]===30 && /^Have \(exp /.test(r1[head.indexOf("Oral glucose")]));
@@ -186,7 +192,7 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   click(b.w,sp.querySelector('[data-srf="all"]')); await wait(50); srRows=[...sp.querySelectorAll(".amb-row")];
   check("'All' shows the ordered one too, with its status", srRows.length===2 && /A1 inventory · Israel Leibowitz/.test(srRows[1].textContent) && /Ordered/.test(srRows[1].querySelector(".sr-st").textContent));
   click(b.w,srRows[0]); await wait(100);
-  check("detail lists the items and offers Mark ordered / Mark done", /Oral glucose/.test(sp.textContent) && !!sp.querySelector('[data-srset="ordered"]') && !!sp.querySelector('[data-srset="done"]'));
+  check("detail lists the items and offers Mark ordered / Mark in stock", /Oral glucose/.test(sp.textContent) && !!sp.querySelector('[data-srset="ordered"]') && /Mark in stock/.test((sp.querySelector('[data-srset="done"]')||{}).textContent||""));
   b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-srset="ordered"]')); await wait(300);
   const pw=b.writes.find(x=>x.method==="PATCH"&&/^supply_requests\?id=eq\.7/.test(x.path));
   check("Mark ordered saves the status with who did it and tells the member", !!pw && pw.body.status==="ordered" && /Eber, Joseph|Joseph Eber/.test(pw.body.status_by) && /\(H-24\)/.test(pw.body.status_by) && b.scriptCalls.length===1 && b.scriptCalls[0].action==="restock_status" && b.scriptCalls[0].id===7 && /Ordered/.test(sp.querySelector(".sr-st.big").textContent));

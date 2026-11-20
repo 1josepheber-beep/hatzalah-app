@@ -63,7 +63,12 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **Live: 1.10.0** (Nov 12, 2026). 1.8.0 made the demo fully functional on sample data;
+- **Live: 1.11.0** (Nov 19, 2026): supply-request status "Done" reads **"In stock"**
+  everywhere (button "Mark in stock", filter chip, detail); a **Remind to restock** button
+  at the bottom of Admin → Jump bags → member (asks first, calls the script's
+  `jumpbag_remind`; in the demo it only shows a toast); the **Pickup Location** setting in
+  the Organisation card (default "the stock room", row 54 in `settings`).
+- **1.10.0** (Nov 12, 2026). 1.8.0 made the demo fully functional on sample data;
   1.8.1 added Settings → Analytics tracking, the Logo upload card and the demo "view as
   member" switch (`localStorage.hoh_demo_as = "H-101"`); 1.9.0 added Settings → Standings
   and made the My Standing preview read from them; 1.10.0 added a **"How to renew" note
