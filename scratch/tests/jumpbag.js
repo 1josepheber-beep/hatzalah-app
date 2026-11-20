@@ -136,6 +136,16 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   a=boot({status:saved,bags:savedBags,reqs:savedReqs}); await wait(3200); await openBag(a);
   const b2=a.d.getElementById("jbBody");
   check("once a handler marks it ordered, the item shows 'Ordered'", /Ordered today/.test(row(a.d,4).textContent) && row(a.d,4).querySelector(".jb-reqline").classList.contains("ordered"));
+  { // per item: the admin marked this one item in stock -> the member is told to pick it up
+    const inStock=a.rows.supply_requests.map(s=>{ const c=Object.assign({},s,{status:"done"}); c.items=c.items.map(x=>Object.assign({},x,{status:"done",status_by:"David Fishman (H-1)",status_at:new Date().toISOString()})); return c; });
+    const a3=boot({status:saved,bags:savedBags,reqs:inStock}); await wait(3200); await openBag(a3);
+    check("an item marked In stock shows 'In stock — pick it up from the stock room' on the member's bag", /In stock \u2014 pick it up from the stock room/.test(row(a3.d,4).textContent) && row(a3.d,4).querySelector(".jb-reqline").classList.contains("done"));
+    click(a3.w,a3.d.getElementById("jbReqBtn")); await wait(100);
+    check("…and the request form leaves it unticked, saying it is in stock", !a3.d.querySelector('#jbBody .jb-reqit input[data-rid="4"]').checked && /in stock \u2014 pick it up/.test(a3.d.querySelector("#jbBody .jb-reqit").textContent));
+    const touched=saved.map(s=>s.item_id===4?Object.assign({},s,{updated_at:new Date(Date.now()+60000).toISOString()}):s);
+    const a4=boot({status:touched,bags:savedBags,reqs:inStock}); await wait(3200); await openBag(a4);
+    check("once the member touches that item again, the old in-stock note is gone (a fresh shortage)", !row(a4.d,4).querySelector(".jb-reqline"));
+  }
   check("the bag check date and reminder setting come back too", /Last checked: today/.test(b2.querySelector(".jb-bag").textContent) && a.d.getElementById("jbRemind").value==="60");
   check("a bag overdue for its reminder shows the amber 'time to go through your bag' line", (()=>{ return true; })());
   check("saved statuses and dates come back on the next open  ("+b2.querySelector(".jb-sumtop b").textContent+")", /3 of 7 stocked/.test(b2.textContent) && row(a.d,3).querySelector("input[type=date]").value===plus(10) && row(a.d,4).classList.contains("missing"));
@@ -196,6 +206,20 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-srset="ordered"]')); await wait(300);
   const pw=b.writes.find(x=>x.method==="PATCH"&&/^supply_requests\?id=eq\.7/.test(x.path));
   check("Mark ordered saves the status with who did it and tells the member", !!pw && pw.body.status==="ordered" && /Eber, Joseph|Joseph Eber/.test(pw.body.status_by) && /\(H-24\)/.test(pw.body.status_by) && b.scriptCalls.length===1 && b.scriptCalls[0].action==="restock_status" && b.scriptCalls[0].id===7 && /Ordered/.test(sp.querySelector(".sr-st.big").textContent));
+  // ---- per-item marking on a request with several items (the A1 inventory one, id 6)
+  click(b.w,sp.querySelector("#srBackLink")); await wait(100); click(b.w,sp.querySelector('[data-srf="all"]')); await wait(50);
+  click(b.w,[...sp.querySelectorAll(".amb-row")].find(r=>/A1 inventory/.test(r.textContent))); await wait(100);
+  check("a request with 2 items gets its own Ordered / In stock buttons per line, big buttons read 'all'", sp.querySelectorAll(".sr-it").length===2 && sp.querySelectorAll('[data-sritem="0"][data-srto="done"]').length===1 && /Mark all in stock/.test(sp.querySelector('[data-srset="done"]').textContent) && /Reopen all/.test(sp.querySelector('[data-srset="open"]').textContent) && !sp.querySelector('[data-srset="ordered"]'));
+  check("old rows (no per-item status) show each line with the request's status (Ordered)", [...sp.querySelectorAll(".sr-it .sr-st")].every(x=>/Ordered/.test(x.textContent)));
+  b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-sritem="1"][data-srto="done"]')); await wait(300);
+  const row6=b.rows.supply_requests.find(x=>x.id===6);
+  check("In stock on the Tourniquet line: that item done, the 4x4s stay ordered (now written explicitly), request stays Ordered", row6.items[1].status==="done" && /\(H-24\)/.test(row6.items[1].status_by) && row6.items[0].status==="ordered" && /David Fishman/.test(row6.items[0].status_by) && row6.status==="ordered");
+  check("…one call to the script naming just that item  "+JSON.stringify(b.scriptCalls.map(c=>[c.action,c.id,c.items])), b.scriptCalls.length===1 && b.scriptCalls[0].action==="restock_status" && b.scriptCalls[0].id===6 && JSON.stringify(b.scriptCalls[0].items)==="[1]");
+  check("the screen shows the mix (1 in stock · 1 ordered), the done line struck through with In stock lit", /1 in stock \u00b7 1 ordered/.test(sp.querySelector(".sr-mix").textContent) && sp.querySelector('.sr-it[data-sri="1"]').classList.contains("done") && sp.querySelector('.sr-it[data-sri="1"] .sr-ib.done').classList.contains("on") && !sp.querySelector('.sr-it[data-sri="1"] [data-srto="ordered"]'));
+  b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-srset="done"]')); await wait(300);
+  check("'Mark all in stock' only touches what is left: the 4x4s, request becomes In stock, script told about item 0 only", row6.items[0].status==="done" && row6.status==="done" && b.scriptCalls.length===1 && JSON.stringify(b.scriptCalls[0].items)==="[0]" && /In stock/.test(sp.querySelector(".sr-st.big").textContent) && !sp.querySelector(".sr-mix"));
+  b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-sritem="0"][data-srto="open"]')); await wait(300);
+  check("Reopen on one line: that item open, request drops back to Ordered (one still in stock), nobody emailed", row6.items[0].status==="open" && row6.status==="ordered" && b.scriptCalls.length===0 && /1 in stock \u00b7 1 open/.test(sp.querySelector(".sr-mix").textContent));
   click(b.w,secBtn(b.d,"Jump bag items")); await wait(500);
   const pane2=b.d.getElementById("admGenPane");
   check("Jump bag items is an editable list (Item, Pouch, Quantity, Has an expiration date, Active) with the 8 rows", /Gloves \(box\)/.test(pane2.textContent) && /Old item/.test(pane2.textContent) && /Pouch/.test(pane2.textContent));

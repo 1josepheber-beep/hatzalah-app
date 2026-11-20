@@ -800,8 +800,9 @@ function doPost(e){
       out.sent = notifyRestock(body.id);
       out.ok = true;
     } else if (String(body.action || "") === "restock_status") {
-      // an admin / service unit marked a request Ordered or In stock: tell the member
-      out.sent = notifyRestockStatus(body.id);
+      // an admin / service unit marked a request (or some of its items — body.items holds
+      // their positions) Ordered or In stock: tell the member about those items
+      out.sent = notifyRestockStatus(body.id, body.items);
       out.ok = true;
     } else if (String(body.action || "") === "jumpbag_remind") {
       // an admin tapped Remind on a member's jump bag: push + email to that member, admins Bcc
@@ -991,10 +992,21 @@ function restockHandlers(roster){
     return adm === "x" || adm === "yes" || adm === "true" || svc === "x" || svc === "yes" || svc === "true" || typ.indexOf("service unit") >= 0;
   });
 }
-function restockItemsText(req){
-  var items = []; try { items = JSON.parse(JSON.stringify(req.items || [])); } catch (e) {}
-  if (!Array.isArray(items)) items = [];
+function restockItemsText(req, idxs){
+  var items = restockItems(req);
+  if (Array.isArray(idxs)) items = items.filter(function(x, i){ return idxs.indexOf(i) >= 0; });
   return items.map(function(x){ return "\u2022 " + String(x.name || "") + (x.qty ? " (\u00d7" + x.qty + ")" : "") + (x.why ? " \u2014 " + String(x.why) : ""); });
+}
+function restockItems(req){
+  var items = []; try { items = JSON.parse(JSON.stringify(req.items || [])); } catch (e) {}
+  return Array.isArray(items) ? items : [];
+}
+/** An item's own status; items saved before per-item marking existed take the request's. */
+function restockItemStatus(x, req){
+  var s = String((x && x.status) || "");
+  if (s === "ordered" || s === "done" || s === "open") return s;
+  s = String((req && req.status) || "");
+  return s === "ordered" || s === "done" ? s : "open";
 }
 function restockTitle(req){
   var n = Array.isArray(req.items) ? req.items.length : 0;
@@ -1029,10 +1041,18 @@ function notifyRestock(id){
   return mails.length + pushed;
 }
 /** The member who asked is told when their request is marked Ordered or Done. */
-function notifyRestockStatus(id){
+function notifyRestockStatus(id, idxs){
   id = parseInt(id, 10); if (!id) return 0;
   var rows = sbGet("supply_requests", "select=*&id=eq." + id); var req = rows && rows[0];
-  if (!req || String(req.status) === "open") return 0;
+  if (!req) return 0;
+  var all = restockItems(req);
+  // Which items this tap covered. Admins can mark each line of a request on its own,
+  // so one tap = one email about those items only. Older apps send no list: all items.
+  idxs = Array.isArray(idxs) ? idxs.map(function(i){ return parseInt(i, 10); }).filter(function(i){ return i >= 0 && i < all.length; }) : null;
+  if (idxs && !idxs.length) return 0;
+  var sel = idxs || all.map(function(x, i){ return i; });
+  var st = idxs ? restockItemStatus(all[idxs[0]], req) : (String(req.status) === "ordered" ? "ordered" : String(req.status) === "done" ? "done" : "open");
+  if (st === "open") return 0;
   var roster = sbAll("roster"), me = null;
   roster.forEach(function(r){ if (normUnit(r.unit) === normUnit(req.unit)) me = r; });
   if (!me) return 0;
@@ -1040,30 +1060,35 @@ function notifyRestockStatus(id){
   // "In stock" (stored as "done") means an admin bought it and it is waiting in the
   // stock room. Nothing is finished until someone fetches it, so the wording says so.
   var pickup = String(getSet(S, "pickup location", "the stock room")).trim() || "the stock room";
-  var st = String(req.status) === "ordered" ? "ordered" : "done";
+  var pickupCap = pickup.charAt(0).toUpperCase() + pickup.slice(1); // fact box reads "The stock room"
   var inv = String(req.source) === "inventory";
   var amb = String(req.ambulance || "the ambulance");
-  var by = req.status_by ? " by " + String(req.status_by) : "";
-  var restockedBy = req.status_by ? ", restocked by " + String(req.status_by) : "";
+  var marker = (idxs && all[idxs[0]] && all[idxs[0]].status_by) || req.status_by || "";
+  var by = marker ? " by " + marker : "";
+  var restockedBy = marker ? ", restocked by " + marker : "";
   var first = String(me.first_name || "").trim() || "there";
-  var items = restockItemsText(req).join("\n");
+  var items = restockItemsText(req, sel).join("\n");
+  var one = sel.length === 1, part = sel.length < all.length;
+  // what is still outstanding on the same request, so the member knows what to expect
+  var rest = all.map(function(x, i){ return i; }).filter(function(i){ return sel.indexOf(i) < 0 && restockItemStatus(all[i], req) !== "done"; });
+  var restText = rest.length ? "\n\nStill to come from this request:\n" + rest.map(function(i){ return restockItemsText(req, [i])[0] + (restockItemStatus(all[i], req) === "ordered" ? " (ordered)" : " (not yet ordered)"); }).join("\n") : "";
   var subject, body, brandSt, bcc = "";
   if (st === "ordered") {
-    subject = "Your restock request was marked ordered";
-    body = "Hi " + first + ",\n\nGood news \u2014 it has been ordered" + by + ":\n\n" + items + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    subject = part ? "Ordered: " + (one ? String(all[sel[0]].name || "an item") : sel.length + " of your items") : "Your restock request was marked ordered";
+    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "this has" : "these have") + " been ordered" + by + ":\n\n" + items + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
     brandSt = { kind: "Supply request", strip: "Ordered", stripColor: "green" };
   } else if (inv) {
     // the person who did the ambulance check restocks the rig; the admins are copied
-    subject = "Back in stock: items for " + amb;
-    body = "Hi " + first + ",\n\nThe items from your " + amb + " inventory check are back in stock" + restockedBy + ":\n\n" + items +
-           "\n\nPlease pick them up from " + pickup + " and restock the ambulance.\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
-    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["For", amb], ["Pick up from", pickup]] };
+    subject = "Back in stock: " + (one ? String(all[sel[0]].name || "an item") : "items") + " for " + amb;
+    body = "Hi " + first + ",\n\n" + (one ? "An item" : part ? "Some of the items" : "The items") + " from your " + amb + " inventory check " + (one ? "is" : "are") + " back in stock" + restockedBy + ":\n\n" + items +
+           "\n\nPlease pick " + (one ? "it" : "them") + " up from " + pickup + " and restock the ambulance." + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["For", amb], ["Pick up from", pickupCap]] };
     bcc = adminRecipients();
   } else {
-    subject = "Back in stock: your jump bag items";
-    body = "Hi " + first + ",\n\nGood news \u2014 the items you asked for are back in stock" + restockedBy + ":\n\n" + items +
-           "\n\nPlease pick them up from " + pickup + ", then open the app \u2192 My Jump Bag and mark them stocked so the reminders stop.\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
-    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["Pick up from", pickup], ["Restocked by", String(req.status_by || "an admin")]] };
+    subject = "Back in stock: " + (one ? String(all[sel[0]].name || "your jump bag item") : "your jump bag items");
+    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "an item you asked for is" : part ? "some of the items you asked for are" : "the items you asked for are") + " back in stock" + restockedBy + ":\n\n" + items +
+           "\n\nPlease pick " + (one ? "it" : "them") + " up from " + pickup + ", then open the app \u2192 My Jump Bag and mark " + (one ? "it" : "them") + " stocked so the reminders stop." + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["Pick up from", pickupCap], ["Restocked by", marker || "an admin"]] };
   }
   var to = [String(me.email || "").trim(), String(me.personal_email || "").trim()].filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); });
   to = to.filter(function(e, i){ return to.indexOf(e) === i; });
@@ -1072,7 +1097,7 @@ function notifyRestockStatus(id){
   var n = 0;
   if (to.length) { try { mailBoth(to.join(", "), subject, body, bcc, brandSt); n++; } catch (e) { Logger.log("restock status mail failed: " + e); } }
   var pushText = (st === "ordered" ? "Ordered" + by : "Back in stock \u2014 pick up from " + pickup + (inv ? " and restock the ambulance" : "")) + ". " +
-                 restockItemsText(req).map(function(l){ return l.replace(/^\u2022 /, ""); }).join(", ");
+                 restockItemsText(req, sel).map(function(l){ return l.replace(/^\u2022 /, ""); }).join(", ");
   if (pushUnit(String(me.unit), subject, pushText.slice(0, 180), "jumpbag")) n++;
   return n;
 }

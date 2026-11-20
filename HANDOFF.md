@@ -63,7 +63,21 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **Live: 1.11.0** (Nov 19, 2026): supply-request status "Done" reads **"In stock"**
+- **Live: 1.12.0** (Nov 19, 2026): **per-item status on supply requests.** In the admin
+  detail every line of a request with 2+ items has its own Ordered · In stock · Reopen
+  buttons; the big buttons became "Mark all ordered / Mark all in stock / Reopen all" and
+  act only on the items not there yet. Each item carries `status`, `status_by`,
+  `status_at` inside the `items` jsonb (no schema change); items saved before this have no
+  status and inherit the request's (`srItemSt`); the first per-item tap writes an explicit
+  status on every item. The request's own `status` is derived (`srDerive`: In stock only
+  when every item is; Ordered when anything is ordered or in stock; else Open), so the
+  filters, badge and older script paths keep working. The list chip shows the mix
+  ("1 in stock · 1 ordered"). Every tap sends `restock_status` with `items:[indexes]`; the
+  script emails/pushes the member about those items only (one email per tap, as Joseph
+  asked). The member's My Jump Bag line now reads per item: "Requested", "Ordered" or
+  "✅ In stock — pick it up from <Pickup Location>" (green); an in-stock note disappears once
+  the member touches that item again (their `updated_at` newer than the item's `status_at`).
+- **1.11.0** (Nov 19, 2026): supply-request status "Done" reads **"In stock"**
   everywhere (button "Mark in stock", filter chip, detail); a **Remind to restock** button
   at the bottom of Admin → Jump bags → member (asks first, calls the script's
   `jumpbag_remind`; in the demo it only shows a toast); the **Pickup Location** setting in
@@ -89,6 +103,12 @@ that makes it wrong.
   ambulance"); new doPost action `jumpbag_remind` (`remindJumpBag(unit, by)`) for the
   admin's Remind-to-restock button; `sendJumpBagTestToMe()` sends a sample jump bag email
   to yourself. Previews: `node preview-restock.js` in scratch/email.
+  **Version 54 (Nov 19, 2026):** `restock_status` takes `items` (positions in the request's
+  `items` array) → `notifyRestockStatus(id, idxs)` mails/pushes about those items only, with
+  the status read from the items themselves (`restockItemStatus`), subject naming the item
+  ("Back in stock: Lancets", "Ordered: Test Strips"), and a "Still to come from this
+  request" list of the other items (ordered / not yet ordered). No list = all items, as
+  before. The "Pick up from" fact box capitalises the place ("The stock room").
 - `logo-email.png` is the shield cut out of the 512 icon (transparent); `logo.png` has a
   white background baked in and is still what the app itself uses.
 - **Feature catalog PDF**: generated from the demo by `scratch/catalog/` (see below).
@@ -140,6 +160,7 @@ that makes it wrong.
 ```
 cd scratch/tests && npm install && npm test        # all harnesses (jsdom; ~2 min)
 cd scratch/tests && npm run catalog                # screenshots → PDF in scratch/catalog/out/
+cd scratch/catalog && node preview-peritem.js      # per-item supply request screens → out/preview/
 ```
 
 `scratch/demo/build_demo_data.py` rebuilds `demo/demo-data.js` from the SQL in `db/`.

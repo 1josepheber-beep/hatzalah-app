@@ -26,8 +26,15 @@ api.notifyRestockStatus(11);
 tables.supply_requests=[{id:12,unit:"H-42",name:"Israel Leibowitz",source:"inventory",ambulance:"A1 Ambulance - 1",items:[{name:"4x4 sterile",qty:"10",why:"Only 12 left"}],status:"done",status_by:"David Fishman (H-1)"}];
 api.notifyRestockStatus(12);
 api.remindJumpBag("H-24","David Fishman (H-1)");
+// per item: a 3-item request where only the Lancets just came in (one ordered, one still open)
+tables.supply_requests=[{id:13,unit:"H-24",name:"Joseph Eber",source:"jumpbag",ambulance:"",status:"ordered",status_by:"David Fishman (H-1)",items:[
+  {name:"Test Strips",qty:"10",why:"Missing",status:"ordered",status_by:"David Fishman (H-1)",status_at:new Date(Date.now()-864e5).toISOString()},
+  {name:"Lancets",qty:"10",why:"Short",status:"done",status_by:"Israel Leibowitz (H-42)",status_at:new Date().toISOString()},
+  {name:"Alcohol prep pads",qty:"1 box",why:"Missing",status:"open"}]}];
+api.notifyRestockStatus(13,[1]);
+api.notifyRestockStatus(13,[0]); // (ordered yesterday) the email the member got then
 const APP="https://houstonhatzalahapp.org"; const OUT=path.join(__dirname,"out"); fs.mkdirSync(OUT,{recursive:true});
-const names=["instock-jumpbag","instock-ambulance","remind"]; const b64=fs.readFileSync(path.join(__dirname,"..","..","logo-email.png")).toString("base64");
+const names=["instock-jumpbag","instock-ambulance","remind","peritem-instock","peritem-ordered"]; const b64=fs.readFileSync(path.join(__dirname,"..","..","logo-email.png")).toString("base64");
 (async()=>{ const b=await chromium.launch();
   for(let i=0;i<sent.length;i++){ const m=sent[i]; const html="<!DOCTYPE html><html><head><meta charset=utf-8></head><body style='margin:0;background:#eef1f5'>"+m.htmlBody.split(APP+"/logo-email.png").join("data:image/png;base64,"+b64)+"</body></html>";
     fs.writeFileSync(path.join(OUT,names[i]+".txt"),"To: "+m.to+"\nBcc: "+(m.bcc||"")+"\nSubject: "+m.subject+"\n\n"+m.body);

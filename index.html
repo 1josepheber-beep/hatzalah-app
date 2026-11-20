@@ -871,7 +871,7 @@
   .jb-reqit{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-top:1px solid #f1d28a;font-size:13.5px;color:var(--ink)} .jb-reqit input{margin-top:3px;width:18px;height:18px} .jb-reqit i{font-style:normal;color:#8a5a00;font-size:12px;font-weight:700}
   .jb-reqnote-in{width:100%;margin-top:8px;font-size:14px;padding:8px 11px;box-sizing:border-box}
   .sr-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px} .sr-btns .ebtn{flex:1 1 140px;padding:11px;font-size:14px;border-radius:11px}
-  .jb-reqline{font-size:11.5px;font-weight:800;color:#8a5a00;margin-top:3px} .jb-reqline.ordered{color:#1f6b3a}
+  .jb-reqline{font-size:11.5px;font-weight:800;color:#8a5a00;margin-top:3px} .jb-reqline.ordered{color:#1d4e9a} .jb-reqline.done{color:#1f6b3a}
   .amb-ord{flex:0 0 auto;margin-top:6px;border:1.5px solid #e8a33d;background:#fff;color:#8a5a00;border-radius:9px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer}
   .amb-ord.on{background:#e8a33d;color:#231a00}
   .amb-restock{text-align:left;border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:13.5px;font-weight:700;background:#eef2f7;color:var(--navy)}
@@ -880,6 +880,14 @@
   .amb-srcard b{font-size:14.5px;color:var(--ink)} .amb-srcard span{flex:1;font-size:12.5px;font-weight:700;color:var(--mut)} .amb-srcard .chev{font-style:normal;color:#9aa8bd;font-size:20px;font-weight:700}
   .sr-st{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;border-radius:6px;padding:3px 7px;white-space:nowrap;background:#fff3d6;color:#8a5a00}
   .sr-st.ordered{background:#e3edfb;color:#1d4e9a} .sr-st.done{background:#e5f3ea;color:#1f6b3a} .sr-st.big{font-size:12px;padding:5px 10px;margin-left:auto}
+  /* one request, several items: each line carries its own status and buttons */
+  .sr-it{border-top:1px solid var(--line);padding:8px 0} .sr-it .amb-dq{border-top:0;padding:0}
+  .sr-it.done .amb-dqt{color:#1f6b3a} .sr-it.done .amb-dqa{color:#1f6b3a;text-decoration:line-through;opacity:.75}
+  .sr-itrow{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:7px}
+  .sr-itby{font-size:11.5px;color:#9aa8bd;font-weight:700;margin-top:5px;text-align:right}
+  .sr-ib{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 10px;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}
+  .sr-ib.ordered.on{background:#1d4e9a;border-color:#1d4e9a;color:#fff} .sr-ib.done.on{background:#1f7a37;border-color:#1f7a37;color:#fff} .sr-ib.on{pointer-events:none}
+  .sr-mix{font-size:12px;color:var(--mut);font-weight:700;margin:-4px 0 8px}
   .sr-note{font-size:14px;color:var(--ink);white-space:pre-wrap;padding:6px 0}
   @keyframes hohflash{0%{background:#fff3b0}100%{background:transparent}}
   .jb-row.flash, .amb-q.flash{animation:hohflash 1.8s ease-out;border-radius:8px}
@@ -1734,7 +1742,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.11.0</div>
+  <div class="ver-line">Version 1.12.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1856,7 +1864,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.11.0</div>
+  <div class="ver-line">Version 1.12.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4634,7 +4642,7 @@
     var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+(JB.pending[id]?" pend":"");
     var rq=(s.status==="short"||s.status==="missing")?jbReqFor(id):null;
     return '<div class="'+cls+'" data-id="'+id+'"><div class="jb-l"><div class="jb-n">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <b>×'+esc(r_(r,"Qty"))+'</b>':'')+'</div>'+
-      (rq?'<div class="jb-reqline '+esc(rq.status)+'">'+(rq.status==="ordered"?"\uD83D\uDED2 Ordered"+(rq.status_at?" "+esc(srWhen(rq.status_at)):""):"\uD83D\uDED2 Requested "+esc(srWhen(rq.created_at)))+'</div>':'')+
+      (rq?'<div class="jb-reqline '+esc(rq.st)+'">'+(rq.st==="done"?"\u2705 In stock \u2014 pick it up from "+esc(getSetting("Pickup Location","the stock room"))+(rq.at?" ("+esc(srWhen(rq.at))+")":""):rq.st==="ordered"?"\uD83D\uDED2 Ordered"+(rq.at?" "+esc(srWhen(rq.at)):""):"\uD83D\uDED2 Requested "+esc(srWhen(rq.r.created_at)))+'</div>':'')+
       (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span>':'')+'</div>'
                :'<button class="jb-addexp" data-id="'+id+'">+ expiration date</button>')+'</div>'+
       '<div class="jb-st"><button class="jb-b have'+(s.status==="have"?" on":"")+'" data-id="'+id+'" data-s="have">✓ Have</button><button class="jb-b short'+(s.status==="short"?" on":"")+'" data-id="'+id+'" data-s="short">Short</button><button class="jb-b missing'+(s.status==="missing"?" on":"")+'" data-id="'+id+'" data-s="missing">Missing</button></div></div>';
@@ -4683,9 +4691,15 @@
     return '<button class="jb-pill '+cls+(JB.jumpOpen===kind?" on":"")+'" data-jump="'+kind+'">'+label+' <span class="jb-caret">\u25BE</span></button>';
   }
   /* the latest request that still covers this item (open or ordered) */
+  /* the newest request that still covers this item: {r, st, at}. st is that item's own
+     status (open / ordered / done). An item already in stock ("done") only counts until
+     the member touches the item again — after that it is a new shortage. */
   function jbReqFor(id){
-    for(var i=0;i<JB.reqs.length;i++){ var r=JB.reqs[i]; if(r.status==="done") continue;
-      var items=Array.isArray(r.items)?r.items:[]; if(items.some(function(x){ return String(x.item_id)===String(id); })) return r; }
+    for(var i=0;i<JB.reqs.length;i++){ var r=JB.reqs[i], items=Array.isArray(r.items)?r.items:[];
+      for(var j=0;j<items.length;j++){ var x=items[j]; if(String(x.item_id)!==String(id)) continue;
+        var st=srItemSt(x,r), at=x.status_at||r.status_at||r.created_at;
+        if(st==="done"){ var mine=(JB.st[id]||{}).updated_at; if(mine && at && new Date(mine)>new Date(at)) continue; }
+        return {r:r, st:st, at:at}; } }
     return null;
   }
   function jbReqHTML(c){
@@ -4693,7 +4707,7 @@
     var waiting=need.filter(function(x){ return !!jbReqFor(x.r.__id); }).length;
     if(!JB.reqOpen) return '<button class="ebtn jb-reqbtn" id="jbReqBtn">\uD83D\uDED2 '+(waiting===need.length?"Request again":"Request restock")+' ('+need.length+')</button>'+(waiting?'<div class="jb-reqnote">'+waiting+' of these '+(waiting===1?"is":"are")+' already requested \u2014 see each item.</div>':'');
     return '<div class="jb-req"><b>Ask the admins and service units to restock:</b>'+
-      need.map(function(x){ var rq=jbReqFor(x.r.__id); return '<label class="jb-reqit"><input type="checkbox" data-rid="'+x.r.__id+'"'+(rq?'':' checked')+'> <span><b>'+esc(r_(x.r,"Item"))+'</b> '+esc(x.why)+(rq?' <i>\u00b7 requested '+esc(srWhen(rq.created_at))+(rq.status==="ordered"?", ordered":"")+'</i>':'')+'</span></label>'; }).join("")+
+      need.map(function(x){ var rq=jbReqFor(x.r.__id); return '<label class="jb-reqit"><input type="checkbox" data-rid="'+x.r.__id+'"'+(rq?'':' checked')+'> <span><b>'+esc(r_(x.r,"Item"))+'</b> '+esc(x.why)+(rq?' <i>\u00b7 '+(rq.st==="done"?"in stock \u2014 pick it up":rq.st==="ordered"?"ordered":"requested")+' '+esc(srWhen(rq.at))+'</i>':'')+'</span></label>'; }).join("")+
       '<textarea class="amb-text jb-reqnote-in" id="jbReqNote" rows="2" placeholder="Anything they should know? (optional)"></textarea>'+
       '<div class="sr-btns"><button class="ebtn primary" id="jbReqSend"'+(JB.reqBusy?" disabled":"")+'>'+(JB.reqBusy?"Sending\u2026":"Send request")+'</button><button class="ebtn" id="jbReqCancel">Cancel</button></div></div>';
   }
@@ -4875,6 +4889,14 @@
   // "done" in the database reads as "In stock" everywhere: an admin bought it and it is
   // waiting in the stock room. The member is told to come and get it.
   function srStatusLabel(st){ return st==="ordered"?"Ordered":st==="done"?"In stock":"Open"; }
+  /* Each item in a request carries its own status (ordered / done / open) so an admin
+     can mark the glucose ordered today and the pads in stock tomorrow. Items saved
+     before this existed have none and take the request's status. The request's own
+     status is worked out from the items: In stock only when every item is. */
+  function srItemSt(x, r){ var s=x&&x.status; if(s==="ordered"||s==="done"||s==="open") return s; s=r&&r.status; return s==="ordered"||s==="done"?s:"open"; }
+  function srCounts(r){ var c={open:0,ordered:0,done:0,n:0}; (Array.isArray(r.items)?r.items:[]).forEach(function(x){ c[srItemSt(x,r)]++; c.n++; }); return c; }
+  function srDerive(items){ var d=0,o=0; items.forEach(function(x){ if(x.status==="done") d++; else if(x.status==="ordered") o++; }); return items.length&&d===items.length?"done":(d||o)?"ordered":"open"; }
+  function srMixText(r){ var c=srCounts(r); if(c.n<2 || (c.open===c.n||c.ordered===c.n||c.done===c.n)) return ""; var p=[]; if(c.done) p.push(c.done+" in stock"); if(c.ordered) p.push(c.ordered+" ordered"); if(c.open) p.push(c.open+" open"); return p.join(" · "); }
   function srTitle(r){ return r.source==="inventory" ? (String(r.ambulance||"Ambulance").replace(/ Ambulance - \d+$/,"")+" inventory") : "Jump bag"; }
 
   /* ---- the list for admins and service units ---- */
@@ -4898,32 +4920,63 @@
     else h+='<div class="amb-list">'+rows.map(function(r){
       var items=Array.isArray(r.items)?r.items:[];
       return '<button class="amb-row" data-srid="'+r.id+'"><div class="amb-rl"><b>'+esc(srTitle(r))+' · '+esc(r.name||r.unit)+'</b><span>'+esc(r.unit)+' · '+items.length+' item'+(items.length===1?"":"s")+' · '+esc(srWhen(r.created_at))+(items.length?' · '+esc(items.slice(0,3).map(function(x){ return x.name; }).join(", "))+(items.length>3?'…':''):'')+'</span></div>'+
-        '<span class="sr-st '+esc(r.status)+'">'+srStatusLabel(r.status)+'</span><span class="chev">›</span></button>';
+        '<span class="sr-st '+esc(r.status)+'">'+esc(srMixText(r)||srStatusLabel(r.status))+'</span><span class="chev">›</span></button>';
     }).join("")+'</div>';
     host.innerHTML=h+'</div>';
     host.querySelectorAll("[data-srf]").forEach(function(el){ el.addEventListener("click",function(){ SR.filter=el.getAttribute("data-srf"); srRenderInto(host, backFn); }); });
     host.querySelectorAll("[data-srid]").forEach(function(el){ el.addEventListener("click",function(){ SR.sel=parseInt(el.getAttribute("data-srid"),10); srRenderInto(host, backFn); }); });
   }
   function srRenderDetail(host, r, backFn){
-    var items=Array.isArray(r.items)?r.items:[];
+    var items=Array.isArray(r.items)?r.items:[], many=items.length>1, c=srCounts(r), mix=srMixText(r);
+    function itemHTML(x,i){
+      var st=srItemSt(x,r), by=x.status_by||(x.status?"":r.status_by)||"", at=x.status_at||(x.status?"":r.status_at)||"";
+      return '<div class="sr-it '+st+'" data-sri="'+i+'"><div class="amb-dq"><div class="amb-dqt">'+esc(x.name)+(x.qty?' <small>(×'+esc(x.qty)+')</small>':'')+'</div><div class="amb-dqa'+(/missing/i.test(x.why)?" warn":"")+'">'+esc(x.why||"")+'</div></div>'+
+        (many?'<div class="sr-itrow">'+
+          (st!=="done"?'<button class="sr-ib ordered'+(st==="ordered"?" on":"")+'" data-sritem="'+i+'" data-srto="ordered">Ordered</button>':'')+
+          '<button class="sr-ib done'+(st==="done"?" on":"")+'" data-sritem="'+i+'" data-srto="done">In stock</button>'+
+          (st!=="open"?'<button class="sr-ib" data-sritem="'+i+'" data-srto="open">Reopen</button>':'')+'</div>'+
+          (st!=="open"&&by?'<div class="sr-itby">Marked '+srStatusLabel(st).toLowerCase()+' by '+esc(by)+(at?' \u00b7 '+esc(srWhen(at)):'')+'</div>':''):'')+'</div>';
+    }
     var h='<div class="adm-body"><button class="adm-backlink" id="srBackLink">‹ All requests</button>'+
       '<div class="adm-mh"><div class="t"><h3>'+esc(srTitle(r))+'</h3><div class="u">'+esc(r.name||"")+' ('+esc(r.unit)+') · '+esc(new Date(r.created_at).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</div></div><span class="sr-st big '+esc(r.status)+'">'+srStatusLabel(r.status)+'</span></div>'+
-      '<div class="adm-sec"><div class="adm-sech">Needed</div>'+items.map(function(x){ return '<div class="amb-dq"><div class="amb-dqt">'+esc(x.name)+(x.qty?' <small>(×'+esc(x.qty)+')</small>':'')+'</div><div class="amb-dqa'+(/missing/i.test(x.why)?" warn":"")+'">'+esc(x.why||"")+'</div></div>'; }).join("")+'</div>'+
+      (mix?'<div class="sr-mix">'+esc(mix)+'</div>':'')+
+      '<div class="adm-sec"><div class="adm-sech">Needed</div>'+items.map(itemHTML).join("")+'</div>'+
       (r.note?'<div class="adm-sec"><div class="adm-sech">Note</div><div class="sr-note">'+esc(r.note)+'</div></div>':'')+
-      (r.status_by?'<div class="adm-help">Marked '+esc(srStatusLabel(r.status).toLowerCase())+' by '+esc(r.status_by)+(r.status_at?' · '+esc(srWhen(r.status_at)):'')+'</div>':'')+
-      '<div class="sr-btns">'+(r.status==="open"?'<button class="ebtn primary" data-srset="ordered">Mark ordered</button>':'')+(r.status!=="done"?'<button class="ebtn'+(r.status==="ordered"?" primary":"")+'" data-srset="done">Mark in stock</button>':'')+(r.status!=="open"?'<button class="ebtn" data-srset="open">Reopen</button>':'')+'</div></div>';
+      (!many&&r.status_by?'<div class="adm-help">Marked '+esc(srStatusLabel(r.status).toLowerCase())+' by '+esc(r.status_by)+(r.status_at?' · '+esc(srWhen(r.status_at)):'')+'</div>':'')+
+      '<div class="sr-btns">'+(c.open?'<button class="ebtn primary" data-srset="ordered">Mark '+(many?'all ':'')+'ordered</button>':'')+
+        (c.done<c.n?'<button class="ebtn'+(!c.open?" primary":"")+'" data-srset="done">Mark '+(many?'all ':'')+'in stock</button>':'')+
+        (c.open<c.n?'<button class="ebtn" data-srset="open">Reopen'+(many?' all':'')+'</button>':'')+'</div></div>';
     host.innerHTML=h;
     $("srBackLink").addEventListener("click",function(){ SR.sel=null; srRenderInto(host, backFn); });
+    /* the big buttons act on every item that is not there yet; the small ones on one item */
     host.querySelectorAll("[data-srset]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srset"), host, backFn); }); });
+    host.querySelectorAll("[data-sritem]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srto"), host, backFn, [parseInt(el.getAttribute("data-sritem"),10)]); }); });
   }
-  function srSetStatus(r, status, host, backFn){
-    if(SR.busy) return; SR.busy=true;
-    var patch={ status:status, status_by:(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")", status_at:new Date().toISOString() };
+  /* which items a tap changes: the ones given, or every item not already in that state */
+  function srTargets(r, status, idxs){
+    var items=Array.isArray(r.items)?r.items:[], out=[];
+    items.forEach(function(x,i){ if(idxs?idxs.indexOf(i)>=0:srItemSt(x,r)!==status) out.push(i); });
+    return out;
+  }
+  function srSetStatus(r, status, host, backFn, idxs){
+    if(SR.busy) return;
+    var who=(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")", now=new Date().toISOString();
+    var targets=srTargets(r, status, idxs); if(!targets.length) return;
+    SR.busy=true;
+    /* every item gets an explicit status from here on (old rows inherit the request's) */
+    var items=(Array.isArray(r.items)?r.items:[]).map(function(x,i){
+      var y={}; for(var k in x) y[k]=x[k];
+      if(!(y.status==="ordered"||y.status==="done"||y.status==="open")){ y.status=srItemSt(x,r); if(y.status!=="open"){ y.status_by=y.status_by||r.status_by||""; y.status_at=y.status_at||r.status_at||""; } }
+      if(targets.indexOf(i)>=0){ y.status=status; y.status_by=who; y.status_at=now; }
+      return y;
+    });
+    var patch={ items:items, status:srDerive(items), status_by:who, status_at:now };
     sbWrite("PATCH","supply_requests?id=eq."+encodeURIComponent(r.id),patch).then(function(res){
       SR.busy=false; if(!res.ok) throw new Error("status-"+res.status);
-      Object.assign(r, patch); diagLog("restock-status", r.id+" "+status); srBadge();
-      if(status!=="open") srNotify("restock_status", r.id);      /* tells the member */
-      toast(status==="ordered"?"Marked ordered \u2014 the member has been told.":status==="done"?"Marked in stock \u2014 they\u2019ve been told to pick it up.":"Reopened.");
+      Object.assign(r, patch); diagLog("restock-status", r.id+" "+status+" ["+targets.join(",")+"]"); srBadge();
+      if(status!=="open") srNotify("restock_status", r.id, {items:targets});      /* one email + push per tap, for these items only */
+      var n=targets.length, what=(n===1&&items.length>1)?items[targets[0]].name:(n===1?"it":n+" items");
+      toast(status==="ordered"?"Marked "+what+" ordered — the member has been told.":status==="done"?"Marked "+what+" in stock — they’ve been told to pick "+(n===1?"it":"them")+" up.":"Reopened.");
       srRenderInto(host, backFn);
     })["catch"](function(err){ SR.busy=false; toast(navigator.onLine===false?"No signal — try again when you’re back online.":"Couldn’t save that — try again."); diagLog("restock-status-failed", String((err&&err.message)||err)); });
   }
@@ -10335,7 +10388,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.11.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.12.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10378,7 +10431,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.11.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.12.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11421,7 +11474,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.11.0".replace("Version ","");
+  var APP_VERSION="Version 1.12.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{
