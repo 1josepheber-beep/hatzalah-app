@@ -63,7 +63,10 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **Live: 1.12.0** (Nov 19, 2026): **per-item status on supply requests.** In the admin
+- **Live: 1.13.0** (Nov 20, 2026): Organisation settings card shows **Send From** /
+  **Send From Name** (rows 55–56) — the address and name every email goes out from; the
+  background script reads them (see the Apps Script v55 note below).
+- **1.12.0** (Nov 19, 2026): **per-item status on supply requests.** In the admin
   detail every line of a request with 2+ items has its own Ordered · In stock · Reopen
   buttons; the big buttons became "Mark all ordered / Mark all in stock / Reopen all" and
   act only on the items not there yet. Each item carries `status`, `status_by`,
