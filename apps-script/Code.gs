@@ -353,19 +353,19 @@ function dailyCertCheck(onlyUnit){
                      blockList.indexOf(cert.toLowerCase()) >= 0 ||
                      blockList.indexOf(c.expCol.toLowerCase()) >= 0;
         if (blocks) {
-          subj = tplSubjExpired ? fillTpl(tplSubjExpired, map) : ("Your " + cert + " has expired \u2014 Hatzalah of Houston");
+          subj = tplSubjExpired ? fillTpl(tplSubjExpired, map) : ("Your " + cert + " has expired");
           body = tplBodyExpired ? fillTpl(tplBodyExpired, map)
                : ("Hi " + who + ",\n\nYour " + cert + " has expired. You are not permitted to respond to medical emergencies until your certification has been renewed, is up to date, and has been updated in our system.\n\n" +
                   howto + "\n\nSincerely,\nHatzalah of Houston Administration");
         } else {
-          subj = tplSubjExpiredSoft ? fillTpl(tplSubjExpiredSoft, map) : ("Action needed: your " + cert + " has expired \u2014 Hatzalah of Houston");
+          subj = tplSubjExpiredSoft ? fillTpl(tplSubjExpiredSoft, map) : ("Action needed: your " + cert + " has expired");
           body = tplBodyExpiredSoft ? fillTpl(tplBodyExpiredSoft, map)
                : ("Hi " + who + ",\n\nYour " + cert + " expired on " + expNice + ". This one does not stop you responding to " +
                   "patients, but it is required to stay current with the organization, and some duties may depend on it.\n\n" +
                   "Please renew it as soon as you can.\n\n" + howto + "\n\n" + closing);
         }
       } else {
-        subj = tplSubjExpiring ? fillTpl(tplSubjExpiring, map) : ("Reminder: your " + cert + " expires in " + days + " day" + (days === 1 ? "" : "s") + " \u2014 Hatzalah of Houston");
+        subj = tplSubjExpiring ? fillTpl(tplSubjExpiring, map) : ("Reminder: your " + cert + " expires in " + days + " day" + (days === 1 ? "" : "s"));
         body = tplBodyExpiring ? fillTpl(tplBodyExpiring, map)
              : ("Hi " + who + ",\n\nThis is a reminder that your " + cert + " will expire in " + days + " day" + (days === 1 ? "" : "s") +
                 ", on " + expNice + ". Please remember to renew it before the expiration date.\n\n" + howto + "\n\n" + closing);
@@ -686,13 +686,42 @@ function mailBoth(to, subject, body, bcc, brand) {
     var parts = splitSignoff(txt);
     txt = parts.main + "\n\n" + (brand.note.title || "How to renew") + ": " + brand.note.text + (parts.signoff ? "\n\n" + parts.signoff : "");
   }
+  // Mail goes out from the organization's address (Settings -> "Send From", e.g.
+  // app@...), which must be a verified "Send mail as" alias of the account the
+  // script runs under (Gmail -> Settings -> Accounts). Replies land in that
+  // mailbox. If the setting is blank or the alias is missing, the mail still
+  // goes out the old way, from the script account, and the log says why.
+  var sender = mailSender();
   // Group mail goes out Bcc so recipients never see each other's addresses.
   // Gmail needs something in To, so a Bcc-only message is addressed to the
-  // account the script runs as.
-  var msg = { to: String(to || "").trim() || Session.getEffectiveUser().getEmail(),
-              subject: subject, body: txt, htmlBody: html };
-  if (bcc && String(bcc).trim()) msg.bcc = String(bcc).trim();
-  MailApp.sendEmail(msg);
+  // sender itself.
+  var toAddr = String(to || "").trim() || sender.from || Session.getEffectiveUser().getEmail();
+  var bccAddr = (bcc && String(bcc).trim()) ? String(bcc).trim() : "";
+  if (sender.from) {
+    var opts = { from: sender.from, name: sender.name, htmlBody: html };
+    if (bccAddr) opts.bcc = bccAddr;
+    GmailApp.sendEmail(toAddr, subject, txt, opts);
+  } else {
+    var msg = { to: toAddr, subject: subject, body: txt, htmlBody: html, name: sender.name };
+    if (bccAddr) msg.bcc = bccAddr;
+    MailApp.sendEmail(msg);
+  }
+}
+/** {from, name}: the verified alias to send as (or "" to send as the script account) and the display name. */
+var MAIL_SENDER_ = null;
+function mailSender(){
+  if (MAIL_SENDER_) return MAIL_SENDER_;
+  var S = settingsMap();
+  var name = String(getSet(S, "send from name", "")).trim() || String(getSet(S, "org name", "")).trim() || "Hatzalah of Houston";
+  var from = String(getSet(S, "send from", "")).trim().toLowerCase();
+  if (from) {
+    var ok = false;
+    try { ok = GmailApp.getAliases().map(function(a){ return String(a).toLowerCase(); }).indexOf(from) >= 0; }
+    catch (e) { Logger.log("send-as check failed: " + e); }
+    if (!ok) { Logger.log("Send From " + from + " is not a verified alias of this account; sending as the script account instead."); from = ""; }
+  }
+  MAIL_SENDER_ = { from: from, name: name };
+  return MAIL_SENDER_;
 }
 var BRAND_NAVY = "#143D75", BRAND_GOLD = "#C9933A", BRAND_RED = "#b3261e", BRAND_GREEN = "#1e9e57";
 var BRAND_LOGO = APP_URL + "/logo-email.png";
@@ -1065,7 +1094,6 @@ function notifyRestockStatus(id, idxs){
   var amb = String(req.ambulance || "the ambulance");
   var marker = (idxs && all[idxs[0]] && all[idxs[0]].status_by) || req.status_by || "";
   var by = marker ? " by " + marker : "";
-  var restockedBy = marker ? ", restocked by " + marker : "";
   var first = String(me.first_name || "").trim() || "there";
   var items = restockItemsText(req, sel).join("\n");
   var one = sel.length === 1, part = sel.length < all.length;
@@ -1075,18 +1103,18 @@ function notifyRestockStatus(id, idxs){
   var subject, body, brandSt, bcc = "";
   if (st === "ordered") {
     subject = part ? "Ordered: " + (one ? String(all[sel[0]].name || "an item") : sel.length + " of your items") : "Your restock request was marked ordered";
-    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "this has" : "these have") + " been ordered" + by + ":\n\n" + items + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
-    brandSt = { kind: "Supply request", strip: "Ordered", stripColor: "green" };
+    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "this has" : "these have") + " been ordered:\n\n" + items + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Ordered", stripColor: "green", facts: marker ? [["Ordered by", marker]] : [] };
   } else if (inv) {
     // the person who did the ambulance check restocks the rig; the admins are copied
     subject = "Back in stock: " + (one ? String(all[sel[0]].name || "an item") : "items") + " for " + amb;
-    body = "Hi " + first + ",\n\n" + (one ? "An item" : part ? "Some of the items" : "The items") + " from your " + amb + " inventory check " + (one ? "is" : "are") + " back in stock" + restockedBy + ":\n\n" + items +
+    body = "Hi " + first + ",\n\n" + (one ? "An item" : part ? "Some of the items" : "The items") + " from your " + amb + " inventory check " + (one ? "is" : "are") + " back in stock:\n\n" + items +
            "\n\nPlease pick " + (one ? "it" : "them") + " up from " + pickup + " and restock the ambulance." + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
-    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["For", amb], ["Pick up from", pickupCap]] };
+    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["For", amb], ["Pick up from", pickupCap]].concat(marker ? [["Restocked by", marker]] : []) };
     bcc = adminRecipients();
   } else {
     subject = "Back in stock: " + (one ? String(all[sel[0]].name || "your jump bag item") : "your jump bag items");
-    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "an item you asked for is" : part ? "some of the items you asked for are" : "the items you asked for are") + " back in stock" + restockedBy + ":\n\n" + items +
+    body = "Hi " + first + ",\n\nGood news \u2014 " + (one ? "an item you asked for is" : part ? "some of the items you asked for are" : "the items you asked for are") + " back in stock:\n\n" + items +
            "\n\nPlease pick " + (one ? "it" : "them") + " up from " + pickup + ", then open the app \u2192 My Jump Bag and mark " + (one ? "it" : "them") + " stocked so the reminders stop." + restText + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
     brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["Pick up from", pickupCap], ["Restocked by", marker || "an admin"]] };
   }
@@ -1144,7 +1172,7 @@ function remindJumpBag(unit, by){
   var first = String(me.first_name || "").trim() || "there";
   var who = String(by || "").trim();
   var subject = "Please restock your jump bag";
-  var body = "Hi " + first + ",\n\n" + (who ? who + " is asking you" : "This is a reminder") + " to go through your jump bag and restock it.\n\n" +
+  var body = "Hi " + first + ",\n\nPlease go through your jump bag and restock it.\n\n" +
              (problems.length ? "From your jump bag in the app:\n\n" + problems.join("\n") + "\n\n" : "") +
              (unchecked ? (unchecked + " item" + (unchecked === 1 ? " has" : "s have") + " never been checked off in the app.\n\n") : "") +
              "Once it is restocked, open the app \u2192 My Jump Bag, mark each item and tap \u201cI checked my bag today\u201d.\n" + APP_URL +
@@ -1155,7 +1183,7 @@ function remindJumpBag(unit, by){
   var n = 0;
   var brand = { kind: "Jump bag", strip: "Please restock your bag", stripColor: "gold",
                 facts: [["Short or missing", String(problems.filter(function(l){ return /missing$|short$/.test(l); }).length)],
-                        ["Expired or expiring", String(problems.filter(function(l){ return /expire/.test(l); }).length)]] };
+                        ["Expired or expiring", String(problems.filter(function(l){ return /expire/.test(l); }).length)]].concat(who ? [["Requested by", who]] : []) };
   if (to.length) { try { mailBoth(to.join(", "), subject, body, bcc, brand); n++; } catch (e) { Logger.log("jump bag remind mail failed for " + unit + ": " + e); } }
   var pushText = (who ? who + " asks: please restock your jump bag. " : "Please restock your jump bag. ") +
                  (problems.length ? problems.length + " item" + (problems.length === 1 ? "" : "s") + " to sort out: " + problems.map(function(l){ return l.replace(/^\u2022 /, ""); }).join("; ") : "Open My Jump Bag to update it.");
@@ -1319,13 +1347,13 @@ function sendTestToMe() {
   var subj, body;
 
   if (picked.days <= 0) {
-    subj = "Your " + picked.c.name + " has expired \u2014 Hatzalah of Houston";
+    subj = "Your " + picked.c.name + " has expired";
     body = "Hi " + name + " (" + UNIT + "),\n\nYour " + picked.c.name + " has expired. You are not " +
            "permitted to respond to medical emergencies until your certification has been renewed, " +
            "is up to date, and has been updated in our system.\n\n" + howto +
            "\n\nSincerely,\nHatzalah of Houston Administration";
   } else {
-    subj = "Reminder: your " + picked.c.name + " expires in " + picked.days + " days \u2014 Hatzalah of Houston";
+    subj = "Reminder: your " + picked.c.name + " expires in " + picked.days + " days";
     body = "Hi " + name + " (" + UNIT + "),\n\nThis is a reminder that your " + picked.c.name +
            " will expire in " + picked.days + " days, on " + when + ". Please remember to renew it " +
            "before the expiration date.\n\n" + howto + "\n\n" + closing;

@@ -6431,13 +6431,14 @@
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
-    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location"],
-     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails."},
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location","Send From","Send From Name"],
+     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails. Send From is the address every email goes out from (it must be a verified \u201cSend mail as\u201d address of the Google account the background script runs under); Send From Name is the sender name people see."},
     {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
      note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
-                           "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room"};
+                           "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room",
+                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
