@@ -63,8 +63,7 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **UNRELEASED (in the working tree, committed locally, not pushed) — supply request
-  archive:** `db/add_supply_archive.sql` (already applied live Nov 20, 2026: columns
+- **Live: 1.14.0** (Nov 20, 2026) — **supply request archive:** `db/add_supply_archive.sql` (already applied live Nov 20, 2026: columns
   `archived_at`, `archived_by`, `kept` on `supply_requests`; settings row 57 **Supply
   Archive Days** = 30). A request counts as archived when `archived_at` is set, or when it
   is In stock with `status_at` older than Supply Archive Days and `kept` is false
@@ -77,8 +76,8 @@ that makes it wrong.
   once it is waiting in the stock room … move to Archived on their own after N days").
   Supply Archive Days is editable in the Organisation settings card. Tests: jumpbag 77.
   Preview: `node preview-peritem.js` in scratch/catalog → out/preview/archive-*.png.
-  Goes out as **1.14.0** when Joseph says release (no script change needed).
-- **Live: 1.13.0** (Nov 20, 2026): Organisation settings card shows **Send From** /
+  No script change.
+- **1.13.0** (Nov 20, 2026): Organisation settings card shows **Send From** /
   **Send From Name** (rows 55–56) — the address and name every email goes out from; the
   background script reads them (see the Apps Script v55 note below).
 - **1.12.0** (Nov 19, 2026): **per-item status on supply requests.** In the admin
