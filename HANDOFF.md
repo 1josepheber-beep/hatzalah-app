@@ -117,29 +117,22 @@ that makes it wrong.
 - **Feature catalog PDF**: generated from the demo by `scratch/catalog/` (see below).
   The Scheduler map screen can't be captured in the sandbox (no map tiles); a hand-taken
   screenshot lives in `scratch/catalog/manual/` and is used automatically.
-- **PENDING, NOT DEPLOYED (Nov 20, 2026) — emails from app@:** Joseph wants every email to
-  come from `app@houstonhatzalah.org` ("Hatzalah of Houston") instead of his own address,
-  with replies landing in the app@ mailbox (he has access; no Reply-To override).
-  Done so far: app@ is a verified "Send mail as" alias of the script account (Gmail →
-  Settings → Accounts; the alias row still says "Joseph Eber" but the script sets its own
-  display name); settings rows **55 `Send From` = app@houstonhatzalah.org** and **56
-  `Send From Name` = Hatzalah of Houston** inserted (inert until the script reads them);
-  the three `Cert Email Subject` rows lost their "— Hatzalah of Houston" tail (Joseph's
-  call: redundant once the sender is the org). In the working tree, **uncommitted/
-  unpushed** until Joseph says release: `Code.gs` — `mailBoth()` sends through
-  `GmailApp.sendEmail(..., {from, name})` when `Send From` is a verified alias
-  (`mailSender()`, cached per run; otherwise falls back to `MailApp` and logs why), Bcc-only
-  mail is addressed To the sender; organization voice — the admin's name moved out of the
-  sentence into the facts box ("Requested by" on the Remind email, "Ordered by" on Ordered,
-  "Restocked by" added to the ambulance in-stock box); fallback subjects trimmed to match
-  the settings. `index.html` — Organisation settings card lists `Send From` / `Send From
-  Name`. Tests: gs-jumpbag now 35 (sender logic covered by `runReal`). **To deploy:**
-  paste Code.gs into the editor (compare the editor against `git show 939287b:apps-script/
-  Code.gs`, the v54 copy), save, run `sendTestToMe` from the editor — referencing `GmailApp`
-  adds the Gmail scope, so Google will ask for authorization: **Joseph clicks Allow, never
-  Claude** — confirm the test mail arrives from app@, then Deploy → Manage deployments →
-  New version (v55). Until that authorization, nothing sends through the new path (every
-  send would fail on the scope), so do not deploy without him present.
+- **Apps Script version 55 (Nov 20, 2026) — emails from app@:** every email now goes out
+  as **Hatzalah of Houston <app@houstonhatzalah.org>**; replies land in the app@ mailbox
+  (Joseph has access; no Reply-To override). How: app@ is a verified "Send mail as" alias
+  of the script account (Gmail → Settings → Accounts; the alias row still says "Joseph
+  Eber" but the script sets its own display name), and `mailBoth()` sends through
+  `GmailApp.sendEmail(..., {from, name})` when settings row 55 **`Send From`** names a
+  verified alias (`mailSender()`, cached per run; otherwise falls back to `MailApp` and
+  logs why); row 56 **`Send From Name`** is the display name (falls back to Org Name).
+  Bcc-only mail is addressed To the sender. Referencing GmailApp added the Gmail scope —
+  Joseph authorized it himself on Nov 20, 2026 (Claude never clicks Allow). Verified with
+  `sendTestToMe`: arrived From app@. Same version: organization voice — the admin's name
+  moved out of the sentence into the facts box ("Requested by" on the Remind email,
+  "Ordered by" on Ordered, "Restocked by" added to the ambulance in-stock box); fallback
+  subjects trimmed to match the settings (the three `Cert Email Subject` rows lost their
+  "— Hatzalah of Houston" tail the same day). Tests: gs-jumpbag 35 (`runReal` covers the
+  sender logic). Editor copy == `git show cacd212:apps-script/Code.gs`.
 - **Pinned (agreed, not started):** automatic test gate (GitHub Actions running
   `scratch/tests`), health watch (uptime ping + nightly check + client error table), a beta
   address, later Supabase Pro / splitting the single file.
