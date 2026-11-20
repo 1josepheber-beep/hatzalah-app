@@ -800,9 +800,14 @@ function doPost(e){
       out.sent = notifyRestock(body.id);
       out.ok = true;
     } else if (String(body.action || "") === "restock_status") {
-      // an admin / service unit marked a request Ordered or Done: tell the member
+      // an admin / service unit marked a request Ordered or In stock: tell the member
       out.sent = notifyRestockStatus(body.id);
       out.ok = true;
+    } else if (String(body.action || "") === "jumpbag_remind") {
+      // an admin tapped Remind on a member's jump bag: push + email to that member, admins Bcc
+      out.sent = remindJumpBag(String(body.unit || ""), String(body.by || ""));
+      out.ok = out.sent > 0;
+      if (!out.ok) out.error = "nothing sent (no member with that unit, or no address)";
     } else if (!body.unit) {
       out.error = "no unit";
     } else {
@@ -1031,17 +1036,44 @@ function notifyRestockStatus(id){
   var roster = sbAll("roster"), me = null;
   roster.forEach(function(r){ if (normUnit(r.unit) === normUnit(req.unit)) me = r; });
   if (!me) return 0;
+  var S = settingsMap();
+  // "In stock" (stored as "done") means an admin bought it and it is waiting in the
+  // stock room. Nothing is finished until someone fetches it, so the wording says so.
+  var pickup = String(getSet(S, "pickup location", "the stock room")).trim() || "the stock room";
   var st = String(req.status) === "ordered" ? "ordered" : "done";
-  var subject = "Your restock request was marked " + st;
-  var body = "Hi " + (String(me.first_name || "").trim() || "there") + ",\n\n" +
-             (st === "ordered" ? "Good news \u2014 it has been ordered" : "It is marked done") + (req.status_by ? " by " + String(req.status_by) : "") + ":\n\n" +
-             restockItemsText(req).join("\n") + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+  var inv = String(req.source) === "inventory";
+  var amb = String(req.ambulance || "the ambulance");
+  var by = req.status_by ? " by " + String(req.status_by) : "";
+  var restockedBy = req.status_by ? ", restocked by " + String(req.status_by) : "";
+  var first = String(me.first_name || "").trim() || "there";
+  var items = restockItemsText(req).join("\n");
+  var subject, body, brandSt, bcc = "";
+  if (st === "ordered") {
+    subject = "Your restock request was marked ordered";
+    body = "Hi " + first + ",\n\nGood news \u2014 it has been ordered" + by + ":\n\n" + items + "\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Ordered", stripColor: "green" };
+  } else if (inv) {
+    // the person who did the ambulance check restocks the rig; the admins are copied
+    subject = "Back in stock: items for " + amb;
+    body = "Hi " + first + ",\n\nThe items from your " + amb + " inventory check are back in stock" + restockedBy + ":\n\n" + items +
+           "\n\nPlease pick them up from " + pickup + " and restock the ambulance.\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["For", amb], ["Pick up from", pickup]] };
+    bcc = adminRecipients();
+  } else {
+    subject = "Back in stock: your jump bag items";
+    body = "Hi " + first + ",\n\nGood news \u2014 the items you asked for are back in stock" + restockedBy + ":\n\n" + items +
+           "\n\nPlease pick them up from " + pickup + ", then open the app \u2192 My Jump Bag and mark them stocked so the reminders stop.\n\n" + APP_URL + "\n\nThank you,\nHatzalah of Houston Administration";
+    brandSt = { kind: "Supply request", strip: "Back in stock", stripColor: "green", facts: [["Pick up from", pickup], ["Restocked by", String(req.status_by || "an admin")]] };
+  }
   var to = [String(me.email || "").trim(), String(me.personal_email || "").trim()].filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); });
   to = to.filter(function(e, i){ return to.indexOf(e) === i; });
+  // never Bcc the member's own addresses
+  if (bcc) bcc = bcc.split(",").map(function(e){ return e.trim(); }).filter(function(e){ return e && to.indexOf(e) < 0; }).join(", ");
   var n = 0;
-  var brandSt = { kind: "Supply request", strip: st === "ordered" ? "Ordered" : "Done", stripColor: "green" };
-  if (to.length) { try { mailBoth(to.join(", "), subject, body, "", brandSt); n++; } catch (e) { Logger.log("restock status mail failed: " + e); } }
-  if (pushUnit(String(me.unit), subject, restockItemsText(req).map(function(l){ return l.replace(/^\u2022 /, ""); }).join("\n").slice(0, 180), "jumpbag")) n++;
+  if (to.length) { try { mailBoth(to.join(", "), subject, body, bcc, brandSt); n++; } catch (e) { Logger.log("restock status mail failed: " + e); } }
+  var pushText = (st === "ordered" ? "Ordered" + by : "Back in stock \u2014 pick up from " + pickup + (inv ? " and restock the ambulance" : "")) + ". " +
+                 restockItemsText(req).map(function(l){ return l.replace(/^\u2022 /, ""); }).join(", ");
+  if (pushUnit(String(me.unit), subject, pushText.slice(0, 180), "jumpbag")) n++;
   return n;
 }
 /** Requests the app saved but could not report (no signal, old app): sent on the nightly run. */
@@ -1050,6 +1082,61 @@ function sweepRestockRequests(){
   var n = 0;
   (rows || []).forEach(function(r){ if (Date.now() - new Date(r.created_at).getTime() > 10 * 60000) { notifyRestock(r.id); n++; } });
   if (n) Logger.log("restock sweep: " + n + " request(s) sent");
+}
+
+// ===================== REMIND ONE MEMBER ABOUT THEIR BAG =====================
+/**
+ * Admin -> Jump bags -> a member -> "Remind". One push and one email to that member
+ * asking them to go through and restock their bag, listing what their own entries
+ * show as short, missing, expired or expiring. Admins are Bcc'd. Nothing is logged
+ * against the automatic reminders, so those keep their own schedule.
+ */
+function remindJumpBag(unit, by){
+  var uk = normUnit(unit); if (!uk) return 0;
+  var roster = sbAll("roster"), me = null;
+  roster.forEach(function(r){ if (normUnit(r.unit) === uk) me = r; });
+  if (!me) { Logger.log("remindJumpBag: no roster row for " + unit); return 0; }
+  var TZ = Session.getScriptTimeZone(), DAY = 86400000;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  function nice(d){ return Utilities.formatDate(new Date(d), TZ, "MMM d, yyyy"); }
+  var items = sbAll("jumpbag_items"), byId = {};
+  items.forEach(function(i){ if (isX(i.active === "" || i.active == null ? "X" : i.active)) byId[i.id] = i; });
+  var status = sbGet("jumpbag_status", "select=*&unit=eq." + encodeURIComponent(String(me.unit)));
+  var problems = [], seen = {};
+  (status || []).forEach(function(s){
+    var it = byId[s.item_id]; if (!it) return; seen[s.item_id] = 1;
+    var name = String(it.name) + (it.qty ? " (\u00d7" + it.qty + ")" : "");
+    if (s.status === "missing") problems.push("\u2022 " + name + " \u2014 missing");
+    else if (s.status === "short") problems.push("\u2022 " + name + " \u2014 short");
+    if (s.exp_date) {
+      var exp = parseDate(s.exp_date);
+      if (exp) { var n = Math.round((exp.getTime() - today.getTime()) / DAY);
+        if (n < 0) problems.push("\u2022 " + name + " \u2014 expired " + nice(exp));
+        else if (n <= 30) problems.push("\u2022 " + name + " \u2014 expires " + nice(exp) + " (in " + n + " day" + (n === 1 ? "" : "s") + ")"); }
+    }
+  });
+  var unchecked = Object.keys(byId).filter(function(id){ return !seen[id]; }).length;
+  var first = String(me.first_name || "").trim() || "there";
+  var who = String(by || "").trim();
+  var subject = "Please restock your jump bag";
+  var body = "Hi " + first + ",\n\n" + (who ? who + " is asking you" : "This is a reminder") + " to go through your jump bag and restock it.\n\n" +
+             (problems.length ? "From your jump bag in the app:\n\n" + problems.join("\n") + "\n\n" : "") +
+             (unchecked ? (unchecked + " item" + (unchecked === 1 ? " has" : "s have") + " never been checked off in the app.\n\n") : "") +
+             "Once it is restocked, open the app \u2192 My Jump Bag, mark each item and tap \u201cI checked my bag today\u201d.\n" + APP_URL +
+             "\n\nThank you,\nHatzalah of Houston Administration";
+  var to = [String(me.email || "").trim(), String(me.personal_email || "").trim()].filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); });
+  to = to.filter(function(e, i){ return to.indexOf(e) === i; });
+  var bcc = adminRecipients().split(",").map(function(e){ return e.trim(); }).filter(function(e){ return e && to.indexOf(e) < 0; }).join(", ");
+  var n = 0;
+  var brand = { kind: "Jump bag", strip: "Please restock your bag", stripColor: "gold",
+                facts: [["Short or missing", String(problems.filter(function(l){ return /missing$|short$/.test(l); }).length)],
+                        ["Expired or expiring", String(problems.filter(function(l){ return /expire/.test(l); }).length)]] };
+  if (to.length) { try { mailBoth(to.join(", "), subject, body, bcc, brand); n++; } catch (e) { Logger.log("jump bag remind mail failed for " + unit + ": " + e); } }
+  var pushText = (who ? who + " asks: please restock your jump bag. " : "Please restock your jump bag. ") +
+                 (problems.length ? problems.length + " item" + (problems.length === 1 ? "" : "s") + " to sort out: " + problems.map(function(l){ return l.replace(/^\u2022 /, ""); }).join("; ") : "Open My Jump Bag to update it.");
+  if (pushUnit(String(me.unit), subject, pushText.slice(0, 180), "jumpbag")) n++;
+  Logger.log("remindJumpBag " + unit + ": " + n + " sent (" + problems.length + " problem lines, " + unchecked + " unchecked)");
+  return n;
 }
 
 // ===================== WHY WAS NOTHING SENT? =====================

@@ -78,7 +78,12 @@ that makes it wrong.
   **Bcc**: certification emails To the member, admins Bcc; supply-request and
   problem-report emails all Bcc. Preview any of it without sending:
   `node preview-emails.js` in scratch/email (runs the real Code.gs under Node →
-  scratch/email/out/*.png). Deployed as web-app version 52.
+  scratch/email/out/*.png). Deployed as web-app version 53 (Nov 19, 2026): supply-request
+  status mail now says **back in stock, pick it up from <Pickup Location>** (jump bag → the
+  member; ambulance inventory → the person who did the check, admins Bcc, "and restock the
+  ambulance"); new doPost action `jumpbag_remind` (`remindJumpBag(unit, by)`) for the
+  admin's Remind-to-restock button; `sendJumpBagTestToMe()` sends a sample jump bag email
+  to yourself. Previews: `node preview-restock.js` in scratch/email.
 - `logo-email.png` is the shield cut out of the 512 icon (transparent); `logo.png` has a
   white background baked in and is still what the app itself uses.
 - **Feature catalog PDF**: generated from the demo by `scratch/catalog/` (see below).
