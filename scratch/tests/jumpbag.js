@@ -220,6 +220,31 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   check("'Mark all in stock' only touches what is left: the 4x4s, request becomes In stock, script told about item 0 only", row6.items[0].status==="done" && row6.status==="done" && b.scriptCalls.length===1 && JSON.stringify(b.scriptCalls[0].items)==="[0]" && /In stock/.test(sp.querySelector(".sr-st.big").textContent) && !sp.querySelector(".sr-mix"));
   b.scriptCalls.length=0; click(b.w,sp.querySelector('[data-sritem="0"][data-srto="open"]')); await wait(300);
   check("Reopen on one line: that item open, request drops back to Ordered (one still in stock), nobody emailed", row6.items[0].status==="open" && row6.status==="ordered" && b.scriptCalls.length===0 && /1 in stock \u00b7 1 open/.test(sp.querySelector(".sr-mix").textContent));
+  // ---- archive: Archive now on a non-in-stock request asks first; Unarchive brings it back; the 30-day rule
+  check("Archive now is offered on the detail", !!sp.querySelector("#srArchive") && !sp.querySelector("#srUnarchive"));
+  click(b.w,sp.querySelector("#srArchive")); await wait(150);
+  const archOk=[...b.d.querySelectorAll(".adm-modal button")].find(x=>/^Archive$/.test(x.textContent.trim()));
+  check("archiving a request that is still ordered asks first", !!archOk && /still ordered/.test(archOk.closest(".adm-modal").textContent));
+  click(b.w,archOk); await wait(300);
+  check("…then it is archived with who did it, and the list goes back to the working view without it", row6.archived_at && /\(H-24\)/.test(row6.archived_by) && row6.kept===false && ![...sp.querySelectorAll(".amb-row")].some(r=>/A1 inventory/.test(r.textContent)));
+  check("the Archived chip counts it and shows it, greyed", /Archived \(1\)/.test(sp.querySelector('[data-srf="archived"]').textContent));
+  click(b.w,sp.querySelector('[data-srf="archived"]')); await wait(50);
+  check("Archived list has the one request", sp.querySelectorAll(".amb-row").length===1 && /A1 inventory/.test(sp.querySelector(".amb-row").textContent) && sp.querySelector(".amb-row .sr-st").classList.contains("arch"));
+  click(b.w,sp.querySelector(".amb-row")); await wait(100);
+  check("archived detail: note + Unarchive, no Archive now", /Archived today by/.test(sp.querySelector(".sr-archnote").textContent) && !!sp.querySelector("#srUnarchive") && !sp.querySelector("#srArchive"));
+  click(b.w,sp.querySelector("#srUnarchive")); await wait(300);
+  check("Unarchive clears it and marks it kept", row6.archived_at===null && row6.kept===true);
+  // the day rule: an in-stock request from 40 days ago is archived on its own; a kept one is not
+  const old=new Date(Date.now()-40*864e5).toISOString();
+  b.rows.supply_requests.push({id:8,created_at:old,unit:"H-22",name:"Joseph Fried",source:"jumpbag",ambulance:"",items:[{item_id:3,name:"Oral glucose",qty:"2",why:"Missing",status:"done"}],note:"",status:"done",status_by:"David Fishman (H-1)",status_at:old,notified:"2 emailed",kept:false},
+    {id:9,created_at:old,unit:"H-30",name:"Avi Katz",source:"jumpbag",ambulance:"",items:[{item_id:3,name:"Oral glucose",qty:"2",why:"Missing",status:"done"}],note:"",status:"done",status_by:"David Fishman (H-1)",status_at:old,notified:"2 emailed",kept:true});
+  click(b.w,secBtn(b.d,"Supply requests")); await wait(500); click(b.w,sp.querySelector('[data-srf="done"]')); await wait(50);
+  const inStockRows=[...sp.querySelectorAll(".amb-row")].map(r=>r.textContent);
+  check("In stock list: the 40-day-old one is gone (auto-archived), the kept one stays", !inStockRows.some(t=>/Joseph Fried/.test(t)) && inStockRows.some(t=>/Avi Katz/.test(t)));
+  click(b.w,sp.querySelector('[data-srf="archived"]')); await wait(50);
+  check("Archived list shows the auto-archived one with the 'automatically' note on open", [...sp.querySelectorAll(".amb-row")].some(r=>/Joseph Fried/.test(r.textContent)));
+  click(b.w,[...sp.querySelectorAll(".amb-row")].find(r=>/Joseph Fried/.test(r.textContent))); await wait(100);
+  check("…and the note says it was archived automatically after 30 days", /Archived automatically/.test(sp.querySelector(".sr-archnote").textContent) && /30 days/.test(sp.querySelector(".sr-archnote").textContent));
   click(b.w,secBtn(b.d,"Jump bag items")); await wait(500);
   const pane2=b.d.getElementById("admGenPane");
   check("Jump bag items is an editable list (Item, Pouch, Quantity, Has an expiration date, Active) with the 8 rows", /Gloves \(box\)/.test(pane2.textContent) && /Old item/.test(pane2.textContent) && /Pouch/.test(pane2.textContent));

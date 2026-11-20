@@ -34,7 +34,17 @@ const MIME={js:"application/javascript",css:"text/css",png:"image/png",jpg:"imag
   // then the second line in stock
   await pg.evaluate(()=>document.querySelector('#admGenPane [data-sritem="1"][data-srto="done"]').click()); await pg.waitForTimeout(700);
   await pg.screenshot({path:OUT+"/peritem-3-mixed.png"});
-  const listTxt=await pg.evaluate(()=>{ document.getElementById("srBackLink").click(); return new Promise(res=>setTimeout(()=>{ document.querySelector('#admGenPane [data-srf="all"]').click(); setTimeout(()=>res([...document.querySelectorAll("#admGenPane .amb-row .sr-st")].map(x=>x.textContent)),100); },100)); });
+  // archive flow
+  await pg.evaluate(()=>document.getElementById("srArchive").click()); await pg.waitForTimeout(300);
+  await pg.screenshot({path:OUT+"/archive-1-confirm.png"});
+  await pg.evaluate(()=>{ const b=[...document.querySelectorAll(".adm-modal button")].find(x=>/^Archive$/.test(x.textContent.trim())); if(b) b.click(); }); await pg.waitForTimeout(600);
+  await pg.evaluate(()=>document.querySelector('#admGenPane [data-srf="archived"]').click()); await pg.waitForTimeout(200);
+  await pg.screenshot({path:OUT+"/archive-2-list.png"});
+  await pg.evaluate(()=>document.querySelector("#admGenPane .amb-row").click()); await pg.waitForTimeout(300);
+  await pg.screenshot({path:OUT+"/archive-3-detail.png"});
+  await pg.evaluate(()=>document.getElementById("srUnarchive").click()); await pg.waitForTimeout(500);
+  await pg.evaluate(()=>document.querySelector('#admGenPane [data-srf="all"]').click()); await pg.waitForTimeout(200);
+  const listTxt=await pg.evaluate(()=>[...document.querySelectorAll("#admGenPane .amb-row .sr-st")].map(x=>x.textContent));
   await pg.screenshot({path:OUT+"/peritem-4-list.png"});
   console.log("list chips:", listTxt);
   // member view: open My Jump Bag as the member who asked (the demo request's unit)

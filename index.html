@@ -888,6 +888,8 @@
   .sr-ib{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:7px 10px;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}
   .sr-ib.ordered.on{background:#1d4e9a;border-color:#1d4e9a;color:#fff} .sr-ib.done.on{background:#1f7a37;border-color:#1f7a37;color:#fff} .sr-ib.on{pointer-events:none}
   .sr-mix{font-size:12px;color:var(--mut);font-weight:700;margin:-4px 0 8px}
+  .sr-st.arch{background:#eef1f5;color:#6b7a90} .sr-archnote{background:#eef1f5;color:#4a5a70;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:600;margin:0 0 10px}
+  .sr-archbtns{margin-top:6px} .sr-archbtns .ebtn{flex:0 1 auto;padding:9px 14px;font-size:13px} .ebtn.ghost{background:#fff;color:var(--mut);border-color:var(--line)}
   .sr-note{font-size:14px;color:var(--ink);white-space:pre-wrap;padding:6px 0}
   @keyframes hohflash{0%{background:#fff3b0}100%{background:transparent}}
   .jb-row.flash, .amb-q.flash{animation:hohflash 1.8s ease-out;border-radius:8px}
@@ -4696,6 +4698,7 @@
      the member touches the item again — after that it is a new shortage. */
   function jbReqFor(id){
     for(var i=0;i<JB.reqs.length;i++){ var r=JB.reqs[i], items=Array.isArray(r.items)?r.items:[];
+      if(srIsArchived(r)) continue;                       /* archived = over and done with */
       for(var j=0;j<items.length;j++){ var x=items[j]; if(String(x.item_id)!==String(id)) continue;
         var st=srItemSt(x,r), at=x.status_at||r.status_at||r.created_at;
         if(st==="done"){ var mine=(JB.st[id]||{}).updated_at; if(mine && at && new Date(mine)>new Date(at)) continue; }
@@ -4905,29 +4908,41 @@
       .then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); })
       .then(function(rows){ SR.rows=Array.isArray(rows)?rows:[]; SR.loaded=true; srBadge(); return SR.rows; });
   }
-  function srOpenCount(){ return SR.rows.filter(function(r){ return r.status==="open"; }).length; }
+  /* Archive: a request leaves the working lists once it has sat In stock for
+     "Supply Archive Days" (Settings, default 30), or when an admin taps Archive now.
+     Unarchive sets kept=true so the day rule leaves it alone. Nothing is deleted. */
+  function srArchiveDays(){ var n=parseInt(getSetting("Supply Archive Days","30"),10); return isNaN(n)||n<1?30:n; }
+  function srIsArchived(r){
+    if(!r) return false; if(r.archived_at) return true; if(r.kept) return false;
+    if(r.status!=="done"||!r.status_at) return false;
+    return (Date.now()-new Date(r.status_at).getTime()) > srArchiveDays()*86400000;
+  }
+  function srLive(){ return SR.rows.filter(function(r){ return !srIsArchived(r); }); }
+  function srOpenCount(){ return srLive().filter(function(r){ return r.status==="open"; }).length; }
   /* the count next to "Supply requests" in the admin sections */
   function srBadge(){ try{ var n=SR.loaded?srOpenCount():0; admSetBadge("supply", n?n+" open":"", n>0); }catch(e){} }
   function srRenderInto(host, backFn){
     if(!host) return;
     if(SR.sel){ var selRow=SR.rows.filter(function(r){ return r.id===SR.sel; })[0]; if(selRow){ srRenderDetail(host, selRow, backFn); return; } SR.sel=null; }
-    var open=SR.rows.filter(function(r){ return r.status==="open"; }).length, ordered=SR.rows.filter(function(r){ return r.status==="ordered"; }).length;
-    var rows=SR.rows.filter(function(r){ return SR.filter==="all" || r.status===SR.filter; });
+    var live=srLive(), open=live.filter(function(r){ return r.status==="open"; }).length, ordered=live.filter(function(r){ return r.status==="ordered"; }).length;
+    var arch=SR.rows.filter(srIsArchived);
+    var rows=SR.filter==="archived" ? arch.slice().sort(function(a,b){ return new Date(b.archived_at||b.status_at||b.created_at)-new Date(a.archived_at||a.status_at||a.created_at); })
+                                    : live.filter(function(r){ return SR.filter==="all" || r.status===SR.filter; });
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Supply requests</h3><div class="u">'+open+' open · '+ordered+' ordered</div></div></div>'+
-      '<div class="adm-help">What members asked to have restocked (from My Jump Bag) and what the ambulance inventory checks flagged for ordering. Tap one, then mark it Ordered when it is on the way and Done when it is in the bag or on the truck.</div>'+
-      '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","In stock"],["all","All"]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
-    if(!rows.length) h+='<div class="adm-empty">'+(SR.rows.length?"Nothing here.":"No requests yet.")+'</div>';
+      '<div class="adm-help">What members asked to have restocked (from My Jump Bag) and what the ambulance inventory checks flagged for ordering. Tap one, then mark it Ordered when it is on the way and In stock once it is waiting in the stock room. In-stock requests move to Archived on their own after '+srArchiveDays()+' days.</div>'+
+      '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","In stock"],["all","All"],["archived","Archived"+(arch.length?" ("+arch.length+")":"")]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
+    if(!rows.length) h+='<div class="adm-empty">'+(SR.filter==="archived"?"Nothing archived yet.":SR.rows.length?"Nothing here.":"No requests yet.")+'</div>';
     else h+='<div class="amb-list">'+rows.map(function(r){
       var items=Array.isArray(r.items)?r.items:[];
       return '<button class="amb-row" data-srid="'+r.id+'"><div class="amb-rl"><b>'+esc(srTitle(r))+' · '+esc(r.name||r.unit)+'</b><span>'+esc(r.unit)+' · '+items.length+' item'+(items.length===1?"":"s")+' · '+esc(srWhen(r.created_at))+(items.length?' · '+esc(items.slice(0,3).map(function(x){ return x.name; }).join(", "))+(items.length>3?'…':''):'')+'</span></div>'+
-        '<span class="sr-st '+esc(r.status)+'">'+esc(srMixText(r)||srStatusLabel(r.status))+'</span><span class="chev">›</span></button>';
+        '<span class="sr-st '+esc(r.status)+(srIsArchived(r)?" arch":"")+'">'+esc(srMixText(r)||srStatusLabel(r.status))+'</span><span class="chev">›</span></button>';
     }).join("")+'</div>';
     host.innerHTML=h+'</div>';
     host.querySelectorAll("[data-srf]").forEach(function(el){ el.addEventListener("click",function(){ SR.filter=el.getAttribute("data-srf"); srRenderInto(host, backFn); }); });
     host.querySelectorAll("[data-srid]").forEach(function(el){ el.addEventListener("click",function(){ SR.sel=parseInt(el.getAttribute("data-srid"),10); srRenderInto(host, backFn); }); });
   }
   function srRenderDetail(host, r, backFn){
-    var items=Array.isArray(r.items)?r.items:[], many=items.length>1, c=srCounts(r), mix=srMixText(r);
+    var items=Array.isArray(r.items)?r.items:[], many=items.length>1, c=srCounts(r), mix=srMixText(r), archived=srIsArchived(r);
     function itemHTML(x,i){
       var st=srItemSt(x,r), by=x.status_by||(x.status?"":r.status_by)||"", at=x.status_at||(x.status?"":r.status_at)||"";
       return '<div class="sr-it '+st+'" data-sri="'+i+'"><div class="amb-dq"><div class="amb-dqt">'+esc(x.name)+(x.qty?' <small>(×'+esc(x.qty)+')</small>':'')+'</div><div class="amb-dqa'+(/missing/i.test(x.why)?" warn":"")+'">'+esc(x.why||"")+'</div></div>'+
@@ -4940,14 +4955,18 @@
     var h='<div class="adm-body"><button class="adm-backlink" id="srBackLink">‹ All requests</button>'+
       '<div class="adm-mh"><div class="t"><h3>'+esc(srTitle(r))+'</h3><div class="u">'+esc(r.name||"")+' ('+esc(r.unit)+') · '+esc(new Date(r.created_at).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}))+'</div></div><span class="sr-st big '+esc(r.status)+'">'+srStatusLabel(r.status)+'</span></div>'+
       (mix?'<div class="sr-mix">'+esc(mix)+'</div>':'')+
+      (archived?'<div class="sr-archnote">\uD83D\uDCE6 Archived '+(r.archived_at?esc(srWhen(r.archived_at))+(r.archived_by?' by '+esc(r.archived_by):''):'automatically \u2014 in stock for more than '+srArchiveDays()+' days')+'. Nothing is deleted; Unarchive brings it back to the In stock list.</div>':'')+
       '<div class="adm-sec"><div class="adm-sech">Needed</div>'+items.map(itemHTML).join("")+'</div>'+
       (r.note?'<div class="adm-sec"><div class="adm-sech">Note</div><div class="sr-note">'+esc(r.note)+'</div></div>':'')+
       (!many&&r.status_by?'<div class="adm-help">Marked '+esc(srStatusLabel(r.status).toLowerCase())+' by '+esc(r.status_by)+(r.status_at?' · '+esc(srWhen(r.status_at)):'')+'</div>':'')+
       '<div class="sr-btns">'+(c.open?'<button class="ebtn primary" data-srset="ordered">Mark '+(many?'all ':'')+'ordered</button>':'')+
         (c.done<c.n?'<button class="ebtn'+(!c.open?" primary":"")+'" data-srset="done">Mark '+(many?'all ':'')+'in stock</button>':'')+
-        (c.open<c.n?'<button class="ebtn" data-srset="open">Reopen'+(many?' all':'')+'</button>':'')+'</div></div>';
+        (c.open<c.n?'<button class="ebtn" data-srset="open">Reopen'+(many?' all':'')+'</button>':'')+'</div>'+
+      '<div class="sr-btns sr-archbtns">'+(archived?'<button class="ebtn" id="srUnarchive">Unarchive</button>':'<button class="ebtn ghost" id="srArchive">Archive now</button>')+'</div></div>';
     host.innerHTML=h;
     $("srBackLink").addEventListener("click",function(){ SR.sel=null; srRenderInto(host, backFn); });
+    if($("srArchive")) $("srArchive").addEventListener("click",function(){ srArchive(r, true, host, backFn); });
+    if($("srUnarchive")) $("srUnarchive").addEventListener("click",function(){ srArchive(r, false, host, backFn); });
     /* the big buttons act on every item that is not there yet; the small ones on one item */
     host.querySelectorAll("[data-srset]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srset"), host, backFn); }); });
     host.querySelectorAll("[data-sritem]").forEach(function(el){ el.addEventListener("click",function(){ srSetStatus(r, el.getAttribute("data-srto"), host, backFn, [parseInt(el.getAttribute("data-sritem"),10)]); }); });
@@ -4979,6 +4998,24 @@
       toast(status==="ordered"?"Marked "+what+" ordered — the member has been told.":status==="done"?"Marked "+what+" in stock — they’ve been told to pick "+(n===1?"it":"them")+" up.":"Reopened.");
       srRenderInto(host, backFn);
     })["catch"](function(err){ SR.busy=false; toast(navigator.onLine===false?"No signal — try again when you’re back online.":"Couldn’t save that — try again."); diagLog("restock-status-failed", String((err&&err.message)||err)); });
+  }
+  /* Archive now / Unarchive. Archiving something still open or ordered asks first. */
+  function srArchive(r, on, host, backFn){
+    if(SR.busy) return;
+    var go=Promise.resolve(true);
+    if(on && r.status!=="done") go=uiConfirm({ title:"Archive this request?", text:"It is still "+srStatusLabel(r.status).toLowerCase()+" \u2014 archiving hides it from the working lists without marking it in stock. You can unarchive it later.", ok:"Archive", cancel:"Keep it" });
+    go.then(function(yes){
+      if(!yes) return;
+      SR.busy=true;
+      var who=(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")";
+      var patch=on?{ archived_at:new Date().toISOString(), archived_by:who, kept:false }:{ archived_at:null, archived_by:"", kept:true };
+      sbWrite("PATCH","supply_requests?id=eq."+encodeURIComponent(r.id),patch).then(function(res){
+        SR.busy=false; if(!res.ok) throw new Error("archive-"+res.status);
+        Object.assign(r, patch); diagLog("restock-archive", r.id+" "+(on?"archived":"unarchived")); srBadge();
+        toast(on?"Archived \u2014 find it under the Archived filter.":"Back in the list.");
+        SR.sel=null; if(on && SR.filter==="archived") SR.filter="archived"; srRenderInto(host, backFn);
+      })["catch"](function(err){ SR.busy=false; toast(navigator.onLine===false?"No signal \u2014 try again when you\u2019re back online.":"Couldn\u2019t save that \u2014 try again."); diagLog("restock-archive-failed", String((err&&err.message)||err)); });
+    });
   }
   /* the stand-alone screen (service units reach it from Ambulance Checkoff; admins too) */
   function srOpen(){
@@ -6431,14 +6468,14 @@
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
-    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location","Send From","Send From Name"],
-     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails. Send From is the address every email goes out from (it must be a verified \u201cSend mail as\u201d address of the Google account the background script runs under); Send From Name is the sender name people see."},
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location","Send From","Send From Name","Supply Archive Days"],
+     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails. Send From is the address every email goes out from (it must be a verified \u201cSend mail as\u201d address of the Google account the background script runs under); Send From Name is the sender name people see. Supply Archive Days: how long an in-stock supply request stays in the working list before it moves to Archived (default 30)."},
     {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
      note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
                            "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room",
-                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston"};
+                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
