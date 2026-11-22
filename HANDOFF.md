@@ -70,7 +70,15 @@ that makes it wrong.
   under minimum **two quarters in a row → automatic drop to Backup**, admin can override;
   Backup under minimum → notice + discussion only, never automatic; Observers no minimum;
   **all doctors (Medical Control) exempt from everything** — a second doctor is being added
-  to the roster. **The real minimums are 8 (Primary) and 5 (Backup)** — the settings rows
+  to the roster. **Clearance rule (Joseph, Nov 22, 2026): call numbers never make anyone a
+  Primary — a member must be "cleared as Primary" first.** To build with the rest: a
+  clearance on the roster (tick + date cleared + who cleared, suggested columns
+  `cleared_primary`, `cleared_primary_at`, `cleared_primary_by`), shown and set in
+  Admin → Members; the app **blocks** setting a status of Primary without it; a Backup over
+  the Primary minimum is never promoted automatically (flagged for a conversation, and if
+  never cleared the screen says clearance is the next step); clearance **does not expire**,
+  so an auto-dropped Primary keeps it and can be restored without re-clearing.
+  **The real minimums are 8 (Primary) and 5 (Backup)** — the settings rows
   said 15/6 (placeholders) until Nov 22, 2026 and were corrected that day. The doc also proposes: check on the 7th after quarter end after a refresh,
   an "excused quarter" option, a standings log, first partial quarter not counted. Build
   nothing of the notices/auto-drop until leadership signs off; the Doc exemption fix
