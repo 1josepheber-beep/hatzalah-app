@@ -64,7 +64,7 @@ const openScreen=()=>[...d.querySelectorAll(".screen.open, .preader.open")].map(
   check("picker shows the current section (Members) with the active-member count", d.getElementById("admSecCur").textContent==="Members" && /^\d+$/.test((d.querySelector("#admSecBtn .adm-secn")||{textContent:""}).textContent));
   check("menu is closed until the picker is tapped", !d.getElementById("admSecs").classList.contains("open"));
   click(d.getElementById("admSecBtn")); await wait(50);
-  check("tapping the picker opens the grouped menu: 5 groups, 17 sections, current one marked", d.getElementById("admSecs").classList.contains("open") && d.querySelectorAll("#admSecMenu .adm-secg").length===5 && d.querySelectorAll("#admSecMenu .adm-secit").length===17 && d.querySelector("#admSecMenu .adm-secit.on").getAttribute("data-sec")==="members");
+  check("tapping the picker opens the grouped menu: 5 groups, 18 sections, current one marked", d.getElementById("admSecs").classList.contains("open") && d.querySelectorAll("#admSecMenu .adm-secg").length===5 && d.querySelectorAll("#admSecMenu .adm-secit").length===18 && d.querySelector("#admSecMenu .adm-secit.on").getAttribute("data-sec")==="members");
   check("groups are in the agreed order with the renamed sections", [...d.querySelectorAll("#admSecMenu .adm-secg")].map(g=>g.textContent).join("|")==="People|Ambulances & gear|App content|Certifications|Reference lists" && !!secBtn("Certification types") && !!secBtn("Document types") && !secBtn("Upload Types"));
   click(d.getElementById("admSecBack")); await wait(50); check("tapping outside closes the menu", !d.getElementById("admSecs").classList.contains("open"));
   click(d.getElementById("admSecBtn")); await wait(50); click(secBtn("Announcements")); await wait(400);

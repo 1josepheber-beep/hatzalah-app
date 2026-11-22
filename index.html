@@ -1024,7 +1024,7 @@
   .stand-soon h3{margin:0 0 7px;font-size:19px;font-weight:800}
   .stand-soon p{margin:0;font-size:13.5px;line-height:1.55;opacity:.92}
   .stand-prev{position:relative}
-  .stand-prev::after{content:"EXAMPLE";position:absolute;top:10px;right:12px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#8a6d00;background:#fff3d6;border:1px solid #f0d58f;padding:3px 9px;border-radius:999px}
+  .stand-prev.example::after{content:"EXAMPLE";position:absolute;top:10px;right:12px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#8a6d00;background:#fff3d6;border:1px solid #f0d58f;padding:3px 9px;border-radius:999px}
   .stand-badge{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:22px;text-align:center;position:relative;overflow:hidden;margin-bottom:12px}
   .stand-badge::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:var(--stand-c,#1e9e57)}
   .stand-badge .lbl{font-size:12px;font-weight:700;color:var(--mut);margin-bottom:8px}
@@ -1043,6 +1043,21 @@
   .stand-note b{color:var(--ink)}
   .stand-tier{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
   .stand-tier:last-child{border-bottom:0}
+  .stand-roles{display:flex;gap:8px;margin:10px 0 2px} .stand-roles span{flex:1;background:#f3f5f9;border-radius:9px;padding:7px 4px;text-align:center;font-size:12px;color:var(--mut);font-weight:700} .stand-roles b{display:block;font-size:17px;color:var(--ink);font-weight:800}
+  .stand-card.under{border-color:#e4b26a;background:#fffaf0}
+  .stand-histh{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--navy);margin:2px 0 6px}
+  .stand-histrow{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:6px;padding:7px 0;border-top:1px solid var(--line);font-size:13.5px;font-weight:700;color:var(--ink)} .stand-histrow span:not(:first-child){text-align:center} .stand-histrow.head{border-top:0;font-size:11px;color:#9aa8bd;text-transform:uppercase;letter-spacing:.3px} .stand-histrow .ok{color:#1f7a37} .stand-histrow .low{color:var(--red)}
+  /* admin: call statistics */
+  .cs-table{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden} .cs-table.plain{border:0;border-radius:0}
+  .cs-row{display:grid;grid-template-columns:2fr .8fr .7fr .7fr .7fr;gap:6px;align-items:center;width:100%;text-align:left;padding:10px 12px;border:0;border-top:1px solid var(--line);background:#fff;font:inherit;color:var(--ink);font-weight:800;font-size:14px;cursor:pointer}
+  .cs-table.plain .cs-row{cursor:default;padding:9px 0} div.cs-row{cursor:default} .cs-row:first-child{border-top:0}
+  .cs-row span:not(:first-child){text-align:center;font-variant-numeric:tabular-nums} .cs-row small{display:block;font-size:11.5px;color:#9aa8bd;font-weight:700}
+  .cs-row.head{font-size:11px;color:#9aa8bd;text-transform:uppercase;letter-spacing:.3px;padding:8px 12px;background:#f7f9fc} .cs-row .ok{color:#1f7a37} .cs-row .low{color:var(--red)}
+  .cs-sumgrid{margin-bottom:12px} .cs-paste{width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;margin-top:8px}
+  .cs-preview{margin-top:10px;font-size:13px;color:var(--ink)} .cs-preview .warn{color:#8a5a00;background:#fff3d6;border-radius:8px;padding:8px 10px;margin-top:8px;font-weight:600}
+  .adm-help.warn{background:#fff3d6;border-color:#ecd19a;color:#6b4a00} .adm-help.warn a{color:#6b4a00;font-weight:800}
+  .cs-link{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)} .cs-link b{flex:1;font-size:13.5px} .cs-link select{max-width:55%}
+  .ebtn.small{padding:8px 12px;font-size:12.5px;border-radius:9px;margin-left:auto}
   .stand-tier .d{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
   .stand-tier .n{font-weight:800}
   .stand-tier .r{margin-left:auto;color:var(--mut);font-weight:700}
@@ -2904,7 +2919,8 @@
   /* for the test harness and the console: a look at the demo's tables while the demo runs */
   window.HOH_DEMO_DEBUG=function(){ return (STATE&&STATE.demo) ? {db:DEMO_DB, me:STATE.me, files:DEMO_FILES} : null; };
   /* test hooks for the harnesses (no secrets, nothing the UI doesn't already do) */
-  window.HOH_TEST={ anaValid:anaValid, applyLogo:applyLogo, settings:function(){ return STATE.settings; } };
+  window.HOH_TEST={ anaValid:anaValid, applyLogo:applyLogo, settings:function(){ return STATE.settings; },
+                    csParse:function(t){ return csParse(t); }, csMatchUnit:function(n){ return csMatchUnit(n); } };
   function demoNextId(t){ var m=0; demoRows(t).forEach(function(r){ var n=parseInt(r.id,10); if(n>m) m=n; }); return m+1; }
   function demoFindRow(t, where){ var rows=demoRows(t); for(var i=0;i<rows.length;i++){ var ok=true; for(var k in where){ if(String(rows[i][k])!==String(where[k])){ ok=false; break; } } if(ok) return rows[i]; } return null; }
   /* The live parts of the sample data are made at start-up, so "now" is now:
@@ -2954,6 +2970,23 @@
       {id:4,unit:"H-105",checked_at:iso(now-1*D),remind_days:0,reminded_at:null} ];
     DEMO_DB.jumpbag_reminders=[ {id:1,when_at:iso(now-1*D),unit:"H-100",item_id:items[36]?items[36].id:1,exp_date:ymd(now+12*D),milestone:"30"},
       {id:2,when_at:iso(now-9*D),unit:"H-100",item_id:items[12]?items[12].id:1,exp_date:ymd(now-9*D),milestone:"0"} ];
+    /* call statistics: eight quarters per responder, steady numbers that make the
+       standings screens interesting (the viewer comfortably above, a couple under) */
+    (function(){
+      var out=[], id=1, cur=csCurrentPeriod();
+      function h(str){ var x=0; for(var i=0;i<str.length;i++) x=(x*31+str.charCodeAt(i))>>>0; return x; }
+      demoRows("roster").forEach(function(r){
+        var ty=String(r.type||"").toLowerCase(); if(!r.unit || /dispatch|non respond/.test(ty)) return;
+        var st=String(r.status||"").toLowerCase(), base=st==="backup"?7:st==="observer"?2:16;
+        if(r.unit==="H-100") base=22; if(r.unit==="H-104") base=4; if(r.unit==="H-108") base=10;
+        for(var k=0;k<8;k++){
+          var per=csShiftPeriod(cur,-k), seed=h(r.unit+per), tot=Math.max(0, base+(seed%7)-3-(k===0?Math.round(base*0.25):0));
+          var lead=Math.round(tot*(0.25+(seed%5)/20)), drv=Math.round((tot-lead)*(0.3+(seed%4)/10)), oth=tot-lead-drv;
+          out.push({id:id++, unit:r.unit, crew_name:(r.first_name+" "+r.last_name).toUpperCase(), period:per, total:tot, lead:lead, driver:drv, other:oth, unknown:0, source:"eso", updated_at:iso(now-3*D)});
+        }
+      });
+      DEMO_DB.call_stats=out; DEMO_DB.call_stats_names=[];
+    })();
     /* ambulance checkoffs: the answers follow the real question list */
     function answersFor(type, skip){
       var a={}, secs=[]; try{ secs=ambSpec(type); }catch(e){ secs=[]; }
@@ -5035,6 +5068,253 @@
     srLoad().then(function(){ srRenderInto($("admGenPane")); })["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_supply_requests.sql if this is the first time.</div>'; });
   }
 
+  /* ===================== Call statistics (the numbers behind Standings) =====================
+     One row per responder per quarter in call_stats: total calls and how many as Lead,
+     Driver or Other crew. Today the rows are imported from ESO (Admin → Call stats →
+     Import — paste the ESO export); when the Hatzalah Web feed arrives it writes the same
+     rows with source "web". Members see their own rows on My Standing; admins see everyone. */
+  var CS={rows:[], names:{}, loaded:false, mine:null, mineFor:"", sel:null, period:"", view:"table", parsed:null, importSource:"eso"};
+  function csPeriodOf(d){ d=(d instanceof Date)?d:new Date(d); return isNaN(d)?"":d.getFullYear()+"-Q"+(Math.floor(d.getMonth()/3)+1); }
+  function csCurrentPeriod(){ return csPeriodOf(new Date()); }
+  function csPeriodParts(p){ var m=/^(\d{4})-Q([1-4])$/.exec(String(p||"")); return m?{y:+m[1],q:+m[2]}:null; }
+  function csShiftPeriod(p, n){ var x=csPeriodParts(p); if(!x) return p; var i=x.y*4+(x.q-1)+n; return Math.floor(i/4)+"-Q"+((i%4)+1); }
+  function csPeriodLabel(p){ var x=csPeriodParts(p); return x?"Q"+x.q+" "+x.y:String(p||""); }
+  function csPeriodRange(p){ var x=csPeriodParts(p); if(!x) return ""; var s=new Date(x.y,(x.q-1)*3,1), e=new Date(x.y,x.q*3,0); var f=function(d){ return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }; return f(s)+" – "+f(e)+", "+x.y; }
+  function csPeriodStart(p){ var x=csPeriodParts(p); return x?new Date(x.y,(x.q-1)*3,1):null; }
+  /* the last n quarters ending with the current one, newest first */
+  function csRecentPeriods(n){ var out=[], p=csCurrentPeriod(); for(var i=0;i<n;i++){ out.push(p); p=csShiftPeriod(p,-1); } return out; }
+  function csNum(v){ v=parseInt(v,10); return isNaN(v)?0:v; }
+  function csSum(rows){ var o={total:0,lead:0,driver:0,other:0,unknown:0}; (rows||[]).forEach(function(r){ o.total+=csNum(r.total); o.lead+=csNum(r.lead); o.driver+=csNum(r.driver); o.other+=csNum(r.other); o.unknown+=csNum(r.unknown); }); return o; }
+  function csWhen(iso){ if(!iso) return ""; var d=new Date(iso); return isNaN(d)?"":d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }
+
+  /* ---- names: how ESO spells a responder vs. the roster ---- */
+  function csNormName(s){ return String(s||"").toLowerCase().replace(/\(.*?\)/g," ").replace(/,.*$/,"").replace(/[^a-z\s]/g," ").replace(/\s+/g," ").trim(); }
+  function csRosterUnit(r){ return String(r_(r,"Unit")||r.unit||"").trim(); }
+  /* roster unit for a crew name: the saved link first, then first+last name, then last name
+     alone when it is unique (Yisroel/Israel, Yaakov/Jacob). Two people with the same last
+     name: the one whose first name matches, else the active responder. "" when unsure. */
+  function csMatchUnit(name, info){
+    info=info||{}; info.loose=false;
+    var k=csNormName(name); if(!k) return "";
+    if(CS.names[k]) return CS.names[k];
+    var parts=k.split(" "), first=parts[0], last=parts[parts.length-1];
+    var ros=(STATE.roster||[]).filter(function(r){ return csRosterUnit(r); });
+    var nl=function(r){ return csNormName(r_(r,"Last Name")||r.last_name||""); }, nf=function(r){ return csNormName(r_(r,"First Name")||r.first_name||""); };
+    var cands=ros.filter(function(r){ var l=nl(r); return l===last || (last.length>4 && l.length>4 && (l.indexOf(last.slice(0,-1))===0 || last.indexOf(l.slice(0,-1))===0)); });
+    if(!cands.length) return "";
+    var byFirst=cands.filter(function(r){ return nf(r)===first; });
+    if(byFirst.length===1) return csRosterUnit(byFirst[0]);
+    if(cands.length===1){ info.loose=nf(cands[0]).charAt(0)!==first.charAt(0); return csRosterUnit(cands[0]); }
+    var pool=byFirst.length?byFirst:cands, act=pool.filter(function(r){ return admIsActive(r) && !/dispatch/i.test(String(r_(r,"Type")||r.type||"")); });
+    if(act.length===1) return csRosterUnit(act[0]);
+    var ini=pool.filter(function(r){ return nf(r).charAt(0)===first.charAt(0); });
+    return ini.length===1?csRosterUnit(ini[0]):"";
+  }
+  function csMemberName(unit){ var u=normUnit(unit); var m=(STATE.roster||[]).filter(function(r){ return normUnit(csRosterUnit(r))===u; })[0]; if(!m) return unit; var f=String(r_(m,"First Name")||m.first_name||"").trim(), l=String(r_(m,"Last Name")||m.last_name||"").trim(); return (l?l+(f?", "+f:""):f)||unit; }
+
+  /* ---- loading ---- */
+  function csLoadMine(){
+    var u=String((STATE.me&&STATE.me.unit)||"").trim(); if(!u) return Promise.resolve([]);
+    if(CS.mine && CS.mineFor===u) return Promise.resolve(CS.mine);
+    return sbFetch(SB_URL+"/rest/v1/call_stats?select=*&unit=eq."+encodeURIComponent(u)+"&order=period.desc",{cache:"no-store"})
+      .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+      .then(function(rows){ CS.mine=Array.isArray(rows)?rows:[]; CS.mineFor=u; return CS.mine; });
+  }
+  function csLoadAll(){
+    return Promise.all([
+      sbFetch(SB_URL+"/rest/v1/call_stats?select=*&order=period.desc&limit=5000",{cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); }),
+      sbFetch(SB_URL+"/rest/v1/call_stats_names?select=*",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+    ]).then(function(res){
+      CS.rows=Array.isArray(res[0])?res[0]:[]; CS.names={};
+      (Array.isArray(res[1])?res[1]:[]).forEach(function(n){ CS.names[csNormName(n.crew_name)]=String(n.unit||""); });
+      CS.loaded=true; return CS.rows;
+    });
+  }
+  /* rows for one unit, merged across sources (web wins over eso for the same quarter) */
+  function csRowsFor(unit, rows){
+    var u=normUnit(unit), by={};
+    (rows||CS.rows).forEach(function(r){ if(normUnit(r.unit)!==u) return; var cur=by[r.period]; if(!cur || (r.source==="web" && cur.source!=="web") || (r.source===cur.source && r.updated_at>cur.updated_at)) by[r.period]=r; });
+    return Object.keys(by).sort().reverse().map(function(p){ return by[p]; });
+  }
+  function csLastUpdated(rows){ var t=""; (rows||CS.rows).forEach(function(r){ if(r.updated_at>t) t=r.updated_at; }); return t; }
+
+  /* ---- the member's own standing ---- */
+  function csStandingNeed(status){ var t=standingTiers(), s=String(status||"").toLowerCase(); return s==="backup"?t.backup:s==="observer"?0:t.primary; }
+  function csStandingHTML(me, rows){
+    var st=(me&&me.status?String(me.status):"Primary").trim()||"Primary", label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
+    var key=label.toLowerCase(); if(key!=="backup"&&key!=="observer"){ key="primary"; label="Primary"; }
+    var color=key==="backup"?"#C9933A":key==="observer"?"#6b7688":"#1e9e57", obs=key==="observer";
+    var t=standingTiers(), need=csStandingNeed(key);
+    var cur=csCurrentPeriod(), now=new Date(), qEnd=new Date(now.getFullYear(), Math.floor(now.getMonth()/3)*3+3, 1), daysLeft=Math.max(0, Math.ceil((qEnd-now)/86400000));
+    var mine=csRowsFor(me&&me.unit, rows), row=mine.filter(function(r){ return r.period===cur; })[0]||{total:0,lead:0,driver:0,other:0,unknown:0};
+    var calls=csNum(row.total), barPct=need?Math.min(100,Math.round(calls/need*100)):0, under=!obs&&calls<need;
+    var note;
+    if(obs) note='Observer has no call minimum. Your coordinator will move you to Backup when you’re ready.';
+    else if(calls>=need) note='<b>'+(calls-need)+' above</b> the minimum to keep '+esc(label)+' this quarter.';
+    else note='<b>'+(need-calls)+' more</b> needed to keep '+esc(label)+' this quarter.'+(daysLeft<=30?' You have not reached your minimum yet \u2014 please speak to an administrator.':'');
+    var hist=mine.filter(function(r){ return r.period!==cur; }).slice(0,8);
+    var upd=csLastUpdated(mine), src=mine.some(function(r){ return r.source==="web"; })?"Hatzalah Web":"ESO records";
+    return '<div class="stand-prev">'+
+      '<div class="stand-badge" style="--stand-c:'+color+'"><div class="lbl">Your current standing</div>'+
+        '<div class="big" style="color:'+color+'">'+esc(label.toUpperCase())+'</div>'+
+        '<div class="sub">'+(obs?'Set by your coordinator':'Based on this quarter’s calls')+'</div></div>'+
+      '<div class="stand-grid">'+
+        '<div class="stand-stat"><div class="k">This quarter</div><div class="v">'+esc(csPeriodLabel(cur))+'</div></div>'+
+        '<div class="stand-stat"><div class="k">Days left</div><div class="v">'+daysLeft+'</div></div>'+
+      '</div>'+
+      '<div class="stand-card'+(under?" under":"")+'">'+
+        '<div class="stand-top"><span>'+calls+' call'+(calls===1?"":"s")+' this quarter</span>'+(obs?'':'<span class="need">min '+need+' for '+esc(label)+'</span>')+'</div>'+
+        (obs?'':'<div class="stand-bar"><span style="width:'+barPct+'%;background:'+color+'"></span></div>')+
+        '<div class="stand-roles"><span><b>'+csNum(row.lead)+'</b> Lead</span><span><b>'+csNum(row.driver)+'</b> Driver</span><span><b>'+csNum(row.other)+'</b> Other</span></div>'+
+        '<div class="stand-note">'+note+'</div>'+
+      '</div>'+
+      (hist.length?'<div class="stand-card stand-hist"><div class="stand-histh">Previous quarters</div>'+
+        '<div class="stand-histrow head"><span>Quarter</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
+        hist.map(function(r){ var n=csNum(r.total), ok=obs||n>=csStandingNeed(key); return '<div class="stand-histrow"><span>'+esc(csPeriodLabel(r.period))+'</span><span class="'+(ok?"ok":"low")+'">'+n+'</span><span>'+csNum(r.lead)+'</span><span>'+csNum(r.driver)+'</span><span>'+csNum(r.other)+'</span></div>'; }).join("")+
+        '</div>':'')+
+      '<div class="stand-card" style="padding:6px 16px">'+
+        '<div class="stand-tier"><span class="d" style="background:#1e9e57"></span><span class="n">Primary</span><span class="r">'+t.primary+'+ calls / quarter</span></div>'+
+        '<div class="stand-tier"><span class="d" style="background:#C9933A"></span><span class="n">Backup</span><span class="r">'+t.backup+'+ calls / quarter</span></div>'+
+        '<div class="stand-tier"><span class="d" style="background:#6b7688"></span><span class="n">Observer</span><span class="r">new members, no minimum</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="stand-foot">Counts come from '+src+(upd?' · updated '+esc(csWhen(upd)):'')+'. A call counts once per crew member; Lead, Driver and Other are the role on the record.<br>'+
+      (me&&me.admin?'Minimums come from Admin → Settings → Standings.':'Your coordinator sets the minimums.')+'</div>';
+  }
+
+  /* ---- import: the ESO export (one row per crew member per incident) or a pre-counted list ---- */
+  function csSplitLine(line, d){ var out=[], cur="", q=false; for(var i=0;i<line.length;i++){ var c=line[i]; if(c==='"'){ if(q&&line[i+1]==='"'){ cur+='"'; i++; } else q=!q; } else if(c===d&&!q){ out.push(cur); cur=""; } else cur+=c; } out.push(cur); return out.map(function(s){ return s.trim(); }); }
+  function csParseDate(s){ s=String(s||"").trim(); if(!s) return null; var m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s); if(m) return new Date(+m[3],+m[1]-1,+m[2]); m=/^(\d{4})-(\d{2})-(\d{2})/.exec(s); if(m) return new Date(+m[1],+m[2]-1,+m[3]); var d=new Date(s); return isNaN(d)?null:d; }
+  function csParsePeriod(s){ s=String(s||"").trim(); var m=/^(\d{4})\s*-?\s*Q([1-4])$/i.exec(s); if(m) return m[1]+"-Q"+m[2]; m=/^Q([1-4])\s*[-\/ ]?\s*(\d{4})$/i.exec(s); if(m) return m[2]+"-Q"+m[1]; var d=csParseDate(s); return d?csPeriodOf(d):""; }
+  function csRole(s){ s=String(s||"").toLowerCase(); return /lead|primary|attend.*charge/.test(s)?"lead":/driv/.test(s)?"driver":/other|attend|crew|second|third/.test(s)?"other":"unknown"; }
+  function csParse(text){
+    var lines=String(text||"").replace(/\r\n?/g,"\n").split("\n").filter(function(l){ return l.trim(); });
+    if(lines.length<2) return {error:"Paste the export with its header row first."};
+    var d=(lines[0].split("\t").length>1)?"\t":",";
+    var head=csSplitLine(lines[0], d).map(function(h){ return h.toLowerCase(); });
+    var find=function(re){ for(var i=0;i<head.length;i++){ if(re.test(head[i])) return i; } return -1; };
+    var ci=find(/crew.*name|^name$|responder|member/), ri=find(/role/), di=find(/created|incident.*date|^date|service date|call date/), pi=find(/quarter|period/), ii=find(/incident.*(number|#|id|no)|^incident$|run.*(number|#)|pcr/), ni=find(/^calls?$|count|total/);
+    if(ci<0) return {error:"No crew name column found (looking for a header like “Crew Full Name”)."};
+    if(di<0 && pi<0) return {error:"No date or quarter column found (looking for “ESO Record Created Date”, “Incident Date” or “Quarter”)."};
+    var agg={}, seen={}, minDate=null, bad=0, n=0;
+    for(var L=1; L<lines.length; L++){
+      var cells=csSplitLine(lines[L], d); if(cells.length<=ci) continue;
+      var crew=cells[ci]; if(!crew) continue;
+      var period="";
+      if(pi>=0 && cells[pi]) period=csParsePeriod(cells[pi]);
+      if(!period && di>=0){ var dt=csParseDate(cells[di]); if(dt){ period=csPeriodOf(dt); if(!minDate||dt<minDate) minDate=dt; } }
+      if(!period){ bad++; continue; }
+      if(ii>=0 && cells[ii]){ var sk=crew.toLowerCase()+"|"+cells[ii]; if(seen[sk]) continue; seen[sk]=1; }
+      var role=csRole(ri>=0?cells[ri]:""), cnt=ni>=0?csNum(cells[ni])||0:1; if(ni>=0 && !cells[ni]) cnt=0;
+      var k=crew+"|"+period; agg[k]=agg[k]||{crew_name:crew, period:period, lead:0, driver:0, other:0, unknown:0, total:0};
+      agg[k][role]+=cnt; agg[k].total+=cnt; n+=cnt;
+    }
+    var rows=Object.keys(agg).map(function(k){ return agg[k]; }), warnings=[];
+    if(bad) warnings.push(bad+" row"+(bad===1?"":"s")+" had no usable date and were skipped.");
+    /* a file that starts mid-quarter cannot give that quarter's full count: leave it alone */
+    if(minDate && pi<0){ var first=csPeriodOf(minDate), fs=csPeriodStart(first); if(fs && (minDate-fs)>86400000*2){ rows=rows.filter(function(r){ return r.period!==first; }); warnings.push(csPeriodLabel(first)+" is only partly covered by this file (it starts "+minDate.toLocaleDateString("en-US",{month:"short",day:"numeric"})+") — that quarter was left unchanged."); } }
+    var loose=[]; rows.forEach(function(r){ var info={}; r.unit=csMatchUnit(r.crew_name, info); if(r.unit && info.loose){ var l=r.crew_name+" \u2192 "+csMemberName(r.unit)+" ("+r.unit+")"; if(loose.indexOf(l)<0) loose.push(l); } });
+    var unmatched=[]; rows.forEach(function(r){ if(!r.unit && unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); });
+    var periods=[]; rows.forEach(function(r){ if(periods.indexOf(r.period)<0) periods.push(r.period); }); periods.sort();
+    return {rows:rows, periods:periods, unmatched:unmatched, loose:loose, warnings:warnings, crewCalls:n, format:ni>=0?"counts":(ii>=0?"incidents":"rows")};
+  }
+  function csImportApply(parsed, source){
+    var now=new Date().toISOString();
+    var body=parsed.rows.map(function(r){ return {unit:r.unit||"", crew_name:r.crew_name, period:r.period, total:r.total, lead:r.lead, driver:r.driver, other:r.other, unknown:r.unknown, source:source||"eso", updated_at:now}; });
+    var links=parsed.rows.filter(function(r){ return r.unit && !CS.names[csNormName(r.crew_name)]; }).map(function(r){ return {crew_name:r.crew_name, unit:r.unit}; });
+    links=links.filter(function(l,i){ return links.findIndex(function(x){ return x.crew_name===l.crew_name; })===i; });
+    var p=sbFetch(SB_URL+"/rest/v1/call_stats?on_conflict=crew_name,period,source",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify(body) })
+      .then(function(r){ if(!r.ok) throw new Error("import-"+r.status); });
+    if(links.length) p=p.then(function(){ return sbFetch(SB_URL+"/rest/v1/call_stats_names?on_conflict=crew_name",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify(links) }); });
+    return p.then(function(){ diagLog("callstats-import", body.length+" rows, "+links.length+" links"); CS.mine=null; return csLoadAll(); });
+  }
+  /* link a crew name to a member: saves the link and stamps the unit on that name's rows */
+  function csLinkName(crewName, unit){
+    return sbFetch(SB_URL+"/rest/v1/call_stats_names?on_conflict=crew_name",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify([{crew_name:crewName, unit:unit}]) })
+      .then(function(r){ if(!r.ok) throw new Error("link-"+r.status); return sbWrite("PATCH","call_stats?crew_name=eq."+encodeURIComponent(crewName),{unit:unit}); })
+      .then(function(r){ if(!r.ok) throw new Error("link-"+r.status); CS.mine=null; return csLoadAll(); });
+  }
+
+  /* ---- admin: Call stats ---- */
+  function csAdminLoad(){
+    $("admGenPane").innerHTML='<div class="adm-empty">Loading…</div>'; CS.sel=null; CS.view="table"; CS.parsed=null;
+    if(!CS.period) CS.period=csCurrentPeriod();
+    csLoadAll().then(function(){ csAdminRender(); })["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_call_stats.sql if this is the first time.</div>'; });
+  }
+  function csResponders(){
+    return (STATE.roster||[]).filter(function(r){ var ty=String(r_(r,"Type")||r.type||"").toLowerCase(); return csRosterUnit(r) && admIsActive(r) && !/dispatch|non respond/.test(ty); });
+  }
+  function csAdminRender(){
+    var host=$("admGenPane"); if(!host) return;
+    if(CS.sel){ csAdminDetail(host, CS.sel); return; }
+    if(CS.view==="import"){ csAdminImport(host); return; }
+    var periods=csRecentPeriods(8), p=CS.period||periods[0], t=standingTiers();
+    var upd=csLastUpdated(), unmatched=[]; CS.rows.forEach(function(r){ if(!r.unit && unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); });
+    var list=csResponders().map(function(r){ var u=csRosterUnit(r), row=csRowsFor(u).filter(function(x){ return x.period===p; })[0]||{}; var st=String(r_(r,"Status")||r.status||"").toLowerCase(); var need=csStandingNeed(st); return {unit:u, name:csMemberName(u), status:st, need:need, total:csNum(row.total), lead:csNum(row.lead), driver:csNum(row.driver), other:csNum(row.other), has:!!row.period}; });
+    list.sort(function(a,b){ return b.total-a.total || a.name.localeCompare(b.name); });
+    var under=list.filter(function(x){ return x.need && x.total<x.need; }).length;
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Call statistics</h3><div class="u">'+(CS.rows.length?esc(csPeriodLabel(p))+' · '+under+' under minimum':'no data yet')+'</div></div>'+
+        '<button class="ebtn small" id="csImportBtn">Import</button></div>'+
+      '<div class="adm-help">Calls per responder per quarter, and how many as Lead, Driver or Other crew. Minimums: Primary '+t.primary+', Backup '+t.backup+' (Settings → Standings). '+(upd?'Last import '+esc(csWhen(upd))+'.':'Nothing imported yet — tap Import and paste the ESO export.')+'</div>'+
+      (unmatched.length?'<div class="adm-help warn">'+unmatched.length+' name'+(unmatched.length===1?"":"s")+' in the data '+(unmatched.length===1?"is":"are")+' not linked to a member: '+esc(unmatched.join(", "))+'. <a href="#" id="csFixNames">Link them</a></div>':'')+
+      '<div class="adm-chips">'+periods.map(function(q){ return '<button class="adm-chip'+(q===p?" on":"")+'" data-csp="'+q+'">'+esc(csPeriodLabel(q))+'</button>'; }).join("")+'</div>'+
+      '<div class="cs-table"><div class="cs-row head"><span>Responder</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
+        list.map(function(x){ var cls=!x.need?"":(x.total>=x.need?"ok":"low"); return '<button class="cs-row" data-csu="'+esc(x.unit)+'"><span><b>'+esc(x.name)+'</b><small>'+esc(x.unit)+(x.status?' · '+esc(x.status.charAt(0).toUpperCase()+x.status.slice(1)):'')+(x.need?' · min '+x.need:'')+'</small></span><span class="'+cls+'">'+x.total+'</span><span>'+x.lead+'</span><span>'+x.driver+'</span><span>'+x.other+'</span></button>'; }).join("")+
+      '</div></div>';
+    host.innerHTML=h;
+    host.querySelectorAll("[data-csp]").forEach(function(el){ el.addEventListener("click",function(){ CS.period=el.getAttribute("data-csp"); csAdminRender(); }); });
+    host.querySelectorAll("[data-csu]").forEach(function(el){ el.addEventListener("click",function(){ CS.sel=el.getAttribute("data-csu"); csAdminRender(); }); });
+    $("csImportBtn").addEventListener("click",function(){ CS.view="import"; csAdminRender(); });
+    if($("csFixNames")) $("csFixNames").addEventListener("click",function(e){ e.preventDefault(); CS.view="import"; csAdminRender(); });
+  }
+  function csAdminDetail(host, unit){
+    var rows=csRowsFor(unit), m=(STATE.roster||[]).filter(function(r){ return normUnit(csRosterUnit(r))===normUnit(unit); })[0]||{};
+    var st=String(r_(m,"Status")||m.status||"").toLowerCase(), need=csStandingNeed(st);
+    var all=csSum(rows), last4=csSum(rows.slice(0,4));
+    var h='<div class="adm-body"><button class="adm-backlink" id="csBackLink">‹ Call statistics</button>'+
+      '<div class="adm-mh"><div class="t"><h3>'+esc(csMemberName(unit))+'</h3><div class="u">'+esc(unit)+(st?' · '+esc(st.charAt(0).toUpperCase()+st.slice(1)):'')+(need?' · minimum '+need+' / quarter':'')+'</div></div></div>'+
+      '<div class="stand-grid cs-sumgrid"><div class="stand-stat"><div class="k">Last 4 quarters</div><div class="v">'+last4.total+'</div></div><div class="stand-stat"><div class="k">All time</div><div class="v">'+all.total+'</div></div></div>'+
+      '<div class="adm-sec"><div class="adm-sech">By quarter</div>'+(rows.length?'<div class="cs-table plain"><div class="cs-row head"><span>Quarter</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
+        rows.map(function(r){ var n=csNum(r.total), cls=!need?"":(n>=need?"ok":"low"); return '<div class="cs-row"><span><b>'+esc(csPeriodLabel(r.period))+'</b><small>'+esc(csPeriodRange(r.period))+(r.source==="web"?" · Hatzalah Web":"")+'</small></span><span class="'+cls+'">'+n+'</span><span>'+csNum(r.lead)+'</span><span>'+csNum(r.driver)+'</span><span>'+csNum(r.other)+'</span></div>'; }).join("")+'</div>':'<div class="adm-empty">No calls recorded for this member.</div>')+'</div></div>';
+    host.innerHTML=h;
+    $("csBackLink").addEventListener("click",function(){ CS.sel=null; csAdminRender(); });
+  }
+  function csAdminImport(host){
+    var P=CS.parsed, unmatched=[], linked=[]; CS.rows.forEach(function(r){ if(!r.unit){ if(unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); } else if(CS.names[csNormName(r.crew_name)] && linked.indexOf(r.crew_name)<0) linked.push(r.crew_name); }); linked.sort();
+    var members=csResponders().concat((STATE.roster||[]).filter(function(r){ return csRosterUnit(r) && !admIsActive(r); }));
+    var opts='<option value="">— pick a member —</option>'+members.map(function(r){ var u=csRosterUnit(r); return '<option value="'+esc(u)+'">'+esc(csMemberName(u))+' ('+esc(u)+')'+(admIsActive(r)?'':' · inactive')+'</option>'; }).join("");
+    var h='<div class="adm-body"><button class="adm-backlink" id="csBackLink">‹ Call statistics</button>'+
+      '<div class="adm-mh"><div class="t"><h3>Import call data</h3><div class="u">from the ESO export</div></div></div>'+
+      '<div class="adm-help">Paste the ESO export (Query Builder / Data Exporter: Crew Full Name, ESO Record Created Date or Incident Date, Crew Standard Role, Incident Number) or a pre-counted list (Crew Full Name, Quarter, Role, Calls). Tab- or comma-separated, header row first. Quarters already in the app are replaced by what you paste; quarters you leave out are untouched.</div>'+
+      '<div class="adm-sec"><label class="adm-f wide"><span>Source</span><select id="csSource"><option value="eso"'+(CS.importSource==="eso"?" selected":"")+'>ESO</option><option value="web"'+(CS.importSource==="web"?" selected":"")+'>Hatzalah Web</option><option value="manual"'+(CS.importSource==="manual"?" selected":"")+'>Manual count</option></select></label>'+
+        '<textarea class="amb-text cs-paste" id="csPaste" rows="7" placeholder="Crew Full Name,ESO Record Created Date,Crew Standard Role,Incident Number&#10;JOSEPH EBER,11/19/2026,Lead,26-001234&#10;…"></textarea>'+
+        '<div class="sr-btns"><button class="ebtn primary" id="csParseBtn">Check the data</button></div>'+
+        (P&&P.error?'<div class="adm-help warn">'+esc(P.error)+'</div>':'')+
+        (P&&!P.error?'<div class="cs-preview"><b>'+P.rows.length+' responder-quarter'+(P.rows.length===1?"":"s")+'</b> from '+P.crewCalls+' crew call'+(P.crewCalls===1?"":"s")+' · '+P.periods.map(csPeriodLabel).join(", ")+
+          (P.warnings.length?'<div class="warn">'+P.warnings.map(esc).join("<br>")+'</div>':'')+
+          (P.loose.length?'<div class="warn">Matched by last name only — please check: '+esc(P.loose.join("; "))+'. Wrong one? Import, then fix it under Name links below.</div>':'')+
+          (P.unmatched.length?'<div class="warn">Not linked to a member (rows are saved but will not show on anyone’s standing until linked): '+esc(P.unmatched.join(", "))+'</div>':'')+
+          '<div class="sr-btns"><button class="ebtn primary" id="csApplyBtn"'+(P.rows.length?"":" disabled")+'>Import '+P.rows.length+' row'+(P.rows.length===1?"":"s")+'</button></div></div>':'')+
+      '</div>'+
+      (unmatched.length?'<div class="adm-sec"><div class="adm-sech">Names not linked to a member</div><div class="adm-help">These names are in the data but the app could not tell who they are. Pick the member and the rows move to them.</div>'+
+        unmatched.map(function(nm,i){ return '<div class="cs-link"><b>'+esc(nm)+'</b><select data-cslink="'+esc(nm)+'">'+opts+'</select></div>'; }).join("")+'</div>':'')+
+      (linked.length?'<div class="adm-sec"><div class="adm-sech">Name links</div><div class="adm-help">How each name in the data maps to a member. Change one if the app guessed wrong; the rows move with it.</div>'+
+        linked.map(function(nm){ var u=CS.names[csNormName(nm)]; return '<div class="cs-link"><b>'+esc(nm)+'</b><select data-cslink="'+esc(nm)+'">'+opts.replace('value="'+esc(u)+'"','value="'+esc(u)+'" selected')+'</select></div>'; }).join("")+'</div>':'')+
+      '</div>';
+    host.innerHTML=h;
+    $("csBackLink").addEventListener("click",function(){ CS.view="table"; CS.parsed=null; csAdminRender(); });
+    $("csSource").addEventListener("change",function(){ CS.importSource=this.value; });
+    $("csParseBtn").addEventListener("click",function(){ CS.parsed=csParse($("csPaste").value); CS.pasteText=$("csPaste").value; csAdminRender(); if($("csPaste")) $("csPaste").value=CS.pasteText||""; });
+    if($("csApplyBtn")) $("csApplyBtn").addEventListener("click",function(){
+      var btn=this; btn.disabled=true; btn.textContent="Importing…";
+      csImportApply(CS.parsed, CS.importSource).then(function(){ toast("Imported — the standings now use these numbers."); CS.parsed=null; CS.pasteText=""; CS.view="table"; csAdminRender(); })
+        ["catch"](function(err){ btn.disabled=false; btn.textContent="Import"; toast("Couldn’t import — try again."); diagLog("callstats-import-failed", String((err&&err.message)||err)); });
+    });
+    host.querySelectorAll("[data-cslink]").forEach(function(sel){ sel.addEventListener("change",function(){ var u=this.value; if(!u) return; var nm=this.getAttribute("data-cslink"); this.disabled=true;
+      csLinkName(nm, u).then(function(){ toast("Linked "+nm+" to "+csMemberName(u)+"."); csAdminRender(); })["catch"](function(err){ toast("Couldn’t save that link."); diagLog("callstats-link-failed", String((err&&err.message)||err)); csAdminRender(); }); }); });
+    if(CS.pasteText && $("csPaste")) $("csPaste").value=CS.pasteText;
+  }
+
   /* ===================== Scene Timer ===================== */
   // Defaults; overridden by the Settings tab in the admin portal.
   var SC_COUNT=600, SC_ADD=300, SC_REMIND=2700;   // 10 min, snooze +5 min, remind at 45 min
@@ -5259,49 +5539,22 @@
   function openStanding(){
     if(!$("standScreen").classList.contains("open")) navOpen(closeStanding);
     $("standScreen").classList.add("open");
-    var st=(STATE.me&&STATE.me.status?String(STATE.me.status):"Primary").trim() || "Primary";
-    var label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
-    var t=standingTiers();
-    // The quarter and days left are real; the call count is an example until the
-    // call-data feed exists. The example is pitched to the member's current status.
-    var now=new Date(), q=Math.floor(now.getMonth()/3), qEnd=new Date(now.getFullYear(), q*3+3, 1);
-    var daysLeft=Math.max(0, Math.ceil((qEnd-now)/86400000));
-    var key=label.toLowerCase(), need, calls, note, barPct, color, obs=false;
-    if(key==="backup"){ need=t.backup; calls=t.backup+2; color="#C9933A"; }
-    else if(key==="observer"){ obs=true; need=0; calls=3; color="#6b7688"; }
-    else { key="primary"; label="Primary"; need=t.primary; calls=t.primary+3; color="#1e9e57"; }
-    // Observer is where new members start; it has no call target. They stay there until
-    // an admin moves them to Backup, so their screen shows calls only, no bar or minimum.
-    if(obs) note='Observer has no call minimum. Your coordinator will move you to Backup when you\u2019re ready.';
-    else note='<b>'+(calls-need)+' above</b> the minimum to keep '+esc(label)+' this quarter.';
-    barPct=need?Math.min(100,Math.round(calls/need*100)):0;
-    $("standBody").innerHTML=
-      '<div class="stand-soon"><span class="tag">Coming soon</span>'+
-        '<h3>Your call activity, at a glance</h3>'+
-        '<p>Soon this screen will show how many calls you\u2019ve responded to this quarter, '+
-        'the minimum for your standing, and how much time is left. Below is an example of what it will look like \u2014 '+
-        'the call count is not real yet.</p></div>'+
-      '<div class="stand-prev">'+
-        '<div class="stand-badge" style="--stand-c:'+color+'"><div class="lbl">Your current standing</div>'+
-          '<div class="big" style="color:'+color+'">'+esc(label.toUpperCase())+'</div>'+
-          '<div class="sub">'+(obs?'Set by your coordinator':'Based on this quarter\u2019s calls')+'</div></div>'+
-        '<div class="stand-grid">'+
-          '<div class="stand-stat"><div class="k">This quarter</div><div class="v">Q'+(q+1)+' '+now.getFullYear()+'</div></div>'+
-          '<div class="stand-stat"><div class="k">Days left</div><div class="v">'+daysLeft+'</div></div>'+
-        '</div>'+
-        '<div class="stand-card">'+
-          '<div class="stand-top"><span>'+calls+' calls responded to</span>'+(obs?'':'<span class="need">min '+need+' for '+esc(label)+'</span>')+'</div>'+
-          (obs?'':'<div class="stand-bar"><span style="width:'+barPct+'%;background:'+color+'"></span></div>')+
-          '<div class="stand-note">'+note+'</div>'+
-        '</div>'+
-        '<div class="stand-card" style="padding:6px 16px">'+
+    $("standBody").innerHTML='<div class="empty">Loading\u2026</div>';
+    /* real counts from call_stats (imported from ESO today, Hatzalah Web later) */
+    csLoadMine().then(function(rows){
+      if(!$("standScreen").classList.contains("open")) return;
+      if(!rows.length){
+        var t=standingTiers();
+        $("standBody").innerHTML='<div class="stand-soon"><span class="tag">No data yet</span><h3>Your call activity, at a glance</h3>'+
+          '<p>No calls are on record for you yet. Once the call data is imported this screen shows how many calls you ran this quarter, how many as Lead, Driver or Other crew, the minimum for your standing, and your previous quarters.</p></div>'+
+          '<div class="stand-prev"><div class="stand-card" style="padding:6px 16px">'+
           '<div class="stand-tier"><span class="d" style="background:#1e9e57"></span><span class="n">Primary</span><span class="r">'+t.primary+'+ calls / quarter</span></div>'+
           '<div class="stand-tier"><span class="d" style="background:#C9933A"></span><span class="n">Backup</span><span class="r">'+t.backup+'+ calls / quarter</span></div>'+
-          '<div class="stand-tier"><span class="d" style="background:#6b7688"></span><span class="n">Observer</span><span class="r">new members, no minimum</span></div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="stand-foot">Example only \u2014 call counts are not live yet.<br>'+
-        (STATE.me&&STATE.me.admin?'Minimums come from Admin \u2192 Settings \u2192 Standings.':'Your coordinator sets the minimums.')+'</div>';
+          '<div class="stand-tier"><span class="d" style="background:#6b7688"></span><span class="n">Observer</span><span class="r">new members, no minimum</span></div></div></div>';
+        return;
+      }
+      $("standBody").innerHTML=csStandingHTML(STATE.me, rows);
+    });
   }
   /* Tier minimums from Settings \u2192 Standings; falls back to 15 / 6 when unset. */
   function standingTiers(){
@@ -5980,7 +6233,7 @@
      Most-used first inside each group. ADM_SECS is the flat list the rest of
      the admin code looks labels up in. */
   var ADM_GROUPS=[
-    {g:"People", secs:[{k:"members",label:"Members"},{k:"guests",label:"Guest codes"}]},
+    {g:"People", secs:[{k:"members",label:"Members"},{k:"callstats",label:"Call stats"},{k:"guests",label:"Guest codes"}]},
     {g:"Ambulances & gear", secs:[{k:"supply",label:"Supply requests"},{k:"ambchecks",label:"Ambulance checks"},{k:"jumpbags",label:"Jump bags"},{k:"jumpbag",label:"Jump bag items"}]},
     {g:"App content", secs:[{k:"announce",label:"Announcements"},{k:"tiles",label:"Tiles"},{k:"resources",label:"Resources"},{k:"settings",label:"Settings"}]},
     {g:"Certifications", secs:[{k:"certtypes",label:"Certification types"},{k:"uploads",label:"Document types"}]},
@@ -6170,6 +6423,7 @@
     if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
     if(k==="jumpbags"){ ADMJB.sel=null; admJbLoad(); return; }
     if(k==="supply"){ srAdminLoad(); return; }
+    if(k==="callstats"){ csAdminLoad(); return; }
     if(k==="certtypes"){
       if(CERT.certCols&&CERT.certCols.length){ admRenderCertTypes(); return; }
       $("admGenPane").innerHTML='<div class="adm-empty">Loading\u2026</div>';

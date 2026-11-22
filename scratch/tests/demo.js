@@ -70,7 +70,7 @@ const back=async()=>{ const s=openScreen(); if(!s) return; const b=s.querySelect
     const before=errs.length; click([...d.querySelectorAll("#admSecs .adm-secit")].find(b=>b.getAttribute("data-label")===label)); await wait(500);
     const pane=label==="Members"?d.getElementById("admMembersPane"):d.getElementById("admGenPane");
     const txt=pane.textContent.replace(/\s+/g," ");
-    const hasRows = label==="Members" ? d.querySelectorAll("#admList .adm-row").length>=10 : (pane.querySelectorAll(".adm-row, .amb-row, tr, .adm-field, .adm-rowline, .cprx-b, input, select").length>=1 && !/Loading…/.test(txt));
+    const hasRows = label==="Members" ? d.querySelectorAll("#admList .adm-row").length>=10 : (pane.querySelectorAll(".adm-row, .amb-row, .cs-row, tr, .adm-field, .adm-rowline, .cprx-b, input, select").length>=1 && !/Loading…/.test(txt));
     check("admin section '"+label+"' shows sample rows", hasRows && errs.length===before && !/Couldn’t load/.test(txt));
   }
   // an admin edit that sticks: supply request -> ordered

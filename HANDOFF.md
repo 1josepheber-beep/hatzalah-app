@@ -63,6 +63,47 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
+- **UNRELEASED (committed locally, not pushed) — Call statistics / real Standings data:**
+  `db/add_call_stats.sql` (tables `call_stats` — unit, crew_name, period '2026-Q4', total,
+  lead, driver, other, unknown, source eso|web|manual, updated_at; unique (crew_name,
+  period, source) — and `call_stats_names` crew_name → unit; RLS: own-or-admin read, admin
+  write). **The migration was NOT applied yet** (the connector's confirmation prompt timed
+  out on Nov 22) — apply it before release, then load the ESO history (29 crew names, Q1 2023 – Q4 2026, pulled from the ESO
+  Insights "Responder Contribution Dashboard" via the Sisense JAQL API — see below; the
+  pulled file lives only in the sandbox under `scratch/eso/`, which is git-ignored: names
+  with call counts do not belong in the public repo).
+  App: `CS` module (search `Call statistics (the numbers behind Standings)`):
+  `csParse()` reads the ESO export (Crew Full Name + date or Quarter + role + incident; one
+  crew member per incident counted once; a file starting mid-quarter leaves that quarter
+  alone and says so; also a pre-counted Crew/Quarter/Role/Calls list), `csMatchUnit()`
+  links names to the roster (saved link → first+last → unique last name, flagged "loose"
+  when the first initial differs → active responder over inactive/dispatcher), import
+  upserts on (crew_name, period, source) and saves new links. **Admin → People → Call
+  stats**: quarter chips, responders sorted by calls with Lead/Driver/Other and red when
+  under their minimum, tap → history; Import screen with preview, unlinked-name pickers
+  and a Name links list to correct a guess. **My Standing** now reads the member's own
+  rows: this quarter's count with the role split, the bar against their minimum, "X more
+  needed" (plus "speak to an administrator" inside the last 30 days), previous quarters,
+  and "Counts come from ESO records · updated …"; a member with no rows gets a plain
+  "No data yet" screen (no invented numbers; the old EXAMPLE preview is gone). Demo seeds
+  8 quarters per demo responder. Tests: `scratch/tests/callstats.js` (25, in `npm test`),
+  smoke now expects 18 admin sections. Preview: `node preview-callstats.js` in
+  scratch/catalog. Still to decide with Joseph: the automatic Primary→Backup drop and the
+  header warning dot — the data is now there to do both. Goes out as **1.16.0**.
+- **ESO (Nov 22, 2026):** ESO Insights is Sisense (`sisense.esosuite.net`). With Joseph
+  signed in, the Sisense REST API answers from a page on that origin: `GET
+  /api/v1/dashboards/<oid>/widgets` and `POST /api/datasources/EMS/jaql` with dims
+  `[Incident Crew.Crew Full Name]`, `[Incident Crew.Crew Standard Role]` (Lead / Driver /
+  Other / Unknown), `[Incident Response.Incident Number]` (count), `[Incident Response.ESO
+  Record Created Date (Calendar)]` (level quarters/days). Dashboard oid
+  `6a220de01e1bb32c965a7efd` ("Responder Contribution Dashboard"). This only works from
+  Joseph's browser session — no key for the background script. His Insights license is
+  Viewer (no Query Builder / scheduled export); a colleague with a creator license was
+  asked to set up a weekly Query Builder export (Crew Full Name, ESO Record Created Date,
+  Crew Standard Role, Incident Number, last 120 days, CSV) to app@houstonhatzalah.org —
+  when it arrives as an attachment, the Apps Script can import it on its own (not built
+  yet; the app's `csParse` is the reference for the format). Never browse ESO patient
+  records; Insights/Analytics only.
 - **Live: 1.15.0** (Nov 21, 2026): the admin view of the **Certifications**
   screen hides members whose roster row is inactive (or who are no longer on the roster)
   behind a "Show N inactive members" toggle at the bottom (`certRowActive`,
@@ -204,6 +245,7 @@ that makes it wrong.
 cd scratch/tests && npm install && npm test        # all harnesses (jsdom; ~2 min)
 cd scratch/tests && npm run catalog                # screenshots → PDF in scratch/catalog/out/
 cd scratch/catalog && node preview-peritem.js      # per-item supply request screens → out/preview/
+cd scratch/catalog && node preview-callstats.js    # My Standing + Admin → Call stats → out/preview/
 ```
 
 `scratch/demo/build_demo_data.py` rebuilds `demo/demo-data.js` from the SQL in `db/`.
