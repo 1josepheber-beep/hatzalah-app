@@ -159,6 +159,10 @@ that makes it wrong.
 - **Open:** an announcement draft about the Quick Actions redesign (Joseph decides whether
   to post it); Google account owners for the private note; Service-unit switches on members.
 - **Supply requests** are in daily use — treat that flow as production-critical.
+- **Not ours — leave alone:** the Supabase project also hosts an edge function
+  **`cf26-relay`** (added Nov 2026) for Joseph's Chanukah Fest check-in system. It only
+  relays requests to a Google script and writes nothing to this database. Do not edit,
+  redeploy or delete it; Joseph removes it himself after Dec 6, 2026.
 - **Database access (RLS), fixed Nov 12, 2026:** the leftover migration-era `"temp read"`
   policies (anon + authenticated, `using (true)`) were dropped from all 19 tables that had
   them. Every table now reads only through its `member read` / `admin read` / own-row
