@@ -63,12 +63,12 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
-- **UNRELEASED (committed locally, not pushed) — Call statistics / real Standings data:**
+- **Live: 1.16.0** (Nov 22, 2026) — **Call statistics / real Standings data:**
   `db/add_call_stats.sql` (tables `call_stats` — unit, crew_name, period '2026-Q4', total,
   lead, driver, other, unknown, source eso|web|manual, updated_at; unique (crew_name,
   period, source) — and `call_stats_names` crew_name → unit; RLS: own-or-admin read, admin
-  write). **The migration was NOT applied yet** (the connector's confirmation prompt timed
-  out on Nov 22) — apply it before release, then load the ESO history (29 crew names, Q1 2023 – Q4 2026, pulled from the ESO
+  write). Migration applied and the ESO history loaded on Nov 22, 2026: 315 rows (29 crew
+  names, 4,200 calls, Q1 2023 – Q4 2026, pulled from the ESO
   Insights "Responder Contribution Dashboard" via the Sisense JAQL API — see below; the
   pulled file lives only in the sandbox under `scratch/eso/`, which is git-ignored: names
   with call counts do not belong in the public repo).
@@ -89,7 +89,9 @@ that makes it wrong.
   8 quarters per demo responder. Tests: `scratch/tests/callstats.js` (25, in `npm test`),
   smoke now expects 18 admin sections. Preview: `node preview-callstats.js` in
   scratch/catalog. Still to decide with Joseph: the automatic Primary→Backup drop and the
-  header warning dot — the data is now there to do both. Goes out as **1.16.0**.
+  header warning dot — the data is now there to do both. Joseph: ESO fills the gap; once
+  Hatzalah Web access/API arrives the counts come from there (source "web") and the import
+  becomes automatic.
 - **ESO (Nov 22, 2026):** ESO Insights is Sisense (`sisense.esosuite.net`). With Joseph
   signed in, the Sisense REST API answers from a page on that origin: `GET
   /api/v1/dashboards/<oid>/widgets` and `POST /api/datasources/EMS/jaql` with dims
@@ -104,7 +106,7 @@ that makes it wrong.
   when it arrives as an attachment, the Apps Script can import it on its own (not built
   yet; the app's `csParse` is the reference for the format). Never browse ESO patient
   records; Insights/Analytics only.
-- **Live: 1.15.0** (Nov 21, 2026): the admin view of the **Certifications**
+- **1.15.0** (Nov 21, 2026): the admin view of the **Certifications**
   screen hides members whose roster row is inactive (or who are no longer on the roster)
   behind a "Show N inactive members" toggle at the bottom (`certRowActive`,
   `CERT.showInactive`); shown rows carry a grey INACTIVE tag; a search still finds them.
