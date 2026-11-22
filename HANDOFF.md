@@ -63,6 +63,12 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
+- **Standings rule addition (Joseph, Nov 22, 2026 — "very important"): Doc — Lars
+  Thestrup, MD-1, type Medical Control — is NEVER part of the call statistics, the
+  standings reminders, or the automatic downgrade.** `csExempt()` (type matches
+  medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
+  and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
+  reminder or auto-downgrade code must call `csExempt()` first.
 - **Live: 1.16.0** (Nov 22, 2026) — **Call statistics / real Standings data:**
   `db/add_call_stats.sql` (tables `call_stats` — unit, crew_name, period '2026-Q4', total,
   lead, driver, other, unknown, source eso|web|manual, updated_at; unique (crew_name,

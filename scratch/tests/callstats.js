@@ -38,6 +38,11 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   a=boot({}); a.rows.roster[0].status="Primary"; a.rows.call_stats=[]; a.rows.call_stats_names=[]; await wait(3200);
   click(a.w,a.d.getElementById("rstatus")); await wait(500); sb=a.d.getElementById("standBody");
   check("no rows at all: a plain 'No data yet' screen with the tiers, no made-up numbers", /No data yet/.test(sb.textContent) && !/calls this quarter/.test(sb.textContent) && /15\+ calls/.test(sb.textContent));
+  // Medical Control (Doc): calls shown for the record, never a minimum
+  a=boot({}); a.rows.roster[0].status="Primary"; a.rows.roster[0].type="Medical Control"; a.rows.roster[0].unit="MD-1"; a.rows.call_stats=[Object.assign({},stats[0],{unit:"MD-1",total:2,lead:0,driver:0,other:2})]; a.rows.call_stats_names=[];
+  a.w.localStorage.setItem("hoh_member_v1",JSON.stringify({email:"t@houstonhatzalah.org",unit:"MD-1"})); await wait(3200);
+  click(a.w,a.d.getElementById("rstatus")); await wait(500); sb=a.d.getElementById("standBody");
+  check("Medical Control: calls listed, 'no call minimum', no bar, no 'more needed'", /2 calls this quarter/.test(sb.textContent) && /Medical Control has no call minimum/.test(sb.textContent) && !sb.querySelector(".stand-bar") && !/more needed|min 15/.test(sb.textContent));
   check("no page errors (member)", a.errs.length===0); a.errs.slice(0,3).forEach(e=>console.log("   !",e));
 
   // ===== 2. the parser and the name matching (through the page's own functions)
@@ -45,7 +50,9 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   b.rows.roster.push({id:9,unit:"H-42",first_name:"Israel",last_name:"Leibowitz",email:"i@x.org",active:"X",type:"Responder",status:"Primary"},
     {id:10,unit:"D-230",first_name:"Yitzchak",last_name:"Abramovitz",email:"ya@x.org",active:"No",type:"Dispatcher"},
     {id:11,unit:"H-44",first_name:"Yitzchak",last_name:"Abramovitz",email:"yb@x.org",active:"X",type:"Responder",status:"Backup"},
-    {id:12,unit:"H-38",first_name:"Naftali",last_name:"Kraus",email:"nk@x.org",active:"No",type:"Responder"});
+    {id:12,unit:"H-38",first_name:"Naftali",last_name:"Kraus",email:"nk@x.org",active:"No",type:"Responder"},
+    {id:13,unit:"MD-1",first_name:"Lars",last_name:"Thestrup",email:"lt@x.org",active:"X",type:"Medical Control",status:"Primary"});
+  b.rows.call_stats.push({id:5,unit:"MD-1",crew_name:"LARS THESTRUP, MD",period:cur,total:1,lead:0,driver:0,other:1,unknown:0,source:"eso",updated_at:"2026-11-22T17:00:00Z"});
   await wait(3200);
   const w=b.w.HOH_TEST;
   console.log("   match:", ["JOSEPH EBER","Yisroel Leibowitz","NAFTALI KRAUSS","Yitzchak Abramovitz","ELIMELECH (ELI) FRIED","Joseph Eber, MD","TECHSUPPORT ESO"].map(n=>n+"="+w.csMatchUnit(n)).join(" "));
@@ -71,6 +78,7 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   const pane=b.d.getElementById("admGenPane");
   const rowsTxt=[...pane.querySelectorAll(".cs-row:not(.head)")].map(r=>[...r.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).join(" | "));
   check("the table lists active responders for this quarter, most calls first, with Lead/Driver/Other  ("+rowsTxt.slice(0,2).join(" | ")+")", /^Eber, Joseph/.test(rowsTxt[0]) && /\| 17 \| 3 \| 7 \| 7$/.test(rowsTxt[0]) && rowsTxt.some(t=>/^Fried, Joseph/.test(t) && /\| 4 \| 1 \| 1 \| 2$/.test(t)));
+  check("Medical Control (MD-1) is not in the standings table at all", !rowsTxt.some(t=>/Thestrup/.test(t)));
   check("the under-minimum count in the header and red numbers for those under", /under minimum/.test(pane.querySelector(".adm-mh .u").textContent) && !!pane.querySelector(".cs-row .low"));
   click(b.w,[...pane.querySelectorAll('[data-csu]')].find(x=>x.getAttribute("data-csu")==="H-24")); await wait(200);
   check("tapping a member shows their quarter history", /Eber, Joseph/.test(pane.querySelector("h3").textContent) && pane.querySelectorAll(".cs-table.plain .cs-row:not(.head)").length===3 && /All time/.test(pane.textContent) && /65/.test(pane.textContent));

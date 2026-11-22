@@ -5143,13 +5143,15 @@
   function csStandingHTML(me, rows){
     var st=(me&&me.status?String(me.status):"Primary").trim()||"Primary", label=st.charAt(0).toUpperCase()+st.slice(1).toLowerCase();
     var key=label.toLowerCase(); if(key!=="backup"&&key!=="observer"){ key="primary"; label="Primary"; }
-    var color=key==="backup"?"#C9933A":key==="observer"?"#6b7688":"#1e9e57", obs=key==="observer";
-    var t=standingTiers(), need=csStandingNeed(key);
+    var exempt=csExempt(me);
+    var color=key==="backup"?"#C9933A":key==="observer"?"#6b7688":"#1e9e57", obs=key==="observer"||exempt;
+    var t=standingTiers(), need=exempt?0:csStandingNeed(key);
     var cur=csCurrentPeriod(), now=new Date(), qEnd=new Date(now.getFullYear(), Math.floor(now.getMonth()/3)*3+3, 1), daysLeft=Math.max(0, Math.ceil((qEnd-now)/86400000));
     var mine=csRowsFor(me&&me.unit, rows), row=mine.filter(function(r){ return r.period===cur; })[0]||{total:0,lead:0,driver:0,other:0,unknown:0};
     var calls=csNum(row.total), barPct=need?Math.min(100,Math.round(calls/need*100)):0, under=!obs&&calls<need;
     var note;
-    if(obs) note='Observer has no call minimum. Your coordinator will move you to Backup when you’re ready.';
+    if(exempt) note='Medical Control has no call minimum — these are your calls for the record.';
+    else if(obs) note='Observer has no call minimum. Your coordinator will move you to Backup when you’re ready.';
     else if(calls>=need) note='<b>'+(calls-need)+' above</b> the minimum to keep '+esc(label)+' this quarter.';
     else note='<b>'+(need-calls)+' more</b> needed to keep '+esc(label)+' this quarter.'+(daysLeft<=30?' You have not reached your minimum yet \u2014 please speak to an administrator.':'');
     var hist=mine.filter(function(r){ return r.period!==cur; }).slice(0,8);
@@ -5157,7 +5159,7 @@
     return '<div class="stand-prev">'+
       '<div class="stand-badge" style="--stand-c:'+color+'"><div class="lbl">Your current standing</div>'+
         '<div class="big" style="color:'+color+'">'+esc(label.toUpperCase())+'</div>'+
-        '<div class="sub">'+(obs?'Set by your coordinator':'Based on this quarter’s calls')+'</div></div>'+
+        '<div class="sub">'+(exempt?'No call minimum':obs?'Set by your coordinator':'Based on this quarter’s calls')+'</div></div>'+
       '<div class="stand-grid">'+
         '<div class="stand-stat"><div class="k">This quarter</div><div class="v">'+esc(csPeriodLabel(cur))+'</div></div>'+
         '<div class="stand-stat"><div class="k">Days left</div><div class="v">'+daysLeft+'</div></div>'+
@@ -5241,8 +5243,11 @@
     if(!CS.period) CS.period=csCurrentPeriod();
     csLoadAll().then(function(){ csAdminRender(); })["catch"](function(){ $("admGenPane").innerHTML='<div class="adm-empty">Couldn’t load. Run add_call_stats.sql if this is the first time.</div>'; });
   }
+  /* Who the call minimums apply to. Medical Control (Doc, MD-1) is never part of the
+     statistics, the reminders or the automatic downgrade — Joseph's rule, Nov 22, 2026. */
+  function csExempt(r){ if(!r) return false; var ty=String(r_(r,"Type")||r.type||"").toLowerCase(); return /medical control|physician|doctor/.test(ty) || /^md-?\d*$/i.test(String(csRosterUnit(r)||r.unit||"").trim()); }
   function csResponders(){
-    return (STATE.roster||[]).filter(function(r){ var ty=String(r_(r,"Type")||r.type||"").toLowerCase(); return csRosterUnit(r) && admIsActive(r) && !/dispatch|non respond/.test(ty); });
+    return (STATE.roster||[]).filter(function(r){ var ty=String(r_(r,"Type")||r.type||"").toLowerCase(); return csRosterUnit(r) && admIsActive(r) && !/dispatch|non respond/.test(ty) && !csExempt(r); });
   }
   function csAdminRender(){
     var host=$("admGenPane"); if(!host) return;
