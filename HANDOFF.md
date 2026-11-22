@@ -63,6 +63,13 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
+- **UNRELEASED (committed locally, not pushed):** the admin view of the **Certifications**
+  screen hides members whose roster row is inactive (or who are no longer on the roster)
+  behind a "Show N inactive members" toggle at the bottom (`certRowActive`,
+  `CERT.showInactive`); shown rows carry a grey INACTIVE tag; a search still finds them.
+  The reminder emails already skipped inactive members — only the screen listed them.
+  Tests: smoke 64. Preview: `node preview-certs-inactive.js` in scratch/catalog. Next
+  release (1.15.0) when Joseph says so.
 - **Live: 1.14.0** (Nov 20, 2026) — **supply request archive:** `db/add_supply_archive.sql` (already applied live Nov 20, 2026: columns
   `archived_at`, `archived_by`, `kept` on `supply_requests`; settings row 57 **Supply
   Archive Days** = 30). A request counts as archived when `archived_at` is set, or when it

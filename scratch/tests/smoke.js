@@ -7,8 +7,8 @@ let pass=0, fail=0; const check=(l,ok)=>{ console.log((ok?"  PASS ":"  FAIL ")+l
 const errs=[], writes=[];
 const tiles=[["Hospitals","hospitals"],["Protocols","protocols"],["Certifications","certifications"],["Members Directory","directory"],["Scheduler","board"],["Task Book","taskbook"],["Resources","resources"],["Ambulance Checkoff","ambcheck"],["Equipment Finder","placement"],["Apartments Finder","apartments"],["Admin","admin"]].map((t,i)=>({id:i+1,label:t[0],type:t[1],active:"X",order_col:i+1}));
 const rows={ settings:[{id:1,setting:"Org Name",value:"HoH"},{id:2,setting:"Ambulances",value:"A1 Ambulance - 1"},{id:3,setting:"Member Types",value:"Responder, Non Responder, Dispatcher, Service Unit"},{id:4,setting:"Logo URL",value:""},{id:5,setting:"Google Analytics ID",value:"G-6Z479MLSKZ"},{id:6,setting:"Google Tag Manager ID",value:""},{id:7,setting:"Meta Pixel ID",value:""}], tiles,
-  roster:[{id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",email:"t@houstonhatzalah.org",active:"X",admin:"X",type:"Responder",level:"ALS",status:"Primary",fto:"H-22"},{id:2,unit:"H-22",first_name:"Joseph",last_name:"Fried",email:"f@houstonhatzalah.org",active:"X",status:"Observer"}],
-  certifications:[{id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",nremt_exp:"4/30/2029",hipaa_exp:"1/1/2027"}], cert_docs:[], announcement_reads:[], announcements:[{id:1,title:"Meeting",body:"8 pm",kind:"feature",active:"X",audience:"everyone",order_col:1}], push_subs:[],
+  roster:[{id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",email:"t@houstonhatzalah.org",active:"X",admin:"X",type:"Responder",level:"ALS",status:"Primary",fto:"H-22"},{id:2,unit:"H-22",first_name:"Joseph",last_name:"Fried",email:"f@houstonhatzalah.org",active:"X",status:"Observer"},{id:3,unit:"H-31",first_name:"Gone",last_name:"Member",email:"g@houstonhatzalah.org",active:"No"}],
+  certifications:[{id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",nremt_exp:"4/30/2029",hipaa_exp:"1/1/2027"},{id:2,unit:"H-31",first_name:"Gone",last_name:"Member",nremt_exp:"1/1/2020",hipaa_exp:"1/1/2020"}], cert_docs:[], announcement_reads:[], announcements:[{id:1,title:"Meeting",body:"8 pm",kind:"feature",active:"X",audience:"everyone",order_col:1}], push_subs:[],
   hospitals:[{id:1,hospital_name:"Memorial Hermann",phone_call:"7135551212",address_navigate:"6411 Fannin St"}], resources:[{id:1,title:"SOPs",file:"doc:resources/x.pdf",active:"X",order_col:1}], task_list:[{id:1,task_id:"T1",category:"Airway",task:"OPA",type:"skill",target:"1",order_col:1}], task_progress:[], apartments:[], apartment_markers:[], uploads:[], guests:[], cpr_buttons:[], vitals:[], schedule:[], availability:[], cabinets:[], cabinet_bins:[], equipment_items:[], equipment_meta:[], poll_tallies:[], ambulance_checks:[] };
 const json=(x,st)=>new Response(JSON.stringify(x),{status:st||200,headers:{"Content-Type":"application/json"}});
 const dom=new JSDOM(html,{runScripts:"dangerously",pretendToBeVisual:true,url:ORIGIN+"/",beforeParse(w){
@@ -100,6 +100,18 @@ const openScreen=()=>[...d.querySelectorAll(".screen.open, .preader.open")].map(
   check("applyLogo swaps the header and sign-in logos to the uploaded file", d.querySelector("#hdrLogo img").getAttribute("src").indexOf("misc/org-logo.png")>0 && [...d.querySelectorAll(".logo img")].every(i=>i.getAttribute("src").indexOf("org-logo")>0));
   w.HOH_TEST.settings()["Logo URL"]=""; w.HOH_TEST.applyLogo();
   check("clearing it goes back to the built-in logo", d.querySelector("#hdrLogo img").getAttribute("src")==="logo.png");
+  // Certifications (admin view): inactive members are hidden until asked for
+  click(d.getElementById("admBack")||d.querySelector("#admScreen .back")); await wait(200);
+  w.HOH_TEST && w.HOH_TEST.openCerts ? w.HOH_TEST.openCerts() : click(tile("Certifications")); await wait(600);
+  const certBody=d.getElementById("certBody");
+  check("admin Certifications hides inactive members by default and offers a toggle", /Eber, Joseph/.test(certBody.textContent) && !/Member, Gone/.test(certBody.textContent) && /Show 1 inactive member/.test((certBody.querySelector("#certInactiveToggle")||{}).textContent||""));
+  click(certBody.querySelector("#certInactiveToggle")); await wait(100);
+  check("the toggle shows them, tagged inactive, and flips to 'Hide'", /Member, Gone/.test(certBody.textContent) && !!certBody.querySelector(".cert-mem.inactive .cert-inactive") && /Hide inactive members/.test(certBody.querySelector("#certInactiveToggle").textContent));
+  click(certBody.querySelector("#certInactiveToggle")); await wait(100);
+  check("…and hides them again", !/Member, Gone/.test(certBody.textContent));
+  const cs=d.getElementById("certSearch"); cs.value="gone"; cs.dispatchEvent(new w.Event("input",{bubbles:true})); await wait(150);
+  check("searching finds an inactive member even when hidden", /Member, Gone/.test(certBody.textContent));
+  cs.value=""; cs.dispatchEvent(new w.Event("input",{bubbles:true})); await wait(100);
   check("no page errors overall", errs.length===0); errs.slice(0,5).forEach(e=>console.log("   !",e));
   console.log("  ("+pass+" passed, "+fail+" failed)"); process.exit(fail?1:0);
 })();

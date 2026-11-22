@@ -622,6 +622,8 @@
   .cert-modal-btns .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cert-mem{border-bottom:1px solid var(--line)}
   .cert-adminnote{background:#eaf0f9;color:var(--navy);font-weight:800;font-size:12.5px;padding:9px 12px;text-align:center;border-bottom:1px solid var(--line)}
+  .cert-inactive-toggle{display:block;margin:14px auto 18px;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:999px;padding:8px 16px;font-weight:800;font-size:12.5px;cursor:pointer}
+  .cert-mem.inactive .cert-mem-h{color:#8a97aa} .cert-inactive{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;background:#eef1f5;color:#6b7a90;border-radius:6px;padding:2px 6px;margin-left:6px}
   .cert-upload-all{display:block;width:calc(100% - 24px);margin:14px 12px 24px;border:1px dashed var(--navy);background:#f4f7fb;color:var(--navy);border-radius:12px;padding:14px;font-weight:800;font-size:14px;cursor:pointer}
   .cert-mem-h{display:flex;align-items:center;gap:9px;padding:13px 12px;cursor:pointer;font-weight:800;
     font-size:15px;color:var(--ink);background:#f2f5fa}
@@ -7864,7 +7866,14 @@
   $("upBack").addEventListener("click",navBack);
 
   // ---------- Certifications ----------
-  var CERT={loaded:false,rows:[],certCols:[],collapsed:{},myWorst:"ok",docs:[],docsLoaded:false};
+  var CERT={loaded:false,rows:[],certCols:[],collapsed:{},myWorst:"ok",docs:[],docsLoaded:false,showInactive:false};
+  /* Is the member behind a certifications row still active on the roster? Rows with no
+     roster match (someone removed from the roster but still in the table) count as inactive. */
+  function certRowActive(r){
+    var key=normUnit(r["Unit #"]||r["Unit"]); if(!key) return true;
+    var m=(STATE.roster||[]).filter(function(x){ return normUnit(r_(x,"Unit"))===key; })[0];
+    return m ? admIsActive(m) : !(STATE.roster&&STATE.roster.length);
+  }
   var CERT_NAMECOLS={"Last Name":1,"First Name":1,"Unit #":1,"Unit":1,"Paused":1};
   function normUnit(u){ return String(u||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
   function parseCertDate(s){
@@ -9716,28 +9725,33 @@
       return;
     }
     q=(q||"").toLowerCase().trim();
+    /* inactive members stay out of the way unless asked for (a search still finds them) */
+    var inactive=CERT.rows.filter(function(r){ return !certRowActive(r); }).length;
     var rows=CERT.rows.filter(function(r){
+      if(!q && !CERT.showInactive && !certRowActive(r)) return false;
       if(!q) return true;
       var nm=certMemberName(r);
       return (nm.first+" "+nm.last+" "+(r["Unit #"]||r["Unit"]||"")).toLowerCase().indexOf(q)>-1;
     });
-    if(!rows.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'; return; }
+    var toggle=(inactive&&!q)?'<button class="cert-inactive-toggle" id="certInactiveToggle">'+(CERT.showInactive?"Hide inactive members":"Show "+inactive+" inactive member"+(inactive===1?"":"s"))+'</button>':'';
+    if(!rows.length){ body.innerHTML=certLegend()+'<div class="empty">No member matches.</div>'+toggle; return; }
     var html=(STATE.demo?'<div class="cert-adminnote">Admin view \u2014 showing all responders\u2019 certifications</div>':'')+certLegend();
     rows.forEach(function(r){
       var key=normUnit(r["Unit #"]||r["Unit"])||(r["Last Name"]||"");
       var w=memberWorst(r), dot=w==="expired"?"var(--red)":(w==="soon"?"var(--gold)":"#2f9e44");
-      var _nm=certMemberName(r), _ln=_nm.last, _fn=_nm.first;
+      var _nm=certMemberName(r), _ln=_nm.last, _fn=_nm.first, act=certRowActive(r);
       var name=(_ln?(_ln+(_fn?", "+_fn:"")):_fn).trim()+" \u00B7 "+(r["Unit #"]||r["Unit"]||"");
       var col=CERT.collapsed[key]!==false;
-      html+='<div class="cert-mem'+(col?" collapsed":"")+'" data-k="'+esc(key)+'">'+
-        '<div class="cert-mem-h"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+esc(name)+
+      html+='<div class="cert-mem'+(col?" collapsed":"")+(act?"":" inactive")+'" data-k="'+esc(key)+'">'+
+        '<div class="cert-mem-h"><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>'+esc(name)+(act?"":' <em class="cert-inactive">inactive</em>')+
         '<span class="cert-badge-dot" style="background:'+dot+'"></span></div>'+
         '<div class="cert-list">'+memberCertsHTML(r)+'</div></div>';
     });
-    body.innerHTML=html;
+    body.innerHTML=html+toggle;
   }
   $("certBody").addEventListener("click",function(e){
     if(e.target && e.target.id==="certUploadAll"){ openUpload(""); return; }
+    if(e.target && e.target.id==="certInactiveToggle"){ CERT.showInactive=!CERT.showInactive; renderCerts($("certSearch").value||""); return; }
     var h=e.target.closest?e.target.closest(".cert-mem-h"):null;
     if(h){ var mem=h.parentNode, key=mem.getAttribute("data-k"); CERT.collapsed[key]=mem.classList.contains("collapsed")?false:true; mem.classList.toggle("collapsed"); return; }
     var cal=e.target.closest?e.target.closest(".cert-cal"):null;
