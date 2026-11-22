@@ -63,6 +63,17 @@ that makes it wrong.
 
 ## Where things stand (keep this section current)
 
+- **Standings policy — proposal written for leadership (Nov 22, 2026), NOT approved yet:**
+  the Claude Doc "Hatzalah of Houston — Responder Standings Policy (draft for leadership
+  review)" (https://claude.ai/artifact/J6k4T7xYDqfuXbKpSxqjGP). Joseph's plan as stated:
+  Primary under minimum → email + app notice to member and admins, admin discussion; Primary
+  under minimum **two quarters in a row → automatic drop to Backup**, admin can override;
+  Backup under minimum → notice + discussion only, never automatic; Observers no minimum;
+  **all doctors (Medical Control) exempt from everything** — a second doctor is being added
+  to the roster. The doc also proposes: check on the 7th after quarter end after a refresh,
+  an "excused quarter" option, a standings log, first partial quarter not counted. Build
+  nothing of the notices/auto-drop until leadership signs off; the Doc exemption fix
+  (`csExempt`) is committed locally and release is HELD until Joseph adds the second doctor.
 - **Standings rule addition (Joseph, Nov 22, 2026 — "very important"): Doc — Lars
   Thestrup, MD-1, type Medical Control — is NEVER part of the call statistics, the
   standings reminders, or the automatic downgrade.** `csExempt()` (type matches
