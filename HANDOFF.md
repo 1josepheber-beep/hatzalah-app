@@ -70,7 +70,8 @@ that makes it wrong.
   under minimum **two quarters in a row → automatic drop to Backup**, admin can override;
   Backup under minimum → notice + discussion only, never automatic; Observers no minimum;
   **all doctors (Medical Control) exempt from everything** — a second doctor is being added
-  to the roster. The doc also proposes: check on the 7th after quarter end after a refresh,
+  to the roster. **The real minimums are 8 (Primary) and 5 (Backup)** — the settings rows
+  said 15/6 (placeholders) until Nov 22, 2026 and were corrected that day. The doc also proposes: check on the 7th after quarter end after a refresh,
   an "excused quarter" option, a standings log, first partial quarter not counted. Build
   nothing of the notices/auto-drop until leadership signs off; the Doc exemption fix
   (`csExempt`) is committed locally and release is HELD until Joseph adds the second doctor.
