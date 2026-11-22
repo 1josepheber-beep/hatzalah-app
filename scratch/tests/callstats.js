@@ -99,6 +99,18 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   const sel=pane.querySelector('[data-cslink="MOSHE K"]'); check("…and the import screen offers a member picker for it", !!sel);
   b.writes.length=0; sel.value="H-22"; sel.dispatchEvent(new b.w.Event("change",{bubbles:true})); await wait(400);
   check("picking a member saves the link and moves that name's rows to the member", b.writes.some(x=>/^call_stats_names/.test(x.path) && x.body[0].unit==="H-22") && b.writes.some(x=>x.method==="PATCH" && /^call_stats\?crew_name=eq\.MOSHE%20K/.test(x.path) && x.body.unit==="H-22"));
+  // ===== 4. clearance: a member can only be set Primary once an admin has cleared them
+  click(b.w,[...b.d.querySelectorAll("#admSecs .adm-secit")].find(x=>x.getAttribute("data-label")==="Members")); await wait(500);
+  click(b.w,b.d.querySelector('#admList .adm-row[data-u="H-30"]')||b.d.querySelectorAll("#admList .adm-row")[2]); await wait(400);
+  const clr=b.d.getElementById("adClr"), stSel=b.d.getElementById("adSt");
+  check("the member form has a 'Cleared as Primary' switch, off for someone never cleared", !!clr && !clr.classList.contains("on"));
+  stSel.value="Primary"; b.writes.length=0;
+  click(b.w,b.d.getElementById("admSave")); await wait(300);
+  check("setting Primary without clearance is blocked and says why, and nothing is saved", /needs clearance first/.test(b.d.getElementById("admMsg").textContent) && !b.writes.some(x=>/^roster/.test(x.path)));
+  click(b.w,clr); await wait(50); b.writes.length=0;
+  click(b.w,b.d.getElementById("admSave")); await wait(400);
+  const rw=b.writes.find(x=>/^roster/.test(x.path));
+  check("turning the switch on saves the status with the clearance, its date and who cleared them  "+JSON.stringify(rw&&{s:rw.body.status,c:rw.body.cleared_primary,d:rw.body.cleared_primary_at,by:rw.body.cleared_primary_by}), !!rw && rw.body.status==="Primary" && rw.body.cleared_primary==="X" && /^\d{4}-\d{2}-\d{2}$/.test(rw.body.cleared_primary_at) && /\(H-24\)/.test(rw.body.cleared_primary_by));
   check("no page errors (admin)", b.errs.length===0); b.errs.slice(0,3).forEach(e=>console.log("   !",e));
   console.log("  ("+pass+" passed, "+fail+" failed)"); process.exit(fail?1:0);
 })();

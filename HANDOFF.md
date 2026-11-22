@@ -82,14 +82,25 @@ that makes it wrong.
   said 15/6 (placeholders) until Nov 22, 2026 and were corrected that day. The doc also proposes: check on the 7th after quarter end after a refresh,
   an "excused quarter" option, a standings log, first partial quarter not counted. Build
   nothing of the notices/auto-drop until leadership signs off; the Doc exemption fix
-  (`csExempt`) is committed locally and release is HELD until Joseph adds the second doctor.
+  (`csExempt`) went out in 1.17.0; it matches any Medical Control type or MD-n unit, so the
+  second doctor is covered automatically when added.
 - **Standings rule addition (Joseph, Nov 22, 2026 — "very important"): Doc — Lars
   Thestrup, MD-1, type Medical Control — is NEVER part of the call statistics, the
   standings reminders, or the automatic downgrade.** `csExempt()` (type matches
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
-- **Live: 1.16.0** (Nov 22, 2026) — **Call statistics / real Standings data:**
+- **Live: 1.17.0** (Nov 22, 2026): **Cleared as Primary** (`db/add_primary_clearance.sql`:
+  roster columns `cleared_primary`, `cleared_primary_at`, `cleared_primary_by`). Admin →
+  Members → Role & access has the switch under Status; turning it on stamps today's date
+  and the admin's name, turning it off clears the stamp, and **saving a status of Primary
+  without it is refused** ("Primary needs clearance first…"). Backfilled on Nov 22, 2026:
+  every member then standing as Primary, plus H-29 (a former Primary), marked cleared with
+  `cleared_primary_by='Backfilled from existing standing'` — MD-1 included so his record
+  stays editable. Same release carries the Medical Control exemption (`csExempt`). The
+  rest of the standings policy (notices, auto-drop, excused quarters, standings log) is
+  still unbuilt and waits on leadership.
+- **1.16.0** (Nov 22, 2026) — **Call statistics / real Standings data:**
   `db/add_call_stats.sql` (tables `call_stats` — unit, crew_name, period '2026-Q4', total,
   lead, driver, other, unknown, source eso|web|manual, updated_at; unique (crew_name,
   period, source) — and `call_stats_names` crew_name → unit; RLS: own-or-admin read, admin
