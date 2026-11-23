@@ -90,6 +90,29 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.21.0** (Nov 23, 2026): **standings at the end of a quarter — built, shipped
+  switched OFF** (`db/add_standings.sql`: table `standings_log`, settings *Standings
+  Notices* = Off, *Standings Auto Downgrade* = Off, *Standings Quarters Before Downgrade*
+  = 2, all in the existing Settings → Standings card). Apps Script **v59**:
+  `standingsQuarterEnd()` runs daily from `dailyCallStats()`; from the 3rd day of a new
+  quarter it writes one `standings_log` row per responder with a minimum (status, need,
+  total, short, streak, action). Off = `would_notice` / `would_downgrade`, nothing emailed,
+  nobody moved. Notices on = email to the member, admins Bcc (sent whenever someone is
+  short, even with the downgrade off). Auto downgrade on = a Primary with `streak >=
+  quarters` is patched to Backup; **clearance is kept**. The streak counts only logged
+  quarters, so the clock starts when this shipped. A member with an existing row for the
+  period (e.g. action `excused`, written by an admin) is left alone. Medical Control,
+  dispatchers and Observers are never included. `standingsDryRun()` lists who is short
+  and writes nothing. App: Admin → Call statistics has an **End of quarter** panel
+  (`csEndQHTML`, `stdSettings`) showing who is below minimum and what the rules would do.
+  **Leadership has NOT approved turning it on** — the switches stay off until Joseph says.
+  Same release: **"open its setting" buttons** (`admSetLinkHTML` / `admWireSetLinks` /
+  `admSetFocus`) on Call statistics, Jump bags, Ambulance checks and Supply requests —
+  Joseph's rule: any admin screen governed by a setting links straight to its Settings
+  card (opens it, flashes it, offers a way back); and **"Not a member"** for crew names
+  that are not responders (`call_stats_names.unit = 'IGNORE'`; skipped by the app's
+  unmatched warning and by the daily import — TECHSUPPORT ESO and MICHAEL FLANAGAN are
+  marked).
 - **Live: 1.20.0** (Nov 22, 2026): **call statistics now load themselves every morning.**
   ESO Insights runs the saved query **"Hatzalah App - Calls by Responder"** (owner
   JOSEPH EBER, EMS model, Denormalized, filter *ESO Record Created Date = this year

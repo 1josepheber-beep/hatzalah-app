@@ -13,11 +13,12 @@ function blob(name, text, gz){
   const b={ getName:()=>name, getDataAsString:()=>buf.toString("utf8"), setContentType:()=>b, copyBlob:()=>b, __buf:buf };
   return b;
 }
+const x_=(q)=>decodeURIComponent(String(q||"").replace(/^unit=eq\./,""));
 function msg(dateMs, atts){ return { getDate:()=>new Date(dateMs), getAttachments:()=>atts }; }
 
 function run(o){
   o=o||{};
-  const mails=[], upserts=[], logs=[], props=Object.assign({},o.props||{});
+  const mails=[], upserts=[], patches=[], logs=[], props=Object.assign({},o.props||{});
   const tables=JSON.parse(JSON.stringify(o.tables||{}));
   const g={
     Logger:{log:(m)=>logs.push(String(m))},
@@ -39,14 +40,16 @@ function run(o){
     UrlFetchApp:{fetch:(url,oo)=>{ oo=oo||{};
       const m=url.match(/\/rest\/v1\/([a-z_]+)(\?(.*))?$/), t=m&&m[1];
       if(oo.method==="post"){ upserts.push({t, q:(m[3]||""), rows:JSON.parse(oo.payload)}); return {getResponseCode:()=>201,getContentText:()=>""}; }
+      if(oo.method==="patch"){ patches.push({t, q:(m[3]||""), body:JSON.parse(oo.payload)}); return {getResponseCode:()=>204,getContentText:()=>""}; }
       let rows=tables[t]||[]; const off=(url.match(/offset=(\d+)/)||[0,0])[1];
+      const pm=url.match(/period=eq\.([^&]+)/); if(pm) rows=rows.filter(x=>String(x.period)===decodeURIComponent(pm[1]));
       if(/order=updated_at\.desc&limit=1/.test(url)) rows=rows.slice().sort((a,b)=>String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,1);
       return {getResponseCode:()=>200,getContentText:()=>JSON.stringify(+off?[]:rows)}; } },
   };
   const api=new Function(...Object.keys(g),"mails_", src.replace(/^\s*\/\*\*[\s\S]*?\*\//,"")
     +"\n mailBoth=function(to,subject,body,bcc,brand){ mails_.push({to:String(to||''), bcc:String(bcc||''), subject:subject, body:body, brand:brand||null}); };"
-    +"\nreturn {importCallStats, callStatsStaleCheck, dailyCallStats, csMatchUnit_, csNorm_, csRole_};")(...Object.values(g), mails);
-  return {api, mails, upserts, logs, props, tables};
+    +"\nreturn {importCallStats, callStatsStaleCheck, dailyCallStats, csMatchUnit_, csNorm_, csRole_, standingsQuarterEnd, standingsDryRun, stPrevPeriod_};")(...Object.values(g), mails);
+  return {api, mails, upserts, patches, logs, props, tables};
 }
 
 const roster=[
@@ -128,6 +131,65 @@ let r10=run({ tables:{roster, settings:[], call_stats:[{updated_at:ago(1)}]}, th
 r10.api.dailyCallStats();
 check("a file with the wrong columns is reported, not written, and does not stop the stale check",
   !r10.upserts.length && /missing the crew name or date column/.test(r10.logs.join(" ")));
+
+// ===== 7. end of quarter: records what it would do while the switches are off
+const SET=(o)=>[{setting:"Standings Primary Minimum",value:"8"},{setting:"Standings Backup Minimum",value:"5"},
+  {setting:"Standings Notices",value:(o&&o.notices)||"Off"},{setting:"Standings Auto Downgrade",value:(o&&o.auto)||"Off"},
+  {setting:"Standings Quarters Before Downgrade",value:(o&&o.quarters)||"2"}];
+const ROS=[
+  {id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",email:"j@x.org",active:"X",type:"Responder",status:"Primary"},
+  {id:2,unit:"H-22",first_name:"Avi",last_name:"Katz",email:"a@x.org",active:"X",type:"Responder",status:"Primary"},
+  {id:3,unit:"H-30",first_name:"Sara",last_name:"New",email:"s@x.org",active:"X",type:"Responder",status:"Observer"},
+  {id:4,unit:"MD-1",first_name:"Lars",last_name:"Thestrup",email:"md@x.org",active:"X",type:"Medical Control",status:"Primary"},
+  {id:5,unit:"D-1",first_name:"Dina",last_name:"Disp",email:"d@x.org",active:"X",type:"Dispatcher",status:"Backup"},
+];
+const CSROWS=(p)=>[{unit:"H-24",period:p,total:11,source:"eso"},{unit:"H-22",period:p,total:3,source:"eso"},{unit:"MD-1",period:p,total:0,source:"eso"}];
+let s1=run({tables:{roster:ROS, settings:SET(), call_stats:CSROWS("2026-Q3"), standings_log:[]}});
+s1.api.standingsQuarterEnd("2026-Q3");
+const logRows=s1.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows);
+const find=(u)=>logRows.find(r=>r.unit===u);
+check("one row recorded per responder with a minimum  ("+logRows.length+")", logRows.length===2 && !!find("H-24") && !!find("H-22"));
+check("Medical Control, the dispatcher and the Observer are left out entirely", !find("MD-1") && !find("D-1") && !find("H-30"));
+check("the one above the minimum is recorded as ok", find("H-24").action==="ok" && find("H-24").short===false && find("H-24").total===11);
+check("the one below is recorded as would_notice, with the streak started  "+JSON.stringify({a:find("H-22").action,s:find("H-22").streak}), find("H-22").action==="would_notice" && find("H-22").short===true && find("H-22").streak===1 && find("H-22").need===8);
+check("nothing is emailed and no status is touched while the switches are off", !s1.mails.length && !s1.upserts.some(x=>x.t==="roster"));
+
+// a second bad quarter in a row -> would_downgrade, still nothing done
+let s2=run({tables:{roster:ROS, settings:SET(), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q3",status:"primary",need:8,total:3,short:true,streak:1,action:"would_notice"}]}});
+s2.api.standingsQuarterEnd("2026-Q4");
+const q2row=s2.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows).find(r=>r.unit==="H-22");
+check("a second quarter in a row below the minimum reads would_downgrade, streak 2", q2row.action==="would_downgrade" && q2row.streak===2);
+check("…and still nobody is emailed or moved", !s2.mails.length && !s2.upserts.some(x=>x.t==="roster"));
+
+// switches on: the email goes out and the status moves
+let s3=run({tables:{roster:ROS, settings:SET({notices:"On",auto:"On"}), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q3",status:"primary",need:8,total:3,short:true,streak:1,action:"notice"}]}});
+s3.api.standingsQuarterEnd("2026-Q4");
+const q3row=s3.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows).find(r=>r.unit==="H-22");
+check("with both switches on the row reads downgrade", q3row.action==="downgrade");
+check("…the member's status is written as Backup, and only that member  "+JSON.stringify(s3.patches.map(x=>[x.q,x.body])), s3.patches.length===1 && x_(s3.patches[0].q)==="H-22" && s3.patches[0].body.status==="Backup" && Object.keys(s3.patches[0].body).length===1);
+check("…the member is emailed, admins copied, saying it can be changed back", s3.mails.length===1 && /standing has changed to Backup/i.test(s3.mails[0].subject) && /speak with an administrator/i.test(s3.mails[0].body) && /can be changed back/.test(s3.mails[0].body));
+check("…and the member above the minimum hears nothing", !s3.mails.some(m=>/j@x.org/.test(m.to)));
+
+// notices on, downgrade off: an email but no change of standing
+let s4=run({tables:{roster:ROS, settings:SET({notices:"On"}), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q3",status:"primary",need:8,total:3,short:true,streak:1,action:"notice"}]}});
+s4.api.standingsQuarterEnd("2026-Q4");
+check("notices on but downgrade off: they still hear about it, and nothing is moved", s4.mails.length===1 && /below the minimum/i.test(s4.mails[0].subject) && /Nothing happens from this on its own/.test(s4.mails[0].body) && !s4.patches.length);
+
+// a quarter already recorded, and a member an admin excused
+let s5=run({tables:{roster:ROS, settings:SET({notices:"On",auto:"On"}), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q4",status:"primary",need:8,total:3,short:true,streak:2,action:"excused",note:"out of town",by_whom:"Joseph Eber (H-24)"}]}});
+s5.api.standingsQuarterEnd("2026-Q4");
+const w5=s5.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows);
+check("a member an admin excused is left alone: no second row, no email, no downgrade", !w5.some(r=>r.unit==="H-22") && !s5.mails.length && !s5.upserts.some(x=>x.t==="roster"));
+check("…and the rest of the quarter is still recorded", w5.some(r=>r.unit==="H-24"));
+
+// the dry run touches nothing
+let s6=run({tables:{roster:ROS, settings:SET(), call_stats:CSROWS("2026-Q3"), standings_log:[]}});
+const dry=s6.api.standingsDryRun();
+check("the dry run just lists who is short and writes nothing", !s6.upserts.length && !s6.mails.length && /H-22/.test(s6.logs.join(" ")) && Array.isArray(dry));
 
 console.log("  ("+pass+" passed, "+fail+" failed)");
 process.exit(fail?1:0);

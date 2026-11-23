@@ -923,6 +923,10 @@
   .jb-bar.on{border-color:var(--navy);background:var(--navy);color:#fff} .jb-bar.on.warn{border-color:#8a6d00;background:#8a6d00} .jb-bar.on.bad{border-color:var(--red);background:var(--red)}
   .jb-bart{flex:0 0 100%;font-size:11.5px;font-weight:800;color:var(--mut)} .jb-bart.warn{color:#8a6d00} .jb-bart.bad{color:var(--red)}
   .jb-chk{margin-top:3px}
+  .adm-mhbtns{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .adm-setlink{white-space:nowrap}
+  .adm-gsec.flash{animation:hohflash 1.8s ease-out;border-radius:10px}
+  .cs-endq .adm-itemsub{white-space:normal}
   .jb-expclr{border:1.5px solid var(--line);background:#fff;color:var(--mut);font-weight:800;font-size:11.5px;border-radius:8px;padding:3px 8px;cursor:pointer;font-family:inherit}
   .jb-expclr:active{background:#f1f3f7}
   .jb-st{display:flex;flex-direction:row;gap:4px;flex:0 0 auto}
@@ -1768,7 +1772,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.20.0</div>
+  <div class="ver-line">Version 1.21.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1890,7 +1894,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.20.0</div>
+  <div class="ver-line">Version 1.21.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4527,7 +4531,7 @@
     var rows=ADMAMB.rows.filter(function(r){ return (!ADMAMB.amb||r.ambulance===ADMAMB.amb) && (!ADMAMB.type||r.log_type===ADMAMB.type); });
     var ambs=ambulances(); ADMAMB.rows.forEach(function(r){ if(r.ambulance && ambs.indexOf(r.ambulance)<0) ambs.push(r.ambulance); });
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Ambulance checks</h3><div class="u">'+ADMAMB.rows.length+' on file</div></div>'+
-      '<button class="ghost" id="admAmbExport"'+(ADMAMB.rows.length?"":" disabled")+'>Download as spreadsheet</button></div>'+
+      '<div class="adm-mhbtns">'+admSetLinkHTML("Ambulance checkoff","ambchecks","Ambulance settings")+'<button class="ghost" id="admAmbExport"'+(ADMAMB.rows.length?"":" disabled")+'>Download as spreadsheet</button></div></div>'+
       '<div class="adm-help">Every weekly, monthly, maintenance and inventory log the service units submit. Tap one to see each answer and photo. Red is something the checker flagged; amber means items were skipped (saved as not checked).</div>'+
       '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.amb?"":" on")+'" data-amb="">All ambulances</button>'].concat(ambs.map(function(a){ return '<button class="adm-chip'+(ADMAMB.amb===a?" on":"")+'" data-amb="'+esc(a)+'">'+esc(a.replace(/ Ambulance - \d+$/,""))+'</button>'; })).join("")+'</div>'+
       '<div class="adm-chips">'+['<button class="adm-chip'+(ADMAMB.type?"":" on")+'" data-lt="">All types</button>'].concat(AMB_TYPES.map(function(t){ return '<button class="adm-chip'+(ADMAMB.type===t.k?" on":"")+'" data-lt="'+t.k+'">'+esc(t.label)+'</button>'; })).join("")+'</div>';
@@ -4543,6 +4547,7 @@
     $("admGenPane").querySelectorAll("[data-lt]").forEach(function(el){ el.addEventListener("click",function(){ ADMAMB.type=el.getAttribute("data-lt"); admAmbRender(); }); });
     $("admGenPane").querySelectorAll(".amb-row").forEach(function(el){ el.addEventListener("click",function(){ var id=parseInt(el.getAttribute("data-id"),10); ADMAMB.sel=ADMAMB.rows.filter(function(r){ return r.id===id; })[0]||null; admAmbRender(); }); });
     var ex=$("admAmbExport"); if(ex) ex.addEventListener("click",admAmbExport);
+    admWireSetLinks($("admGenPane"));
   }
   /* the question keys a check was submitted without */
   function ambSkipped(r){ var a=r&&r.answers; return (a && Array.isArray(a._skipped))?a._skipped:[]; }
@@ -4887,7 +4892,7 @@
   function admJbRender(){
     if(ADMJB.sel){ admJbDetail(ADMJB.sel); return; }
     var ms=admJbMembers(), checked=ms.filter(function(m){ return m.c.last; }).length;
-    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Jump bags</h3><div class="u">'+checked+' of '+ms.length+' members have checked theirs</div></div><button class="ghost" id="admJbExport">Download as spreadsheet</button></div>'+
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Jump bags</h3><div class="u">'+checked+' of '+ms.length+' members have checked theirs</div></div><div class="adm-mhbtns">'+admSetLinkHTML("Jump bag","jumpbags","Jump bag settings")+'<button class="ghost" id="admJbExport">Download as spreadsheet</button></div></div>'+
       '<div class="adm-help">What each member has marked in My Jump Bag. The ones with problems are at the top. The item list itself is under Jump bag items.</div>'+
       '<div class="amb-list">'+ms.map(function(m){ var c=m.c, tags="";
         if(c.expired) tags+='<span class="amb-flagn">'+c.expired+' expired</span>'; if(c.battery) tags+='<span class="jb-tag warn">battery low</span>'; if(c.soon) tags+='<span class="jb-tag warn">'+c.soon+' expiring</span>'; if(c.missing+c.short) tags+='<span class="jb-tag warn">'+(c.missing+c.short)+' short/missing</span>';
@@ -4896,6 +4901,7 @@
     $("admGenPane").innerHTML=h;
     $("admGenPane").querySelectorAll(".amb-row[data-u]").forEach(function(el){ el.addEventListener("click",function(){ ADMJB.sel=el.getAttribute("data-u"); admJbRender(); }); });
     var ex=$("admJbExport"); if(ex) ex.addEventListener("click",admJbExport);
+    admWireSetLinks($("admGenPane"));
   }
   function admJbDetail(unit){
     var m=admJbMembers().filter(function(x){ return normUnit(x.unit)===normUnit(unit); })[0]; var c=m?m.c:admJbSummary(unit);
@@ -5009,7 +5015,7 @@
     var arch=SR.rows.filter(srIsArchived);
     var rows=SR.filter==="archived" ? arch.slice().sort(function(a,b){ return new Date(b.archived_at||b.status_at||b.created_at)-new Date(a.archived_at||a.status_at||a.created_at); })
                                     : live.filter(function(r){ return SR.filter==="all" || r.status===SR.filter; });
-    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Supply requests</h3><div class="u">'+open+' open · '+ordered+' ordered</div></div></div>'+
+    var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Supply requests</h3><div class="u">'+open+' open · '+ordered+' ordered</div></div><div class="adm-mhbtns">'+admSetLinkHTML("Organisation","supply","Supply settings")+'</div></div>'+
       '<div class="adm-help">What members asked to have restocked (from My Jump Bag) and what the ambulance inventory checks flagged for ordering. Tap one, then mark it Ordered when it is on the way and In stock once it is waiting in the stock room. In-stock requests move to Archived on their own after '+srArchiveDays()+' days.</div>'+
       '<div class="adm-chips">'+[["open","Open"],["ordered","Ordered"],["done","In stock"],["all","All"],["archived","Archived"+(arch.length?" ("+arch.length+")":"")]].map(function(f){ return '<button class="adm-chip'+(SR.filter===f[0]?" on":"")+'" data-srf="'+f[0]+'">'+f[1]+'</button>'; }).join("")+'</div>';
     if(!rows.length) h+='<div class="adm-empty">'+(SR.filter==="archived"?"Nothing archived yet.":SR.rows.length?"Nothing here.":"No requests yet.")+'</div>';
@@ -5020,6 +5026,7 @@
     }).join("")+'</div>';
     host.innerHTML=h+'</div>';
     host.querySelectorAll("[data-srf]").forEach(function(el){ el.addEventListener("click",function(){ SR.filter=el.getAttribute("data-srf"); srRenderInto(host, backFn); }); });
+    admWireSetLinks(host);
     host.querySelectorAll("[data-srid]").forEach(function(el){ el.addEventListener("click",function(){ SR.sel=parseInt(el.getAttribute("data-srid"),10); srRenderInto(host, backFn); }); });
   }
   function srRenderDetail(host, r, backFn){
@@ -5119,7 +5126,7 @@
      Driver or Other crew. Today the rows are imported from ESO (Admin → Call stats →
      Import — paste the ESO export); when the Hatzalah Web feed arrives it writes the same
      rows with source "web". Members see their own rows on My Standing; admins see everyone. */
-  var CS={rows:[], names:{}, loaded:false, mine:null, mineFor:"", sel:null, period:"", view:"table", parsed:null, importSource:"eso"};
+  var CS={rows:[], names:{}, log:[], endqOpen:false, loaded:false, mine:null, mineFor:"", sel:null, period:"", view:"table", parsed:null, importSource:"eso"};
   function csPeriodOf(d){ d=(d instanceof Date)?d:new Date(d); return isNaN(d)?"":d.getFullYear()+"-Q"+(Math.floor(d.getMonth()/3)+1); }
   function csCurrentPeriod(){ return csPeriodOf(new Date()); }
   function csPeriodParts(p){ var m=/^(\d{4})-Q([1-4])$/.exec(String(p||"")); return m?{y:+m[1],q:+m[2]}:null; }
@@ -5134,6 +5141,7 @@
   function csWhen(iso){ if(!iso) return ""; var d=new Date(iso); return isNaN(d)?"":d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }
 
   /* ---- names: how ESO spells a responder vs. the roster ---- */
+  function csIgnored(nm){ return CS.names[csNormName(nm)]==="IGNORE"; }
   function csNormName(s){ return String(s||"").toLowerCase().replace(/\(.*?\)/g," ").replace(/,.*$/,"").replace(/[^a-z\s]/g," ").replace(/\s+/g," ").trim(); }
   function csRosterUnit(r){ return String(r_(r,"Unit")||r.unit||"").trim(); }
   /* roster unit for a crew name: the saved link first, then first+last name, then last name
@@ -5142,7 +5150,9 @@
   function csMatchUnit(name, info){
     info=info||{}; info.loose=false;
     var k=csNormName(name); if(!k) return "";
-    if(CS.names[k]) return CS.names[k];
+    /* "IGNORE" is a name that is not one of ours at all - ESO support, a visiting
+       medic - marked by an admin so it stops being reported as unmatched. */
+    if(CS.names[k]) return CS.names[k]==="IGNORE" ? "" : CS.names[k];
     var parts=k.split(" "), first=parts[0], last=parts[parts.length-1];
     var ros=(STATE.roster||[]).filter(function(r){ return csRosterUnit(r); });
     var nl=function(r){ return csNormName(r_(r,"Last Name")||r.last_name||""); }, nf=function(r){ return csNormName(r_(r,"First Name")||r.first_name||""); };
@@ -5169,8 +5179,10 @@
   function csLoadAll(){
     return Promise.all([
       sbFetch(SB_URL+"/rest/v1/call_stats?select=*&order=period.desc&limit=5000",{cache:"no-store"}).then(function(r){ if(!r.ok) throw new Error("load-"+r.status); return r.json(); }),
-      sbFetch(SB_URL+"/rest/v1/call_stats_names?select=*",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+      sbFetch(SB_URL+"/rest/v1/call_stats_names?select=*",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
+      sbFetch(SB_URL+"/rest/v1/standings_log?select=*&order=period.desc&limit=2000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
     ]).then(function(res){
+      CS.log=Array.isArray(res[2])?res[2]:[];
       CS.rows=Array.isArray(res[0])?res[0]:[]; CS.names={};
       (Array.isArray(res[1])?res[1]:[]).forEach(function(n){ CS.names[csNormName(n.crew_name)]=String(n.unit||""); });
       CS.loaded=true; return CS.rows;
@@ -5300,14 +5312,15 @@
     if(CS.sel){ csAdminDetail(host, CS.sel); return; }
     if(CS.view==="import"){ csAdminImport(host); return; }
     var periods=csRecentPeriods(8), p=CS.period||periods[0], t=standingTiers();
-    var upd=csLastUpdated(), unmatched=[]; CS.rows.forEach(function(r){ if(!r.unit && unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); });
+    var upd=csLastUpdated(), unmatched=[]; CS.rows.forEach(function(r){ if(!r.unit && !csIgnored(r.crew_name) && unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); });
     var list=csResponders().map(function(r){ var u=csRosterUnit(r), row=csRowsFor(u).filter(function(x){ return x.period===p; })[0]||{}; var st=String(r_(r,"Status")||r.status||"").toLowerCase(); var need=csStandingNeed(st); return {unit:u, name:csMemberName(u), status:st, need:need, total:csNum(row.total), lead:csNum(row.lead), driver:csNum(row.driver), other:csNum(row.other), has:!!row.period}; });
     list.sort(function(a,b){ return b.total-a.total || a.name.localeCompare(b.name); });
     var under=list.filter(function(x){ return x.need && x.total<x.need; }).length;
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Call statistics</h3><div class="u">'+(CS.rows.length?esc(csPeriodLabel(p))+' · '+under+' under minimum':'no data yet')+'</div></div>'+
-        '<button class="ebtn small" id="csImportBtn">Import</button></div>'+
+        '<div class="adm-mhbtns">'+admSetLinkHTML("Standings","callstats","Standings settings")+'<button class="ebtn small" id="csImportBtn">Import</button></div></div>'+
       '<div class="adm-help">Calls per responder per quarter, and how many as Lead, Driver or Other crew. Minimums: Primary '+t.primary+', Backup '+t.backup+' (Settings → Standings). '+(upd?'ESO emails the export here every morning and the numbers load on their own \u2014 last update '+esc(csWhen(upd))+'. Import is only for a file you have in hand.':'Nothing imported yet \u2014 tap Import and paste the ESO export.')+'</div>'+
       (unmatched.length?'<div class="adm-help warn">'+unmatched.length+' name'+(unmatched.length===1?"":"s")+' in the data '+(unmatched.length===1?"is":"are")+' not linked to a member: '+esc(unmatched.join(", "))+'. <a href="#" id="csFixNames">Link them</a></div>':'')+
+      csEndQHTML(p, list)+
       '<div class="adm-chips">'+periods.map(function(q){ return '<button class="adm-chip'+(q===p?" on":"")+'" data-csp="'+q+'">'+esc(csPeriodLabel(q))+'</button>'; }).join("")+'</div>'+
       '<div class="cs-table"><div class="cs-row head"><span>Responder</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
         list.map(function(x){ var cls=!x.need?"":(x.total>=x.need?"ok":"low"); return '<button class="cs-row" data-csu="'+esc(x.unit)+'"><span><b>'+esc(x.name)+'</b><small>'+esc(x.unit)+(x.status?' · '+esc(x.status.charAt(0).toUpperCase()+x.status.slice(1)):'')+(x.need?' · min '+x.need:'')+'</small></span><span class="'+cls+'">'+x.total+'</span><span>'+x.lead+'</span><span>'+x.driver+'</span><span>'+x.other+'</span></button>'; }).join("")+
@@ -5317,6 +5330,44 @@
     host.querySelectorAll("[data-csu]").forEach(function(el){ el.addEventListener("click",function(){ CS.sel=el.getAttribute("data-csu"); csAdminRender(); }); });
     $("csImportBtn").addEventListener("click",function(){ CS.view="import"; csAdminRender(); });
     if($("csFixNames")) $("csFixNames").addEventListener("click",function(e){ e.preventDefault(); CS.view="import"; csAdminRender(); });
+    var eq=$("csEndQh"); if(eq) eq.addEventListener("click",function(){ CS.endqOpen=!CS.endqOpen; csAdminRender(); });
+    admWireSetLinks(host);
+  }
+  /* ---- end of quarter: who fell below their minimum, and what the rules would do ----
+     While Standings Notices and Auto Downgrade are off this is the whole feature: it
+     shows what would have happened, so nothing is a surprise the day they go on. */
+  function stdSettings(){
+    var on=function(k,d){ var v=String(getSetting(k,d)||"").trim().toLowerCase(); return v==="on"||v==="x"||v==="yes"||v==="true"||v==="1"; };
+    var q=parseInt(getSetting("Standings Quarters Before Downgrade","2"),10);
+    return {notices:on("Standings Notices","Off"), auto:on("Standings Auto Downgrade","Off"), quarters:(isNaN(q)||q<1)?2:q};
+  }
+  function stdLogFor(period){ return (CS.log||[]).filter(function(r){ return r.period===period; }); }
+  function csEndQHTML(p, list){
+    var S=stdSettings(), logged=stdLogFor(p), recorded=!!logged.length;
+    var short=recorded ? logged.filter(function(r){ return r.short; })
+                       : list.filter(function(x){ return x.need && x.has && x.total<x.need; }).map(function(x){ return {unit:x.unit, status:x.status, need:x.need, total:x.total, streak:1, action:"", short:true}; });
+    var dueDown=short.filter(function(r){ return String(r.status||"").toLowerCase()==="primary" && csNum(r.streak)>=S.quarters; }).length;
+    var state=(S.notices?"notices on":"notices off")+" \u00b7 "+(S.auto?"auto downgrade on":"auto downgrade off");
+    var h='<div class="adm-item cs-endq'+(CS.endqOpen?" open":"")+'"><div class="adm-itemh" id="csEndQh">'+
+      '<span class="adm-itemt">End of quarter</span>'+
+      '<span class="adm-itemsub">'+short.length+' below minimum'+(dueDown?' \u00b7 '+dueDown+' would drop to Backup':'')+' \u00b7 '+esc(state)+'</span>'+
+      '<svg class="adm-car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div><div class="adm-itemb">';
+    h+='<div class="adm-help">'+(recorded
+        ? 'Recorded at the end of '+esc(csPeriodLabel(p))+'.'
+        : esc(csPeriodLabel(p))+' is still running \u2014 this is how it stands today. The check records the quarter a few days after it ends.')+
+      (S.notices||S.auto?'' : ' Nothing is emailed and nobody\u2019s standing changes while both switches are off.')+'</div>';
+    if(!short.length) h+='<div class="adm-okline">Everybody is at or above their minimum.</div>';
+    else h+='<div class="cs-table plain"><div class="cs-row head"><span>Responder</span><span>Calls</span><span>Min</span><span>In a row</span><span>Would</span></div>'+
+      short.map(function(r){
+        var st=String(r.status||"").toLowerCase(), n=csNum(r.streak);
+        var what=(st==="primary"&&n>=S.quarters) ? (S.auto?"drops to Backup":"would drop to Backup") : (S.notices?"emailed":"would be emailed");
+        if(String(r.action||"")==="excused") what="excused";
+        return '<div class="cs-row"><span><b>'+esc(csMemberName(r.unit))+'</b><small>'+esc(r.unit)+(st?' \u00b7 '+esc(st.charAt(0).toUpperCase()+st.slice(1)):'')+'</small></span><span class="low">'+csNum(r.total)+'</span><span>'+csNum(r.need)+'</span><span>'+(n||1)+'</span><span><small>'+esc(what)+'</small></span></div>';
+      }).join("")+'</div>';
+    h+='<div class="adm-note">Primary '+standingTiers().primary+', Backup '+standingTiers().backup+' calls a quarter; '+S.quarters+' quarter'+(S.quarters===1?"":"s")+' in a row below the minimum is what moves a Primary to Backup. '+
+       'Medical Control is left out. A downgrade keeps the member\u2019s Primary clearance, so an admin can move them back without clearing them again.</div>'+
+       '<div class="sr-btns">'+admSetLinkHTML("Standings","callstats","Change these settings")+'</div>';
+    return h+'</div></div>';
   }
   function csAdminDetail(host, unit){
     var rows=csRowsFor(unit), m=(STATE.roster||[]).filter(function(r){ return normUnit(csRosterUnit(r))===normUnit(unit); })[0]||{};
@@ -5331,7 +5382,10 @@
     $("csBackLink").addEventListener("click",function(){ CS.sel=null; csAdminRender(); });
   }
   function csAdminImport(host){
-    var P=CS.parsed, unmatched=[], linked=[]; CS.rows.forEach(function(r){ if(!r.unit){ if(unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); } else if(CS.names[csNormName(r.crew_name)] && linked.indexOf(r.crew_name)<0) linked.push(r.crew_name); }); linked.sort();
+    var P=CS.parsed, unmatched=[], linked=[], ignored=[]; CS.rows.forEach(function(r){
+      if(csIgnored(r.crew_name)){ if(ignored.indexOf(r.crew_name)<0) ignored.push(r.crew_name); return; }
+      if(!r.unit){ if(unmatched.indexOf(r.crew_name)<0) unmatched.push(r.crew_name); }
+      else if(CS.names[csNormName(r.crew_name)] && linked.indexOf(r.crew_name)<0) linked.push(r.crew_name); }); linked.sort(); ignored.sort();
     var members=csResponders().concat((STATE.roster||[]).filter(function(r){ return csRosterUnit(r) && !admIsActive(r); }));
     var opts='<option value="">— pick a member —</option>'+members.map(function(r){ var u=csRosterUnit(r); return '<option value="'+esc(u)+'">'+esc(csMemberName(u))+' ('+esc(u)+')'+(admIsActive(r)?'':' · inactive')+'</option>'; }).join("");
     var h='<div class="adm-body"><button class="adm-backlink" id="csBackLink">‹ Call statistics</button>'+
@@ -5348,7 +5402,9 @@
           '<div class="sr-btns"><button class="ebtn primary" id="csApplyBtn"'+(P.rows.length?"":" disabled")+'>Import '+P.rows.length+' row'+(P.rows.length===1?"":"s")+'</button></div></div>':'')+
       '</div>'+
       (unmatched.length?'<div class="adm-sec"><div class="adm-sech">Names not linked to a member</div><div class="adm-help">These names are in the data but the app could not tell who they are. Pick the member and the rows move to them.</div>'+
-        unmatched.map(function(nm,i){ return '<div class="cs-link"><b>'+esc(nm)+'</b><select data-cslink="'+esc(nm)+'">'+opts+'</select></div>'; }).join("")+'</div>':'')+
+        unmatched.map(function(nm,i){ return '<div class="cs-link"><b>'+esc(nm)+'</b><select data-cslink="'+esc(nm)+'">'+opts+'</select><button class="ebtn small" data-csign="'+esc(nm)+'">Not a member</button></div>'; }).join("")+'</div>':'')+
+      (ignored.length?'<div class="adm-sec"><div class="adm-sech">Not members</div><div class="adm-help">Names in the data that are not responders \u2014 ESO support, visiting crews. They are left out of the statistics and are not reported as unmatched.</div>'+
+        ignored.map(function(nm){ return '<div class="cs-link"><b>'+esc(nm)+'</b><button class="ebtn small" data-csunign="'+esc(nm)+'">This is a member</button></div>'; }).join("")+'</div>':'')+
       (linked.length?'<div class="adm-sec"><div class="adm-sech">Name links</div><div class="adm-help">How each name in the data maps to a member. Change one if the app guessed wrong; the rows move with it.</div>'+
         linked.map(function(nm){ var u=CS.names[csNormName(nm)]; return '<div class="cs-link"><b>'+esc(nm)+'</b><select data-cslink="'+esc(nm)+'">'+opts.replace('value="'+esc(u)+'"','value="'+esc(u)+'" selected')+'</select></div>'; }).join("")+'</div>':'')+
       '</div>';
@@ -5361,6 +5417,10 @@
       csImportApply(CS.parsed, CS.importSource).then(function(){ toast("Imported — the standings now use these numbers."); CS.parsed=null; CS.pasteText=""; CS.view="table"; csAdminRender(); })
         ["catch"](function(err){ btn.disabled=false; btn.textContent="Import"; toast("Couldn’t import — try again."); diagLog("callstats-import-failed", String((err&&err.message)||err)); });
     });
+    host.querySelectorAll("[data-csign]").forEach(function(b){ b.addEventListener("click",function(){ var nm=b.getAttribute("data-csign"); b.disabled=true;
+      csLinkName(nm, "IGNORE").then(function(){ toast(nm+" will be left out of the statistics."); csAdminRender(); })["catch"](function(){ toast("Couldn\u2019t save that."); csAdminRender(); }); }); });
+    host.querySelectorAll("[data-csunign]").forEach(function(b){ b.addEventListener("click",function(){ var nm=b.getAttribute("data-csunign"); b.disabled=true;
+      csLinkName(nm, "").then(function(){ csAdminRender(); })["catch"](function(){ csAdminRender(); }); }); });
     host.querySelectorAll("[data-cslink]").forEach(function(sel){ sel.addEventListener("change",function(){ var u=this.value; if(!u) return; var nm=this.getAttribute("data-cslink"); this.disabled=true;
       csLinkName(nm, u).then(function(){ toast("Linked "+nm+" to "+csMemberName(u)+"."); csAdminRender(); })["catch"](function(err){ toast("Couldn’t save that link."); diagLog("callstats-link-failed", String((err&&err.message)||err)); csAdminRender(); }); }); });
     if(CS.pasteText && $("csPaste")) $("csPaste").value=CS.pasteText;
@@ -6489,6 +6549,36 @@
     bar.classList.toggle("open", open); $("admSecBtn").setAttribute("aria-expanded", open?"true":"false");
     if(open){ var on=$("admSecMenu").querySelector(".adm-secit.on"); if(on && on.scrollIntoView){ try{ on.scrollIntoView({block:"nearest"}); }catch(e){} } }
   }
+  /* Admins kept hunting for the Settings card behind a screen, so every screen that a
+     setting governs links straight to it: the card opens, flashes, and offers a way back. */
+  var ADM_SETBACK=null;
+  function admSetLinkHTML(card, backSec, label){
+    return '<button class="ebtn small adm-setlink" data-setcard="'+esc(card)+'" data-setback="'+esc(backSec)+'" title="Open the '+esc(card)+' settings">\u2699 '+esc(label||(card+" settings"))+'</button>';
+  }
+  function admWireSetLinks(host){
+    (host||$("admGenPane")).querySelectorAll("[data-setcard]").forEach(function(b){
+      b.addEventListener("click",function(){
+        ADM_SETBACK={sec:b.getAttribute("data-setback"), card:b.getAttribute("data-setcard")};
+        admSecSwitch("settings"); admSetFocus(ADM_SETBACK.card, 0);
+      });
+    });
+  }
+  function admSetFocus(card, tries){
+    var pane=$("admGenPane"), el=null;
+    pane.querySelectorAll(".adm-gsec").forEach(function(x){ var t=x.querySelector(".adm-itemt"); if(t && t.textContent.trim()===card) el=x; });
+    if(!el){ if((tries||0)<40) setTimeout(function(){ admSetFocus(card,(tries||0)+1); },100); return; }
+    el.classList.add("open");
+    if(ADM_SETBACK && !pane.querySelector("#admSetBack")){
+      var back=document.createElement("button");
+      back.className="adm-backlink"; back.id="admSetBack";
+      back.textContent="\u2039 Back to "+(ADM_SECNAME[ADM_SETBACK.sec]||"where you were");
+      back.addEventListener("click",function(){ var to=ADM_SETBACK.sec; ADM_SETBACK=null; admSecSwitch(to); });
+      pane.insertBefore(back, pane.firstChild);
+    }
+    try{ el.scrollIntoView({block:"center",behavior:"smooth"}); }catch(e){}
+    el.classList.add("flash"); setTimeout(function(){ el.classList.remove("flash"); },1800);
+  }
+  var ADM_SECNAME={callstats:"Call statistics", jumpbags:"Jump bags", supply:"Supply requests", ambchecks:"Ambulance checkoff", jumpbagitems:"Jump bag items"};
   function admLoadSec(k){
     if(k==="ambchecks"){ ADMAMB.sel=null; admAmbLoad(); return; }
     if(k==="jumpbags"){ ADMJB.sel=null; admJbLoad(); return; }
@@ -6780,8 +6870,8 @@
                                           "Scene Reminder Minutes","Scene Reminder Message",
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
-    {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum"],
-     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum — they stay Observer until an admin moves them to Backup. For now these only change the example on the My Standing screen; real call counts arrive when the call-data feed is connected."},
+    {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum","Standings Notices","Standings Auto Downgrade","Standings Quarters Before Downgrade"],
+     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum \u2014 they stay Observer until an admin moves them to Backup. Standings Notices (On/Off): at the end of a quarter, anyone below their minimum gets an email, admins copied. Standings Auto Downgrade (On/Off): a Primary below the minimum for \u201CQuarters Before Downgrade\u201D quarters in a row moves to Backup on its own \u2014 their Primary clearance is kept, so an admin can move them back without clearing them again. Both start Off: the end-of-quarter check still runs and records what it would have done, under Call statistics \u2192 End of quarter. Medical Control is never included."},
     {name:"Ambulance checkoff",    keys:["Ambulances"]},
     {name:"Jump bag",              keys:["Jump Bag Reminder Days"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
@@ -6801,7 +6891,7 @@
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
                            "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room",
-                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30","Call Stats Stale Days":"10"};
+                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30","Call Stats Stale Days":"10","Standings Notices":"Off","Standings Auto Downgrade":"Off","Standings Quarters Before Downgrade":"2"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
@@ -10764,7 +10854,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.20.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.21.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10807,7 +10897,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.20.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.21.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11850,7 +11940,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.20.0".replace("Version ","");
+  var APP_VERSION="Version 1.21.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

@@ -76,7 +76,8 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   check("admin has a 'Call stats' section under People", !!secBtn(b.d,"Call stats"));
   click(b.w,secBtn(b.d,"Call stats")); await wait(500);
   const pane=b.d.getElementById("admGenPane");
-  const rowsTxt=[...pane.querySelectorAll(".cs-row:not(.head)")].map(r=>[...r.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).join(" | "));
+  const mainTable=()=>pane.querySelector(".cs-table:not(.plain)");
+  const rowsTxt=[...mainTable().querySelectorAll(".cs-row:not(.head)")].map(r=>[...r.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).join(" | "));
   check("the table lists active responders for this quarter, most calls first, with Lead/Driver/Other  ("+rowsTxt.slice(0,2).join(" | ")+")", /^Eber, Joseph/.test(rowsTxt[0]) && /\| 17 \| 3 \| 7 \| 7$/.test(rowsTxt[0]) && rowsTxt.some(t=>/^Fried, Joseph/.test(t) && /\| 4 \| 1 \| 1 \| 2$/.test(t)));
   check("Medical Control (MD-1) is not in the standings table at all", !rowsTxt.some(t=>/Thestrup/.test(t)));
   check("the under-minimum count in the header and red numbers for those under", /under minimum/.test(pane.querySelector(".adm-mh .u").textContent) && !!pane.querySelector(".cs-row .low"));
@@ -112,5 +113,48 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
   const rw=b.writes.find(x=>/^roster/.test(x.path));
   check("turning the switch on saves the status with the clearance, its date and who cleared them  "+JSON.stringify(rw&&{s:rw.body.status,c:rw.body.cleared_primary,d:rw.body.cleared_primary_at,by:rw.body.cleared_primary_by}), !!rw && rw.body.status==="Primary" && rw.body.cleared_primary==="X" && /^\d{4}-\d{2}-\d{2}$/.test(rw.body.cleared_primary_at) && /\(H-24\)/.test(rw.body.cleared_primary_by));
   check("no page errors (admin)", b.errs.length===0); b.errs.slice(0,3).forEach(e=>console.log("   !",e));
+
+  // ===== 5. end of quarter, shipped switched off
+  {
+    const st=[{id:1,unit:"H-24",crew_name:"JOSEPH EBER",period:cur,total:3,lead:1,driver:1,other:1,unknown:0,source:"eso",updated_at:new Date().toISOString()},
+              {id:2,unit:"H-22",crew_name:"JOSEPH FRIED",period:cur,total:4,lead:1,driver:1,other:2,unknown:0,source:"eso",updated_at:new Date().toISOString()}];
+    const c=boot({admin:true});
+    c.rows.roster[0].status="Primary"; c.rows.roster[1].status="Primary";
+    c.rows.call_stats=st; c.rows.call_stats_names=[]; c.rows.standings_log=[];
+    c.rows.settings.push({id:90,setting:"Standings Primary Minimum",value:"8"},{id:91,setting:"Standings Backup Minimum",value:"5"},
+      {id:92,setting:"Standings Notices",value:"Off"},{id:93,setting:"Standings Auto Downgrade",value:"Off"},{id:94,setting:"Standings Quarters Before Downgrade",value:"2"});
+    await wait(3200);
+    click(c.w,[...c.d.querySelectorAll("#grid .tile")].find(t=>/Admin/.test(t.textContent))); await wait(600);
+    click(c.w,secBtn(c.d,"Call stats")); await wait(600);
+    const pane2=c.d.getElementById("admGenPane"), eq=pane2.querySelector(".cs-endq");
+    check("Call stats has an 'End of quarter' panel saying both switches are off", !!eq && /notices off/.test(eq.textContent) && /auto downgrade off/.test(eq.textContent) && /2 below minimum/.test(eq.textContent));
+    click(c.w,c.d.getElementById("csEndQh")); await wait(300);
+    const eqRows=[...c.d.getElementById("admGenPane").querySelectorAll(".cs-endq .cs-row:not(.head)")].map(r=>r.textContent.replace(/\s+/g," "));
+    check("…listing who is below their minimum and what it would do, nothing more  "+JSON.stringify(eqRows.slice(0,1)), eqRows.length===2 && eqRows.every(t=>/would be emailed/.test(t)) && /Nothing is emailed/.test(c.d.getElementById("admGenPane").querySelector(".cs-endq .adm-help").textContent));
+    check("…and it says a downgrade keeps the member's clearance", /keeps the member\u2019s Primary clearance/.test(c.d.getElementById("admGenPane").querySelector(".cs-endq .adm-note").textContent));
+    check("no page errors (end of quarter)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
+  // ===== 6. a name that is not one of ours
+  {
+    const st=[{id:1,unit:"",crew_name:"TECHSUPPORT ESO",period:cur,total:9,lead:0,driver:0,other:0,unknown:9,source:"eso",updated_at:new Date().toISOString()},
+              {id:2,unit:"H-24",crew_name:"JOSEPH EBER",period:cur,total:17,lead:3,driver:7,other:7,unknown:0,source:"eso",updated_at:new Date().toISOString()}];
+    const c=boot({admin:true}); c.rows.roster[0].status="Primary"; c.rows.call_stats=st; c.rows.call_stats_names=[]; c.rows.standings_log=[];
+    await wait(3200);
+    click(c.w,[...c.d.querySelectorAll("#grid .tile")].find(t=>/Admin/.test(t.textContent))); await wait(600);
+    click(c.w,secBtn(c.d,"Call stats")); await wait(600);
+    check("an unknown name is reported once", /not linked to a member: TECHSUPPORT ESO/.test(c.d.getElementById("admGenPane").textContent));
+    click(c.w,c.d.getElementById("csFixNames")); await wait(400);
+    const ign=c.d.getElementById("admGenPane").querySelector('[data-csign="TECHSUPPORT ESO"]');
+    check("the unmatched name offers 'Not a member' next to the member picker", !!ign);
+    click(c.w,ign); await wait(400);
+    const lk=c.writes.find(x=>/^call_stats_names/.test(x.path));
+    check("marking it saves the name as ignored  "+JSON.stringify(lk&&lk.body), !!lk && lk.body[0].crew_name==="TECHSUPPORT ESO" && lk.body[0].unit==="IGNORE");
+    c.rows.call_stats_names=[{crew_name:"TECHSUPPORT ESO",unit:"IGNORE"}];
+    click(c.w,secBtn(c.d,"Members")); await wait(300); click(c.w,secBtn(c.d,"Call stats")); await wait(700);
+    check("…and it is no longer reported as unmatched", !/not linked to a member/.test(c.d.getElementById("admGenPane").textContent));
+    check("no page errors (ignored names)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
   console.log("  ("+pass+" passed, "+fail+" failed)"); process.exit(fail?1:0);
 })();

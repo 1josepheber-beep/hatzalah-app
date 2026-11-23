@@ -1640,6 +1640,7 @@ var CS_SEARCH = 'from:eso.com has:attachment newer_than:7d';
 function dailyCallStats(){
   try { importCallStats(); } catch (e) { Logger.log("importCallStats failed: " + e); }
   try { callStatsStaleCheck(); } catch (e) { Logger.log("callStatsStaleCheck failed: " + e); }
+  try { standingsQuarterEnd(); } catch (e) { Logger.log("standingsQuarterEnd failed: " + e); }
 }
 
 /** Run once by hand to put dailyCallStats on a 6am timer (ESO sends at 5am). */
@@ -1699,7 +1700,8 @@ function csRole_(s){
 function csMatchUnit_(name, links, roster){
   var k = csNorm_(name);
   if (!k) return "";
-  if (links[k]) return links[k];
+  // "IGNORE" marks a name that is not one of ours (ESO support, a visiting medic)
+  if (links[k]) return links[k] === "IGNORE" ? "" : links[k];
   var parts = k.split(" "), first = parts[0], last = parts[parts.length - 1];
   var nl = function(r){ return csNorm_(r.last_name); }, nf = function(r){ return csNorm_(r.first_name); };
   var cands = roster.filter(function(r){
@@ -1785,7 +1787,9 @@ function importCallStats(){
 
   var now = new Date().toISOString(), rows = [], newLinks = [], unmatched = [];
   Object.keys(agg).forEach(function(k){
-    var a = agg[k], unit = csMatchUnit_(a.crew_name, links, roster);
+    var a = agg[k];
+    if (links[csNorm_(a.crew_name)] === "IGNORE") return;        // not one of ours
+    var unit = csMatchUnit_(a.crew_name, links, roster);
     rows.push({ unit: unit, crew_name: a.crew_name, period: a.period, total: a.total, lead: a.lead,
                 driver: a.driver, other: a.other, unknown: a.unknown, source: CS_SOURCE, updated_at: now });
     var nk = csNorm_(a.crew_name);
@@ -1831,4 +1835,176 @@ function callStatsStaleCheck(){
   props.setProperty("CS_STALE_ALERTED_MS", String(Date.now()));
   Logger.log("callStatsStaleCheck: admins told (last update " + since + ").");
   return true;
+}
+
+// ===================== STANDINGS AT THE END OF A QUARTER =====================
+//
+// Ships switched OFF (Settings -> Standings). Every quarter this works out who
+// fell below their minimum and writes one row per responder to standings_log.
+// While the switches are off it records what it WOULD have done and sends
+// nothing; when leadership approves, the same job starts acting on it.
+//
+//   Standings Notices                     Off -> the member and the admins get the email
+//   Standings Auto Downgrade              Off -> Primary drops to Backup on its own
+//   Standings Quarters Before Downgrade   2   -> how many quarters in a row it takes
+//
+// The streak is counted from the rows in standings_log, which start when this
+// ships, so nobody is downgraded for quarters they were never warned about.
+// Medical Control is never part of any of it, and a downgrade never takes away
+// a member's Primary clearance.
+
+var ST_QUARTERS = 2;
+
+function stOn_(v){ v = String(v == null ? "" : v).trim().toLowerCase(); return v === "on" || v === "x" || v === "yes" || v === "true" || v === "1"; }
+function stPeriodOf_(d){ return d.getFullYear() + "-Q" + (Math.floor(d.getMonth() / 3) + 1); }
+function stPrevPeriod_(p){
+  var m = /^(\d{4})-Q([1-4])$/.exec(String(p || ""));
+  if (!m) return "";
+  var y = +m[1], q = +m[2] - 1;
+  if (q < 1) { y--; q = 4; }
+  return y + "-Q" + q;
+}
+function stLabel_(p){
+  var m = /^(\d{4})-Q([1-4])$/.exec(String(p || ""));
+  return m ? ("Q" + m[2] + " " + m[1]) : String(p || "");
+}
+/** Medical Control sits outside the statistics, the notices and the downgrade. */
+function stExempt_(r){
+  var ty = String(r.type || "").toLowerCase();
+  return /medical control|physician|doctor/.test(ty) || /^md-?\d*$/i.test(String(r.unit || "").trim());
+}
+function stResponder_(r){
+  var a = String(r.active == null ? "" : r.active).trim().toLowerCase();
+  if (a === "no" || a === "off" || a === "false" || a === "0") return false;
+  if (!String(r.unit || "").trim()) return false;
+  if (/dispatch|non respond/i.test(String(r.type || ""))) return false;
+  return !stExempt_(r);
+}
+
+/**
+ * The end-of-quarter check. Runs daily and does nothing until a quarter has
+ * ended; `period` forces a particular quarter (for a dry run from the editor).
+ */
+function standingsQuarterEnd(period){
+  var m = settingsMap();
+  var notices = stOn_(getSet(m, "standings notices", "off"));
+  var autoDown = stOn_(getSet(m, "standings auto downgrade", "off"));
+  var needQ = parseInt(getSet(m, "standings quarters before downgrade", String(ST_QUARTERS)), 10) || ST_QUARTERS;
+  var minPri = parseInt(getSet(m, "standings primary minimum", "8"), 10) || 8;
+  var minBak = parseInt(getSet(m, "standings backup minimum", "5"), 10) || 5;
+
+  var now = new Date();
+  if (!period) {
+    // a few days into the new quarter, so the last calls of the old one are in
+    if (now.getDate() < 3 && now.getMonth() % 3 === 0) return 0;
+    if (now.getMonth() % 3 !== 0 && now.getDate() >= 3) { /* mid-quarter: still fine, the rows just exist already */ }
+    period = stPrevPeriod_(stPeriodOf_(now));
+  }
+  if (!period) return 0;
+
+  var done = {};
+  sbGet("standings_log", "select=*&period=eq." + encodeURIComponent(period)).forEach(function(r){ done[normUnit(r.unit)] = r; });
+  var prev = {};
+  sbGet("standings_log", "select=*&period=eq." + encodeURIComponent(stPrevPeriod_(period))).forEach(function(r){ prev[normUnit(r.unit)] = r; });
+
+  var stats = {};
+  sbGet("call_stats", "select=*&period=eq." + encodeURIComponent(period)).forEach(function(r){
+    var u = normUnit(r.unit); if (!u) return;
+    // the web feed wins over the ESO export for the same quarter
+    if (!stats[u] || (r.source === "web" && stats[u].source !== "web")) stats[u] = r;
+  });
+
+  var roster = sbAll("roster").filter(stResponder_);
+  var n = 0, flagged = [], dropped = [];
+  roster.forEach(function(r){
+    var u = normUnit(r.unit);
+    if (done[u]) return;                                   // already recorded, or excused by an admin
+    var status = String(r.status || "").trim().toLowerCase();
+    var need = status === "primary" ? minPri : status === "backup" ? minBak : 0;
+    if (!need) return;                                     // Observer has no minimum
+    var total = stats[u] ? (parseInt(stats[u].total, 10) || 0) : 0;
+    var short = total < need;
+    var was = prev[u] && prev[u].short ? (parseInt(prev[u].streak, 10) || 1) : 0;
+    var streak = short ? was + 1 : 0;
+    var action = "ok";
+    if (short) {
+      var dueDown = status === "primary" && streak >= needQ;
+      action = dueDown ? (autoDown ? "downgrade" : "would_downgrade") : (notices ? "notice" : "would_notice");
+    }
+
+    if (action === "downgrade") {
+      // the clearance stays: an admin can put them back to Primary without re-clearing
+      if (sbPatch("roster", "unit=eq." + encodeURIComponent(String(r.unit).trim()), { status: "Backup" })) {
+        dropped.push(r);
+      } else {
+        action = "would_downgrade";                        // the write failed; do not pretend it happened
+      }
+    }
+    // notices are their own switch: someone short hears about it even when the
+    // automatic downgrade is off, and that is the quarter it matters most
+    if (short && notices) flagged.push({ r: r, total: total, need: need, streak: streak, action: action });
+
+    sbInsert("standings_log", { unit: String(r.unit).trim(), period: period, status: status, need: need,
+                                total: total, short: short, streak: streak, action: action, note: "", by_whom: "" });
+    n++;
+  });
+
+  if (notices) flagged.forEach(function(f){ stNotify_(f, period, needQ, autoDown); });
+  if (n) Logger.log("standingsQuarterEnd " + period + ": " + n + " recorded, " + flagged.length + " below minimum, "
+                    + dropped.length + " moved to Backup" + (notices ? "" : " (notices off)") + (autoDown ? "" : " (auto downgrade off)"));
+  return n;
+}
+
+/** The member's email, admins copied. Only ever sent when Standings Notices is on. */
+function stNotify_(f, period, needQ, autoDown){
+  var r = f.r, first = String(r.first_name || "").trim() || "there";
+  var label = stLabel_(period);
+  var to = [String(r.email || "").trim(), String(r.personal_email || "").trim()]
+             .filter(function(e){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e); }).join(", ");
+  var down = f.action === "downgrade";
+  var subject = down ? ("Your standing has changed to Backup — " + label)
+                     : ("Your " + label + " call count was below the minimum");
+  var body = "Hi " + first + ",\n\n";
+  if (down) {
+    body += "You ran " + f.total + " call" + (f.total === 1 ? "" : "s") + " in " + label + ", below the minimum of " + f.need
+          + " for Primary, and this is " + f.streak + " quarter" + (f.streak === 1 ? "" : "s") + " in a row.\n\n"
+          + "Your standing has been changed to Backup. This is not a mark against you — it reflects availability, and it can be changed back. "
+          + "Please speak with an administrator about what is getting in the way and what would help.\n\n";
+  } else {
+    body += "You ran " + f.total + " call" + (f.total === 1 ? "" : "s") + " in " + label + ", below the minimum of " + f.need + ".\n\n"
+          + "Nothing happens from this on its own. Please speak with an administrator so we can understand what is getting in the way"
+          + (autoDown && String(r.status || "").toLowerCase() === "primary"
+              ? " — " + needQ + " quarters in a row below the minimum moves a Primary to Backup."
+              : "") + "\n\n";
+  }
+  body += "You can see your own numbers any time in the app → My Standing.\n" + APP_URL
+        + "\n\nThank you for everything you do,\nHatzalah of Houston Administration";
+  mailBoth(to, subject, body, adminRecipients(), {
+    kind: "Standings", strip: label + ": " + f.total + " of " + f.need + (down ? " · moved to Backup" : ""),
+    stripColor: down ? "red" : "gold",
+    facts: [["Quarter", label], ["Calls", String(f.total)], ["Minimum", String(f.need)],
+            ["Quarters in a row below", String(f.streak)]]
+  });
+}
+
+/** A dry run from the editor: what the last quarter would have done. Writes nothing. */
+function standingsDryRun(){
+  var m = settingsMap();
+  var period = stPrevPeriod_(stPeriodOf_(new Date()));
+  var minPri = parseInt(getSet(m, "standings primary minimum", "8"), 10) || 8;
+  var minBak = parseInt(getSet(m, "standings backup minimum", "5"), 10) || 5;
+  var stats = {};
+  sbGet("call_stats", "select=*&period=eq." + encodeURIComponent(period)).forEach(function(r){
+    var u = normUnit(r.unit); if (u && (!stats[u] || (r.source === "web" && stats[u].source !== "web"))) stats[u] = r;
+  });
+  var out = [];
+  sbAll("roster").filter(stResponder_).forEach(function(r){
+    var status = String(r.status || "").trim().toLowerCase();
+    var need = status === "primary" ? minPri : status === "backup" ? minBak : 0;
+    if (!need) return;
+    var total = stats[normUnit(r.unit)] ? (parseInt(stats[normUnit(r.unit)].total, 10) || 0) : 0;
+    if (total < need) out.push(r.unit + " " + r.first_name + " " + r.last_name + ": " + total + " of " + need + " (" + status + ")");
+  });
+  Logger.log("Dry run for " + stLabel_(period) + " — below minimum:\n" + (out.length ? out.join("\n") : "nobody"));
+  return out;
 }
