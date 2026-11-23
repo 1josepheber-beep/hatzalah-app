@@ -18,7 +18,7 @@ function msg(dateMs, atts){ return { getDate:()=>new Date(dateMs), getAttachment
 
 function run(o){
   o=o||{};
-  const mails=[], upserts=[], patches=[], logs=[], props=Object.assign({},o.props||{});
+  const mails=[], upserts=[], patches=[], pushes=[], logs=[], props=Object.assign({},o.props||{});
   const tables=JSON.parse(JSON.stringify(o.tables||{}));
   const g={
     Logger:{log:(m)=>logs.push(String(m))},
@@ -38,6 +38,7 @@ function run(o){
     MailApp:{sendEmail:(m)=>mails.push(m)},
     ScriptApp:{getProjectTriggers:()=>[], newTrigger:()=>({timeBased:()=>({everyDays:()=>({atHour:()=>({create:()=>{}})})})}), deleteTrigger:()=>{}},
     UrlFetchApp:{fetch:(url,oo)=>{ oo=oo||{};
+      if(/workers\.dev/.test(url)){ pushes.push(JSON.parse(oo.payload)); return {getResponseCode:()=>200,getContentText:()=>"{}"}; }
       const m=url.match(/\/rest\/v1\/([a-z_]+)(\?(.*))?$/), t=m&&m[1];
       if(oo.method==="post"){ upserts.push({t, q:(m[3]||""), rows:JSON.parse(oo.payload)}); return {getResponseCode:()=>201,getContentText:()=>""}; }
       if(oo.method==="patch"){ patches.push({t, q:(m[3]||""), body:JSON.parse(oo.payload)}); return {getResponseCode:()=>204,getContentText:()=>""}; }
@@ -49,7 +50,7 @@ function run(o){
   const api=new Function(...Object.keys(g),"mails_", src.replace(/^\s*\/\*\*[\s\S]*?\*\//,"")
     +"\n mailBoth=function(to,subject,body,bcc,brand){ mails_.push({to:String(to||''), bcc:String(bcc||''), subject:subject, body:body, brand:brand||null}); };"
     +"\nreturn {importCallStats, callStatsStaleCheck, dailyCallStats, csMatchUnit_, csNorm_, csRole_, standingsQuarterEnd, standingsDryRun, stPrevPeriod_};")(...Object.values(g), mails);
-  return {api, mails, upserts, patches, logs, props, tables};
+  return {api, mails, upserts, patches, pushes, logs, props, tables};
 }
 
 const roster=[
@@ -89,6 +90,9 @@ check("every row is written as source=eso with a fresh timestamp", cs.rows.every
 const lk=r.upserts.filter(x=>x.t==="call_stats_names")[0];
 check("newly matched names are saved as links so the next import is instant", !!lk && lk.rows.some(x=>x.crew_name==="JOSEPH EBER"&&x.unit==="H-24") && !lk.rows.some(x=>x.crew_name==="A STRANGER"));
 check("the message is remembered so it is not imported twice", r.props.CS_LAST_MSG_MS===String(Date.parse("2026-11-23T05:02:00Z")));
+
+const tot=r.upserts.filter(x=>x.t==="call_totals")[0];
+check("the organization's own total is written per quarter: each incident once, whoever was on it  "+JSON.stringify(tot&&tot.rows.map(x=>[x.period,x.total])), !!tot && /on_conflict=period/.test(tot.q) && tot.rows.find(x=>x.period==="2026-Q4").total===3 && tot.rows.find(x=>x.period==="2026-Q3").total===1);
 
 // ===== 2. the same email again the next morning -> nothing
 let r2=run({ tables:{roster, call_stats:[], call_stats_names:[], settings:[]},
@@ -185,6 +189,26 @@ s5.api.standingsQuarterEnd("2026-Q4");
 const w5=s5.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows);
 check("a member an admin excused is left alone: no second row, no email, no downgrade", !w5.some(r=>r.unit==="H-22") && !s5.mails.length && !s5.upserts.some(x=>x.t==="roster"));
 check("…and the rest of the quarter is still recorded", w5.some(r=>r.unit==="H-24"));
+
+// an excused quarter, or a drop an admin reversed, starts the count again
+let s7=run({tables:{roster:ROS, settings:SET({notices:"On",auto:"On"}), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q3",status:"primary",need:8,total:3,short:true,streak:0,action:"excused",note:"surgery"}]}});
+s7.api.standingsQuarterEnd("2026-Q4");
+const q7=s7.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows).find(r=>r.unit==="H-22");
+check("a miss right after an excused quarter counts as the first, not the second", q7.streak===1 && q7.action==="notice" && !s7.patches.length);
+let s8=run({tables:{roster:ROS, settings:SET({notices:"On",auto:"On"}), call_stats:CSROWS("2026-Q4"),
+  standings_log:[{unit:"H-22",period:"2026-Q3",status:"primary",need:8,total:3,short:true,streak:2,action:"overridden",note:"back from leave"}]}});
+s8.api.standingsQuarterEnd("2026-Q4");
+const q8=s8.upserts.filter(x=>x.t==="standings_log").map(x=>x.rows).find(r=>r.unit==="H-22");
+check("…and the same after an admin reversed a drop: no instant second drop", q8.streak===1 && q8.action==="notice" && !s8.patches.length);
+
+// the notice also goes to the phone
+let s9=run({tables:{roster:ROS, settings:SET({notices:"On"}).concat([{setting:"Push Worker URL",value:"https://hoh-push.example.workers.dev"}]), call_stats:CSROWS("2026-Q4"), standings_log:[]}, props:{PUSH_CRON_KEY:"k"}});
+s9.api.standingsQuarterEnd("2026-Q4");
+check("with Notices on the member also gets an app notification that opens My Standing  "+JSON.stringify(s9.pushes.map(x=>[x.audience,x.kind])), s9.pushes.length===1 && s9.pushes[0].audience==="unit:H-22" && s9.pushes[0].kind==="standing" && s9.mails.length===1);
+let s10=run({tables:{roster:ROS, settings:SET().concat([{setting:"Push Worker URL",value:"https://hoh-push.example.workers.dev"}]), call_stats:CSROWS("2026-Q4"), standings_log:[]}, props:{PUSH_CRON_KEY:"k"}});
+s10.api.standingsQuarterEnd("2026-Q4");
+check("with Notices off there is no notification either", !s10.pushes.length && !s10.mails.length);
 
 // the dry run touches nothing
 let s6=run({tables:{roster:ROS, settings:SET(), call_stats:CSROWS("2026-Q3"), standings_log:[]}});

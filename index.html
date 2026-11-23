@@ -923,6 +923,10 @@
   .jb-bar.on{border-color:var(--navy);background:var(--navy);color:#fff} .jb-bar.on.warn{border-color:#8a6d00;background:#8a6d00} .jb-bar.on.bad{border-color:var(--red);background:var(--red)}
   .jb-bart{flex:0 0 100%;font-size:11.5px;font-weight:800;color:var(--mut)} .jb-bart.warn{color:#8a6d00} .jb-bart.bad{color:var(--red)}
   .jb-chk{margin-top:3px}
+  .stand-org{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:var(--mut);line-height:1.45} .stand-org b{color:var(--ink)}
+  .stand-of{font-style:normal;font-weight:600;font-size:11px;color:var(--mut)}
+  .cs-excuse{padding:10px 0 12px;border-bottom:1px solid var(--line)} .cs-excuse textarea{width:100%;margin:6px 0}
+  .cs-exnote{font-size:12px;color:var(--mut);padding:0 0 8px} .cs-exlink{border:0;background:none;color:var(--navy);font-weight:800;font-size:12px;padding:2px 0;cursor:pointer;text-decoration:underline}
   .adm-onoff{padding:10px 0;border-top:1px solid var(--line)} .adm-onoff .ts{font-size:12px;color:var(--mut);margin-top:2px}
   .adm-mhbtns{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .adm-setlink{white-space:nowrap}
@@ -1773,7 +1777,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.22.0</div>
+  <div class="ver-line">Version 1.23.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1895,7 +1899,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.22.0</div>
+  <div class="ver-line">Version 1.23.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5127,7 +5131,7 @@
      Driver or Other crew. Today the rows are imported from ESO (Admin → Call stats →
      Import — paste the ESO export); when the Hatzalah Web feed arrives it writes the same
      rows with source "web". Members see their own rows on My Standing; admins see everyone. */
-  var CS={rows:[], names:{}, log:[], endqOpen:false, loaded:false, mine:null, mineFor:"", sel:null, period:"", view:"table", parsed:null, importSource:"eso"};
+  var CS={rows:[], names:{}, log:[], totals:{}, excuseFor:"", endqOpen:false, loaded:false, mine:null, mineFor:"", sel:null, period:"", view:"table", parsed:null, importSource:"eso"};
   function csPeriodOf(d){ d=(d instanceof Date)?d:new Date(d); return isNaN(d)?"":d.getFullYear()+"-Q"+(Math.floor(d.getMonth()/3)+1); }
   function csCurrentPeriod(){ return csPeriodOf(new Date()); }
   function csPeriodParts(p){ var m=/^(\d{4})-Q([1-4])$/.exec(String(p||"")); return m?{y:+m[1],q:+m[2]}:null; }
@@ -5175,7 +5179,7 @@
     if(CS.mine && CS.mineFor===u) return Promise.resolve(CS.mine);
     return sbFetch(SB_URL+"/rest/v1/call_stats?select=*&unit=eq."+encodeURIComponent(u)+"&order=period.desc",{cache:"no-store"})
       .then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
-      .then(function(rows){ CS.mine=Array.isArray(rows)?rows:[]; CS.mineFor=u; return CS.mine; });
+      .then(function(rows){ CS.mine=Array.isArray(rows)?rows:[]; CS.mineFor=u; return (stdShowTotals()?csLoadTotals():Promise.resolve()).then(function(){ return CS.mine; }); });
   }
   function csLoadAll(){
     return Promise.all([
@@ -5183,7 +5187,7 @@
       sbFetch(SB_URL+"/rest/v1/call_stats_names?select=*",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; }),
       sbFetch(SB_URL+"/rest/v1/standings_log?select=*&order=period.desc&limit=2000",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
     ]).then(function(res){
-      CS.log=Array.isArray(res[2])?res[2]:[];
+      CS.log=Array.isArray(res[2])?res[2]:[]; csLoadTotals();
       CS.rows=Array.isArray(res[0])?res[0]:[]; CS.names={};
       (Array.isArray(res[1])?res[1]:[]).forEach(function(n){ CS.names[csNormName(n.crew_name)]=String(n.unit||""); });
       CS.loaded=true; return CS.rows;
@@ -5214,6 +5218,7 @@
     else if(calls>=need) note='<b>'+(calls-need)+' above</b> the minimum to keep '+esc(label)+' this quarter.';
     else note='<b>'+(need-calls)+' more</b> needed to keep '+esc(label)+' this quarter.'+(daysLeft<=30?' You have not reached your minimum yet \u2014 please speak to an administrator.':'');
     var hist=mine.filter(function(r){ return r.period!==cur; }).slice(0,8);
+    var showOrg=stdShowTotals(), orgNow=showOrg?csNum((CS.totals||{})[cur]):0;
     var upd=csLastUpdated(mine), src=mine.some(function(r){ return r.source==="web"; })?"Hatzalah Web":"ESO records";
     return '<div class="stand-prev">'+
       '<div class="stand-badge" style="--stand-c:'+color+'"><div class="lbl">Your current standing</div>'+
@@ -5227,11 +5232,12 @@
         '<div class="stand-top"><span>'+calls+' call'+(calls===1?"":"s")+' this quarter</span>'+(obs?'':'<span class="need">min '+need+' for '+esc(label)+'</span>')+'</div>'+
         (obs?'':'<div class="stand-bar"><span style="width:'+barPct+'%;background:'+color+'"></span></div>')+
         '<div class="stand-roles"><span><b>'+csNum(row.lead)+'</b> Lead</span><span><b>'+csNum(row.driver)+'</b> Driver</span><span><b>'+csNum(row.other)+'</b> Other</span></div>'+
+        (orgNow?'<div class="stand-org">Hatzalah ran <b>'+orgNow+'</b> call'+(orgNow===1?"":"s")+' this quarter \u2014 you were on <b>'+calls+'</b>'+(calls?' ('+Math.max(1,Math.round(calls/orgNow*100))+'%)':'')+'.</div>':'')+
         '<div class="stand-note">'+note+'</div>'+
       '</div>'+
       (hist.length?'<div class="stand-card stand-hist"><div class="stand-histh">Previous quarters</div>'+
         '<div class="stand-histrow head"><span>Quarter</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
-        hist.map(function(r){ var n=csNum(r.total), ok=obs||n>=csStandingNeed(key); return '<div class="stand-histrow"><span>'+esc(csPeriodLabel(r.period))+'</span><span class="'+(ok?"ok":"low")+'">'+n+'</span><span>'+csNum(r.lead)+'</span><span>'+csNum(r.driver)+'</span><span>'+csNum(r.other)+'</span></div>'; }).join("")+
+        hist.map(function(r){ var n=csNum(r.total), ok=obs||n>=csStandingNeed(key); var org=showOrg?csNum((CS.totals||{})[r.period]):0; return '<div class="stand-histrow"><span>'+esc(csPeriodLabel(r.period))+'</span><span class="'+(ok?"ok":"low")+'">'+n+(org?'<i class="stand-of"> of '+org+'</i>':'')+'</span><span>'+csNum(r.lead)+'</span><span>'+csNum(r.driver)+'</span><span>'+csNum(r.other)+'</span></div>'; }).join("")+
         '</div>':'')+
       '<div class="stand-card" style="padding:6px 16px">'+
         '<div class="stand-tier"><span class="d" style="background:#1e9e57"></span><span class="n">Primary</span><span class="r">'+t.primary+'+ calls / quarter</span></div>'+
@@ -5332,44 +5338,107 @@
     $("csImportBtn").addEventListener("click",function(){ CS.view="import"; csAdminRender(); });
     if($("csFixNames")) $("csFixNames").addEventListener("click",function(e){ e.preventDefault(); CS.view="import"; csAdminRender(); });
     var eq=$("csEndQh"); if(eq) eq.addEventListener("click",function(){ CS.endqOpen=!CS.endqOpen; csAdminRender(); });
+    var findRow=function(u){ return csEndQRows(p, list).filter(function(r){ return normUnit(r.unit)===normUnit(u); })[0]; };
+    host.querySelectorAll("[data-csex]").forEach(function(b){ b.addEventListener("click",function(){ CS.excuseFor=b.getAttribute("data-csex"); csAdminRender(); var t=$("csExWhy"); if(t){ try{ t.focus(); }catch(e){} } }); });
+    if($("csExCancel")) $("csExCancel").addEventListener("click",function(){ CS.excuseFor=""; csAdminRender(); });
+    if($("csExSave")) $("csExSave").addEventListener("click",function(){
+      var why=String(($("csExWhy")||{}).value||"").trim(), x=findRow(CS.excuseFor);
+      if(!why){ toast("Add the reason first."); return; }
+      if(!x) return;
+      var btn=this; btn.disabled=true; btn.textContent="Saving\u2026";
+      csExcuse(p, x, why).then(function(){ CS.excuseFor=""; toast("Excused for "+csPeriodLabel(p)+"."); csAdminRender(); })
+        ["catch"](function(err){ btn.disabled=false; btn.textContent="Excuse this quarter"; toast("Couldn\u2019t save that \u2014 try again."); diagLog("standing-excuse-failed", String((err&&err.message)||err)); });
+    });
+    host.querySelectorAll("[data-csunex]").forEach(function(b){ b.addEventListener("click",function(){ var x=findRow(b.getAttribute("data-csunex")); if(!x) return; b.disabled=true;
+      csUnexcuse(p, x).then(function(){ csAdminRender(); })["catch"](function(){ toast("Couldn\u2019t undo that \u2014 try again."); csAdminRender(); }); }); });
     admWireSetLinks(host);
   }
   /* ---- end of quarter: who fell below their minimum, and what the rules would do ----
      While Standings Notices and Auto Downgrade are off this is the whole feature: it
      shows what would have happened, so nothing is a surprise the day they go on. */
+  /* how many calls Hatzalah ran in a quarter (distinct incidents in the ESO export) */
+  function csLoadTotals(){
+    return sbFetch(SB_URL+"/rest/v1/call_totals?select=*",{cache:"no-store"}).then(function(r){ return r.ok?r.json():[]; })["catch"](function(){ return []; })
+      .then(function(rows){ CS.totals={}; (Array.isArray(rows)?rows:[]).forEach(function(t){ CS.totals[t.period]=csNum(t.total); }); return CS.totals; });
+  }
+  function stdShowTotals(){ return /^(on|x|yes|true|1)$/i.test(String(getSetting("Standings Show Total Calls","Off")||"").trim()); }
   function stdSettings(){
     var on=function(k,d){ var v=String(getSetting(k,d)||"").trim().toLowerCase(); return v==="on"||v==="x"||v==="yes"||v==="true"||v==="1"; };
     var q=parseInt(getSetting("Standings Quarters Before Downgrade","2"),10);
     return {notices:on("Standings Notices","Off"), auto:on("Standings Auto Downgrade","Off"), quarters:(isNaN(q)||q<1)?2:q};
   }
   function stdLogFor(period){ return (CS.log||[]).filter(function(r){ return r.period===period; }); }
+  function stdStreakBefore(unit, p){
+    var prev=csShiftPeriod(p,-1), pr=(CS.log||[]).filter(function(r){ return r.period===prev && normUnit(r.unit)===normUnit(unit); })[0];
+    if(!pr || !pr.short) return 0;
+    if(pr.action==="excused" || pr.action==="overridden") return 0;      /* those start the count again */
+    return csNum(pr.streak)||1;
+  }
+  /* everyone below their minimum for the period: what was recorded where the check has
+     run, how it stands today where it has not, and anyone an admin has excused */
+  function csEndQRows(p, list){
+    var by={}; stdLogFor(p).forEach(function(r){ by[normUnit(r.unit)]=r; });
+    var running=(p===csCurrentPeriod()), out=[];
+    list.forEach(function(x){
+      var lg=by[normUnit(x.unit)];
+      if(lg){
+        if(!lg.short && lg.action!=="excused") return;
+        out.push({unit:x.unit, status:lg.status||x.status, need:csNum(lg.need)||x.need, total:(running?x.total:csNum(lg.total)), streak:csNum(lg.streak), action:String(lg.action||""), note:String(lg.note||""), by:String(lg.by_whom||""), id:lg.id, logged:true});
+        return;
+      }
+      /* like the check itself: only a standing of Primary or Backup carries a minimum */
+      if((x.status==="primary"||x.status==="backup") && x.need && x.total<x.need) out.push({unit:x.unit, status:x.status, need:x.need, total:x.total, streak:stdStreakBefore(x.unit,p)+1, action:"", note:"", by:"", logged:false});
+    });
+    return out;
+  }
   function csEndQHTML(p, list){
-    var S=stdSettings(), logged=stdLogFor(p), recorded=!!logged.length;
-    var short=recorded ? logged.filter(function(r){ return r.short; })
-                       : list.filter(function(x){ return x.need && x.has && x.total<x.need; }).map(function(x){ return {unit:x.unit, status:x.status, need:x.need, total:x.total, streak:1, action:"", short:true}; });
+    var S=stdSettings(), recorded=stdLogFor(p).some(function(r){ return r.action!=="excused"; });
+    var rows=csEndQRows(p, list), short=rows.filter(function(r){ return r.action!=="excused"; }), excused=rows.length-short.length;
     var dueDown=short.filter(function(r){ return String(r.status||"").toLowerCase()==="primary" && csNum(r.streak)>=S.quarters; }).length;
     var state=(S.notices?"notices on":"notices off")+" \u00b7 "+(S.auto?"auto downgrade on":"auto downgrade off");
     var h='<div class="adm-item cs-endq'+(CS.endqOpen?" open":"")+'"><div class="adm-itemh" id="csEndQh">'+
       '<span class="adm-itemt">End of quarter</span>'+
-      '<span class="adm-itemsub">'+short.length+' below minimum'+(dueDown?' \u00b7 '+dueDown+' would drop to Backup':'')+' \u00b7 '+esc(state)+'</span>'+
+      '<span class="adm-itemsub">'+short.length+' below minimum'+(excused?' \u00b7 '+excused+' excused':'')+(dueDown?' \u00b7 '+dueDown+' would drop to Backup':'')+' \u00b7 '+esc(state)+'</span>'+
       '<svg class="adm-car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div><div class="adm-itemb">';
     h+='<div class="adm-help">'+(recorded
         ? 'Recorded at the end of '+esc(csPeriodLabel(p))+'.'
         : esc(csPeriodLabel(p))+' is still running \u2014 this is how it stands today. The check records the quarter a few days after it ends.')+
       (S.notices||S.auto?'' : ' Nothing is emailed and nobody\u2019s standing changes while both switches are off.')+'</div>';
-    if(!short.length) h+='<div class="adm-okline">Everybody is at or above their minimum.</div>';
+    if(!rows.length) h+='<div class="adm-okline">Everybody is at or above their minimum.</div>';
     else h+='<div class="cs-table plain"><div class="cs-row head"><span>Responder</span><span>Calls</span><span>Min</span><span>In a row</span><span>Would</span></div>'+
-      short.map(function(r){
-        var st=String(r.status||"").toLowerCase(), n=csNum(r.streak);
-        var what=(st==="primary"&&n>=S.quarters) ? (S.auto?"drops to Backup":"would drop to Backup") : (S.notices?"emailed":"would be emailed");
-        if(String(r.action||"")==="excused") what="excused";
-        return '<div class="cs-row"><span><b>'+esc(csMemberName(r.unit))+'</b><small>'+esc(r.unit)+(st?' \u00b7 '+esc(st.charAt(0).toUpperCase()+st.slice(1)):'')+'</small></span><span class="low">'+csNum(r.total)+'</span><span>'+csNum(r.need)+'</span><span>'+(n||1)+'</span><span><small>'+esc(what)+'</small></span></div>';
+      rows.map(function(r){
+        var st=String(r.status||"").toLowerCase(), n=csNum(r.streak), ex=r.action==="excused";
+        var what=ex?"excused":(st==="primary"&&n>=S.quarters) ? (S.auto?"drops to Backup":"would drop to Backup") : (S.notices?"emailed":"would be emailed");
+        var line='<div class="cs-row"><span><b>'+esc(csMemberName(r.unit))+'</b><small>'+esc(r.unit)+(st?' \u00b7 '+esc(st.charAt(0).toUpperCase()+st.slice(1)):'')+'</small></span><span class="low">'+csNum(r.total)+'</span><span>'+csNum(r.need)+'</span><span>'+(ex?"\u2014":(n||1))+'</span><span><small>'+esc(what)+'</small></span></div>';
+        if(ex) return line+'<div class="cs-exnote">Excused'+(r.note?': '+esc(r.note):'')+(r.by?' \u2014 '+esc(r.by):'')+' \u00b7 <button class="cs-exlink" data-csunex="'+esc(r.unit)+'">Undo</button></div>';
+        if(CS.excuseFor && normUnit(CS.excuseFor)===normUnit(r.unit)) return line+'<div class="cs-excuse"><b>Excuse '+esc(csMemberName(r.unit))+' for '+esc(csPeriodLabel(p))+'</b>'+
+          '<div class="adm-note">An excused quarter is not held against them and starts the \u201Cin a row\u201D count again. The reason is kept on their record.</div>'+
+          '<textarea class="amb-text" id="csExWhy" rows="2" placeholder="Reason \u2014 required (illness, travel, family\u2026)"></textarea>'+
+          '<div class="sr-btns"><button class="ebtn primary" id="csExSave">Excuse this quarter</button><button class="ebtn" id="csExCancel">Cancel</button></div></div>';
+        return line+'<div class="cs-exnote"><button class="cs-exlink" data-csex="'+esc(r.unit)+'">Excuse this quarter</button></div>';
       }).join("")+'</div>';
     h+='<div class="adm-note">Primary '+standingTiers().primary+', Backup '+standingTiers().backup+' calls a quarter; '+S.quarters+' quarter'+(S.quarters===1?"":"s")+' in a row below the minimum is what moves a Primary to Backup. '+
        'Medical Control is left out. A downgrade keeps the member\u2019s Primary clearance, so an admin can move them back without clearing them again.</div>'+
        '<div class="sr-btns">'+admSetLinkHTML("Standings","callstats","Change these settings")+'</div>';
     return h+'</div></div>';
   }
+  /* an admin excuses a member's quarter: one row on the standings record, which the
+     end-of-quarter check then leaves alone */
+  function csExcuse(p, x, why){
+    var row={unit:x.unit, period:p, status:String(x.status||""), need:csNum(x.need), total:csNum(x.total), short:true, streak:0, action:"excused", note:why,
+             by_whom:(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")"};
+    return sbFetch(SB_URL+"/rest/v1/standings_log?on_conflict=unit,period",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify([row]) })
+      .then(function(r){ if(!r.ok) throw new Error("excuse-"+r.status); diagLog("standing-excused", x.unit+" "+p); return csLoadAll(); });
+  }
+  /* taking an excuse back: a quarter still running just loses the row (the check writes it
+     fresh); a quarter already over goes back to what the numbers say */
+  function csUnexcuse(p, x){
+    var q="standings_log?unit=eq."+encodeURIComponent(x.unit)+"&period=eq."+encodeURIComponent(p);
+    var job=(p===csCurrentPeriod()) ? sbWrite("DELETE", q)
+      : sbWrite("PATCH", q, {action:stdWould(x,p), note:"", by_whom:"", streak:stdStreakBefore(x.unit,p)+1});
+    return job.then(function(r){ if(!r.ok) throw new Error("unexcuse-"+r.status); return csLoadAll(); });
+  }
+  function stdWould(x, p){ var S=stdSettings(); return (String(x.status||"").toLowerCase()==="primary" && stdStreakBefore(x.unit,p)+1>=S.quarters) ? "would_downgrade" : "would_notice"; }
   function csAdminDetail(host, unit){
     var rows=csRowsFor(unit), m=(STATE.roster||[]).filter(function(r){ return normUnit(csRosterUnit(r))===normUnit(unit); })[0]||{};
     var st=String(r_(m,"Status")||m.status||"").toLowerCase(), need=csStandingNeed(st);
@@ -5970,6 +6039,31 @@
         msg.className="adm-msg err"; msg.textContent="Primary needs clearance first \u2014 turn on “Cleared as Primary”, or pick another status.";
         return;
       }
+      /* Putting someone back to Primary after the app itself moved them down needs a
+         reason, kept on the standings record. Looked up once per member, at save time. */
+      var wasSt=String(r["Status"]||"").trim().toLowerCase(), ovr=null;
+      if(String(newSt||"").toLowerCase()==="primary" && wasSt!=="primary"){
+        var uk=normUnit(r["Unit"]);
+        if(!ADM.dropChk || ADM.dropChk.unit!==uk){
+          sbFetch(SB_URL+"/rest/v1/standings_log?select=*&unit=eq."+encodeURIComponent(String(r["Unit"]||"").trim())+"&order=period.desc&limit=1",{cache:"no-store"})
+            .then(function(x){ return x.ok?x.json():[]; })["catch"](function(){ return []; })
+            .then(function(rows){ var last=(Array.isArray(rows)&&rows[0])||null; ADM.dropChk={unit:uk, row:(last&&last.action==="downgrade")?last:null}; admSave(); });
+          return;
+        }
+        if(ADM.dropChk.row){
+          var why=String(($("adOvrWhy")||{}).value||"").trim();
+          if(!why){
+            btn.disabled=false; btn.textContent="Save changes";
+            if(!$("adOvrWhy")){ var box=document.createElement("label"); box.className="adm-f wide"; box.id="adOvrBox";
+              box.innerHTML='Reason for moving them back to Primary<textarea id="adOvrWhy" rows="2" placeholder="Required \u2014 kept on their standings record"></textarea>';
+              msg.parentNode.insertBefore(box, msg); }
+            msg.className="adm-msg err"; msg.textContent="The app moved this member to Backup after "+csPeriodLabel(ADM.dropChk.row.period)+". Add the reason for putting them back, then save again.";
+            return;
+          }
+          ovr={id:ADM.dropChk.row.id, why:why};
+        }
+      }
+      ADM.ovr=ovr;
       put("status","Status",newSt);
       if(clr!==wasClr){
         put("cleared_primary","Cleared Primary",clr?"X":"");
@@ -6031,6 +6125,11 @@
           sbWrite("PATCH","certifications?unit=eq."+encodeURIComponent(oldUnit),certSync)
             .then(function(cr){ if(cr&&cr.ok) CERT.loaded=false; else diagLog("cert-sync-failed", oldUnit+" "+(cr&&cr.status)); })
             ["catch"](function(){ diagLog("cert-sync-failed", oldUnit+" no connection"); });
+        }
+        if(ADM.ovr){ var o=ADM.ovr; ADM.ovr=null; ADM.dropChk=null;
+          sbWrite("PATCH","standings_log?id=eq."+o.id,{action:"overridden", note:o.why, by_whom:(srMeName()||"")+" ("+String((STATE.me&&STATE.me.unit)||"")+")"})
+            .then(function(x){ if(!(x&&x.ok)) diagLog("standing-override-failed", oldUnit+" "+(x&&x.status)); })["catch"](function(){ diagLog("standing-override-failed", oldUnit+" no connection"); });
+          var ob=$("adOvrBox"); if(ob&&ob.parentNode) ob.parentNode.removeChild(ob);
         }
         for(var k in local) r[k]=local[k];
         if(local["Unit"] && normUnit(local["Unit"])!==normUnit(oldUnit)) ADM.sel=local["Unit"];
@@ -6864,7 +6963,8 @@
   // displayed -- each still lives in its own row, so nothing that reads them
   // needs to change.
   var SETTING_ONOFF={"Standings Notices":"email anyone below their minimum at the end of a quarter, admins copied",
-                     "Standings Auto Downgrade":"move a Primary to Backup after the number of quarters below"};
+                     "Standings Auto Downgrade":"move a Primary to Backup after the number of quarters below",
+                     "Standings Show Total Calls":"show every member how many calls Hatzalah ran in the quarter, next to their own"};
   var SETTING_PICK={"Standings Quarters Before Downgrade":[["1","1 quarter below the minimum"],["2","2 quarters in a row"],["3","3 quarters in a row"],["4","4 quarters in a row"]]};
   var SETTING_GROUPS=[
     {name:"Dispatch",              keys:["Dispatch Label","Dispatch Number"]},
@@ -6874,8 +6974,8 @@
                                           "Scene Reminder Minutes","Scene Reminder Message",
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
-    {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum","Standings Notices","Standings Auto Downgrade","Standings Quarters Before Downgrade"],
-     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum \u2014 they stay Observer until an admin moves them to Backup. Standings Notices: at the end of a quarter, anyone below their minimum gets an email, admins copied. Standings Auto Downgrade: a Primary below the minimum for \u201CQuarters Before Downgrade\u201D quarters in a row moves to Backup on its own \u2014 their Primary clearance is kept, so an admin can move them back without clearing them again. Both start Off: the end-of-quarter check still runs and records what it would have done, under Call statistics \u2192 End of quarter. Medical Control is never included."},
+    {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum","Standings Notices","Standings Auto Downgrade","Standings Quarters Before Downgrade","Standings Show Total Calls"],
+     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum \u2014 they stay Observer until an admin moves them to Backup. Standings Notices: at the end of a quarter, anyone below their minimum gets an email, admins copied. Standings Auto Downgrade: a Primary below the minimum for \u201CQuarters Before Downgrade\u201D quarters in a row moves to Backup on its own \u2014 their Primary clearance is kept, so an admin can move them back without clearing them again. Both start Off: the end-of-quarter check still runs and records what it would have done, under Call statistics \u2192 End of quarter. Medical Control is never included. Show Total Calls: when on, My Standing also tells each member how many calls Hatzalah ran that quarter in all, so they can see their own count against it."},
     {name:"Ambulance checkoff",    keys:["Ambulances"]},
     {name:"Jump bag",              keys:["Jump Bag Reminder Days"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
@@ -6895,7 +6995,7 @@
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
                            "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room",
-                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30","Call Stats Stale Days":"10","Standings Notices":"Off","Standings Auto Downgrade":"Off","Standings Quarters Before Downgrade":"2"};
+                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30","Call Stats Stale Days":"10","Standings Notices":"Off","Standings Auto Downgrade":"Off","Standings Quarters Before Downgrade":"2","Standings Show Total Calls":"Off"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
@@ -10878,7 +10978,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.22.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.23.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10921,7 +11021,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.22.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.23.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11934,6 +12034,9 @@
         else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="restock"){
           diagLog("push-open", "restock"); try{ if(srCanHandle()) srOpen(); else openJumpBag(); }catch(x){}
         }
+        else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="standing"){
+          diagLog("push-open", "standing"); try{ CS.mine=null; openStanding(); }catch(x){}
+        }
         else if(e.data && e.data.type==="PUSH_OPEN" && String(e.data.kind||"")==="scene-timer"){
           diagLog("push-open", "scene-timer");
           try{ if(SCT.active) scTick(); scOpen(); }catch(x){}
@@ -11964,7 +12067,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.22.0".replace("Version ","");
+  var APP_VERSION="Version 1.23.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

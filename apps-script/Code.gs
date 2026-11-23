@@ -1762,7 +1762,7 @@ function importCallStats(){
     return 0;
   }
 
-  var agg = {}, seen = {}, skipped = 0;
+  var agg = {}, seen = {}, skipped = 0, incidents = {};
   for (var L = 1; L < table.length; L++) {
     var cells = table[L];
     if (!cells || cells.length <= ci) continue;
@@ -1770,6 +1770,10 @@ function importCallStats(){
     if (!crew) continue;
     var dt = parseDate(cells[di]);
     if (!dt) { skipped++; continue; }
+    if (ii >= 0 && cells[ii]) {                       // the organization's own count: each incident once
+      var ip = csPeriodOf_(dt);
+      (incidents[ip] = incidents[ip] || {})[String(cells[ii]).trim()] = 1;
+    }
     if (ii >= 0 && cells[ii]) {                       // one call counts once per responder
       var sk = crew.toLowerCase() + "|" + cells[ii];
       if (seen[sk]) continue;
@@ -1799,12 +1803,23 @@ function importCallStats(){
 
   if (!sbUpsert("call_stats", rows, "crew_name,period,source")) return 0;
   sbUpsert("call_stats_names", newLinks, "crew_name");
+  // how many calls Hatzalah ran in each quarter, whoever was on them
+  var totals = Object.keys(incidents).map(function(p){
+    return { period: p, total: Object.keys(incidents[p]).length, source: CS_SOURCE, updated_at: now };
+  });
+  sbUpsert("call_totals", totals, "period");
 
   PropertiesService.getScriptProperties().setProperty("CS_LAST_MSG_MS", String(found.ms));
   Logger.log("importCallStats: " + rows.length + " rows from " + (table.length - 1) + " lines"
              + (skipped ? ", " + skipped + " with no date skipped" : "")
              + (unmatched.length ? ", not matched to a member: " + unmatched.join("; ") : ""));
   return rows.length;
+}
+
+/** Run by hand to read the newest ESO email again, even if it was already imported. */
+function reimportCallStats(){
+  PropertiesService.getScriptProperties().deleteProperty("CS_LAST_MSG_MS");
+  return importCallStats();
 }
 
 /** Tells the admins when the numbers stop arriving — a pulled ESO licence, a lapsed
@@ -1924,7 +1939,9 @@ function standingsQuarterEnd(period){
     if (!need) return;                                     // Observer has no minimum
     var total = stats[u] ? (parseInt(stats[u].total, 10) || 0) : 0;
     var short = total < need;
-    var was = prev[u] && prev[u].short ? (parseInt(prev[u].streak, 10) || 1) : 0;
+    // a quarter an admin excused, or a drop an admin reversed, starts the count again
+    var pa = prev[u] ? String(prev[u].action || "") : "";
+    var was = (prev[u] && prev[u].short && pa !== "excused" && pa !== "overridden") ? (parseInt(prev[u].streak, 10) || 1) : 0;
     var streak = short ? was + 1 : 0;
     var action = "ok";
     if (short) {
@@ -1979,6 +1996,13 @@ function stNotify_(f, period, needQ, autoDown){
   }
   body += "You can see your own numbers any time in the app → My Standing.\n" + APP_URL
         + "\n\nThank you for everything you do,\nHatzalah of Houston Administration";
+  // the same news on the phone; tapping it opens My Standing
+  try {
+    pushUnit(String(r.unit).trim(),
+             down ? "Your standing is now Backup" : "Below the call minimum for " + label,
+             "You ran " + f.total + " call" + (f.total === 1 ? "" : "s") + " in " + label + "; the minimum is " + f.need + ". Tap to see your numbers.",
+             "standing");
+  } catch (e) { Logger.log("standing push failed for " + r.unit + ": " + e); }
   mailBoth(to, subject, body, adminRecipients(), {
     kind: "Standings", strip: label + ": " + f.total + " of " + f.need + (down ? " · moved to Backup" : ""),
     stripColor: down ? "red" : "gold",

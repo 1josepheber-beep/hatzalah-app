@@ -156,6 +156,70 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
     check("no page errors (ignored names)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
   }
 
+  // ===== 6b. excusing a quarter, with a reason
+  {
+    const st=[{id:1,unit:"H-24",crew_name:"JOSEPH EBER",period:cur,total:3,lead:1,driver:1,other:1,unknown:0,source:"eso",updated_at:new Date().toISOString()}];
+    const c=boot({admin:true}); c.rows.roster[0].status="Primary"; c.rows.roster[1].status="Backup";
+    c.rows.call_stats=st; c.rows.call_stats_names=[]; c.rows.standings_log=[]; c.rows.call_totals=[];
+    c.rows.settings.push({id:90,setting:"Standings Primary Minimum",value:"8"},{id:91,setting:"Standings Backup Minimum",value:"5"});
+    await wait(3200);
+    click(c.w,[...c.d.querySelectorAll("#grid .tile")].find(t=>/Admin/.test(t.textContent))); await wait(600);
+    click(c.w,secBtn(c.d,"Call stats")); await wait(600);
+    click(c.w,c.d.getElementById("csEndQh")); await wait(300);
+    const P=()=>c.d.getElementById("admGenPane");
+    check("a member with no calls at all this quarter is listed as below minimum too", [...P().querySelectorAll(".cs-endq .cs-row:not(.head)")].length===2 && /Fried/.test(P().querySelector(".cs-endq").textContent));
+    const exb=P().querySelector('[data-csex="H-24"]');
+    check("each line below the minimum offers 'Excuse this quarter'", !!exb);
+    click(c.w,exb); await wait(300);
+    check("…which asks for a reason before anything is saved", !!c.d.getElementById("csExWhy") && !!c.d.getElementById("csExSave"));
+    c.writes.length=0; click(c.w,c.d.getElementById("csExSave")); await wait(300);
+    check("no reason, no excuse", !c.writes.some(x=>/^standings_log/.test(x.path)) && !!c.d.getElementById("csExWhy"));
+    c.d.getElementById("csExWhy").value="Recovering from surgery";
+    c.w.fetch=((orig)=>(u,o)=>{ if(typeof u==="string" && /standings_log\?on_conflict/.test(u) && o && o.method==="POST"){ const b=JSON.parse(o.body); c.rows.standings_log.push(Object.assign({id:501},b[0])); } return orig(u,o); })(c.w.fetch);
+    click(c.w,c.d.getElementById("csExSave")); await wait(600);
+    const ew=c.writes.find(x=>/^standings_log\?on_conflict=unit,period/.test(x.path));
+    check("the excuse is saved with the reason and who gave it  "+JSON.stringify(ew&&{a:ew.body[0].action,n:ew.body[0].note,by:ew.body[0].by_whom,s:ew.body[0].streak}), !!ew && ew.body[0].unit==="H-24" && ew.body[0].period===cur && ew.body[0].action==="excused" && ew.body[0].note==="Recovering from surgery" && /\(H-24\)/.test(ew.body[0].by_whom) && ew.body[0].streak===0);
+    check("the panel then shows them as excused with the reason, and counts one fewer below minimum", /Excused: Recovering from surgery/.test(P().querySelector(".cs-endq").textContent) && /1 below minimum/.test(P().querySelector(".cs-endq .adm-itemsub").textContent) && /1 excused/.test(P().querySelector(".cs-endq .adm-itemsub").textContent) && !!P().querySelector('[data-csunex="H-24"]'));
+    check("no page errors (excuse)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
+  // ===== 6c. the organization's total on My Standing, behind its switch
+  {
+    const st=[{id:1,unit:"H-24",crew_name:"JOSEPH EBER",period:cur,total:18,lead:3,driver:7,other:8,unknown:0,source:"eso",updated_at:new Date().toISOString()},
+              {id:2,unit:"H-24",crew_name:"JOSEPH EBER",period:p1,total:35,lead:5,driver:14,other:14,unknown:2,source:"eso",updated_at:new Date().toISOString()}];
+    const tot=[{period:cur,total:120,source:"eso"},{period:p1,total:160,source:"eso"}];
+    let c=boot({}); c.rows.roster[0].status="Primary"; c.rows.call_stats=st.map(x=>Object.assign({},x)); c.rows.call_stats_names=[]; c.rows.call_totals=tot;
+    await wait(3200); click(c.w,c.d.getElementById("rstatus")); await wait(600);
+    check("switched off (the default), My Standing says nothing about the organization's total", !c.d.querySelector("#standBody .stand-org") && !/Hatzalah ran/.test(c.d.getElementById("standBody").textContent) && !c.d.querySelector("#standBody .stand-of"));
+    c=boot({}); c.rows.roster[0].status="Primary"; c.rows.call_stats=st.map(x=>Object.assign({},x)); c.rows.call_stats_names=[]; c.rows.call_totals=tot;
+    c.rows.settings.push({id:95,setting:"Standings Show Total Calls",value:"On"});
+    await wait(3200); click(c.w,c.d.getElementById("rstatus")); await wait(700);
+    const org=c.d.querySelector("#standBody .stand-org");
+    check("switched on, it shows the quarter's total and the member's share  ("+(org&&org.textContent)+")", !!org && /Hatzalah ran 120 calls this quarter/.test(org.textContent) && /you were on 18 \(15%\)/.test(org.textContent));
+    check("…and past quarters read 'of 160'", /of 160/.test(c.d.querySelector("#standBody .stand-histrow:not(.head)").textContent));
+    check("no page errors (totals)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
+  // ===== 6d. putting someone back to Primary after an automatic drop needs a reason
+  {
+    const c=boot({admin:true});
+    c.rows.roster[1].status="Backup"; c.rows.roster[1].cleared_primary="X";
+    c.rows.standings_log=[{id:77,unit:"H-22",period:p1,status:"primary",need:8,total:2,short:true,streak:2,action:"downgrade",note:"",by_whom:""}];
+    c.rows.call_stats=[]; c.rows.call_stats_names=[]; c.rows.call_totals=[];
+    await wait(3200);
+    click(c.w,[...c.d.querySelectorAll("#grid .tile")].find(t=>/Admin/.test(t.textContent))); await wait(600);
+    click(c.w,secBtn(c.d,"Members")); await wait(400);
+    click(c.w,[...c.d.querySelectorAll("#admList .adm-row, #admGenPane .adm-row, .adm-mrow")].find(x=>/Fried/.test(x.textContent))); await wait(500);
+    const stSel=c.d.getElementById("adSt"); stSel.value="Primary"; c.writes.length=0;
+    click(c.w,c.d.getElementById("admSave")); await wait(700);
+    check("the save stops and asks for the reason, naming the quarter of the drop", !!c.d.getElementById("adOvrWhy") && /moved this member to Backup/.test(c.d.getElementById("admMsg").textContent) && !c.writes.some(x=>/^roster/.test(x.path)));
+    c.d.getElementById("adOvrWhy").value="Back from leave, cleared by the board";
+    click(c.w,c.d.getElementById("admSave")); await wait(700);
+    const rw2=c.writes.find(x=>/^roster/.test(x.path)), lw=c.writes.find(x=>/^standings_log\?id=eq\.77/.test(x.path));
+    check("with a reason the status is saved and the reason goes on the standings record  "+JSON.stringify(lw&&lw.body), !!rw2 && rw2.body.status==="Primary" && !!lw && lw.body.action==="overridden" && lw.body.note==="Back from leave, cleared by the board" && /\(H-24\)/.test(lw.body.by_whom));
+    check("no page errors (override)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
   // ===== 7. the standings switches are switches, not text boxes
   {
     const c=boot({admin:true});
@@ -167,7 +231,7 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
     const pane3=c.d.getElementById("admGenPane");
     const card=[...pane3.querySelectorAll(".adm-gsec")].find(x=>x.querySelector(".adm-itemt").textContent.trim()==="Standings");
     const sws=card?[...card.querySelectorAll("[data-onoff]")]:[];
-    check("Notices and Auto Downgrade are two switches, both off, with no box to type in", sws.length===2 && sws.every(x=>!x.classList.contains("on")) && /Off/.test(card.querySelector("[data-onofftxt]").textContent) && card.querySelectorAll('input[type="text"]').length===2);
+    check("Notices and Auto Downgrade are switches, both off, with no box to type in", sws.length>=2 && sws.every(x=>!x.classList.contains("on")) && /Off/.test(card.querySelector("[data-onofftxt]").textContent) && card.querySelectorAll('input[type="text"]').length===2);
     check("Quarters Before Downgrade is a picker of 1 to 4, set to 2", !!card.querySelector("select") && card.querySelector("select").value==="2" && card.querySelectorAll("select option").length===4);
     click(c.w,sws[0]); await wait(100);
     check("tapping the switch turns it on and says so", sws[0].classList.contains("on") && /^On/.test(card.querySelector("[data-onofftxt]").textContent));

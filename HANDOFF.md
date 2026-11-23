@@ -90,6 +90,28 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.23.0** (Nov 23, 2026): the standings pieces that 1.21.0 left out, plus the
+  organization's call total. Apps Script **v60**.
+  - **Excuse a quarter**: Admin → Call statistics → End of quarter, "Excuse this quarter"
+    on each member below the minimum; a reason is required (`csExcuse` upserts a
+    `standings_log` row, action `excused`, streak 0, note, by_whom); Undo deletes the row
+    for a running quarter or resets it for a past one (`csUnexcuse`). The panel now lists
+    members with zero calls too, and only Primary/Backup (like the job).
+  - **Reason on an override**: in `admSave`, moving a member back to Primary whose newest
+    `standings_log` row is `downgrade` asks for a reason, then marks that row
+    `overridden` with note + by_whom.
+  - **Streak rule**: an `excused` or `overridden` previous quarter starts the count again
+    (script `standingsQuarterEnd`, app `stdStreakBefore`).
+  - **Push** with the standing notice (`pushUnit(..., "standing")`); the app opens My
+    Standing on `PUSH_OPEN` kind `standing`. Only when Standings Notices is on.
+  - **Organization totals** (`db/add_call_totals.sql`: table `call_totals`, member-read):
+    the daily import counts distinct incident numbers per quarter. Setting **Standings
+    Show Total Calls** (switch, ships **Off**): when on, My Standing shows "Hatzalah ran N
+    calls this quarter — you were on X (Y%)" and "of N" on past quarters. Totals exist
+    only for quarters covered by the daily file (2026 onward). `reimportCallStats()`
+    re-reads the newest ESO email.
+  - Still not built: a rule for members promoted or reactivated mid-quarter (left to
+    leadership).
 - **Live: 1.22.0** (Nov 23, 2026): the Standings settings can no longer be mistyped.
   *Standings Notices* and *Standings Auto Downgrade* render as on/off switches
   (`SETTING_ONOFF`: a hidden `data-row` input holding exactly "On"/"Off" plus a
