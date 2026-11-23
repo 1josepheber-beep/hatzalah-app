@@ -80,7 +80,7 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   check("items grouped by pouch in order; inactive item left out  "+JSON.stringify(pouches), pouches.join("|")==="Main compartment|Airway pouch|Trauma pouch" && body.querySelectorAll(".jb-row").length===7 && !/Old item/.test(body.textContent));
   check("summary: 0 of 7 stocked, 'Not checked yet', 7 not checked", /0 of 7 stocked/.test(body.textContent) && /Not checked yet/.test(body.textContent) && /7 not checked/.test(body.querySelector(".jb-pills").textContent));
   check("reminder hint follows the setting (30, 7, 0)", /30 days before, 7 days before and on the day they expire/.test(body.querySelector(".jb-hint").textContent));
-  check("quantity shown; items flagged as expiring show a date box up front, the others a '+ expiration date' link", /×2/.test(row(a.d,3).textContent) && !!row(a.d,3).querySelector('input[type=date]') && !row(a.d,1).querySelector('input[type=date]') && !!row(a.d,1).querySelector(".jb-addexp"));
+  check("quantity shown; only items ticked 'has an expiration date' get a date box - the rest have no date option at all", /×2/.test(row(a.d,3).textContent) && !!row(a.d,3).querySelector('input[type=date]') && !row(a.d,1).querySelector('input[type=date]') && !/expiration date/.test(row(a.d,1).textContent) && !body.querySelector(".jb-addexp"));
 
   // ===== 2. marking items
   tap(a.w,a.d,1,"have"); await wait(100);
@@ -121,10 +121,17 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   check("…and tells the script to email + push the admins and service units", a.scriptCalls.length===1 && a.scriptCalls[0].action==="restock" && a.scriptCalls[0].secret==="s3cret" && a.scriptCalls[0].id===101);
   check("the item now shows 'Requested today' and the button reads 'Request again'", /Requested today/.test(row(a.d,4).textContent) && /Request again/.test(a.d.getElementById("jbReqBtn").textContent) && /already requested/.test(body.textContent));
   [...a.d.querySelectorAll("#jbBody .amb-tog")].filter(h=>!h.classList.contains("open")).forEach(h=>click(a.w,h));
-  click(a.w,row(a.d,1).querySelector(".jb-addexp")); await wait(100);
-  check("'+ expiration date' opens a date box on an item that normally has none", !!row(a.d,1).querySelector("input[type=date]"));
-  const inp1=row(a.d,1).querySelector("input[type=date]"); inp1.value=plus(400); inp1.dispatchEvent(new a.w.Event("change",{bubbles:true})); await wait(100);
-  check("a far-off date just shows the date, status Have kept", /Expires /.test(row(a.d,1).textContent) && !row(a.d,1).classList.contains("soon") && a.writes[a.writes.length-1].body.status==="have" && a.writes[a.writes.length-1].body.exp_date===plus(400));
+  // a date put in by mistake can be taken out again
+  check("an item holding a date shows a Clear button beside it", !!row(a.d,7).querySelector(".jb-expclr") && !!row(a.d,3).querySelector(".jb-expclr"));
+  click(a.w,row(a.d,7).querySelector(".jb-expclr")); await wait(100);
+  check("Clear wipes the date, saves it as empty and drops it from the summary", a.writes[a.writes.length-1].body.item_id===7 && a.writes[a.writes.length-1].body.exp_date===null && row(a.d,7).querySelector("input[type=date]").value==="" && !row(a.d,7).querySelector(".jb-expclr") && !/expired/i.test(body.querySelector(".jb-pills").textContent));
+  const inp7b=row(a.d,7).querySelector("input[type=date]"); inp7b.value=plus(-3); inp7b.dispatchEvent(new a.w.Event("change",{bubbles:true})); await wait(100);
+  check("putting a date back in works as before", /Expired 3 days ago/.test(row(a.d,7).textContent) && /1 expired/.test(body.querySelector(".jb-pills").textContent));
+  { // a date sitting on an item that does not carry one (tick taken off, or put in by mistake before) is ignored
+    const a5=boot({status:[{id:1,unit:"H-24",item_id:1,status:"have",exp_date:plus(-5),updated_at:new Date().toISOString()}]});
+    await wait(3200); await openBag(a5);
+    check("a leftover date on an item with no expiry tick is hidden and not counted as expired", !row(a5.d,1).querySelector("input[type=date]") && !/Expired/.test(row(a5.d,1).textContent) && !/expired/i.test(a5.d.querySelector("#jbBody .jb-pills").textContent));
+  }
   // All stocked on a pouch
   click(a.w,[...body.querySelectorAll(".amb-allok[data-pouch]")].find(x=>x.getAttribute("data-pouch")==="Trauma pouch")); await wait(150);
   check("'All stocked' marks the pouch's unmarked items Have (and only those), pouch stays open", row(a.d,6).classList.contains("have") && row(a.d,7).classList.contains("have") && a.writes.filter(x=>x.body&&x.body.status==="have"&&(x.body.item_id===6||x.body.item_id===7)).length===2 && !row(a.d,5).classList.contains("have") && pouchOpen(a.d,"Trauma pouch"));

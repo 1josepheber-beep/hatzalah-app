@@ -90,6 +90,19 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.18.0** (Nov 22, 2026): **jump bag expiration dates only where the item carries
+  one.** An item whose "Has an expiration date" tick is off now shows no date box and no
+  "+ expiration date" link in My Jump Bag (that link and `JB.expOpen` are gone), so a date
+  cannot be entered by mistake. An item that does carry a date gets a **Clear** button
+  beside it, so a wrong date can be taken out in one tap. A date already saved against a
+  non-expiring item is **ignored, not deleted**: `jbExpOf(r,s)` returns "" unless
+  `jbWantsExp(r)`, which keeps it out of the member's screen, the summary pills, the admin
+  Jump bags view and its spreadsheet; Apps Script **v56** skips it in the nightly expiry
+  reminders and in "Remind to restock" (`if (!isX(it.expires)) return;`). Tick the item in
+  Admin → Jump bag items and the saved date comes straight back. 15 such dates existed at
+  release (H-1 and H-24: Isolation Kit, OB Kit, Kerlix 4", ABD Pad 5x9, nonrebreathing
+  masks, nasal cannulas, Eye Wash, Trauma Dressing Sheet, Burn Sheet, Trauma Shears) —
+  Joseph releases as is and ticks whichever of those should expire afterwards.
 - **Live: 1.17.0** (Nov 22, 2026): **Cleared as Primary** (`db/add_primary_clearance.sql`:
   roster columns `cleared_primary`, `cleared_primary_at`, `cleared_primary_by`). Admin →
   Members → Role & access has the switch under Status; turning it on stamps today's date

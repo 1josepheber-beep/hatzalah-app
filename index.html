@@ -917,7 +917,8 @@
   .jb-exp{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin-top:4px} .jb-exp label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
   .jb-exp input{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit;background:#fff;max-width:150px}
   .jb-expt{font-size:11.5px;font-weight:800;color:var(--mut)} .jb-expt.soon{color:#8a6d00} .jb-expt.expired{color:var(--red)}
-  .jb-addexp{border:0;background:transparent;color:var(--navy);font-weight:800;font-size:12px;padding:3px 0 0;cursor:pointer}
+  .jb-expclr{border:1.5px solid var(--line);background:#fff;color:var(--mut);font-weight:800;font-size:11.5px;border-radius:8px;padding:3px 8px;cursor:pointer;font-family:inherit}
+  .jb-expclr:active{background:#f1f3f7}
   .jb-st{display:flex;flex-direction:row;gap:4px;flex:0 0 auto}
   .jb-b{border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:9px;padding:8px 8px;font-weight:800;font-size:11.5px;cursor:pointer;white-space:nowrap}
   .jb-b.have.on{background:#1f7a37;border-color:#1f7a37;color:#fff} .jb-b.short.on{background:#e8a33d;border-color:#e8a33d;color:#231a00} .jb-b.missing.on{background:var(--red);border-color:var(--red);color:#fff}
@@ -1761,7 +1762,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.17.0</div>
+  <div class="ver-line">Version 1.18.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1883,7 +1884,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.17.0</div>
+  <div class="ver-line">Version 1.18.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -4589,7 +4590,7 @@
   // Every member's own bag, checked against the item list the admins keep
   // (Admin -> Jump bag items). One row per item the member has marked; the
   // nightly script reads the expiration dates and sends the reminders.
-  var JB={items:[], st:{}, loaded:false, busy:false, expOpen:{}, pending:{}, saving:0, open:{}, bag:null, bagPending:false, jumpOpen:null, reqs:[], reqOpen:false, reqBusy:false};
+  var JB={items:[], st:{}, loaded:false, busy:false, pending:{}, saving:0, open:{}, bag:null, bagPending:false, jumpOpen:null, reqs:[], reqOpen:false, reqBusy:false};
   var JB_REMIND_OPTS=[[0,"Off"],[30,"Every 30 days"],[60,"Every 60 days"],[90,"Every 90 days"],[180,"Every 180 days"]];
   var JB_SOON=30;
   function jbUnit(){ return String((STATE.me&&STATE.me.unit)||""); }
@@ -4597,6 +4598,10 @@
   function jbDays(iso){ var m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return null; var d=new Date(+m[1],+m[2]-1,+m[3]); return Math.round((d.getTime()-jbToday().getTime())/864e5); }
   function jbExpState(iso){ var n=jbDays(iso); if(n===null) return ""; if(n<0) return "expired"; if(n<=JB_SOON) return "soon"; return "ok"; }
   function jbExpText(iso){ var n=jbDays(iso); if(n===null) return ""; if(n<0) return "Expired "+(n===-1?"yesterday":(-n)+" days ago"); if(n===0) return "Expires today"; if(n===1) return "Expires tomorrow"; if(n<=JB_SOON) return "Expires in "+n+" days"; return "Expires "+ambPrettyDate(iso); }
+  /* only items an admin ticked "Has an expiration date" carry one. A date left behind on an
+     item after that tick is taken off is ignored everywhere - and comes back if it is re-ticked. */
+  function jbWantsExp(r){ return admBoolOn(r_(r,"Expires"),"Expires"); }
+  function jbExpOf(r, s){ return jbWantsExp(r) ? String((s&&s.exp_date)||"") : ""; }
   function jbActiveItems(){ return JB.items.filter(function(r){ return admBoolOn(r_(r,"Active"),"Active") && String(r_(r,"Item")||"").trim(); }).sort(function(a,b){ return (parseFloat(r_(a,"Order"))||9999)-(parseFloat(r_(b,"Order"))||9999); }); }
   function jbPouches(){
     var out=[], by={};
@@ -4608,7 +4613,7 @@
     (items||jbActiveItems()).forEach(function(r){
       var s=JB.st[r.__id]||{}; c.total++;
       if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
-      var e=jbExpState(s.exp_date); if(e==="expired") c.expired++; else if(e==="soon") c.soon++;
+      var e=jbExpState(jbExpOf(r,s)); if(e==="expired") c.expired++; else if(e==="soon") c.soon++;
     });
     return c;
   }
@@ -4676,14 +4681,13 @@
     var sel=$("jbRemind"); if(sel) sel.addEventListener("change",function(){ jbSaveBag({remind_days:parseInt(sel.value,10)||0}); });
   }
   function jbRowHTML(r){
-    var id=r.__id, s=JB.st[id]||{}, exp=s.exp_date||"", es=jbExpState(exp);
-    var showDate=admBoolOn(r_(r,"Expires"),"Expires") || !!exp || !!JB.expOpen[id];
+    var id=r.__id, s=JB.st[id]||{}, exp=jbExpOf(r,s), es=jbExpState(exp);
+    var showDate=jbWantsExp(r);
     var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+(JB.pending[id]?" pend":"");
     var rq=(s.status==="short"||s.status==="missing")?jbReqFor(id):null;
     return '<div class="'+cls+'" data-id="'+id+'"><div class="jb-l"><div class="jb-n">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <b>×'+esc(r_(r,"Qty"))+'</b>':'')+'</div>'+
       (rq?'<div class="jb-reqline '+esc(rq.st)+'">'+(rq.st==="done"?"\u2705 In stock \u2014 pick it up from "+esc(getSetting("Pickup Location","the stock room"))+(rq.at?" ("+esc(srWhen(rq.at))+")":""):rq.st==="ordered"?"\uD83D\uDED2 Ordered"+(rq.at?" "+esc(srWhen(rq.at)):""):"\uD83D\uDED2 Requested "+esc(srWhen(rq.r.created_at)))+'</div>':'')+
-      (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span>':'')+'</div>'
-               :'<button class="jb-addexp" data-id="'+id+'">+ expiration date</button>')+'</div>'+
+      (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span><button class="jb-expclr" data-id="'+id+'" title="Remove this date">Clear</button>':'')+'</div>':'')+'</div>'+
       '<div class="jb-st"><button class="jb-b have'+(s.status==="have"?" on":"")+'" data-id="'+id+'" data-s="have">✓ Have</button><button class="jb-b short'+(s.status==="short"?" on":"")+'" data-id="'+id+'" data-s="short">Short</button><button class="jb-b missing'+(s.status==="missing"?" on":"")+'" data-id="'+id+'" data-s="missing">Missing</button></div></div>';
   }
   function jbWire(root){
@@ -4698,7 +4702,7 @@
     }
     b.querySelectorAll(".jb-b[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), v=el.getAttribute("data-s"); var s=JB.st[id]||{}; jbSet(id, (s.status===v)?"":v, s.exp_date||null); }); });
     b.querySelectorAll(".jb-exp input[data-id]").forEach(function(el){ el.addEventListener("change",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", el.value||null); }); });
-    b.querySelectorAll(".jb-addexp[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"); JB.expOpen[id]=true; jbRepaint(id); var inp=b.querySelector('.jb-row[data-id="'+id+'"] input[type=date]'); if(inp){ try{ inp.focus(); if(inp.showPicker) inp.showPicker(); }catch(e){} } }); });
+    b.querySelectorAll(".jb-expclr[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", null); }); });
     b.querySelectorAll(".amb-allok[data-pouch]").forEach(function(el){ el.addEventListener("click",function(e){
       e.stopPropagation();
       var p=el.getAttribute("data-pouch"); jbPouches().forEach(function(pp){ if(pp.name!==p) return; pp.items.forEach(function(r){ var s=JB.st[r.__id]||{}; if(!s.status) jbSet(r.__id,"have",s.exp_date||null,true); }); });
@@ -4719,9 +4723,9 @@
   function jbListFor(kind){
     var out=[];
     jbPouches().forEach(function(p){ p.items.forEach(function(r){
-      var st=JB.st[r.__id]||{}, es=jbExpState(st.exp_date);
-      if(kind==="expired" && es==="expired") out.push({r:r, p:p, why:jbExpText(st.exp_date)});
-      else if(kind==="soon" && es==="soon") out.push({r:r, p:p, why:jbExpText(st.exp_date)});
+      var st=JB.st[r.__id]||{}, ex=jbExpOf(r,st), es=jbExpState(ex);
+      if(kind==="expired" && es==="expired") out.push({r:r, p:p, why:jbExpText(ex)});
+      else if(kind==="soon" && es==="soon") out.push({r:r, p:p, why:jbExpText(ex)});
       else if(kind==="fix" && (st.status==="short"||st.status==="missing")) out.push({r:r, p:p, why:st.status==="short"?"Short":"Missing"});
     }); });
     return out;
@@ -4832,7 +4836,7 @@
     var bag=ADMJB.bags[normUnit(unit)]||{};
     var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, last:0, st:st, checked:bag.checked_at?Date.parse(bag.checked_at):0, remind:parseInt(bag.remind_days,10)||0};
     items.forEach(function(r){ var s=st[r.__id]||{}; if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
-      var e=jbExpState(s.exp_date); if(e==="expired") c.expired++; else if(e==="soon") c.soon++; var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
+      var e=jbExpState(jbExpOf(r,s)); if(e==="expired") c.expired++; else if(e==="soon") c.soon++; var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
     return c;
   }
   function admJbMembers(){
@@ -4860,9 +4864,9 @@
     var h='<div class="adm-body"><button class="adm-backlink" id="admJbBack">‹ All members</button><div class="adm-mh"><div class="t"><h3>'+esc(m?m.name:unit)+'</h3><div class="u">'+esc(unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambPrettyDate(new Date(c.last).toISOString().slice(0,10))):' · not checked yet')+'</div></div></div>'+
       '<div class="amb-okline jb-bagline">Bag last checked: <b>'+(c.checked?esc(ambPrettyDate(new Date(c.checked).toISOString().slice(0,10)))+' ('+esc(ambAgo(new Date(c.checked).toISOString().slice(0,10)))+')':'never')+'</b> · reminder: '+(c.remind?'every '+c.remind+' days':'off')+'</div>';
     order.forEach(function(p){
-      h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, e=jbExpState(s.exp_date);
+      h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s), e=jbExpState(ex);
         var val=s.status==="have"?"✓ Have":s.status==="short"?"Short":s.status==="missing"?"Missing":"—";
-        return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(s.exp_date?'<div class="jb-dexp '+e+'">'+esc(jbExpText(s.exp_date))+'</div>':'')+'</div></div>'; }).join("")+'</div>';
+        return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(ex?'<div class="jb-dexp '+e+'">'+esc(jbExpText(ex))+'</div>':'')+'</div></div>'; }).join("")+'</div>';
     });
     // Remind: a push and an email to this member asking them to restock, admins Bcc'd.
     // Sent by the Apps Script, so it needs the webhook settings; otherwise the button says so.
@@ -4892,7 +4896,7 @@
     if(!ms.length){ toast("Nothing to export yet."); return; }
     var head=["Member","Unit","Stocked","Short","Missing","Not checked","Expired","Expiring soon","Last updated","Bag last checked","Reminder every (days)"].concat(items.map(function(r){ return r_(r,"Item"); }));
     var data=[head].concat(ms.map(function(m){ var c=m.c; return [m.name, m.unit, c.have, c.short, c.missing, c.unchecked, c.expired, c.soon, c.last?new Date(c.last).toISOString().slice(0,10):"", c.checked?new Date(c.checked).toISOString().slice(0,10):"", c.remind||""]
-      .concat(items.map(function(r){ var s=c.st[r.__id]||{}; var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(s.exp_date?" (exp "+s.exp_date+")":""); })); }));
+      .concat(items.map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s); var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(ex?" (exp "+ex+")":""); })); }));
     toast("Preparing the spreadsheet…");
     loadXlsxLib().then(function(X){ var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Jump bags"); X.writeFile(wb, "jump-bags-"+ambToday()+".xlsx"); })
       ["catch"](function(){ var csv=data.map(function(row){ return row.map(function(x){ x=String(x==null?"":x); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(","); }).join("\n");
@@ -10720,7 +10724,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.17.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.18.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10763,7 +10767,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.17.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.18.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11806,7 +11810,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.17.0".replace("Version ","");
+  var APP_VERSION="Version 1.18.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

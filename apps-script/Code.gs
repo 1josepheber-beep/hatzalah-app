@@ -920,6 +920,7 @@ function dailyJumpBagCheck(){
   status.forEach(function(s){
     if (!s.exp_date) return;
     var it = itemById[s.item_id]; if (!it || !isX(it.active === "" ? "X" : it.active)) return;
+    if (!isX(it.expires)) return;                                    // item carries no expiration date
     if (s.status === "missing") return;                              // nothing to expire
     var exp = parseDate(s.exp_date); if (!exp) return;
     var n = Math.round((exp.getTime() - today.getTime()) / DAY);     // days until expiry
@@ -1161,7 +1162,7 @@ function remindJumpBag(unit, by){
     var name = String(it.name) + (it.qty ? " (\u00d7" + it.qty + ")" : "");
     if (s.status === "missing") problems.push("\u2022 " + name + " \u2014 missing");
     else if (s.status === "short") problems.push("\u2022 " + name + " \u2014 short");
-    if (s.exp_date) {
+    if (s.exp_date && isX(it.expires)) {
       var exp = parseDate(s.exp_date);
       if (exp) { var n = Math.round((exp.getTime() - today.getTime()) / DAY);
         if (n < 0) problems.push("\u2022 " + name + " \u2014 expired " + nice(exp));
