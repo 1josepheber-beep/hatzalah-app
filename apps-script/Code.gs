@@ -1619,3 +1619,216 @@ function sendProblemReport(rep){
   mailBoth("", subject, lines.join("\n"), adminRecipients(), { kind: "Problem report", strip: "Problem report from " + who, stripColor: "red" });
   Logger.log("Problem report mailed for " + who);
 }
+
+// ===================== CALL STATISTICS (the daily ESO export) =====================
+//
+// ESO Insights runs "Hatzalah App - Calls by Responder" every morning at 5:00 and
+// emails the result to this account as a .csv.gz attachment (one row per responder
+// per call: Crew Full Name, Crew Standard Role, Incident Number, ESO Record Created
+// Date, this year to date). dailyCallStats() opens the newest one, counts the calls
+// per responder per quarter and writes them to call_stats — the same rows the app's
+// Admin -> Call stats -> Import writes, so My Standing just shows the new numbers.
+//
+// Nobody has to touch anything. If the file ever stops arriving, callStatsStaleCheck()
+// tells the admins rather than letting the numbers quietly go stale.
+
+var CS_SOURCE = "eso";
+var CS_STALE_DAYS = 10;     // no fresh import for this long -> tell the admins
+var CS_STALE_AGAIN = 7;     // ...and don't say it again for another week
+var CS_SEARCH = 'from:eso.com has:attachment newer_than:7d';
+
+function dailyCallStats(){
+  try { importCallStats(); } catch (e) { Logger.log("importCallStats failed: " + e); }
+  try { callStatsStaleCheck(); } catch (e) { Logger.log("callStatsStaleCheck failed: " + e); }
+}
+
+/** Run once by hand to put dailyCallStats on a 6am timer (ESO sends at 5am). */
+function setupCallStatsTrigger(){
+  ScriptApp.getProjectTriggers().forEach(function(t){
+    if (t.getHandlerFunction() === "dailyCallStats") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("dailyCallStats").timeBased().everyDays(1).atHour(6).create();
+  Logger.log("dailyCallStats will run daily at 6am.");
+}
+
+/** The newest ESO export email that has not been imported yet, or null. */
+function csNewestExport_(){
+  var props = PropertiesService.getScriptProperties();
+  var since = Number(props.getProperty("CS_LAST_MSG_MS") || 0);
+  var best = null;
+  GmailApp.search(CS_SEARCH, 0, 20).forEach(function(th){
+    th.getMessages().forEach(function(m){
+      var ms = m.getDate().getTime();
+      if (ms <= since) return;
+      var att = null;
+      m.getAttachments().forEach(function(a){ if (/\.csv(\.gz)?$/i.test(a.getName())) att = a; });
+      if (!att) return;
+      if (!best || ms > best.ms) best = { ms: ms, msg: m, att: att };
+    });
+  });
+  return best;
+}
+
+function csText_(att){
+  var name = att.getName();
+  if (/\.gz$/i.test(name)) {
+    return Utilities.ungzip(att.copyBlob().setContentType("application/x-gzip")).getDataAsString();
+  }
+  return att.getDataAsString();
+}
+
+function csNorm_(s){
+  return String(s == null ? "" : s).toLowerCase()
+    .replace(/\(.*?\)/g, " ").replace(/,.*$/, "")
+    .replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+function csPeriodOf_(d){ return d.getFullYear() + "-Q" + (Math.floor(d.getMonth() / 3) + 1); }
+function csRole_(s){
+  s = String(s || "").toLowerCase();
+  if (/lead|primary|attend.*charge/.test(s)) return "lead";
+  if (/driv/.test(s)) return "driver";
+  if (/other|attend|crew|second|third/.test(s)) return "other";
+  return "unknown";
+}
+
+/**
+ * Roster unit for a crew name, by the same rules the app uses: a saved link first,
+ * then first+last name, then a last name that belongs to only one member. Blank when
+ * it cannot be sure — the admin links those by hand in Admin -> Call stats.
+ */
+function csMatchUnit_(name, links, roster){
+  var k = csNorm_(name);
+  if (!k) return "";
+  if (links[k]) return links[k];
+  var parts = k.split(" "), first = parts[0], last = parts[parts.length - 1];
+  var nl = function(r){ return csNorm_(r.last_name); }, nf = function(r){ return csNorm_(r.first_name); };
+  var cands = roster.filter(function(r){
+    var l = nl(r);
+    return l === last || (last.length > 4 && l.length > 4 && (l.indexOf(last.slice(0, -1)) === 0 || last.indexOf(l.slice(0, -1)) === 0));
+  });
+  if (!cands.length) return "";
+  var byFirst = cands.filter(function(r){ return nf(r) === first; });
+  if (byFirst.length === 1) return String(byFirst[0].unit || "").trim();
+  if (cands.length === 1) {
+    // a lone last-name match with a different first initial is a guess, not a match
+    return nf(cands[0]).charAt(0) === first.charAt(0) ? String(cands[0].unit || "").trim() : "";
+  }
+  var pool = byFirst.length ? byFirst : cands;
+  var act = pool.filter(function(r){
+    var a = String(r.active == null ? "" : r.active).trim().toLowerCase();
+    return !(a === "no" || a === "off" || a === "false" || a === "0") && !/dispatch/i.test(String(r.type || ""));
+  });
+  // nobody reviews what this job decides, so where the app would flag a guess for an
+  // admin to confirm, the job leaves it unmatched instead
+  if (act.length === 1 && nf(act[0]).charAt(0) === first.charAt(0)) return String(act[0].unit || "").trim();
+  var ini = pool.filter(function(r){ return nf(r).charAt(0) === first.charAt(0); });
+  return ini.length === 1 ? String(ini[0].unit || "").trim() : "";
+}
+
+/** Upsert rows, merging on the given unique columns. */
+function sbUpsert(table, rows, onConflict){
+  if (!rows || !rows.length) return true;
+  var res = UrlFetchApp.fetch(SB_URL + "/rest/v1/" + table + "?on_conflict=" + encodeURIComponent(onConflict), {
+    method: "post", contentType: "application/json",
+    headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, Prefer: "resolution=merge-duplicates,return=minimal" },
+    payload: JSON.stringify(rows), muteHttpExceptions: true
+  });
+  var code = res.getResponseCode();
+  if (code >= 300) Logger.log("UPSERT FAILED on " + table + ": " + code + " " + res.getContentText());
+  return code < 300;
+}
+
+/**
+ * Opens the newest ESO export and writes the per-quarter counts. Safe to run twice:
+ * the rows are keyed on crew name + quarter + source, so a repeat just rewrites them.
+ */
+function importCallStats(){
+  var found = csNewestExport_();
+  if (!found) { Logger.log("importCallStats: no new ESO export email."); return 0; }
+
+  var table = Utilities.parseCsv(csText_(found.att));
+  if (!table || table.length < 2) { Logger.log("importCallStats: the attachment had no rows."); return 0; }
+
+  var head = table[0].map(function(h){ return String(h || "").toLowerCase(); });
+  var find = function(re){ for (var i = 0; i < head.length; i++) { if (re.test(head[i])) return i; } return -1; };
+  var ci = find(/crew.*name|^name$|responder|member/);
+  var ri = find(/role/);
+  var di = find(/created|incident.*date|^date|service date|call date/);
+  var ii = find(/incident.*(number|#|id|no)|^incident$|run.*(number|#)|pcr/);
+  if (ci < 0 || di < 0) {
+    Logger.log("importCallStats: the file is missing the crew name or date column (headers: " + head.join(", ") + ")");
+    return 0;
+  }
+
+  var agg = {}, seen = {}, skipped = 0;
+  for (var L = 1; L < table.length; L++) {
+    var cells = table[L];
+    if (!cells || cells.length <= ci) continue;
+    var crew = String(cells[ci] || "").trim();
+    if (!crew) continue;
+    var dt = parseDate(cells[di]);
+    if (!dt) { skipped++; continue; }
+    if (ii >= 0 && cells[ii]) {                       // one call counts once per responder
+      var sk = crew.toLowerCase() + "|" + cells[ii];
+      if (seen[sk]) continue;
+      seen[sk] = 1;
+    }
+    var period = csPeriodOf_(dt), key = crew + "|" + period;
+    if (!agg[key]) agg[key] = { crew_name: crew, period: period, lead: 0, driver: 0, other: 0, unknown: 0, total: 0 };
+    agg[key][csRole_(ri >= 0 ? cells[ri] : "")]++;
+    agg[key].total++;
+  }
+
+  var links = {}, roster = [];
+  sbGet("call_stats_names", "select=*").forEach(function(n){ links[csNorm_(n.crew_name)] = String(n.unit || ""); });
+  sbAll("roster").forEach(function(r){ if (String(r.unit || "").trim()) roster.push(r); });
+
+  var now = new Date().toISOString(), rows = [], newLinks = [], unmatched = [];
+  Object.keys(agg).forEach(function(k){
+    var a = agg[k], unit = csMatchUnit_(a.crew_name, links, roster);
+    rows.push({ unit: unit, crew_name: a.crew_name, period: a.period, total: a.total, lead: a.lead,
+                driver: a.driver, other: a.other, unknown: a.unknown, source: CS_SOURCE, updated_at: now });
+    var nk = csNorm_(a.crew_name);
+    if (unit && !links[nk]) { links[nk] = unit; newLinks.push({ crew_name: a.crew_name, unit: unit }); }
+    if (!unit && unmatched.indexOf(a.crew_name) < 0) unmatched.push(a.crew_name);
+  });
+
+  if (!sbUpsert("call_stats", rows, "crew_name,period,source")) return 0;
+  sbUpsert("call_stats_names", newLinks, "crew_name");
+
+  PropertiesService.getScriptProperties().setProperty("CS_LAST_MSG_MS", String(found.ms));
+  Logger.log("importCallStats: " + rows.length + " rows from " + (table.length - 1) + " lines"
+             + (skipped ? ", " + skipped + " with no date skipped" : "")
+             + (unmatched.length ? ", not matched to a member: " + unmatched.join("; ") : ""));
+  return rows.length;
+}
+
+/** Tells the admins when the numbers stop arriving — a pulled ESO licence, a lapsed
+ *  schedule, a changed file. Without this the app would show stale counts as if fine. */
+function callStatsStaleCheck(){
+  var latest = sbGet("call_stats", "select=updated_at&order=updated_at.desc&limit=1");
+  var when = (latest && latest[0]) ? new Date(latest[0].updated_at) : null;
+  var days = when ? Math.floor((Date.now() - when.getTime()) / 86400000) : 9999;
+  var limit = parseInt(getSet(settingsMap(), "call stats stale days", String(CS_STALE_DAYS)), 10) || CS_STALE_DAYS;
+  if (days < limit) return false;
+
+  var props = PropertiesService.getScriptProperties();
+  var last = Number(props.getProperty("CS_STALE_ALERTED_MS") || 0);
+  if (last && (Date.now() - last) / 86400000 < CS_STALE_AGAIN) return false;
+
+  var TZ = Session.getScriptTimeZone();
+  var since = when ? Utilities.formatDate(when, TZ, "MMM d, yyyy") : "never";
+  var body = "The call statistics in the app have not been updated since " + since + ".\n\n"
+           + "Every morning ESO Insights is supposed to run “Hatzalah App - Calls by Responder” and email the file here, "
+           + "where the app picks it up on its own. Something in that chain has stopped.\n\n"
+           + "Worth checking, in this order:\n"
+           + "• Is the daily query still scheduled in ESO Insights → Query Builder? Schedules can lapse.\n"
+           + "• Does the ESO account that owns it still have its Insights licence?\n"
+           + "• Is the export still going to the Hatzalah address?\n\n"
+           + "Until it is fixed, every member's My Standing is showing the numbers from " + since + ".";
+  mailBoth("", "Call statistics have stopped updating", body, adminRecipients(),
+           { kind: "Call statistics", strip: "No update for " + (when ? days + " days" : "a long time"), stripColor: "gold" });
+  props.setProperty("CS_STALE_ALERTED_MS", String(Date.now()));
+  Logger.log("callStatsStaleCheck: admins told (last update " + since + ").");
+  return true;
+}

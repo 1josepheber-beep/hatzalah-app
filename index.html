@@ -1768,7 +1768,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.19.0</div>
+  <div class="ver-line">Version 1.20.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1890,7 +1890,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.19.0</div>
+  <div class="ver-line">Version 1.20.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -5306,7 +5306,7 @@
     var under=list.filter(function(x){ return x.need && x.total<x.need; }).length;
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Call statistics</h3><div class="u">'+(CS.rows.length?esc(csPeriodLabel(p))+' · '+under+' under minimum':'no data yet')+'</div></div>'+
         '<button class="ebtn small" id="csImportBtn">Import</button></div>'+
-      '<div class="adm-help">Calls per responder per quarter, and how many as Lead, Driver or Other crew. Minimums: Primary '+t.primary+', Backup '+t.backup+' (Settings → Standings). '+(upd?'Last import '+esc(csWhen(upd))+'.':'Nothing imported yet — tap Import and paste the ESO export.')+'</div>'+
+      '<div class="adm-help">Calls per responder per quarter, and how many as Lead, Driver or Other crew. Minimums: Primary '+t.primary+', Backup '+t.backup+' (Settings → Standings). '+(upd?'ESO emails the export here every morning and the numbers load on their own \u2014 last update '+esc(csWhen(upd))+'. Import is only for a file you have in hand.':'Nothing imported yet \u2014 tap Import and paste the ESO export.')+'</div>'+
       (unmatched.length?'<div class="adm-help warn">'+unmatched.length+' name'+(unmatched.length===1?"":"s")+' in the data '+(unmatched.length===1?"is":"are")+' not linked to a member: '+esc(unmatched.join(", "))+'. <a href="#" id="csFixNames">Link them</a></div>':'')+
       '<div class="adm-chips">'+periods.map(function(q){ return '<button class="adm-chip'+(q===p?" on":"")+'" data-csp="'+q+'">'+esc(csPeriodLabel(q))+'</button>'; }).join("")+'</div>'+
       '<div class="cs-table"><div class="cs-row head"><span>Responder</span><span>Calls</span><span>Lead</span><span>Driver</span><span>Other</span></div>'+
@@ -6794,14 +6794,14 @@
     {name:"Instant renewal emails",keys:["Renewal Webhook URL","Renewal Webhook Secret"]},
     {name:"Certification renewals",keys:["Renew Egnyte Step"]},
     {name:"Notifications",         keys:["Push Worker URL","Push Public Key"]},
-    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location","Send From","Send From Name","Supply Archive Days"],
-     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails. Send From is the address every email goes out from (it must be a verified \u201cSend mail as\u201d address of the Google account the background script runs under); Send From Name is the sender name people see. Supply Archive Days: how long an in-stock supply request stays in the working list before it moves to Archived (default 30)."},
+    {name:"Organisation",          keys:["Org Name","Location","Search Placeholder","Pickup Location","Send From","Send From Name","Supply Archive Days","Call Stats Stale Days"],
+     note:"Pickup Location is where members collect restocked supplies (\u201cthe stock room\u201d); it is written into the back-in-stock emails. Send From is the address every email goes out from (it must be a verified \u201cSend mail as\u201d address of the Google account the background script runs under); Send From Name is the sender name people see. Supply Archive Days: how long an in-stock supply request stays in the working list before it moves to Archived (default 30). Call Stats Stale Days: how many days without a new ESO export before the admins are emailed that the call numbers have stopped updating (default 10)."},
     {name:"Analytics tracking",    keys:["Google Analytics ID","Google Tag Manager ID","Meta Pixel ID"],
      note:"Usage from every phone reports to these accounts. Leave a box empty to not use that service. Changing an ID that is already set asks you to confirm."}
   ];
   var SETTING_PLACEHOLDER={"Google Analytics ID":"G-XXXXXXXXXX","Google Tag Manager ID":"GTM-XXXXXXX","Meta Pixel ID":"Pixel ID (numbers only)",
                            "Standings Primary Minimum":"e.g. 15","Standings Backup Minimum":"e.g. 6","Pickup Location":"the stock room",
-                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30"};
+                           "Send From":"app@example.org","Send From Name":"Hatzalah of Houston","Supply Archive Days":"30","Call Stats Stale Days":"10"};
   var SETTING_LABELS={"Logo URL":"Logo"};
   function settingGroupOf(name){
     name=String(name||"").trim().toLowerCase();
@@ -10764,7 +10764,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.19.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.20.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10807,7 +10807,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.19.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.20.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11850,7 +11850,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.19.0".replace("Version ","");
+  var APP_VERSION="Version 1.20.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

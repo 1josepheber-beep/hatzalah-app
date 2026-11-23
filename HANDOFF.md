@@ -90,6 +90,23 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.20.0** (Nov 22, 2026): **call statistics now load themselves every morning.**
+  ESO Insights runs the saved query **"Hatzalah App - Calls by Responder"** (owner
+  JOSEPH EBER, EMS model, Denormalized, filter *ESO Record Created Date = this year
+  (YTD)*, columns Crew Full Name / Crew Standard Role / Incident Number / ESO Record
+  Created Date) **daily at 5:00**, and emails it as a **.csv.gz attachment** — a real
+  attachment, no portal login. Joseph's ESO **work email was changed to
+  yeber@houstonhatzalah.org** on Nov 22 (personal address moved to Home Email; ESO uses
+  the work email for password recovery too; his login `j_jobor` is unchanged), so the
+  file lands in the mailbox the script runs in. Apps Script **v58**: `dailyCallStats()`
+  on a 6:00 trigger runs `importCallStats()` (newest unimported ESO email → `Utilities.ungzip`
+  → parseCsv → dedupe crew+incident → per-quarter lead/driver/other → upsert `call_stats`
+  on `crew_name,period,source`, and save new `call_stats_names` links) and
+  `callStatsStaleCheck()` (no new rows for *Call Stats Stale Days*, default 10 → one email
+  to the admins, repeated at most weekly). Name matching mirrors the app's but is
+  **stricter**: where the app would flag a guess for an admin, the job leaves the row
+  unmatched for Admin → Call stats to link. Last imported message is remembered in script
+  property `CS_LAST_MSG_MS`, so a re-run imports nothing. Tests: `scratch/tests/gs-callstats.js`.
 - **Live: 1.19.0** (Nov 22, 2026): **battery check on a jump bag item**
   (`db/add_battery_bars.sql`: `jumpbag_items.bars`, `jumpbag_status.bars` + `.bars_at`).
   An item ticked **"Ask how many battery bars (1-4)"** in Admin → Jump bag items shows, on
