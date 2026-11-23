@@ -923,6 +923,7 @@
   .jb-bar.on{border-color:var(--navy);background:var(--navy);color:#fff} .jb-bar.on.warn{border-color:#8a6d00;background:#8a6d00} .jb-bar.on.bad{border-color:var(--red);background:var(--red)}
   .jb-bart{flex:0 0 100%;font-size:11.5px;font-weight:800;color:var(--mut)} .jb-bart.warn{color:#8a6d00} .jb-bart.bad{color:var(--red)}
   .jb-chk{margin-top:3px}
+  .adm-onoff{padding:10px 0;border-top:1px solid var(--line)} .adm-onoff .ts{font-size:12px;color:var(--mut);margin-top:2px}
   .adm-mhbtns{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .adm-setlink{white-space:nowrap}
   .adm-gsec.flash{animation:hohflash 1.8s ease-out;border-radius:10px}
@@ -1772,7 +1773,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.21.0</div>
+  <div class="ver-line">Version 1.22.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1894,7 +1895,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.21.0</div>
+  <div class="ver-line">Version 1.22.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -6862,6 +6863,9 @@
   // Settings that belong together are shown as one card. Purely how they are
   // displayed -- each still lives in its own row, so nothing that reads them
   // needs to change.
+  var SETTING_ONOFF={"Standings Notices":"email anyone below their minimum at the end of a quarter, admins copied",
+                     "Standings Auto Downgrade":"move a Primary to Backup after the number of quarters below"};
+  var SETTING_PICK={"Standings Quarters Before Downgrade":[["1","1 quarter below the minimum"],["2","2 quarters in a row"],["3","3 quarters in a row"],["4","4 quarters in a row"]]};
   var SETTING_GROUPS=[
     {name:"Dispatch",              keys:["Dispatch Label","Dispatch Number"]},
     {name:"Medical Control",       keys:["Medical Control Label","Medical Control Number"]},
@@ -6871,7 +6875,7 @@
                                           "Scene Timer Snooze Minutes","Scene Alarm Repeats"]},
     {name:"Member options",        keys:["Member Levels","Member Types","Member Statuses"]},
     {name:"Standings",             keys:["Standings Primary Minimum","Standings Backup Minimum","Standings Notices","Standings Auto Downgrade","Standings Quarters Before Downgrade"],
-     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum \u2014 they stay Observer until an admin moves them to Backup. Standings Notices (On/Off): at the end of a quarter, anyone below their minimum gets an email, admins copied. Standings Auto Downgrade (On/Off): a Primary below the minimum for \u201CQuarters Before Downgrade\u201D quarters in a row moves to Backup on its own \u2014 their Primary clearance is kept, so an admin can move them back without clearing them again. Both start Off: the end-of-quarter check still runs and records what it would have done, under Call statistics \u2192 End of quarter. Medical Control is never included."},
+     note:"Calls per quarter a member needs to keep Primary, and to keep Backup. Observer is for new members and has no call minimum \u2014 they stay Observer until an admin moves them to Backup. Standings Notices: at the end of a quarter, anyone below their minimum gets an email, admins copied. Standings Auto Downgrade: a Primary below the minimum for \u201CQuarters Before Downgrade\u201D quarters in a row moves to Backup on its own \u2014 their Primary clearance is kept, so an admin can move them back without clearing them again. Both start Off: the end-of-quarter check still runs and records what it would have done, under Call statistics \u2192 End of quarter. Medical Control is never included."},
     {name:"Ambulance checkoff",    keys:["Ambulances"]},
     {name:"Jump bag",              keys:["Jump Bag Reminder Days"]},
     {name:"Certification emails",  keys:["Cert Reminder Days","Cert Reminder Milestones",
@@ -7006,6 +7010,18 @@
           if(/body|message/i.test(r_(m.r,"Setting"))){
             return '<label class="adm-f wide">'+esc(flbl)+
               '<textarea id="'+fid+'" data-h="Value" data-row="'+m.i+'" rows="7">'+esc(fv)+'</textarea></label>';
+          }
+          /* on/off settings are a switch, and a small fixed choice is a picker: typing
+             "on", "On " or "yes" into a box is how a rule ends up not doing what was meant */
+          if(SETTING_ONOFF[r_(m.r,"Setting")]){
+            var isOn=/^(on|x|yes|true|1)$/i.test(String(fv||"").trim());
+            return '<div class="adm-tg adm-onoff"><div class="tl"><div class="tn">'+esc(flbl)+'</div><div class="ts" data-onofftxt="'+fid+'">'+(isOn?"On":"Off")+' \u2014 '+esc(SETTING_ONOFF[r_(m.r,"Setting")])+'</div></div>'+
+              '<input id="'+fid+'" data-h="Value" data-row="'+m.i+'" type="hidden" value="'+(isOn?"On":"Off")+'">'+
+              '<button class="adm-sw'+(isOn?" on":"")+'" data-onoff="'+fid+'" aria-label="'+esc(flbl)+'"></button></div>';
+          }
+          if(SETTING_PICK[r_(m.r,"Setting")]){
+            return '<label class="adm-f wide">'+esc(flbl)+'<select id="'+fid+'" data-h="Value" data-row="'+m.i+'">'+
+              SETTING_PICK[r_(m.r,"Setting")].map(function(o){ return '<option value="'+esc(o[0])+'"'+(String(fv).trim()===o[0]?" selected":"")+'>'+esc(o[1])+'</option>'; }).join("")+'</select></label>';
           }
           var fph=SETTING_PLACEHOLDER[r_(m.r,"Setting")]||"";
           return '<label class="adm-f wide">'+esc(flbl)+
@@ -7565,6 +7581,14 @@
       try{ admMarkDirty(); }catch(e){}
       toast("Back to the built-in logo \u2014 press Save to keep it.");
       return;
+    }
+    var oo=e.target.closest?e.target.closest("[data-onoff]"):null;
+    if(oo){
+      var inp=$(oo.getAttribute("data-onoff")), nowOn=!oo.classList.contains("on");
+      oo.classList.toggle("on", nowOn); if(inp) inp.value=nowOn?"On":"Off";
+      var tx=$("admGenPane").querySelector('[data-onofftxt="'+oo.getAttribute("data-onoff")+'"]');
+      if(tx) tx.textContent=(nowOn?"On":"Off")+tx.textContent.replace(/^(On|Off)/,"");
+      admMarkDirty(); return;
     }
     var sw=e.target.closest?e.target.closest("[data-sw]"):null;
     if(sw){ sw.classList.toggle("on"); return; }
@@ -10854,7 +10878,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.21.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.22.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10897,7 +10921,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.21.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.22.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11940,7 +11964,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.21.0".replace("Version ","");
+  var APP_VERSION="Version 1.22.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

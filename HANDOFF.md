@@ -90,6 +90,18 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.22.0** (Nov 23, 2026): the Standings settings can no longer be mistyped.
+  *Standings Notices* and *Standings Auto Downgrade* render as on/off switches
+  (`SETTING_ONOFF`: a hidden `data-row` input holding exactly "On"/"Off" plus a
+  `[data-onoff]` switch), and *Standings Quarters Before Downgrade* is a 1-4 picker
+  (`SETTING_PICK`). Any future on/off or fixed-choice setting should be added to those two
+  maps rather than left as a text box. Demo data carries the same five Standings rows
+  (8 / 5 / Off / Off / 2). No script change (still v59). The leadership document
+  (https://claude.ai/artifact/J6k4T7xYDqfuXbKpSxqjGP) was rewritten the same day from
+  "proposal" to "in place and switched off", with the settings card screenshot; it lists
+  as NOT built: the admin button to excuse a quarter (the job already honours an
+  `excused` row), a reason on overrides, push notifications for standings, and a
+  mid-quarter promotion rule.
 - **Live: 1.21.0** (Nov 23, 2026): **standings at the end of a quarter — built, shipped
   switched OFF** (`db/add_standings.sql`: table `standings_log`, settings *Standings
   Notices* = Off, *Standings Auto Downgrade* = Off, *Standings Quarters Before Downgrade*

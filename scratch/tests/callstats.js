@@ -156,5 +156,27 @@ const cur=q(), p1=prevQ(cur,1), p2=prevQ(cur,2);
     check("no page errors (ignored names)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
   }
 
+  // ===== 7. the standings switches are switches, not text boxes
+  {
+    const c=boot({admin:true});
+    c.rows.settings.push({id:90,setting:"Standings Primary Minimum",value:"8"},{id:91,setting:"Standings Backup Minimum",value:"5"},
+      {id:92,setting:"Standings Notices",value:"Off"},{id:93,setting:"Standings Auto Downgrade",value:"Off"},{id:94,setting:"Standings Quarters Before Downgrade",value:"2"});
+    await wait(3200);
+    click(c.w,[...c.d.querySelectorAll("#grid .tile")].find(t=>/Admin/.test(t.textContent))); await wait(600);
+    click(c.w,secBtn(c.d,"Settings")); await wait(700);
+    const pane3=c.d.getElementById("admGenPane");
+    const card=[...pane3.querySelectorAll(".adm-gsec")].find(x=>x.querySelector(".adm-itemt").textContent.trim()==="Standings");
+    const sws=card?[...card.querySelectorAll("[data-onoff]")]:[];
+    check("Notices and Auto Downgrade are two switches, both off, with no box to type in", sws.length===2 && sws.every(x=>!x.classList.contains("on")) && /Off/.test(card.querySelector("[data-onofftxt]").textContent) && card.querySelectorAll('input[type="text"]').length===2);
+    check("Quarters Before Downgrade is a picker of 1 to 4, set to 2", !!card.querySelector("select") && card.querySelector("select").value==="2" && card.querySelectorAll("select option").length===4);
+    click(c.w,sws[0]); await wait(100);
+    check("tapping the switch turns it on and says so", sws[0].classList.contains("on") && /^On/.test(card.querySelector("[data-onofftxt]").textContent));
+    c.writes.length=0;
+    click(c.w,c.d.getElementById("admGenSave")); await wait(500);
+    const sv=c.writes.filter(x=>/^settings\?id=eq\.92/.test(x.path));
+    check("saving writes exactly 'On' for that one setting and leaves the other alone  "+JSON.stringify(c.writes.map(x=>[x.path,x.body])), sv.length===1 && sv[0].body.value==="On" && !c.writes.some(x=>/id=eq\.93/.test(x.path)));
+    check("no page errors (switches)", c.errs.length===0); c.errs.slice(0,3).forEach(e=>console.log("   !",e));
+  }
+
   console.log("  ("+pass+" passed, "+fail+" failed)"); process.exit(fail?1:0);
 })();
