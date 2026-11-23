@@ -912,11 +912,17 @@
   .jb-sec .amb-sech em{font-style:normal;margin-left:8px;color:var(--mut);font-size:11.5px;letter-spacing:0;text-transform:none}
   .jb-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--line)}
   .jb-row.expired{background:#fff7f7;margin:0 -14px;padding-left:14px;padding-right:14px} .jb-row.soon{background:#fffaf0;margin:0 -14px;padding-left:14px;padding-right:14px}
+  .jb-row.batbad{background:#fff7f7;margin:0 -14px;padding-left:14px;padding-right:14px} .jb-row.batwarn{background:#fffaf0;margin:0 -14px;padding-left:14px;padding-right:14px}
   .jb-row.pend .jb-n::after{content:" \00b7 not saved yet";color:#c9933a;font-size:11px;font-weight:800}
   .jb-l{flex:1 1 auto;min-width:0} .jb-n{font-size:14px;font-weight:700;color:var(--ink);line-height:1.3} .jb-n b{color:var(--mut);font-weight:800;font-size:12px}
   .jb-exp{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;margin-top:4px} .jb-exp label{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
   .jb-exp input{border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;font-size:12.5px;font-weight:700;color:var(--ink);font-family:inherit;background:#fff;max-width:150px}
   .jb-expt{font-size:11.5px;font-weight:800;color:var(--mut)} .jb-expt.soon{color:#8a6d00} .jb-expt.expired{color:var(--red)}
+  .jb-bars{display:flex;align-items:center;flex-wrap:wrap;gap:4px 5px;margin-top:5px} .jb-bars label{flex:0 0 100%;font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.4px}
+  .jb-bar{min-width:28px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font-weight:800;font-size:13px;border-radius:8px;padding:4px 6px;cursor:pointer;font-family:inherit}
+  .jb-bar.on{border-color:var(--navy);background:var(--navy);color:#fff} .jb-bar.on.warn{border-color:#8a6d00;background:#8a6d00} .jb-bar.on.bad{border-color:var(--red);background:var(--red)}
+  .jb-bart{flex:0 0 100%;font-size:11.5px;font-weight:800;color:var(--mut)} .jb-bart.warn{color:#8a6d00} .jb-bart.bad{color:var(--red)}
+  .jb-chk{margin-top:3px}
   .jb-expclr{border:1.5px solid var(--line);background:#fff;color:var(--mut);font-weight:800;font-size:11.5px;border-radius:8px;padding:3px 8px;cursor:pointer;font-family:inherit}
   .jb-expclr:active{background:#f1f3f7}
   .jb-st{display:flex;flex-direction:row;gap:4px;flex:0 0 auto}
@@ -1762,7 +1768,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.18.0</div>
+  <div class="ver-line">Version 1.19.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1884,7 +1890,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.18.0</div>
+  <div class="ver-line">Version 1.19.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2485,7 +2491,7 @@
   var SB_URL="https://gcvbohdarppaolqhdnri.supabase.co";
   var SB_ANON="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdmJvaGRhcnBwYW9scWhkbnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NDk1NjgsImV4cCI6MjEwNDEyNTU2OH0.2cEPykzubaXLFVQ6mMSLNWc6fe20nJUUn2Z4P4C36sE";
   var SB_TAB2TBL={"Task List":"task_list","Task Progress":"task_progress","Roster":"roster","Cert Reminders":"cert_reminders","Tiles":"tiles","apartments":"apartments","Apartment Markers":"apartment_markers","Cert Updates":"cert_updates","Vitals":"vitals","Schedule":"schedule","Availability":"availability","Code Logs":"code_logs","Changes":"changes","CPR Buttons":"cpr_buttons","Certifications":"certifications","Settings":"settings","Guests":"guests","Hospitals":"hospitals","Uploads":"uploads","Resources":"resources","Announcements":"announcements","Jump Bag Items":"jumpbag_items"};
-  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","service_unit":"Service Unit","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo","cleared_primary":"Cleared Primary","cleared_primary_at":"Cleared Primary At","cleared_primary_by":"Cleared Primary By"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"jumpbag_items":{"order_col":"Order","pouch":"Pouch","name":"Item","qty":"Qty","expires":"Expires","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
+  var SB_COLMAP={"task_list":{"order_col":"Order","task_id":"ID","category":"Category","task":"Task","type":"Type","target":"Target"},"task_progress":{"unit":"Unit","task_id":"Task ID","self_marked":"Self Marked","self_date":"Self Date","confirmed":"Confirmed","confirmed_by":"Confirmed By","confirmed_date":"Confirmed Date","count":"Count","note":"Note"},"roster":{"unit":"Unit","last_name":"Last Name","first_name":"First Name","email":"Email","personal_email":"Personal Email","phone":"Phone","address":"Address","dob":"DOB","type":"Type","dispatcher":"Dispatcher","service_unit":"Service Unit","level":"Level","status":"Status","fto":"FTO","admin":"Admin","active":"Active","last_active":"Last Active","last_version":"Last Version","t_shirt_size":"T-Shirt Size","polo_shirt_size":"Polo Shirt Size","dress_shirt_size":"Dress Shirt Size","hat_size":"Hat Size","coat_size":"Coat Size","glove_size":"Glove Size","emergency_contact":"Emergency Contact","emergency_phone":"Emergency Phone","emergency_relationship":"Emergency Relationship","text_home":"Text Home","text_home_method":"Text Home Method","photo":"Photo","cleared_primary":"Cleared Primary","cleared_primary_at":"Cleared Primary At","cleared_primary_by":"Cleared Primary By"},"cert_reminders":{"when_at":"When","unit":"Unit","name":"Name","certification":"Certification","exp_date":"Exp Date","type":"Type"},"tiles":{"order_col":"Order","label":"Label","type":"Type","target":"Target","admin_only":"Admin Only","icon":"Icon","image":"Image","active":"Active"},"apartments":{"order_col":"Order","name":"Name","code":"Code","file":"File","address":"Address","active":"Active"},"apartment_markers":{"file":"File","label":"Label","x":"X","y":"Y"},"cert_updates":{"when_at":"When","unit":"Unit","certification":"Certification","old_date":"Old date","new_date":"New date"},"vitals":{"order_col":"Order","tab":"Tab","section":"Section","item":"Item","value":"Value","value2":"Value2","value3":"Value3"},"schedule":{"sched_id":"ID","unit":"Unit","start_at":"Start","end_at":"End","label":"Label","lat":"Lat","lng":"Lng","loc_source":"Loc Source","created":"Created"},"availability":{"unit":"Unit","available":"Available","until":"Until","lat":"Lat","lng":"Lng","loc_source":"Loc Source","updated":"Updated"},"code_logs":{"saved_at":"Saved At","unit":"Unit","name":"Name","mode":"Mode","duration":"Duration","shocks":"Shocks","epis":"Epis","cycles":"Cycles","started":"Started","log":"Log"},"changes":{"when_at":"When","unit":"Unit","name":"Name","field":"Field","old_value":"Old value","new_value":"New value"},"cpr_buttons":{"order_col":"Order","label":"Label","action":"Action","color":"Color","active":"Active"},"certifications":{"unit":"Unit #","last_name":"Last Name","first_name":"First Name","drivers_license_num":"Driver's License #","drivers_license_exp":"Driver's License Exp","state_emt_paramedic_license_num":"State EMT/Paramedic License #","state_emt_paramedic_license_exp":"State EMT/Paramedic License Exp","nremt_num":"NREMT #","nremt_exp":"NREMT Exp","american_heart_bls_num":"American Heart BLS #","american_heart_bls_exp":"American Heart BLS Exp","acls_num":"ACLS #","acls_exp":"ACLS Exp","pals_num":"PALS #","pals_exp":"PALS Exp","jurisprudence_exp":"Jurisprudence Exp","epi_training_exp":"Epi Training Exp","hipaa_exp":"HIPAA Exp","hipaa_awareness":"HIPAA Awareness","evoc_course":"EVOC Course","hazmat":"Hazmat","blood_borne_pathogen":"Blood Borne Pathogen","administrator_of_record":"Administrator of Record","administrator_of_record_exp":"Administrator of Record Exp","coh_ambulance_permit_num":"COH Ambulance Permit #","coh_ambulance_permit_exp":"COH Ambulance Permit Exp","paused":"Paused"},"settings":{"setting":"Setting","value":"Value"},"guests":{"passcode":"Passcode","name":"Name","active":"Active"},"hospitals":{"order_col":"Order","hospital_name":"Hospital Name","phone_call":"Phone (Call)","red_phone":"Red Phone","address_navigate":"Address (Navigate)","door_code":"Door Code","latitude":"Latitude","longitude":"Longitude","specialties_summary":"Specialties (summary)","trauma_i_ii":"Trauma I/II","trauma_iii":"Trauma III","pedi_trauma_i":"Pedi Trauma I","stroke_comprehensive":"Stroke Comprehensive","stroke_primary":"Stroke Primary","cardiac_cath_24hr":"24hr Cardiac Cath","post_arrest_hypothermia":"Post-Arrest Hypothermia","vad":"VAD","burn":"Burn","hyperbaric":"Hyperbaric","obstetric":"Obstetric","pediatric_icu":"Pediatric ICU","safe_certified":"SAFE Certified","hide":"Hide"},"uploads":{"order_col":"Order","document_type":"Document Type"},"resources":{"order_col":"Order","title":"Title","description":"Description","file":"File","active":"Active"},"jumpbag_items":{"order_col":"Order","pouch":"Pouch","name":"Item","qty":"Qty","expires":"Expires","bars":"Battery Bars","active":"Active"},"announcements":{"order_col":"Order","kind":"Kind","title":"Title","body":"Body","target":"Target","audience":"Audience","options":"Options","show_results":"Show Results","anonymous":"Anonymous","show_until":"Show Until","active":"Active","notify":"Notify"}};
   var LS="hoh_member_v1";
   var DCACHE="hoh_data_v1";
   /* ---------- Diagnostics ----------
@@ -2955,6 +2961,7 @@
           else if(soonIdx.indexOf(i)>=0) row.exp_date=ymd(now+12*D);
           else row.exp_date=ymd(now+(200+i*9)*D);
         }
+        if(String(it.bars||"").toUpperCase()==="X"){ row.bars=(unit==="H-100"?2:4); row.bars_at=ymd(now-(unit==="H-100"?12:3)*D); }
         st.push(row);
       });
     }
@@ -4601,6 +4608,14 @@
   /* only items an admin ticked "Has an expiration date" carry one. A date left behind on an
      item after that tick is taken off is ignored everywhere - and comes back if it is re-ticked. */
   function jbWantsExp(r){ return admBoolOn(r_(r,"Expires"),"Expires"); }
+  /* items ticked "Battery Bars" (the AED and its battery) also ask how many bars the
+     battery showed and the day it was last checked. 1 bar is red, 2 amber, 3-4 fine. */
+  function jbWantsBars(r){ return admBoolOn(r_(r,"Battery Bars"),"Battery Bars"); }
+  function jbBarsOf(r, s){ if(!jbWantsBars(r)) return 0; var n=parseInt((s&&s.bars),10); return (n>=1&&n<=4)?n:0; }
+  function jbBarsAtOf(r, s){ return jbWantsBars(r) ? String((s&&s.bars_at)||"") : ""; }
+  function jbBarState(n){ return n===1?"bad":n===2?"warn":n?"ok":""; }
+  function jbBarText(n){ return n===1?"1 bar \u2014 replace the battery":n===2?"2 bars \u2014 getting low":n+" bars"; }
+  function jbYmd(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
   function jbExpOf(r, s){ return jbWantsExp(r) ? String((s&&s.exp_date)||"") : ""; }
   function jbActiveItems(){ return JB.items.filter(function(r){ return admBoolOn(r_(r,"Active"),"Active") && String(r_(r,"Item")||"").trim(); }).sort(function(a,b){ return (parseFloat(r_(a,"Order"))||9999)-(parseFloat(r_(b,"Order"))||9999); }); }
   function jbPouches(){
@@ -4609,11 +4624,12 @@
     return out;
   }
   function jbCounts(items){
-    var c={total:0, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0};
+    var c={total:0, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, battery:0};
     (items||jbActiveItems()).forEach(function(r){
       var s=JB.st[r.__id]||{}; c.total++;
       if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
       var e=jbExpState(jbExpOf(r,s)); if(e==="expired") c.expired++; else if(e==="soon") c.soon++;
+      var bn=jbBarsOf(r,s); if(bn===1||bn===2) c.battery++;
     });
     return c;
   }
@@ -4683,12 +4699,24 @@
   function jbRowHTML(r){
     var id=r.__id, s=JB.st[id]||{}, exp=jbExpOf(r,s), es=jbExpState(exp);
     var showDate=jbWantsExp(r);
-    var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+(JB.pending[id]?" pend":"");
+    var bn=jbBarsOf(r,s), bs=jbBarState(bn);
+    var cls="jb-row"+(s.status?" "+s.status:"")+(es?" "+es:"")+((bs==="bad"||bs==="warn")?" bat"+bs:"")+(JB.pending[id]?" pend":"");
     var rq=(s.status==="short"||s.status==="missing")?jbReqFor(id):null;
     return '<div class="'+cls+'" data-id="'+id+'"><div class="jb-l"><div class="jb-n">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <b>×'+esc(r_(r,"Qty"))+'</b>':'')+'</div>'+
       (rq?'<div class="jb-reqline '+esc(rq.st)+'">'+(rq.st==="done"?"\u2705 In stock \u2014 pick it up from "+esc(getSetting("Pickup Location","the stock room"))+(rq.at?" ("+esc(srWhen(rq.at))+")":""):rq.st==="ordered"?"\uD83D\uDED2 Ordered"+(rq.at?" "+esc(srWhen(rq.at)):""):"\uD83D\uDED2 Requested "+esc(srWhen(rq.r.created_at)))+'</div>':'')+
-      (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span><button class="jb-expclr" data-id="'+id+'" title="Remove this date">Clear</button>':'')+'</div>':'')+'</div>'+
+      (showDate?'<div class="jb-exp"><label>Expires</label><input type="date" data-id="'+id+'" value="'+esc(exp)+'">'+(exp?'<span class="jb-expt '+es+'">'+esc(jbExpText(exp))+'</span><button class="jb-expclr" data-id="'+id+'" title="Remove this date">Clear</button>':'')+'</div>':'')+
+      (jbWantsBars(r)?jbBarsHTML(r,s,id):'')+'</div>'+
       '<div class="jb-st"><button class="jb-b have'+(s.status==="have"?" on":"")+'" data-id="'+id+'" data-s="have">✓ Have</button><button class="jb-b short'+(s.status==="short"?" on":"")+'" data-id="'+id+'" data-s="short">Short</button><button class="jb-b missing'+(s.status==="missing"?" on":"")+'" data-id="'+id+'" data-s="missing">Missing</button></div></div>';
+  }
+  /* battery bars + the day it was last checked, for items that carry a battery */
+  function jbBarsHTML(r, s, id){
+    var n=jbBarsOf(r,s), at=jbBarsAtOf(r,s), st=jbBarState(n);
+    return '<div class="jb-bars"><label>Battery</label>'+
+      [1,2,3,4].map(function(k){ return '<button class="jb-bar'+(n===k?" on "+jbBarState(k):"")+'" data-bar="'+id+'" data-n="'+k+'">'+k+'</button>'; }).join("")+
+      (n?'<span class="jb-bart '+st+'">'+esc(jbBarText(n))+'</span>':'<span class="jb-bart none">How many bars?</span>')+'</div>'+
+      '<div class="jb-exp jb-chk"><label>Checked</label><input type="date" data-chk="'+id+'" value="'+esc(at)+'">'+
+      (at?'<span class="jb-expt">'+esc("Checked "+ambAgo(at))+'</span>':'')+
+      ((n||at)?'<button class="jb-expclr" data-barclr="'+id+'" title="Remove this check">Clear</button>':'')+'</div>';
   }
   function jbWire(root){
     var b=root||$("jbBody");
@@ -4703,6 +4731,9 @@
     b.querySelectorAll(".jb-b[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), v=el.getAttribute("data-s"); var s=JB.st[id]||{}; jbSet(id, (s.status===v)?"":v, s.exp_date||null); }); });
     b.querySelectorAll(".jb-exp input[data-id]").forEach(function(el){ el.addEventListener("change",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", el.value||null); }); });
     b.querySelectorAll(".jb-expclr[data-id]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-id"), s=JB.st[id]||{}; jbSet(id, s.status||"", null); }); });
+    b.querySelectorAll(".jb-bar[data-bar]").forEach(function(el){ el.addEventListener("click",function(){ var id=el.getAttribute("data-bar"); jbSave(id, {bars:parseInt(el.getAttribute("data-n"),10), bars_at:jbYmd(jbToday())}); }); });
+    b.querySelectorAll(".jb-chk input[data-chk]").forEach(function(el){ el.addEventListener("change",function(){ jbSave(el.getAttribute("data-chk"), {bars_at:el.value||null}); }); });
+    b.querySelectorAll(".jb-expclr[data-barclr]").forEach(function(el){ el.addEventListener("click",function(){ jbSave(el.getAttribute("data-barclr"), {bars:null, bars_at:null}); }); });
     b.querySelectorAll(".amb-allok[data-pouch]").forEach(function(el){ el.addEventListener("click",function(e){
       e.stopPropagation();
       var p=el.getAttribute("data-pouch"); jbPouches().forEach(function(pp){ if(pp.name!==p) return; pp.items.forEach(function(r){ var s=JB.st[r.__id]||{}; if(!s.status) jbSet(r.__id,"have",s.exp_date||null,true); }); });
@@ -4726,6 +4757,7 @@
       var st=JB.st[r.__id]||{}, ex=jbExpOf(r,st), es=jbExpState(ex);
       if(kind==="expired" && es==="expired") out.push({r:r, p:p, why:jbExpText(ex)});
       else if(kind==="soon" && es==="soon") out.push({r:r, p:p, why:jbExpText(ex)});
+      else if(kind==="battery" && (jbBarsOf(r,st)===1||jbBarsOf(r,st)===2)) out.push({r:r, p:p, why:jbBarText(jbBarsOf(r,st))});
       else if(kind==="fix" && (st.status==="short"||st.status==="missing")) out.push({r:r, p:p, why:st.status==="short"?"Short":"Missing"});
     }); });
     return out;
@@ -4770,7 +4802,7 @@
   function jbSumHTML(c){
     var last=jbLastUpdated(), open=JB.jumpOpen, list=open?jbListFor(open):[];
     return '<div class="jb-sum"><div class="jb-sumtop"><div><b>'+c.have+' of '+c.total+' stocked</b><span>'+(last?"Last updated "+ambAgo(last.getFullYear()+"-"+("0"+(last.getMonth()+1)).slice(-2)+"-"+("0"+last.getDate()).slice(-2)):"Not checked yet")+'</span></div>'+
-      '<div class="jb-pills">'+(c.expired?jbPill("expired","bad",c.expired+' expired'):'')+(c.soon?jbPill("soon","warn",c.soon+' expiring soon'):'')+(c.short+c.missing?jbPill("fix","warn",(c.short+c.missing)+' short/missing'):'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
+      '<div class="jb-pills">'+(c.expired?jbPill("expired","bad",c.expired+' expired'):'')+(c.soon?jbPill("soon","warn",c.soon+' expiring soon'):'')+(c.battery?jbPill("battery","bad",c.battery+' battery low'):'')+(c.short+c.missing?jbPill("fix","warn",(c.short+c.missing)+' short/missing'):'')+(c.unchecked?'<i>'+c.unchecked+' not checked</i>':'')+(!c.expired&&!c.soon&&!c.battery&&!c.short&&!c.missing&&!c.unchecked?'<i class="good">All set</i>':'')+'</div></div>'+
       '<div class="amb-bar"><i style="width:'+Math.round(100*c.have/Math.max(c.total,1))+'%"></i></div>'+
       (open?'<div class="jb-jump">'+(list.length?list.map(function(x){ return '<button class="jb-jumpit" data-id="'+x.r.__id+'"><b>'+esc(r_(x.r,"Item"))+'</b><span>'+esc(x.p.name)+' \u00b7 '+esc(x.why)+'</span></button>'; }).join(""):'<div class="jb-jumpnone">Nothing here any more.</div>')+'</div>':'')+
       jbReqHTML(c)+
@@ -4800,14 +4832,20 @@
     row.classList.add("flash"); setTimeout(function(){ row.classList.remove("flash"); }, 1800);
   }
   /* one item changed: remember it, repaint it, send it */
-  function jbSet(id, status, exp, quiet){
-    var row={ unit:jbUnit(), item_id:+id, status:String(status||""), exp_date:exp||null, updated_at:new Date().toISOString() };
-    var prev=JB.st[id]||{}; row.id=prev.id; JB.st[id]=row;
+  function jbSet(id, status, exp, quiet){ jbSave(id, {status:String(status||""), exp_date:exp||null}, quiet); }
+  /* one place that writes a member's row: whatever is not in the patch is carried over */
+  function jbSave(id, patch, quiet){
+    var prev=JB.st[id]||{};
+    var row={ unit:jbUnit(), item_id:+id, status:String(prev.status||""), exp_date:prev.exp_date||null,
+              bars:(prev.bars==null||prev.bars==="")?null:parseInt(prev.bars,10), bars_at:prev.bars_at||null,
+              updated_at:new Date().toISOString() };
+    Object.keys(patch).forEach(function(k){ row[k]=patch[k]; });
+    row.id=prev.id; JB.st[id]=row;
     if(!quiet) jbRepaint(id);
     jbSend(id, row);
   }
   function jbSend(id, row){
-    var body={ unit:row.unit, item_id:row.item_id, status:row.status, exp_date:row.exp_date, updated_at:row.updated_at };
+    var body={ unit:row.unit, item_id:row.item_id, status:row.status, exp_date:row.exp_date, bars:(row.bars==null?null:row.bars), bars_at:row.bars_at||null, updated_at:row.updated_at };
     JB.saving++;
     return sbFetch(SB_URL+"/rest/v1/jumpbag_status?on_conflict=unit,item_id",{ method:"POST", headers:{"Content-Type":"application/json", Prefer:"resolution=merge-duplicates,return=minimal"}, body:JSON.stringify(body) })
       .then(function(r){ JB.saving--; if(!r.ok) throw new Error("save-"+r.status); if(JB.pending[id]){ delete JB.pending[id]; jbRepaint(id); } })
@@ -4834,15 +4872,17 @@
   function admJbSummary(unit){
     var items=admJbItems(), st={}; ADMJB.rows.forEach(function(s){ if(normUnit(s.unit)===normUnit(unit)) st[s.item_id]=s; });
     var bag=ADMJB.bags[normUnit(unit)]||{};
-    var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, last:0, st:st, checked:bag.checked_at?Date.parse(bag.checked_at):0, remind:parseInt(bag.remind_days,10)||0};
+    var c={total:items.length, have:0, short:0, missing:0, unchecked:0, expired:0, soon:0, battery:0, last:0, st:st, checked:bag.checked_at?Date.parse(bag.checked_at):0, remind:parseInt(bag.remind_days,10)||0};
     items.forEach(function(r){ var s=st[r.__id]||{}; if(s.status==="have") c.have++; else if(s.status==="short") c.short++; else if(s.status==="missing") c.missing++; else c.unchecked++;
-      var e=jbExpState(jbExpOf(r,s)); if(e==="expired") c.expired++; else if(e==="soon") c.soon++; var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
+      var e=jbExpState(jbExpOf(r,s)); if(e==="expired") c.expired++; else if(e==="soon") c.soon++;
+      var bn=jbBarsOf(r,s); if(bn===1||bn===2) c.battery++;
+      var u=Date.parse(s.updated_at||""); if(u>c.last) c.last=u; });
     return c;
   }
   function admJbMembers(){
     return ADMJB.roster.filter(function(r){ return admIsActive(r) && !/dispatcher/i.test(String(r_(r,"Type")||"")); })
       .map(function(r){ return {r:r, unit:r_(r,"Unit"), name:admName(r), c:admJbSummary(r_(r,"Unit"))}; })
-      .sort(function(a,b){ function pr(c){ return c.expired*1000+c.missing*100+c.short*10+c.soon*5+(c.last?0:1); } var pa=pr(a.c), pb=pr(b.c); if(pb!==pa) return pb-pa; return String(a.name).localeCompare(String(b.name)); });
+      .sort(function(a,b){ function pr(c){ return c.expired*1000+c.battery*500+c.missing*100+c.short*10+c.soon*5+(c.last?0:1); } var pa=pr(a.c), pb=pr(b.c); if(pb!==pa) return pb-pa; return String(a.name).localeCompare(String(b.name)); });
   }
   function admJbRender(){
     if(ADMJB.sel){ admJbDetail(ADMJB.sel); return; }
@@ -4850,7 +4890,7 @@
     var h='<div class="adm-body"><div class="adm-mh"><div class="t"><h3>Jump bags</h3><div class="u">'+checked+' of '+ms.length+' members have checked theirs</div></div><button class="ghost" id="admJbExport">Download as spreadsheet</button></div>'+
       '<div class="adm-help">What each member has marked in My Jump Bag. The ones with problems are at the top. The item list itself is under Jump bag items.</div>'+
       '<div class="amb-list">'+ms.map(function(m){ var c=m.c, tags="";
-        if(c.expired) tags+='<span class="amb-flagn">'+c.expired+' expired</span>'; if(c.soon) tags+='<span class="jb-tag warn">'+c.soon+' expiring</span>'; if(c.missing+c.short) tags+='<span class="jb-tag warn">'+(c.missing+c.short)+' short/missing</span>';
+        if(c.expired) tags+='<span class="amb-flagn">'+c.expired+' expired</span>'; if(c.battery) tags+='<span class="jb-tag warn">battery low</span>'; if(c.soon) tags+='<span class="jb-tag warn">'+c.soon+' expiring</span>'; if(c.missing+c.short) tags+='<span class="jb-tag warn">'+(c.missing+c.short)+' short/missing</span>';
         if(!c.last) tags+='<span class="jb-tag">not checked</span>'; else if(c.unchecked) tags+='<span class="jb-tag">'+c.unchecked+' not checked</span>'; else if(!tags) tags='<span class="amb-okn">All set</span>';
         return '<button class="amb-row" data-u="'+esc(m.unit)+'"><div class="amb-rl"><b>'+esc(m.name)+'</b><span>'+esc(m.unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambAgo(new Date(c.last).toISOString().slice(0,10))):'')+' · bag checked '+(c.checked?esc(ambAgo(new Date(c.checked).toISOString().slice(0,10))):'never')+'</span></div><span class="jb-tags">'+tags+'</span><span class="chev">›</span></button>'; }).join("")+'</div></div>';
     $("admGenPane").innerHTML=h;
@@ -4864,9 +4904,9 @@
     var h='<div class="adm-body"><button class="adm-backlink" id="admJbBack">‹ All members</button><div class="adm-mh"><div class="t"><h3>'+esc(m?m.name:unit)+'</h3><div class="u">'+esc(unit)+' · '+c.have+' of '+c.total+' stocked'+(c.last?' · updated '+esc(ambPrettyDate(new Date(c.last).toISOString().slice(0,10))):' · not checked yet')+'</div></div></div>'+
       '<div class="amb-okline jb-bagline">Bag last checked: <b>'+(c.checked?esc(ambPrettyDate(new Date(c.checked).toISOString().slice(0,10)))+' ('+esc(ambAgo(new Date(c.checked).toISOString().slice(0,10)))+')':'never')+'</b> · reminder: '+(c.remind?'every '+c.remind+' days':'off')+'</div>';
     order.forEach(function(p){
-      h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s), e=jbExpState(ex);
+      h+='<div class="adm-sec"><div class="adm-sech">'+esc(p)+'</div>'+by[p].map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s), e=jbExpState(ex), bn=jbBarsOf(r,s), bat=jbBarsAtOf(r,s);
         var val=s.status==="have"?"✓ Have":s.status==="short"?"Short":s.status==="missing"?"Missing":"—";
-        return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(ex?'<div class="jb-dexp '+e+'">'+esc(jbExpText(ex))+'</div>':'')+'</div></div>'; }).join("")+'</div>';
+        return '<div class="amb-dq"><div class="amb-dqt">'+esc(r_(r,"Item"))+(r_(r,"Qty")?' <small>(×'+esc(r_(r,"Qty"))+')</small>':'')+'</div><div class="amb-dqa'+(s.status==="have"?" ok":(s.status?" warn":" none"))+'">'+val+(ex?'<div class="jb-dexp '+e+'">'+esc(jbExpText(ex))+'</div>':'')+(jbWantsBars(r)?'<div class="jb-dexp '+jbBarState(bn)+'">'+esc(bn?jbBarText(bn):"Battery not checked")+(bat?" \u00b7 "+esc(ambAgo(bat)):"")+'</div>':'')+'</div></div>'; }).join("")+'</div>';
     });
     // Remind: a push and an email to this member asking them to restock, admins Bcc'd.
     // Sent by the Apps Script, so it needs the webhook settings; otherwise the button says so.
@@ -4896,7 +4936,7 @@
     if(!ms.length){ toast("Nothing to export yet."); return; }
     var head=["Member","Unit","Stocked","Short","Missing","Not checked","Expired","Expiring soon","Last updated","Bag last checked","Reminder every (days)"].concat(items.map(function(r){ return r_(r,"Item"); }));
     var data=[head].concat(ms.map(function(m){ var c=m.c; return [m.name, m.unit, c.have, c.short, c.missing, c.unchecked, c.expired, c.soon, c.last?new Date(c.last).toISOString().slice(0,10):"", c.checked?new Date(c.checked).toISOString().slice(0,10):"", c.remind||""]
-      .concat(items.map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s); var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(ex?" (exp "+ex+")":""); })); }));
+      .concat(items.map(function(r){ var s=c.st[r.__id]||{}, ex=jbExpOf(r,s), bn=jbBarsOf(r,s), bat=jbBarsAtOf(r,s); var v=s.status==="have"?"Have":s.status==="short"?"Short":s.status==="missing"?"Missing":""; return v+(ex?" (exp "+ex+")":"")+(bn?" ["+bn+" bars"+(bat?" "+bat:"")+"]":""); })); }));
     toast("Preparing the spreadsheet…");
     loadXlsxLib().then(function(X){ var ws=X.utils.aoa_to_sheet(data); var wb=X.utils.book_new(); X.utils.book_append_sheet(wb, ws, "Jump bags"); X.writeFile(wb, "jump-bags-"+ambToday()+".xlsx"); })
       ["catch"](function(){ var csv=data.map(function(row){ return row.map(function(x){ x=String(x==null?"":x); return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x; }).join(","); }).join("\n");
@@ -6311,7 +6351,7 @@
               ["Notify","Send a notification when I save this","bool"],
               ["Active","Active","bool"]],
     uploads:[["Document Type","Document type","text"]],
-    jumpbag:[["Item","Item","text"],["Pouch","Pouch","text"],["Qty","Quantity to carry","text"],["Expires","Has an expiration date","bool"],["Active","Active","bool"]],
+    jumpbag:[["Item","Item","text"],["Pouch","Pouch","text"],["Qty","Quantity to carry","text"],["Expires","Has an expiration date","bool"],["Battery Bars","Ask how many battery bars (1-4)","bool"],["Active","Active","bool"]],
     guests:[["Passcode","Passcode","text"],["Name","Name","text"],["Active","Active","bool"]],
     hospitals:[["Hospital Name","Hospital name","text"],["Phone (Call)","Phone","text"],
                ["Red Phone","Red phone","text"],["Address (Navigate)","Address","text"],["Door Code","Door code","text"],
@@ -10724,7 +10764,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.18.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.19.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -10767,7 +10807,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.18.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.19.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11810,7 +11850,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.18.0".replace("Version ","");
+  var APP_VERSION="Version 1.19.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

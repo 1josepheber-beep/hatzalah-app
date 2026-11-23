@@ -90,6 +90,17 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.19.0** (Nov 22, 2026): **battery check on a jump bag item**
+  (`db/add_battery_bars.sql`: `jumpbag_items.bars`, `jumpbag_status.bars` + `.bars_at`).
+  An item ticked **"Ask how many battery bars (1-4)"** in Admin → Jump bag items shows, on
+  top of its expiration date, four bar buttons and a **Checked** date; tapping a bar stamps
+  that day, and the date can be backdated. **AED w/ Battery is the one item ticked today.**
+  1 bar is red ("replace the battery"), 2 amber ("getting low"); both tint the row, count in
+  a "battery low" pill on the member's summary, tag the member in Admin → Jump bags (sorted
+  just under expired), show in the detail and in the spreadsheet, and are listed in the
+  "Remind to restock" email (Apps Script **v57**). Nightly expiry emails are untouched.
+  Helpers: `jbWantsBars` / `jbBarsOf` / `jbBarsAtOf` / `jbBarState`; every member write now
+  goes through one `jbSave(id, patch)` that carries over whatever the patch does not name.
 - **Live: 1.18.0** (Nov 22, 2026): **jump bag expiration dates only where the item carries
   one.** An item whose "Has an expiration date" tick is off now shows no date box and no
   "+ expiration date" link in My Jump Bag (that link and `JB.expOpen` are gone), so a date

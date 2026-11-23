@@ -17,14 +17,14 @@ const MIME={js:"application/javascript",css:"text/css",png:"image/png",jpg:"imag
   await pg.evaluate(()=>{ [...document.querySelectorAll("#grid .tile")].find(t=>/My Jump Bag/.test(t.textContent)).click(); }); await pg.waitForTimeout(1500);
   const info=await pg.evaluate(()=>{
     const secs=[...document.querySelectorAll("#jbBody .amb-tog")];
-    secs.forEach(h=>{ if(!h.classList.contains("open")) h.click(); });
+    secs.forEach(h=>{ if(/AED/.test(h.textContent) && !h.classList.contains("open")) h.click(); });
     const out=[];
     document.querySelectorAll("#jbBody .jb-sec").forEach(sec=>{ const rows=[...sec.querySelectorAll(".jb-row")];
       out.push({p:sec.getAttribute("data-pouch"), dated:rows.filter(r=>r.querySelector(".jb-exp")).length, plain:rows.filter(r=>!r.querySelector(".jb-exp")).length}); });
     return out;
   }); await pg.waitForTimeout(500);
-  await pg.evaluate(()=>{ const sec=[...document.querySelectorAll("#jbBody .jb-sec")].find(s=>{ const rows=[...s.querySelectorAll(".jb-row")]; return rows.some(r=>r.querySelector(".jb-exp")) && rows.some(r=>!r.querySelector(".jb-exp")); }); if(sec) sec.scrollIntoView({block:"center"}); });
-  await pg.screenshot({path:OUT+"/jbexp-1.png"});
+  await pg.evaluate(()=>{ const r=document.querySelector("#jbBody .jb-bars"); if(r) r.closest(".jb-sec").scrollIntoView({block:"start"}); });
+  await pg.screenshot({path:OUT+"/jbbars-1.png"});
   console.log(info, await pg.evaluate(()=>({withDate:document.querySelectorAll("#jbBody .jb-sec:not(.closed) .jb-exp").length, clears:document.querySelectorAll("#jbBody .jb-expclr").length, addexp:document.querySelectorAll("#jbBody .jb-addexp").length})));
   console.log("page errors:", errs.length?errs:"none"); await b.close();
 })();

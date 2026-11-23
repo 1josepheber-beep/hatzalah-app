@@ -1168,6 +1168,10 @@ function remindJumpBag(unit, by){
         if (n < 0) problems.push("\u2022 " + name + " \u2014 expired " + nice(exp));
         else if (n <= 30) problems.push("\u2022 " + name + " \u2014 expires " + nice(exp) + " (in " + n + " day" + (n === 1 ? "" : "s") + ")"); }
     }
+    if (isX(it.bars)) {                                   // battery check: 1 bar is urgent, 2 is getting low
+      var bn = parseInt(s.bars, 10);
+      if (bn === 1 || bn === 2) problems.push("\u2022 " + name + " \u2014 battery down to " + bn + " bar" + (bn === 1 ? "" : "s"));
+    }
   });
   var unchecked = Object.keys(byId).filter(function(id){ return !seen[id]; }).length;
   var first = String(me.first_name || "").trim() || "there";

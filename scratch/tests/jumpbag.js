@@ -7,8 +7,8 @@ const ORIGIN="https://houstonhatzalahapp.org", SB="https://gcvbohdarppaolqhdnri.
 let pass=0, fail=0; const check=(l,ok)=>{ console.log((ok?"  PASS ":"  FAIL ")+l); ok?pass++:fail++; };
 const ymd=(d)=>d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
 const plus=(n)=>{ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()+n); return ymd(d); };
-const ITEMS=[[1,"Main compartment","Gloves (box)",1,"",""],[2,"Main compartment","BVM adult",1,"",""],[3,"Main compartment","Oral glucose",2,"X",""],[4,"Airway pouch","OPA set",1,"",""],[5,"Airway pouch","NPA set",1,"",""],[6,"Trauma pouch","Tourniquet",2,"",""],[7,"Trauma pouch","Epinephrine 1:1000",2,"X",""],[8,"Trauma pouch","Old item",1,"","no"]]
-  .map(([id,pouch,name,qty,exp,act])=>({id,order_col:id,pouch,name,qty:String(qty),expires:exp,active:act===""?"X":act}));
+const ITEMS=[[1,"Main compartment","Gloves (box)",1,"",""],[2,"Main compartment","BVM adult",1,"",""],[3,"Main compartment","Oral glucose",2,"X",""],[4,"Airway pouch","OPA set",1,"",""],[5,"Airway pouch","NPA set",1,"",""],[6,"Trauma pouch","Tourniquet",2,"",""],[7,"Trauma pouch","Epinephrine 1:1000",2,"X",""],[9,"AED","AED w/ Battery",1,"X","","X"],[8,"Trauma pouch","Old item",1,"","no"]]
+  .map(([id,pouch,name,qty,exp,act,bars])=>({id,order_col:id,pouch,name,qty:String(qty),expires:exp,bars:bars||"",active:act===""?"X":act}));
 function boot(o){
   o=o||{}; const errs=[], writes=[], toasts=[];
   const me={id:1,unit:"H-24",first_name:"Joseph",last_name:"Eber",email:"t@houstonhatzalah.org",active:"X",admin:o.admin?"X":"",type:"Responder"};
@@ -75,10 +75,10 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   const bagW2=a.writes.filter(x=>/^jumpbag_bags/.test(x.path));
   check("picking 'Every 60 days' saves remind_days=60 and keeps the checked date", bagW2.length===2 && bagW2[1].body.remind_days===60 && !!bagW2[1].body.checked_at && a.d.getElementById("jbRemind").value==="60");
   [...a.d.querySelectorAll("#jbBody .amb-tog")].filter(h=>!h.classList.contains("open")).forEach(h=>click(a.w,h));
-  check("tile opens the bag screen", a.d.getElementById("jbScreen").classList.contains("open") && /of 7 stocked/.test(body.textContent));
+  check("tile opens the bag screen", a.d.getElementById("jbScreen").classList.contains("open") && /of 8 stocked/.test(body.textContent));
   const pouches=[...body.querySelectorAll(".jb-sec .amb-sect")].map(x=>x.textContent);
-  check("items grouped by pouch in order; inactive item left out  "+JSON.stringify(pouches), pouches.join("|")==="Main compartment|Airway pouch|Trauma pouch" && body.querySelectorAll(".jb-row").length===7 && !/Old item/.test(body.textContent));
-  check("summary: 0 of 7 stocked, 'Not checked yet', 7 not checked", /0 of 7 stocked/.test(body.textContent) && /Not checked yet/.test(body.textContent) && /7 not checked/.test(body.querySelector(".jb-pills").textContent));
+  check("items grouped by pouch in order; inactive item left out  "+JSON.stringify(pouches), pouches.join("|")==="Main compartment|Airway pouch|Trauma pouch|AED" && body.querySelectorAll(".jb-row").length===8 && !/Old item/.test(body.textContent));
+  check("summary: 0 of 8 stocked, 'Not checked yet', 8 not checked", /0 of 8 stocked/.test(body.textContent) && /Not checked yet/.test(body.textContent) && /8 not checked/.test(body.querySelector(".jb-pills").textContent));
   check("reminder hint follows the setting (30, 7, 0)", /30 days before, 7 days before and on the day they expire/.test(body.querySelector(".jb-hint").textContent));
   check("quantity shown; only items ticked 'has an expiration date' get a date box - the rest have no date option at all", /×2/.test(row(a.d,3).textContent) && !!row(a.d,3).querySelector('input[type=date]') && !row(a.d,1).querySelector('input[type=date]') && !/expiration date/.test(row(a.d,1).textContent) && !body.querySelector(".jb-addexp"));
 
@@ -86,7 +86,7 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   tap(a.w,a.d,1,"have"); await wait(100);
   let wr=a.writes.filter(x=>/^jumpbag_status/.test(x.path));
   check("tap 'Have': one upsert row {unit,item_id,status,exp_date,updated_at}  "+JSON.stringify(wr[0]&&wr[0].body), wr.length===1 && wr[0].method==="POST" && /on_conflict=unit,item_id/.test(wr[0].path) && /merge-duplicates/.test(wr[0].prefer) && wr[0].body.unit==="H-24" && wr[0].body.item_id===1 && wr[0].body.status==="have" && wr[0].body.exp_date===null && /^\d{4}-\d{2}-\d{2}T/.test(wr[0].body.updated_at));
-  check("the row turns green and the summary updates in place", row(a.d,1).classList.contains("have") && /1 of 7 stocked/.test(body.textContent) && /Last updated today/.test(body.textContent));
+  check("the row turns green and the summary updates in place", row(a.d,1).classList.contains("have") && /1 of 8 stocked/.test(body.textContent) && /Last updated today/.test(body.textContent));
   tap(a.w,a.d,2,"short"); tap(a.w,a.d,4,"missing"); await wait(100);
   check("Short and Missing marked, counted as short/missing", row(a.d,2).classList.contains("short") && row(a.d,4).classList.contains("missing") && /2 short\/missing/.test(body.querySelector(".jb-pills").textContent));
   tap(a.w,a.d,2,"short"); await wait(100);
@@ -127,6 +127,23 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   check("Clear wipes the date, saves it as empty and drops it from the summary", a.writes[a.writes.length-1].body.item_id===7 && a.writes[a.writes.length-1].body.exp_date===null && row(a.d,7).querySelector("input[type=date]").value==="" && !row(a.d,7).querySelector(".jb-expclr") && !/expired/i.test(body.querySelector(".jb-pills").textContent));
   const inp7b=row(a.d,7).querySelector("input[type=date]"); inp7b.value=plus(-3); inp7b.dispatchEvent(new a.w.Event("change",{bubbles:true})); await wait(100);
   check("putting a date back in works as before", /Expired 3 days ago/.test(row(a.d,7).textContent) && /1 expired/.test(body.querySelector(".jb-pills").textContent));
+  // ---- battery bars (AED w/ Battery, item 9)
+  check("an item ticked for battery bars shows 1-4 buttons, a Checked date box and no answer yet", row(a.d,9).querySelectorAll(".jb-bar").length===4 && !!row(a.d,9).querySelector('.jb-chk input[type=date]') && /How many bars/.test(row(a.d,9).textContent) && !row(a.d,1).querySelector(".jb-bars"));
+  click(a.w,[...row(a.d,9).querySelectorAll(".jb-bar")].find(x=>x.textContent==="4")); await wait(100);
+  const bw=a.writes[a.writes.length-1];
+  check("tapping 4 saves the bars and stamps today, status and date kept  "+JSON.stringify(bw.body&&{b:bw.body.bars,at:bw.body.bars_at}), bw.body.item_id===9 && bw.body.bars===4 && bw.body.bars_at===plus(0) && /4 bars/.test(row(a.d,9).textContent) && /Checked today/.test(row(a.d,9).textContent) && !row(a.d,9).classList.contains("batwarn"));
+  click(a.w,[...row(a.d,9).querySelectorAll(".jb-bar")].find(x=>x.textContent==="2")); await wait(100);
+  check("2 bars reads 'getting low', tints the row amber and counts in the summary", a.writes[a.writes.length-1].body.bars===2 && /2 bars \u2014 getting low/.test(row(a.d,9).textContent) && row(a.d,9).classList.contains("batwarn") && /1 battery low/.test(body.querySelector(".jb-pills").textContent));
+  click(a.w,body.querySelector('.jb-pill[data-jump="battery"]')); await wait(50);
+  check("the 'battery low' pill lists the item with its pouch", /AED w\/ Battery/.test(body.querySelector(".jb-jump").textContent) && /AED/.test(body.querySelector(".jb-jump .jb-jumpit span").textContent));
+  click(a.w,body.querySelector('.jb-pill[data-jump="battery"]')); await wait(50);
+  click(a.w,[...row(a.d,9).querySelectorAll(".jb-bar")].find(x=>x.textContent==="1")); await wait(100);
+  check("1 bar says replace the battery and turns the row red", /replace the battery/.test(row(a.d,9).textContent) && row(a.d,9).classList.contains("batbad"));
+  const chk=row(a.d,9).querySelector('.jb-chk input[type=date]'); chk.value=plus(-6); chk.dispatchEvent(new a.w.Event("change",{bubbles:true})); await wait(100);
+  check("the Checked date can be backdated without touching the bars", a.writes[a.writes.length-1].body.bars_at===plus(-6) && a.writes[a.writes.length-1].body.bars===1 && /Checked 6 days ago/.test(row(a.d,9).textContent));
+  click(a.w,row(a.d,9).querySelector(".jb-chk .jb-expclr")); await wait(100);
+  check("Clear wipes the battery check and drops it from the summary", a.writes[a.writes.length-1].body.bars===null && a.writes[a.writes.length-1].body.bars_at===null && /How many bars/.test(row(a.d,9).textContent) && !/battery low/.test(body.querySelector(".jb-pills").textContent));
+  click(a.w,[...row(a.d,9).querySelectorAll(".jb-bar")].find(x=>x.textContent==="4")); await wait(100);
   { // a date sitting on an item that does not carry one (tick taken off, or put in by mistake before) is ignored
     const a5=boot({status:[{id:1,unit:"H-24",item_id:1,status:"have",exp_date:plus(-5),updated_at:new Date().toISOString()}]});
     await wait(3200); await openBag(a5);
@@ -155,8 +172,8 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   }
   check("the bag check date and reminder setting come back too", /Last checked: today/.test(b2.querySelector(".jb-bag").textContent) && a.d.getElementById("jbRemind").value==="60");
   check("a bag overdue for its reminder shows the amber 'time to go through your bag' line", (()=>{ return true; })());
-  check("saved statuses and dates come back on the next open  ("+b2.querySelector(".jb-sumtop b").textContent+")", /3 of 7 stocked/.test(b2.textContent) && row(a.d,3).querySelector("input[type=date]").value===plus(10) && row(a.d,4).classList.contains("missing"));
-  check("'Last updated today' and the pouch counts", /Last updated today/.test(b2.textContent) && [...b2.querySelectorAll(".jb-sec .amb-sech em")].map(x=>x.textContent.split(" ·")[0]).join("|")==="1/3|0/2|2/2");
+  check("saved statuses and dates come back on the next open  ("+b2.querySelector(".jb-sumtop b").textContent+")", /3 of 8 stocked/.test(b2.textContent) && row(a.d,3).querySelector("input[type=date]").value===plus(10) && row(a.d,4).classList.contains("missing"));
+  check("'Last updated today' and the pouch counts", /Last updated today/.test(b2.textContent) && [...b2.querySelectorAll(".jb-sec .amb-sech em")].map(x=>x.textContent.split(" ·")[0]).join("|")==="1/3|0/2|2/2|0/1");
 
   // ===== 4. no signal: kept and retried
   a=boot({failSaves:true}); await wait(3200); await openBag(a);
@@ -185,10 +202,10 @@ const secBtn=(d,label)=>[...d.querySelectorAll("#admSecs .adm-secit")].find(x=>x
   click(b.w,secBtn(b.d,"Jump bags")); await wait(500);
   const pane=b.d.getElementById("admGenPane"); const rowsEl=[...pane.querySelectorAll(".amb-row")];
   check("overview lists members (not dispatchers), problems first: expired, then expiring, then never checked  "+JSON.stringify(rowsEl.map(r=>r.querySelector("b").textContent)), rowsEl.length===3 && /Fried/.test(rowsEl[0].textContent) && /Katz/.test(rowsEl[1].textContent) && /Eber/.test(rowsEl[2].textContent) && !/Disp/.test(pane.textContent) && /2 of 3 members have checked/.test(pane.textContent));
-  check("tags: Fried = 1 expired + 5 not checked; Katz = 1 expiring, all 7 stocked; Eber = not checked", /1 expired/.test(rowsEl[0].textContent) && /5 not checked/.test(rowsEl[0].textContent) && /1 expiring/.test(rowsEl[1].textContent) && /7 of 7 stocked/.test(rowsEl[1].textContent) && !/All set/.test(rowsEl[1].textContent) && /not checked/.test(rowsEl[2].textContent));
+  check("tags: Fried = 1 expired + 6 not checked; Katz = 1 expiring, all 7 stocked; Eber = not checked", /1 expired/.test(rowsEl[0].textContent) && /6 not checked/.test(rowsEl[0].textContent) && /1 expiring/.test(rowsEl[1].textContent) && /7 of 8 stocked/.test(rowsEl[1].textContent) && !/All set/.test(rowsEl[1].textContent) && /not checked/.test(rowsEl[2].textContent));
   check("overview shows when each bag was last gone through", /bag checked .*weeks ago/.test(rowsEl[0].textContent) && /bag checked never/.test(rowsEl[1].textContent));
   click(b.w,rowsEl[0]); await wait(200);
-  check("detail: every item by pouch with status and the expiry in red", /Fried/.test(pane.querySelector("h3").textContent) && pane.querySelectorAll(".amb-dqa.ok").length===2 && pane.querySelectorAll(".amb-dqa.none").length===5 && /Expired 2 days ago/.test(pane.textContent));
+  check("detail: every item by pouch with status and the expiry in red", /Fried/.test(pane.querySelector("h3").textContent) && pane.querySelectorAll(".amb-dqa.ok").length===2 && pane.querySelectorAll(".amb-dqa.none").length===6 && /Expired 2 days ago/.test(pane.textContent));
   check("detail: bag last checked + reminder setting", /Bag last checked: .*weeks ago/.test(pane.querySelector(".jb-bagline").textContent) && /every 30 days/.test(pane.querySelector(".jb-bagline").textContent));
   check("detail: a 'Remind to restock' button", !!b.d.getElementById("admJbRemind") && !b.d.getElementById("admJbRemind").disabled);
   const scriptCalls=b.scriptCalls, before=scriptCalls.length; click(b.w,b.d.getElementById("admJbRemind")); await wait(150);
