@@ -90,6 +90,26 @@ that makes it wrong.
   medical control / physician / doctor, or unit MD-n) keeps him out of Admin → Call stats
   and gives his My Standing no minimum ("Medical Control has no call minimum"). Any future
   reminder or auto-downgrade code must call `csExempt()` first.
+- **Live: 1.24.0** (Nov 27, 2026): **a counter for pulse and respirations in Call Notes.**
+  App only — no database change, no Apps Script change (still **v60**).
+  - A stopwatch button sits inside the HR box and the RR box (`#ntHrCnt`, `#ntRrCnt`,
+    wrapper `.nt-tw`). It opens a bottom sheet `#rcSheet` (state `RC`, functions `rc*`,
+    right after the Call Notes code).
+  - **Timed count** (default): 15 / 30 / 60 seconds (RR starts at 30, HR at 15), Start,
+    count in your head; at the end the phone vibrates and beeps twice (`rcTone`), the sheet
+    shrinks to "Time's up" + "How many did you count?" and shows count x multiplier = rate
+    a minute. "Use N for RR/HR" writes the box and closes. The clock runs off `Date.now()`
+    so a throttled timer cannot drift; a screen wake lock is held while counting.
+  - **Tap along**: one big button tapped on every breath/beat; rate = (taps-1) over the time
+    from first to last tap, shown from the 3rd tap.
+  - Remembered on the phone only (`hoh_rc_v1`): last length per vital and last mode. Nothing
+    is sent anywhere; the result only lands in the HR / RR box of the entry being written.
+  - The sheet is on the Back stack (`navOpen(rcHide)`), so Back closes the counter and not
+    Call Notes. `rcKb` lifts the sheet by the keyboard's height (visualViewport) because
+    newer phones overlay the keyboard. iPhones do not vibrate from a web app: they get the
+    beep (unless on silent) and the "Time's up" screen.
+  - Tests: `scratch/tests/ratecounter.js` (42, in `npm test`). Preview:
+    `scratch/catalog/preview-ratecounter.js`.
 - **Live: 1.23.0** (Nov 23, 2026): the standings pieces that 1.21.0 left out, plus the
   organization's call total. Apps Script **v60**.
   - **Excuse a quarter**: Admin → Call statistics → End of quarter, "Excuse this quarter"

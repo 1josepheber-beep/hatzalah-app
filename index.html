@@ -305,6 +305,45 @@
   .nt-copy{flex:1;border:0;background:var(--navy);color:#fff;border-radius:11px;padding:13px;font-weight:800;font-size:15px;cursor:pointer}
   .nt-clear{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--red);border-radius:11px;padding:13px 16px;font-weight:800;font-size:14px;cursor:pointer}
   .nt-phi{font-size:12px;color:var(--mut);text-align:center;padding:2px 6px 6px}
+  /* Call Notes: the stopwatch in HR and RR opens a counter (timed count, or tap along) */
+  .nt-tw{position:relative;display:block}
+  .nt-fields .nt-tw input{padding-right:42px}
+  .nt-cnt{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:8px;background:#e6edf8;color:var(--navy);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+  .nt-cnt svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nt-cnt:active{background:#d3dff1}
+  .rc button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .rc-top{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 10px}
+  .rc-title{font-weight:800;color:var(--navy);font-size:17px}
+  .rc-x{border:0;background:#eef1f6;color:var(--mut);width:36px;height:36px;border-radius:50%;font-size:22px;line-height:1;padding:0}
+  .rc-seg{display:flex;gap:8px;margin-bottom:6px}
+  .rc-seg button{flex:1;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:10px;padding:11px 0;font-size:15px;font-weight:700}
+  .rc-seg button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+  .rc-clock{text-align:center;font-size:60px;font-weight:800;color:var(--ink);line-height:1.1;padding-top:8px;font-variant-numeric:tabular-nums}
+  .rc-clock.run{color:var(--navy)}
+  .rc-clock.done{color:#2f9e44;font-size:26px;padding:4px 0 2px}
+  .sheet.rc{max-height:100%;overflow-y:auto;box-sizing:border-box}
+  .rc-clock small{font-size:17px;font-weight:700;color:var(--mut)}
+  .rc-hint{text-align:center;font-size:14px;color:var(--mut);padding:2px 8px 12px;min-height:20px}
+  .rc-go{width:100%;border:0;background:#2f9e44;color:#fff;border-radius:13px;padding:17px;font-weight:800;font-size:18px}
+  .rc-go.stop{background:#eef1f6;color:var(--red)}
+  .rc-after{padding-top:2px}
+  .rc-again{display:block;width:100%;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:13px;padding:13px;font-weight:800;font-size:15px;margin-top:9px}
+  .rc-q{font-size:13px;font-weight:700;color:var(--mut);margin-bottom:7px}
+  .rc-calc{display:flex;align-items:center;gap:11px}
+  .rc-calc input{width:92px;border:1px solid var(--line);border-radius:10px;padding:11px 8px;font-size:22px;font-weight:700;text-align:center;color:var(--ink);box-sizing:border-box;font-family:inherit}
+  .rc-calc input:focus{outline:none;border-color:var(--navy)}
+  .rc-mult{font-size:16px;color:var(--mut);font-weight:700}
+  .rc-rate{font-size:15px;color:var(--mut);font-weight:700}
+  .rc-rate b{font-size:28px;color:var(--ink);font-weight:800}
+  .rc-err{color:var(--red);font-size:13px;font-weight:700;min-height:18px;padding-top:5px}
+  .rc-use{width:100%;border:0;background:var(--navy);color:#fff;border-radius:13px;padding:15px;font-weight:800;font-size:16px}
+  .rc-swap{display:block;width:100%;border:0;background:none;color:var(--navy);font-size:14px;font-weight:700;padding:14px 0 4px;text-decoration:underline}
+  .rc-tapbtn{display:block;width:100%;height:150px;border:0;background:var(--navy);color:#fff;border-radius:18px;font-size:30px;font-weight:800;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+  .rc-tapbtn:active{background:#0d2a52;transform:scale(.985)}
+  .rc-taprow{display:flex;gap:10px;margin-top:10px}
+  .rc-taprow .rc-use{flex:1}
+  .rc-reset{flex:0 0 auto;border:1px solid var(--line);background:#fff;color:var(--mut);border-radius:13px;padding:15px 18px;font-weight:800;font-size:15px}
   header .logo{width:44px;height:44px;border-radius:11px;background:#fff;
     display:flex;align-items:center;justify-content:center;overflow:hidden}
   header .logo img{width:40px;height:40px;object-fit:contain}
@@ -1777,7 +1816,7 @@
     <button id="viewDemo" class="demolink hidden">View demo</button>
     <button id="gReport" class="linkbtn">Having trouble? Send a report</button>
   </div>
-  <div class="ver-line">Version 1.23.0</div>
+  <div class="ver-line">Version 1.24.0</div>
 </div>
 
 <div class="rebar hidden" id="reBar"><span class="rebar-per">Per row: <button id="reCols2">2</button><button id="reCols3">3</button></span><span class="rebar-btns"><button id="reReset">Reset</button><button id="reDone">Done</button></span></div>
@@ -1899,7 +1938,7 @@
   <div class="grid" id="grid"></div>
   <button class="signout home-report" id="homeReport">Having trouble? Send a report</button>
   <button class="signout" id="signout">Sign out of this device</button>
-  <div class="ver-line">Version 1.23.0</div>
+  <div class="ver-line">Version 1.24.0</div>
 </div>
 
 <!-- PROTOCOLS SCREEN -->
@@ -2309,8 +2348,8 @@
       <div class="nt-h">New entry</div>
       <label class="nt-date-l">Date<input id="ntDate" type="date"></label>
       <div class="nt-fields">
-        <label>HR<input id="ntHr" type="text" inputmode="numeric"></label>
-        <label>RR<input id="ntRr" type="text" inputmode="numeric"></label>
+        <label>HR<span class="nt-tw"><input id="ntHr" type="text" inputmode="numeric"><button type="button" class="nt-cnt" id="ntHrCnt" aria-label="Count pulse"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 10.5V14l2.2 1.6M9.5 3h5M12 3v4M18.4 7.6l1.4-1.4"/></svg></button></span></label>
+        <label>RR<span class="nt-tw"><input id="ntRr" type="text" inputmode="numeric"><button type="button" class="nt-cnt" id="ntRrCnt" aria-label="Count respirations"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M12 10.5V14l2.2 1.6M9.5 3h5M12 3v4M18.4 7.6l1.4-1.4"/></svg></button></span></label>
         <label>BP<input id="ntBp" type="text" inputmode="text" placeholder="120/80"></label>
         <label>SpO2<input id="ntSpo2" type="text" inputmode="numeric"></label>
         <label>Temp<input id="ntTemp" type="text" inputmode="decimal"></label>
@@ -2325,6 +2364,35 @@
       <button class="nt-clear" id="ntClear">Clear all</button>
     </div>
     <div class="nt-phi">Saved only on this phone — never uploaded. Copy into your PCR, then Clear when done.</div>
+  </div>
+</div>
+
+<!-- RATE COUNTER (Call Notes: stopwatch on HR / RR) -->
+<div class="sheet-wrap hidden" id="rcSheet">
+  <div class="sheet rc">
+    <div class="rc-top"><div class="rc-title" id="rcTitle">Count respirations</div><button type="button" class="rc-x" id="rcX" aria-label="Close">&times;</button></div>
+    <div id="rcTimed">
+      <div class="rc-seg" id="rcSeg"><button type="button" data-s="15">15 sec</button><button type="button" data-s="30">30 sec</button><button type="button" data-s="60">60 sec</button></div>
+      <div class="rc-clock" id="rcClock">0:30</div>
+      <div class="rc-hint" id="rcHint"></div>
+      <button type="button" class="rc-go" id="rcGo">Start</button>
+      <div class="rc-after hidden" id="rcAfter">
+        <div class="rc-q" id="rcQ">How many did you count?</div>
+        <div class="rc-calc"><input id="rcN" type="text" inputmode="numeric" maxlength="3" aria-label="Your count"><span class="rc-mult">&times; <span id="rcMult">2</span> =</span><span class="rc-rate"><b id="rcRate">&ndash;</b> / min</span></div>
+        <div class="rc-err" id="rcErr"></div>
+        <button type="button" class="rc-use" id="rcUse">Use for RR</button>
+        <button type="button" class="rc-again" id="rcAgain">Count again</button>
+      </div>
+      <button type="button" class="rc-swap" id="rcToTap">Tap along instead</button>
+    </div>
+    <div id="rcTap" class="hidden">
+      <div class="rc-clock" id="rcTapRate">&ndash;</div>
+      <div class="rc-hint" id="rcTapHint"></div>
+      <button type="button" class="rc-tapbtn" id="rcTapBtn">Tap</button>
+      <div class="rc-err" id="rcTapErr"></div>
+      <div class="rc-taprow"><button type="button" class="rc-reset" id="rcTapReset">Reset</button><button type="button" class="rc-use" id="rcTapUse">Use for RR</button></div>
+      <button type="button" class="rc-swap" id="rcToTimed">Timed count instead</button>
+    </div>
   </div>
 </div>
 
@@ -10978,7 +11046,7 @@
       b.innerHTML='<div class="prof-card"><div class="prof-name">'+esc(name||"—")+'</div>'+
         '<div class="prof-unit">Unit '+esc(STATE.me.unit)+'</div>'+
         '<div class="prof-note">Your unit isn\u2019t in the directory yet. Ask your coordinator to add you, then you can update your info here.</div></div>'+
-        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.23.0</div>';
+        '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.24.0</div>';
       $("profSignout").addEventListener("click",doSignout);
       return;
     }
@@ -11021,7 +11089,7 @@
       '<div class="prof-note" id="profNote"></div>'+
       '<details class="pfold" id="profOther"><summary>'+'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9c.14.35.4.64.73.83H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'+'<span>Other settings</span>'+'<svg class="pf-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></summary>'+'<div class="pf-body"><div class="prof-bio" id="profBioWrap"></div><div class="prof-off" id="profOffWrap"></div><div class="prof-push" id="profPushWrap"></div><div class="prof-sec"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 17.5A2 2 0 004.2 20.5h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>Having trouble?</div><div class="prof-hint">Send a report and the admins get the technical details with it \u2014 app version, phone type, and what the app was doing.</div><button class="ebtn" id="profReport">Send a report</button></div></details>'+
       '</div>'+
-      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.23.0</div>';
+      '<button class="signout" id="profSignout">Sign out of this device</button>'+'<div class="ver-line">Version 1.24.0</div>';
     $("profSave").addEventListener("click",saveProfile);
     $("profSignout").addEventListener("click",doSignout);
     wireOther("profTshirt"); wireOther("profDress"); wireOther("profPolo"); wireOther("profHat"); wireOther("profCoat"); wireOther("profGlove"); wireOther("profRel");
@@ -11504,6 +11572,78 @@
     });
   });
   $("notesBack").addEventListener("click",navBack);
+
+  // ---- Rate counter: the stopwatch in HR and RR. Timed count (15 / 30 / 60 s, buzz + tone at the end) or tap along. ----
+  // Nothing is saved but the last length and mode you used; the result only goes into the HR or RR box.
+  var RC={kind:"rr",mode:"timed",dur:{hr:15,rr:30},end:0,id:0,running:false,done:false,taps:[],actx:null,wl:null,open:false};
+  try{ var rcSaved=JSON.parse(localStorage.getItem("hoh_rc_v1")||"null");
+    if(rcSaved){ ["hr","rr"].forEach(function(k){ if([15,30,60].indexOf(rcSaved[k])>-1) RC.dur[k]=rcSaved[k]; }); if(rcSaved.mode==="tap") RC.mode="tap"; } }catch(e){}
+  function rcRemember(){ try{ localStorage.setItem("hoh_rc_v1",JSON.stringify({hr:RC.dur.hr,rr:RC.dur.rr,mode:RC.mode})); }catch(e){} }
+  function rcW(){ return RC.kind==="hr" ? {title:"Count pulse",one:"beat",many:"beats",field:"HR",box:"ntHr"} : {title:"Count respirations",one:"breath",many:"breaths",field:"RR",box:"ntRr"}; }
+  function rcFmt(s){ s=Math.max(0,s); return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2); }
+  function rcRateOf(n,dur){ return Math.round(n*60/dur); }
+  function rcTapRate(){ var t=RC.taps; if(t.length<2) return 0; var span=t[t.length-1]-t[0]; return span>0 ? Math.round((t.length-1)*60000/span) : 0; }
+  function rcAudio(){ if(!RC.actx){ try{ RC.actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } try{ if(RC.actx&&RC.actx.state==="suspended") RC.actx.resume(); }catch(e){} }
+  function rcTone(){ if(navigator.vibrate){ try{ navigator.vibrate([350,120,350]); }catch(e){} }
+    var c=RC.actx; if(!c) return;
+    try{ [0,0.28].forEach(function(at){ var o=c.createOscillator(),g=c.createGain(); o.frequency.value=988; o.connect(g); g.connect(c.destination);
+      g.gain.setValueAtTime(0.35,c.currentTime+at); g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+at+0.2); o.start(c.currentTime+at); o.stop(c.currentTime+at+0.22); }); }catch(e){} }
+  function rcWake(on){ try{ if(on){ if("wakeLock" in navigator) navigator.wakeLock.request("screen").then(function(x){ if(RC.running) RC.wl=x; else x.release(); }).catch(function(){}); }
+      else if(RC.wl){ RC.wl.release(); RC.wl=null; } }catch(e){} }
+  function rcHalt(){ clearInterval(RC.id); RC.id=0; RC.running=false; rcWake(false); }
+  function rcCalc(){ var w=rcW(), dur=RC.dur[RC.kind], raw=$("rcN").value.trim(), n=/^\d{1,3}$/.test(raw)?parseInt(raw,10):NaN, ok=!isNaN(n)&&n>0;
+    $("rcMult").textContent=String(60/dur); $("rcRate").textContent=ok?String(rcRateOf(n,dur)):"–";
+    $("rcUse").textContent=ok?("Use "+rcRateOf(n,dur)+" for "+w.field):("Use for "+w.field); return ok?rcRateOf(n,dur):0; }
+  function rcRender(){
+    var w=rcW(), dur=RC.dur[RC.kind], tap=RC.mode==="tap";
+    $("rcTitle").textContent=w.title;
+    $("rcTimed").classList.toggle("hidden",tap); $("rcTap").classList.toggle("hidden",!tap);
+    if(!tap){
+      [].forEach.call($("rcSeg").querySelectorAll("button"),function(b){ b.classList.toggle("on",+b.getAttribute("data-s")===dur); });
+      var ck=$("rcClock"), go=$("rcGo");
+      ck.classList.toggle("run",RC.running); ck.classList.toggle("done",RC.done);
+      go.classList.toggle("stop",RC.running); go.classList.toggle("hidden",RC.done);
+      $("rcSeg").classList.toggle("hidden",RC.done); $("rcToTap").classList.toggle("hidden",RC.done);
+      if(RC.running){ ck.textContent=rcFmt(Math.ceil((RC.end-Date.now())/1000)); go.textContent="Stop"; $("rcHint").textContent="Counting… count each "+w.one+"."; }
+      else if(RC.done){ ck.textContent="Time\u2019s up"; $("rcHint").textContent="You counted for "+dur+" seconds."; }
+      else { ck.textContent=rcFmt(dur); go.textContent="Start"; $("rcHint").textContent="Count each "+w.one+". The phone buzzes and beeps when time is up."; }
+      $("rcAfter").classList.toggle("hidden",!RC.done);
+      $("rcQ").textContent="How many "+w.many+" did you count?";
+      rcCalc();
+    } else {
+      var n=RC.taps.length, r=rcTapRate();
+      $("rcTapRate").innerHTML=(n>=3&&r)?(r+' <small>/ min</small>'):"–";
+      $("rcTapHint").textContent=!n?("Tap the button on every "+w.one+"."):(n<3?("Keep tapping — "+n+" so far."):(n+" "+w.many+" in "+Math.round((RC.taps[n-1]-RC.taps[0])/1000)+" seconds."));
+      $("rcTapUse").textContent=(n>=3&&r)?("Use "+r+" for "+w.field):("Use for "+w.field);
+    }
+  }
+  function rcReset(){ rcHalt(); RC.done=false; RC.taps=[]; $("rcN").value=""; $("rcErr").textContent=""; $("rcTapErr").textContent=""; }
+  function rcStart(){ rcReset(); rcAudio(); RC.running=true; RC.end=Date.now()+RC.dur[RC.kind]*1000; rcWake(true);
+    RC.id=setInterval(function(){ if(Date.now()>=RC.end) rcDone(); else rcRender(); },200); rcRender(); }
+  function rcDone(){ rcHalt(); RC.done=true; rcTone(); rcRender(); try{ $("rcN").focus(); }catch(e){} }
+  function rcHide(){ rcReset(); RC.open=false; $("rcSheet").classList.add("hidden"); $("rcSheet").style.paddingBottom=""; try{ $("rcN").blur(); }catch(e){} }
+  // Newer phones lay the keyboard over the page instead of shrinking it, so lift the sheet by the keyboard's height.
+  function rcKb(){ try{ var vv=window.visualViewport, sh=$("rcSheet"); if(!vv||!RC.open){ sh.style.paddingBottom=""; return; }
+      var kb=Math.round(window.innerHeight-vv.height-vv.offsetTop); sh.style.paddingBottom=kb>60?(kb+"px"):""; }catch(e){} }
+  if(window.visualViewport){ try{ window.visualViewport.addEventListener("resize",rcKb); window.visualViewport.addEventListener("scroll",rcKb); }catch(e){} }
+  function rcClose(){ if(RC.open) navBack(); }
+  function rcOpen(kind){ RC.kind=kind==="hr"?"hr":"rr"; rcReset(); rcRender(); $("rcSheet").classList.remove("hidden"); if(!RC.open){ RC.open=true; navOpen(rcHide); } }
+  function rcUse(rate){ var w=rcW(); $(w.box).value=String(rate); rcClose(); toast(w.field+" set to "+rate+"."); }
+  $("ntHrCnt").addEventListener("click",function(e){ e.preventDefault(); rcOpen("hr"); });
+  $("ntRrCnt").addEventListener("click",function(e){ e.preventDefault(); rcOpen("rr"); });
+  $("rcX").addEventListener("click",rcClose);
+  $("rcSheet").addEventListener("click",function(e){ if(e.target===this) rcClose(); });
+  $("rcSeg").addEventListener("click",function(e){ var b=e.target.closest?e.target.closest("button[data-s]"):null; if(!b) return;
+    RC.dur[RC.kind]=+b.getAttribute("data-s"); rcRemember(); rcReset(); rcRender(); });
+  $("rcGo").addEventListener("click",function(){ if(RC.running){ rcReset(); rcRender(); } else rcStart(); });
+  $("rcAgain").addEventListener("click",function(){ rcReset(); rcRender(); });
+  $("rcN").addEventListener("input",function(){ $("rcErr").textContent=""; rcCalc(); });
+  $("rcUse").addEventListener("click",function(){ var r=rcCalc(); if(!r){ $("rcErr").textContent="Enter your count first."; return; } rcUse(r); });
+  $("rcToTap").addEventListener("click",function(){ RC.mode="tap"; rcRemember(); rcReset(); rcRender(); });
+  $("rcToTimed").addEventListener("click",function(){ RC.mode="timed"; rcRemember(); rcReset(); rcRender(); });
+  $("rcTapBtn").addEventListener("click",function(){ RC.taps.push(Date.now()); $("rcTapErr").textContent=""; if(navigator.vibrate){ try{ navigator.vibrate(12); }catch(e){} } rcRender(); });
+  $("rcTapReset").addEventListener("click",function(){ rcReset(); rcRender(); });
+  $("rcTapUse").addEventListener("click",function(){ var r=rcTapRate(); if(RC.taps.length<3||!r){ $("rcTapErr").textContent="Tap at least 3 times first."; return; } rcUse(r); });
 
   // ---------- Vitals reference ----------
   var VIT={view:"adult",loaded:false,data:null};
@@ -12067,7 +12207,7 @@
   // nobody should be two versions behind. If something IS going on, offer it
   // instead of yanking the screen away.
   var APP_OPENED_AT=Date.now();
-  var APP_VERSION="Version 1.23.0".replace("Version ","");
+  var APP_VERSION="Version 1.24.0".replace("Version ","");
   // Backstop: if the worker is serving a different build than this page came
   // from, we are out of date regardless of any message.
   try{

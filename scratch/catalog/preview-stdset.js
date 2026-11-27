@@ -4,7 +4,7 @@ const ROOT=path.join(__dirname,"..",".."); const OUT=path.join(__dirname,"out","
 const html=fs.readFileSync(ROOT+"/index.html","utf8"); const SB="https://gcvbohdarppaolqhdnri.supabase.co"; const errs=[];
 const MIME={js:"application/javascript",css:"text/css",png:"image/png",jpg:"image/jpeg",svg:"image/svg+xml",json:"application/json",html:"text/html",webmanifest:"application/manifest+json"};
 (async()=>{
-  const b=await chromium.launch(); const ctx=await b.newContext({viewport:{width:412,height:900},deviceScaleFactor:2,hasTouch:true,isMobile:true}); const pg=await ctx.newPage();
+  const b=await chromium.launch(); const ctx=await b.newContext({viewport:{width:412,height:1700},deviceScaleFactor:2,hasTouch:true,isMobile:true}); const pg=await ctx.newPage();
   pg.on("pageerror",e=>errs.push(String(e)));
   await pg.route("**/*",r=>{ const u=r.request().url();
     if(u==="https://houstonhatzalahapp.org/") return r.fulfill({contentType:"text/html",body:html});
@@ -20,6 +20,7 @@ const MIME={js:"application/javascript",css:"text/css",png:"image/png",jpg:"imag
   const box=await pg.evaluate(()=>{ const el=[...document.querySelectorAll(".adm-gsec")].find(x=>x.querySelector(".adm-itemt").textContent.trim()==="Standings"); el.scrollIntoView({block:"start"}); window.scrollBy(0,-8); const r=el.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height}; });
   await pg.waitForTimeout(2200);
   const b2=await pg.evaluate(()=>{ const el=[...document.querySelectorAll(".adm-gsec")].find(x=>x.querySelector(".adm-itemt").textContent.trim()==="Standings"); const r=el.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height}; });
+  await pg.addStyleTag({content:".adm-save{display:none!important}"});
   await (await pg.$$(".adm-gsec.open"))[0].screenshot({path:OUT+"/standings-settings.png"});
   console.log(b2);
   console.log("page errors:", errs.length?errs:"none"); await b.close();
